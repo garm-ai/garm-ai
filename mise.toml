@@ -1,0 +1,40 @@
+# The toolchain this repository is, pinned rather than assumed.
+#
+# GOWORK = "off" because this estate deliberately has no go.work: a workspace
+# silently changes which code builds, and the previous estate spent real time on
+# LSP errors that were a workspace artefact rather than a compile failure.
+[tools]
+go = "1.26"
+buf = "1"
+
+[env]
+GOWORK = "off"
+
+[tasks.gen]
+description = "Regenerate the Go from the protos"
+run = "buf generate"
+
+[tasks."gen-check"]
+description = "Fail if the committed generated Go is not what the protos produce"
+# The generated code is committed, so a reader sees what the options compile to
+# without running buf. That is only true if something checks the two agree.
+run = """
+set -e
+buf generate
+git diff --exit-code -- garm/ || {
+  echo "generated Go is stale: run 'mise run gen' and commit the result" >&2
+  exit 1
+}
+"""
+
+[tasks.lint]
+description = "buf lint"
+run = "buf lint"
+
+[tasks.test]
+description = "go test"
+run = "go test ./... -race"
+
+[tasks.ci]
+description = "Everything CI runs, in order"
+depends = ["lint", "gen-check", "test"]

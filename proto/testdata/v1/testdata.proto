@@ -1,0 +1,46 @@
+// A service that declares the agent option, so a test can read it back off a
+// real compiled descriptor rather than off a struct the test filled in itself.
+//
+// That distinction is not pedantry. In the estate this replaces, four separate
+// tests passed while the behaviour they covered was broken, and every one failed
+// the same way: the fixture was built by hand, so it could not express the thing
+// that was wrong. A test that fabricates its own input proves the test compiles.
+syntax = "proto3";
+
+package testdata.v1;
+
+import "garm/agent/v1/agent.proto";
+
+option go_package = "github.com/garm-ai/garm-ai/testdata/v1;testdatav1";
+
+message InvokeRequest  { string request = 1; }
+message InvokeResponse { string reply = 1; }
+
+// Named with the `Service` suffix only because buf's STANDARD lint requires it
+// and this is throwaway test scaffolding. Whether a real AGENT should be called
+// `SupportAssistantService` is a genuine convention question -- an agent is a
+// named actor rather than an RPC service, and the suffix reads badly for one --
+// and it is deliberately NOT decided here. It gets decided when the first real
+// agent proto is written, with a reason, in the config.
+//
+// What is NOT happening: silently dropping the rule. The estate this replaces
+// configured STANDARD and never ran it clean -- `examples/bank` emits eight
+// violations today, including this one -- so the config claimed one thing and
+// the tree did another, and nothing noticed. A lint nobody honours is worse than
+// no lint, because it reads as a guarantee.
+service SupportAssistantService {
+  // NOTE THE DELIBERATE MISMATCH. This service's proto full name is
+  // `testdata.v1.SupportAssistantService`; its agent name is
+  // `support-assistant`. Different on purpose, so any code that confuses an
+  // address for an identity fails a test rather than failing in production
+  // three services away. The previous estate had that bug twice in one day.
+  option (garm.agent.v1.agent) = {
+    name: "support-assistant"
+    tools: [
+      { name: "accounts.v1.get_customer" },
+      { name: "payments.v1.get_payment_status" }
+    ]
+  };
+
+  rpc Invoke(InvokeRequest) returns (InvokeResponse);
+}

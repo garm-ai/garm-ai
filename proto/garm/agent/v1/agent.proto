@@ -1,0 +1,81 @@
+// What an agent declares about itself.
+//
+// This file is deliberately almost empty, and growing it has a rule: **a field
+// arrives when the thing that enforces it arrives, never before.** The estate
+// this replaces had eleven fields on its agent options, of which one shipped
+// admitting in its own comment that it was "parsed by lint, not evaluated", and
+// four more in the tool options turned out to have no enforcer at all. A
+// declaration nothing acts on is not documentation -- it is a promise the
+// platform breaks silently, and a reader has no way to tell which promises hold.
+//
+// So: one field, one enforced property, and the next field waits its turn.
+syntax = "proto3";
+
+package garm.agent.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/garm-ai/garm-ai/garm/agent/v1;agentv1";
+
+// An agent IS a gRPC service that carries this option. There is no separate
+// registry, manifest or list of agents: the declaration lives on the thing it
+// describes, so the two cannot disagree.
+//
+// 50101 continues the numbering the previous contracts used (50001-50005 for
+// tool options, 50101+ for agent options), because a familiar number costs
+// nothing and a gratuitously different one invites a mistake during migration.
+extend google.protobuf.ServiceOptions {
+  Agent agent = 50101;
+}
+
+message Agent {
+  // The agent's ONE identity. Policy keys on it, logs name it, tokens carry it.
+  //
+  // THE SERVICE'S PROTO FULL NAME IS AN ADDRESS, NEVER AN IDENTITY. That
+  // sentence is the whole point of this field, and it is the direct fix for the
+  // two most expensive bugs in the system this replaces: an agent had both a
+  // short declared name and a proto full name, both were used as identity in
+  // different places, and twice a component passed one where another expected
+  // the other. Each time the symptom was a refusal with a correct-looking
+  // message and a cause three services away.
+  //
+  // So there is exactly one spelling. If you are holding
+  // `bank.agents.v1.SupportAssistant` and something wants an agent, you are
+  // holding an address and you need to look up the name. If you are tempted to
+  // add a second identity field, that is this bug returning.
+  //
+  // An explicit name rather than deriving it from the service name, because an
+  // identity derived from a proto path changes when the path does -- and then
+  // every policy that keys on it silently stops matching a renamed package.
+  // Uniqueness is therefore not free: it needs a lint rule, which arrives with
+  // the linter.
+  string name = 1;
+
+  // The tools this agent may call, and the only thing currently enforced.
+  //
+  // A MESSAGE rather than a repeated string, so this grows without a breaking
+  // change. A guard, a per-tool ceiling, a rate -- each can arrive as a field on
+  // ToolRef when its enforcer does. `repeated string` would have forced a
+  // parallel field or a reshape the first time one did.
+  //
+  // The allowlist is the ONLY authority on what this agent may call. Nothing
+  // widens it -- not a prompt, not a graph, not a runtime decision. When
+  // something that orders calls arrives, it will be able to order only what is
+  // already here.
+  repeated ToolRef tools = 2;
+}
+
+// One entry in an agent's allowlist.
+//
+// It carries a name and nothing else, on purpose: this message exists so that
+// the NEXT thing an allowlist entry needs has somewhere to go, not so that
+// fields can be declared ahead of the code that honours them.
+message ToolRef {
+  // The tool, as `<proto package>.<tool name>` -- `payments.v1.initiate_payment`.
+  //
+  // A different shape from Agent.name above, deliberately. An agent's name is a
+  // deployment identity a human writes into policy; a tool's is a contract
+  // address resolved against a catalogue. Two kinds of thing, two forms, said
+  // out loud here so nobody has to infer it from examples.
+  string name = 1;
+}
