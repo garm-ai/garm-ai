@@ -1,0 +1,106 @@
+// What a tool declares about itself. An agent is a tool.
+//
+// This file is deliberately almost empty, and growing it has a rule: **a field
+// arrives when the thing that enforces it arrives, never before.** An audit of
+// the estate this replaces traced every field of its tool and agent options to
+// an enforcer and found five declared and enforced by nothing -- including one
+// whose own comment admitted it was "parsed by lint, not evaluated", and a whole
+// instance-authorization vocabulary with no implementation. None of it was
+// carelessness; each was added in good faith slightly ahead of its enforcer and
+// nothing ever checked the gap. The gap is what this file refuses to open.
+syntax = "proto3";
+
+package garm.tool.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/garm-ai/garm-ai/garm/tool/v1;toolv1";
+
+// A tool IS an RPC method carrying this option. There is no registry, manifest
+// or list of tools: the declaration lives on the thing it describes, so the two
+// cannot disagree.
+//
+// 50002 is the number the previous contracts used for the same option. A
+// familiar number costs nothing; a gratuitously different one invites a mistake.
+extend google.protobuf.MethodOptions {
+  Tool tool = 50002;
+}
+
+message Tool {
+  // The tool's ONE identity. Policy keys on it, logs name it, allowlists cite
+  // it, tokens carry it.
+  //
+  // THE METHOD'S PROTO FULL NAME IS AN ADDRESS, NEVER AN IDENTITY. That sentence
+  // is the whole point of this field and the direct fix for the two most
+  // expensive bugs in the estate this replaces: an agent had a short declared
+  // name AND a proto full name, both were used as identity in different places,
+  // and twice a component passed one where another expected the other. Each time
+  // the symptom was a refusal with a correct-looking message and a cause three
+  // services away.
+  //
+  // One spelling. If you hold `testdata.v1.SupportAssistantService.Invoke` and
+  // something wants a tool, you hold an address and must look up the name. If
+  // you are tempted to add a second identity field, that is this bug returning.
+  //
+  // Explicit rather than derived from the method path, because an identity
+  // derived from a path changes when the path does, and then every policy that
+  // keys on it silently stops matching. Uniqueness therefore needs a lint rule,
+  // which arrives with the linter.
+  string name = 1;
+
+  // HOW THIS TOOL IS ANSWERED, and the whole of what an "agent" is.
+  //
+  // Absent: a service answers the call itself. A balance lookup, a payment.
+  // Present: a RUNNER answers it, and this says what that run may call in turn.
+  //
+  // This replaces a split that cost the previous estate real money. There, a
+  // tool option sat on each method and a separate AGENT option sat on the
+  // service, at a different level, with its own identity -- and the two had to
+  // be kept consistent by a lint rule (A5, `lintAgentDoorParity`) that existed
+  // for no other reason. Meanwhile an agent already appeared in other agents'
+  // allowlists as a plain tool name, so the model was half-unified in practice
+  // and fully split in the contract.
+  //
+  // The distinction that actually matters is not tool-versus-agent. It is **who
+  // answers this call** -- a service, or the platform. That is one optional
+  // field, not two option types at two attachment levels.
+  Agent agent = 2;
+}
+
+// How a runner answers a tool call.
+//
+// NOTE WHAT IS ABSENT: there is no `mode`, `type` or `kind` field saying which
+// KIND of runner. That is deliberate and it follows from an invariant the
+// previous estate wrote down and then broke -- "garmd does not know about
+// agents. An agent is a tool: a service at a NATS subject."
+//
+// If a runner is a NATS micro service like any other, then which runner answers
+// a given agent is decided by WHICH SERVICE REGISTERED THE SUBJECT, discovered
+// the same way every other service is. The gateway routes by tool name and never
+// learns that runners or agent types exist. A `mode` field would hand it that
+// knowledge for nothing, and under the rule at the top of this file it has no
+// enforcer anyway: nothing reads it if routing is registration.
+message Agent {
+  // What a run may call, and the only thing currently enforced.
+  //
+  // THE ALLOWLIST IS THE ONLY AUTHORITY on what a run may call. Nothing widens
+  // it -- not a prompt, not a graph, not a runtime decision. When something that
+  // orders calls arrives, it will be able to order only what is already here.
+  //
+  // Entries name tools by `Tool.name`, the same spelling a tool declares for
+  // itself. One namespace: an agent in another agent's allowlist is an ordinary
+  // entry, because an agent is an ordinary tool.
+  repeated ToolRef tools = 1;
+}
+
+// One entry in an allowlist.
+//
+// A message rather than a bare string, so this grows without a breaking change:
+// a guard, a per-tool ceiling, a rate can each arrive as a field when its
+// enforcer does. It carries a name and nothing else today, on purpose -- the
+// message exists so the NEXT thing has somewhere to go, not so fields can be
+// declared ahead of the code that honours them.
+message ToolRef {
+  // The tool, by its declared `Tool.name`.
+  string name = 1;
+}

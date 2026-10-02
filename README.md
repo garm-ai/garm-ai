@@ -31,23 +31,71 @@ Point 3 is not style. Four tests in the old estate passed while the behaviour
 they covered was broken, and all four had fixtures that could not express the
 failure.
 
-## Step 1 — what an agent is
+## Steps so far
 
-An agent is a gRPC service carrying `(garm.agent.v1.agent)`. It declares a
-`name` and the tools it may call. That is all, and the one enforced property is
-that the allowlist is the only authority on what it may call.
+**Step 1 — an agent declares a name and the tools it may call.** Superseded in
+shape by step 2; its two properties survive.
 
-**An agent's `name` is its one identity; its proto full name is an address.**
-That sentence is the direct fix for the two most expensive bugs of 2026-10-02:
-the old agent had both, both were used as identity, and twice a component passed
-one where another expected the other.
+**Step 2 — everything is a tool, and an agent is a tool a runner answers.**
+
+A tool is an RPC method carrying `(garm.tool.v1.tool)`. It declares a `name`, and
+optionally an `agent` block. **Absent: a service answers the call itself.
+Present: a runner answers it, and the block says what that run may call.**
+
+The distinction is not tool-versus-agent. It is **who answers this call** — a
+service, or the platform. That is one optional field, not two option types at two
+attachment levels, which is what the previous estate had and what cost it a lint
+rule (`lintAgentDoorParity`) existing for no other purpose.
+
+Three properties, each with a test proved able to fail:
+
+1. **A tool's `name` is its one identity; its method's proto full name is an
+   address.** Direct fix for the two most expensive bugs of 2026-10-02, where a
+   thing had both and twice one was passed where the other was expected.
+2. **A plain tool declares no agent block**, and an agent declares one.
+3. **One namespace.** An allowlist entry names a tool by the same spelling the
+   tool declares. So an agent in another agent's allowlist needs no special case,
+   and "the allowlist is the only authority" became checkable: an entry either
+   resolves to a declared tool or it does not. Breaking this test by citing an
+   *address* in the allowlist reproduces the old bug exactly, and it fails.
+
+### What is deliberately absent, and why `mode` never arrives
+
+There is no `mode`, `type` or `kind` saying which runner answers an agent. That
+follows from an invariant the previous estate wrote down and then broke —
+`garmd/CLAUDE.md:21`: *"garmd does not know about agents. An agent is a tool: a
+service at a NATS subject."*
+
+If a runner is a NATS micro service like any other, which runner answers a given
+agent is decided by **which service registered the subject**, discovered the same
+way every other service is. The gateway routes by tool name and never learns that
+runners or agent types exist. A `mode` field would hand it that knowledge for
+nothing — and under the rule above it has no enforcer, because nothing reads it
+if routing is registration.
 
 ## What is deliberately absent
 
 No clearance, compartments, verbs, tool sets, principal ceiling, bounds, model,
-prompts, graph, or consent. Every one of those is real and most will return. They
-are absent because nothing enforces them yet, and in the old estate the
-authority model is where all four of 2026-10-02's bugs lived.
+prompts, graph, or consent. Every one is real and most will return. They are
+absent because nothing enforces them yet, and in the old estate the authority
+model is where all four of 2026-10-02's bugs lived.
+
+## A convention decision deliberately deferred
+
+buf's `STANDARD` lint has now fought the domain twice in two steps:
+`SERVICE_SUFFIX` wants `SupportAssistantService` where an agent is a named actor;
+`RPC_RESPONSE_STANDARD_NAME` wants `InvokeResponse` where one shared `RunRef`
+across every agent is better design, and `RPC_REQUEST_RESPONSE_UNIQUE` would
+object to the sharing too.
+
+The previous estate hit all three, configured `STANDARD` anyway, and **never ran
+it clean** — `examples/bank` emits eight violations today. So the config claimed
+one thing and the tree did another, and nothing noticed.
+
+The decision is not being dodged; it is deferred to the step that writes a real
+proto, with a reason, in the config. Until then **the fixture bends, not the
+ruleset** — because a lint nobody honours is worse than no lint, since it reads
+as a guarantee.
 
 `mise run ci` — lint, a check that the committed generated Go matches the protos,
 and the tests.

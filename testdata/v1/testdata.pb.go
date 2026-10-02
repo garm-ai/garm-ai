@@ -1,5 +1,5 @@
-// A service that declares the agent option, so a test can read it back off a
-// real compiled descriptor rather than off a struct the test filled in itself.
+// Two tools: one a service answers itself, one a runner answers. A test reads
+// both back off a real compiled descriptor rather than off structs it filled in.
 //
 // That distinction is not pedantry. In the estate this replaces, four separate
 // tests passed while the behaviour they covered was broken, and every one failed
@@ -15,7 +15,7 @@
 package testdatav1
 
 import (
-	_ "github.com/garm-ai/garm-ai/garm/agent/v1"
+	_ "github.com/garm-ai/garm-ai/garm/tool/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -30,6 +30,94 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type GetCustomerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CustomerId    string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCustomerRequest) Reset() {
+	*x = GetCustomerRequest{}
+	mi := &file_testdata_v1_testdata_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCustomerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCustomerRequest) ProtoMessage() {}
+
+func (x *GetCustomerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_testdata_v1_testdata_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCustomerRequest.ProtoReflect.Descriptor instead.
+func (*GetCustomerRequest) Descriptor() ([]byte, []int) {
+	return file_testdata_v1_testdata_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetCustomerRequest) GetCustomerId() string {
+	if x != nil {
+		return x.CustomerId
+	}
+	return ""
+}
+
+type GetCustomerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DisplayName   string                 `protobuf:"bytes,1,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCustomerResponse) Reset() {
+	*x = GetCustomerResponse{}
+	mi := &file_testdata_v1_testdata_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCustomerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCustomerResponse) ProtoMessage() {}
+
+func (x *GetCustomerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_testdata_v1_testdata_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCustomerResponse.ProtoReflect.Descriptor instead.
+func (*GetCustomerResponse) Descriptor() ([]byte, []int) {
+	return file_testdata_v1_testdata_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetCustomerResponse) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
 type InvokeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Request       string                 `protobuf:"bytes,1,opt,name=request,proto3" json:"request,omitempty"`
@@ -39,7 +127,7 @@ type InvokeRequest struct {
 
 func (x *InvokeRequest) Reset() {
 	*x = InvokeRequest{}
-	mi := &file_testdata_v1_testdata_proto_msgTypes[0]
+	mi := &file_testdata_v1_testdata_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -51,7 +139,7 @@ func (x *InvokeRequest) String() string {
 func (*InvokeRequest) ProtoMessage() {}
 
 func (x *InvokeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_testdata_v1_testdata_proto_msgTypes[0]
+	mi := &file_testdata_v1_testdata_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -64,7 +152,7 @@ func (x *InvokeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvokeRequest.ProtoReflect.Descriptor instead.
 func (*InvokeRequest) Descriptor() ([]byte, []int) {
-	return file_testdata_v1_testdata_proto_rawDescGZIP(), []int{0}
+	return file_testdata_v1_testdata_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *InvokeRequest) GetRequest() string {
@@ -74,16 +162,29 @@ func (x *InvokeRequest) GetRequest() string {
 	return ""
 }
 
+// Named InvokeResponse rather than RunRef purely to satisfy buf's
+// RPC_RESPONSE_STANDARD_NAME. That is the SECOND naming rule STANDARD has fought
+// in two steps, and the pattern is worth recording before real protos arrive:
+//
+//   - SERVICE_SUFFIX wants `SupportAssistantService`, where an agent is a named
+//     actor and reads better without the suffix.
+//   - RPC_RESPONSE_STANDARD_NAME wants InvokeResponse, where every agent's Invoke
+//     returning one shared `RunRef` is good design -- and
+//     RPC_REQUEST_RESPONSE_UNIQUE would then object to the sharing too.
+//
+// The previous estate hit all three, configured STANDARD anyway, and never ran it
+// clean. So the decision is NOT being dodged, it is being deferred to the step
+// that writes a real proto -- and until then the fixture bends, not the ruleset.
 type InvokeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Reply         string                 `protobuf:"bytes,1,opt,name=reply,proto3" json:"reply,omitempty"`
+	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *InvokeResponse) Reset() {
 	*x = InvokeResponse{}
-	mi := &file_testdata_v1_testdata_proto_msgTypes[1]
+	mi := &file_testdata_v1_testdata_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -95,7 +196,7 @@ func (x *InvokeResponse) String() string {
 func (*InvokeResponse) ProtoMessage() {}
 
 func (x *InvokeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_testdata_v1_testdata_proto_msgTypes[1]
+	mi := &file_testdata_v1_testdata_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -108,12 +209,12 @@ func (x *InvokeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InvokeResponse.ProtoReflect.Descriptor instead.
 func (*InvokeResponse) Descriptor() ([]byte, []int) {
-	return file_testdata_v1_testdata_proto_rawDescGZIP(), []int{1}
+	return file_testdata_v1_testdata_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *InvokeResponse) GetReply() string {
+func (x *InvokeResponse) GetRunId() string {
 	if x != nil {
-		return x.Reply
+		return x.RunId
 	}
 	return ""
 }
@@ -122,15 +223,25 @@ var File_testdata_v1_testdata_proto protoreflect.FileDescriptor
 
 const file_testdata_v1_testdata_proto_rawDesc = "" +
 	"\n" +
-	"\x1atestdata/v1/testdata.proto\x12\vtestdata.v1\x1a\x19garm/agent/v1/agent.proto\")\n" +
+	"\x1atestdata/v1/testdata.proto\x12\vtestdata.v1\x1a\x17garm/tool/v1/tool.proto\"5\n" +
+	"\x12GetCustomerRequest\x12\x1f\n" +
+	"\vcustomer_id\x18\x01 \x01(\tR\n" +
+	"customerId\"8\n" +
+	"\x13GetCustomerResponse\x12!\n" +
+	"\fdisplay_name\x18\x01 \x01(\tR\vdisplayName\")\n" +
 	"\rInvokeRequest\x12\x18\n" +
-	"\arequest\x18\x01 \x01(\tR\arequest\"&\n" +
-	"\x0eInvokeResponse\x12\x14\n" +
-	"\x05reply\x18\x01 \x01(\tR\x05reply2\xb3\x01\n" +
-	"\x17SupportAssistantService\x12A\n" +
-	"\x06Invoke\x12\x1a.testdata.v1.InvokeRequest\x1a\x1b.testdata.v1.InvokeResponse\x1aU\xaa\xbb\x18Q\n" +
-	"\x11support-assistant\x12\x1a\n" +
-	"\x18accounts.v1.get_customer\x12 \n" +
+	"\arequest\x18\x01 \x01(\tR\arequest\"'\n" +
+	"\x0eInvokeResponse\x12\x15\n" +
+	"\x06run_id\x18\x01 \x01(\tR\x05runId2\x83\x01\n" +
+	"\x0fAccountsService\x12p\n" +
+	"\vGetCustomer\x12\x1f.testdata.v1.GetCustomerRequest\x1a .testdata.v1.GetCustomerResponse\"\x1e\x92\xb5\x18\x1a\n" +
+	"\x18accounts.v1.get_customer2\xb6\x01\n" +
+	"\x17SupportAssistantService\x12\x9a\x01\n" +
+	"\x06Invoke\x12\x1a.testdata.v1.InvokeRequest\x1a\x1b.testdata.v1.InvokeResponse\"W\x92\xb5\x18S\n" +
+	"\x11support-assistant\x12>\n" +
+	"\x1a\n" +
+	"\x18accounts.v1.get_customer\n" +
+	" \n" +
 	"\x1epayments.v1.get_payment_statusB3Z1github.com/garm-ai/garm-ai/testdata/v1;testdatav1b\x06proto3"
 
 var (
@@ -145,16 +256,20 @@ func file_testdata_v1_testdata_proto_rawDescGZIP() []byte {
 	return file_testdata_v1_testdata_proto_rawDescData
 }
 
-var file_testdata_v1_testdata_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_testdata_v1_testdata_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_testdata_v1_testdata_proto_goTypes = []any{
-	(*InvokeRequest)(nil),  // 0: testdata.v1.InvokeRequest
-	(*InvokeResponse)(nil), // 1: testdata.v1.InvokeResponse
+	(*GetCustomerRequest)(nil),  // 0: testdata.v1.GetCustomerRequest
+	(*GetCustomerResponse)(nil), // 1: testdata.v1.GetCustomerResponse
+	(*InvokeRequest)(nil),       // 2: testdata.v1.InvokeRequest
+	(*InvokeResponse)(nil),      // 3: testdata.v1.InvokeResponse
 }
 var file_testdata_v1_testdata_proto_depIdxs = []int32{
-	0, // 0: testdata.v1.SupportAssistantService.Invoke:input_type -> testdata.v1.InvokeRequest
-	1, // 1: testdata.v1.SupportAssistantService.Invoke:output_type -> testdata.v1.InvokeResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	0, // 0: testdata.v1.AccountsService.GetCustomer:input_type -> testdata.v1.GetCustomerRequest
+	2, // 1: testdata.v1.SupportAssistantService.Invoke:input_type -> testdata.v1.InvokeRequest
+	1, // 2: testdata.v1.AccountsService.GetCustomer:output_type -> testdata.v1.GetCustomerResponse
+	3, // 3: testdata.v1.SupportAssistantService.Invoke:output_type -> testdata.v1.InvokeResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -171,9 +286,9 @@ func file_testdata_v1_testdata_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_testdata_v1_testdata_proto_rawDesc), len(file_testdata_v1_testdata_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_testdata_v1_testdata_proto_goTypes,
 		DependencyIndexes: file_testdata_v1_testdata_proto_depIdxs,
