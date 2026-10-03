@@ -181,3 +181,35 @@ func TestWireOfNilIsNil(t *testing.T) {
 		t.Errorf("Wire(nil) = %v, want nil", w)
 	}
 }
+
+// TestCodeAndKindRoundTripOverEveryKind.
+//
+// Code and KindOf are inverses in ONE package on purpose. The failure they are
+// here to prevent is quiet: one side learns a kind the other does not, so a tool
+// reporting UNAVAILABLE reaches a caller as UNSPECIFIED, which Wire turns into
+// INTERNAL -- a transient outage reported as a broken tool, which a caller then
+// does not retry.
+//
+// It walks the ENUM's own descriptor, so a kind added to the proto is covered
+// without anybody remembering to add it here.
+func TestCodeAndKindRoundTripOverEveryKind(t *testing.T) {
+	vals := invokev1.ErrorKind(0).Descriptor().Values()
+	for i := 0; i < vals.Len(); i++ {
+		kind := invokev1.ErrorKind(vals.Get(i).Number())
+		code := serve.Code(kind)
+		if code == "" {
+			t.Errorf("%v has an empty code, which micro turns into no reply at all", kind)
+		}
+		if got := serve.KindOf(code); got != kind {
+			t.Errorf("%v -> %q -> %v, which does not round-trip", kind, code, got)
+		}
+	}
+}
+
+func TestAnUnknownCodeIsUnspecifiedRatherThanAGuess(t *testing.T) {
+	// A newer peer sending a kind this build does not know. UNSPECIFIED is honest;
+	// guessing the nearest kind would tell a caller to act on something invented.
+	if got := serve.KindOf("SOMETHING_FROM_THE_FUTURE"); got != invokev1.ErrorKind_ERROR_KIND_UNSPECIFIED {
+		t.Errorf("an unknown code mapped to %v, want UNSPECIFIED", got)
+	}
+}

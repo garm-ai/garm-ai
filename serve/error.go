@@ -3,6 +3,7 @@ package serve
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 )
@@ -98,6 +99,29 @@ func Internal(cause error) *Error {
 // Fixed text. It says to quote the id, because that is the only action available to
 // somebody holding it.
 const internalMessage = "internal error — quote the id when reporting this"
+
+// Code is what a generic NATS client reads in a transport's error header.
+//
+// DERIVED from the generated enum rather than a map, so a kind added to
+// garm/invoke/v1 cannot be forgotten. A hand-written table would compile
+// perfectly while answering a new kind as the empty string -- which NATS micro
+// turns into no reply at all.
+func Code(kind invokev1.ErrorKind) string {
+	return strings.TrimPrefix(kind.String(), "ERROR_KIND_")
+}
+
+// KindOf is Code's inverse, for a caller reading an error off the wire.
+//
+// It lives BESIDE Code, and a test asserts they round-trip over every kind the
+// enum declares. Two inverse functions in two packages is how a mapping drifts:
+// one side learns a new kind and the other answers UNSPECIFIED, which Wire then
+// turns into INTERNAL -- a transient tool outage reported as a broken tool.
+func KindOf(code string) invokev1.ErrorKind {
+	if v, ok := invokev1.ErrorKind_value["ERROR_KIND_"+code]; ok {
+		return invokev1.ErrorKind(v)
+	}
+	return invokev1.ErrorKind_ERROR_KIND_UNSPECIFIED
+}
 
 // Wire is the ONLY path from a handler's error to what a caller sees.
 //

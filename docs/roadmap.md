@@ -29,9 +29,9 @@ one component in more detail. They link here rather than repeating it.
 
 | | step |
 |---|---|
-| `rund`: `Invoke`/`Fetch`, catalogue-loaded, sync fast path | **9b** |
-| The budget binds: client deadline, handler deadline, compose check | 9b |
-| Correlation, causation, message ids and `traceparent`, end to end | 9b |
+| `rund`: `Invoke`/`Fetch`, catalogue-loaded, sync fast path | ✅ **9b** |
+| The budget binds: handler deadline and compose check | ✅ 9b — the client deadline lands with the client, in 9c |
+| Correlation, causation, message ids and `traceparent`, end to end | ✅ 9b |
 | The generated client, `garmctl call`, and an example loop that answers | 9c |
 
 ## Waiting on something real
@@ -51,6 +51,7 @@ one component in more detail. They link here rather than repeating it.
 | Approval, `ApprovalNeeded`, and policy that may interpose a human | the run store **and** the authority model |
 | Guardrails before and after a call | something to check — the authority model |
 | Cost budgets across a run tree | an accountant |
+| Enforcing that only rund calls `garm.tool.>` | NATS account permissions. Today the two-layer split is a convention, and protobuf cannot distinguish a wrongly-addressed message from a right one |
 | Refusing a reused idempotency key whose **input differs** | the run store. DBOS ignores the new input and returns the old result, which is a correct-looking answer to a question nobody asked |
 | A task list filtered by **compartment and principal** | the authority model — and a projection table, since JSONB containment is AND-only and cannot express "any of my compartments" |
 | rund owning a schema and migrations | a listing surface that needs OR queries and real pagination. A deliberate step, because it concedes the second half of the original no-database constraint |

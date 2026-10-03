@@ -29,7 +29,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -37,7 +36,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/serve"
 )
 
@@ -60,30 +59,12 @@ func Subject(toolName string) string { return SubjectPrefix + toolName }
 // total: declared.validateName already guarantees every other character is legal.
 func endpointName(toolName string) string { return strings.ReplaceAll(toolName, ".", "_") }
 
-// errorCode is what a generic NATS client reads in Nats-Service-Error-Code.
-//
-// DERIVED from the generated enum rather than a map, so a kind added to
-// garm/invoke/v1 cannot be forgotten here. A hand-written table would compile
-// perfectly while answering a new kind as the empty string -- which micro refuses
-// by never replying at all.
-func errorCode(kind invokev1.ErrorKind) string {
-	return strings.TrimPrefix(kind.String(), "ERROR_KIND_")
-}
-
 // Config is what a deployment knows and generated code does not.
-type Config struct {
-	// Name is this deployment's service name, e.g. "weatherd". NATS micro requires
-	// ^[A-Za-z0-9\-_]+$.
-	Name string
-
-	// Version must be semver: micro validates it and refuses anything else.
-	Version string
-
-	// Logger receives the cause chain of every error, keyed by the id the caller
-	// is given. This is the other half of "the cause never crosses the wire" --
-	// without it the cause is not hidden, it is lost. nil means slog.Default().
-	Logger *slog.Logger
-}
+//
+// Logger receives the cause chain of every error, keyed by the id the caller is
+// given -- the other half of "the cause never crosses the wire", because without
+// it the cause is not hidden, it is lost.
+type Config = natsmicro.Config
 
 type endpoint struct {
 	tool    string
@@ -94,38 +75,37 @@ type endpoint struct {
 	subject string
 }
 
-// Service collects endpoints, then answers them. It implements serve.Registrar.
+// Service answers declared tools. It implements serve.Registrar.
+//
+// The micro lifecycle -- mounting, the flush that makes Start's promise true, and
+// the three-step drain -- is natsmicro's. What is here is the TOOL semantics:
+// where a tool's subject comes from, how its budget becomes a deadline, and how an
+// error reaches a caller.
 type Service struct {
-	cfg Config
+	svc *natsmicro.Service
 	log *slog.Logger
-
-	mu    sync.Mutex
-	eps   []endpoint
-	taken map[string]string // subject -> tool that claimed it
-	svc   micro.Service     // nil until Start
-	nc    *nats.Conn        // the caller's, held only so Serve can Barrier on it
-
-	inFlight sync.WaitGroup
 }
 
-// New validates what micro would otherwise reject at Run, so a misconfigured
-// process fails at construction rather than after it has started doing work.
+// New validates what micro would otherwise reject at Start.
 func New(cfg Config) (*Service, error) {
-	if !microName.MatchString(cfg.Name) {
-		return nil, fmt.Errorf("service name %q: must be one or more of A-Z a-z 0-9 - _", cfg.Name)
+	svc, err := natsmicro.New(cfg)
+	if err != nil {
+		return nil, err
 	}
-	if !semver.MatchString(cfg.Version) {
-		return nil, fmt.Errorf("service version %q: must be semver, e.g. 0.1.0", cfg.Version)
-	}
-	log := cfg.Logger
-	if log == nil {
-		log = slog.Default()
-	}
-	return &Service{cfg: cfg, log: log, taken: map[string]string{}}, nil
+	return &Service{svc: svc, log: svc.Log()}, nil
 }
+
+// Start mounts every tool and returns once they are answering.
+func (s *Service) Start(nc *nats.Conn) error { return s.svc.Start(nc) }
+
+// Serve answers until ctx is cancelled, then drains.
+func (s *Service) Serve(ctx context.Context) error { return s.svc.Serve(ctx) }
+
+// Run is Start then Serve.
+func (s *Service) Run(ctx context.Context, nc *nats.Conn) error { return s.svc.Run(ctx, nc) }
 
 // Endpoint implements serve.Registrar. Generated code calls it once per tool,
-// before Run.
+// before Start.
 func (s *Service) Endpoint(
 	name string,
 	method protoreflect.FullName,
@@ -136,127 +116,14 @@ func (s *Service) Endpoint(
 	if name == "" || newRequest == nil || handle == nil {
 		return fmt.Errorf("endpoint %q: a name, a request constructor and a handler are all required", name)
 	}
-	subject := Subject(name)
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	// Two tools on one subject means one of them silently never answers, and which
-	// one depends on registration order. Refused here rather than discovered in
-	// production. declared refuses duplicate NAMES; this catches the same thing
-	// arriving from two Serve calls a process made itself.
-	if prev, dup := s.taken[subject]; dup {
-		return fmt.Errorf("%q and %q both answer on %s", prev, name, subject)
-	}
-	s.taken[subject] = name
-	s.eps = append(s.eps, endpoint{
+	e := endpoint{
 		tool: name, method: method, budget: budget,
-		newReq: newRequest, handle: handle, subject: subject,
-	})
-	return nil
+		newReq: newRequest, handle: handle, subject: Subject(name),
+	}
+	return s.svc.Mount(endpointName(name), e.subject,
+		micro.HandlerFunc(func(r micro.Request) { s.svc.Track(func() { s.answer(e, r) }) }))
 }
 
-// Start mounts every endpoint and returns once they are ANSWERING.
-//
-// Separate from Serve because "mounted" and "serving" are different facts and a
-// process needs the first one on its own: it should not report itself ready, or
-// announce anything, until mounting has actually succeeded.
-//
-// The Flush at the end is what makes the promise true. A subscription is sent
-// asynchronously, so without it this returns while the server has not yet been told
-// what we answer -- and a caller gets "no responders available" for a service that
-// is, by then, perfectly fine. That is also exactly how the first version of this
-// package's own tests became flaky.
-//
-// The connection belongs to the caller: a process may serve tools, publish and
-// subscribe on one connection, and owning it here would make that impossible.
-func (s *Service) Start(nc *nats.Conn) error {
-	s.mu.Lock()
-	if s.svc != nil {
-		s.mu.Unlock()
-		return fmt.Errorf("%s: already started", s.cfg.Name)
-	}
-	eps := append([]endpoint(nil), s.eps...)
-	s.mu.Unlock()
-
-	if len(eps) == 0 {
-		return fmt.Errorf("%s: no endpoints registered, so there is nothing to answer", s.cfg.Name)
-	}
-
-	svc, err := micro.AddService(nc, micro.Config{Name: s.cfg.Name, Version: s.cfg.Version})
-	if err != nil {
-		return fmt.Errorf("adding the micro service %q: %w", s.cfg.Name, err)
-	}
-
-	for _, e := range eps {
-		ep := e
-		// No queue group set, so micro's default applies and every instance
-		// answering this subject shares it. That is what request/reply wants --
-		// exactly one responder per call, whoever is serving. The old estate used
-		// the proto service name, which tied load balancing back to the address.
-		if err := svc.AddEndpoint(
-			endpointName(ep.tool),
-			micro.HandlerFunc(func(r micro.Request) { s.answer(ep, r) }),
-			micro.WithEndpointSubject(ep.subject),
-		); err != nil {
-			_ = svc.Stop()
-			return fmt.Errorf("mounting %q on %s: %w", ep.tool, ep.subject, err)
-		}
-		s.log.Info("tool mounted", "tool", ep.tool, "subject", ep.subject, "declared_at", string(ep.method))
-	}
-
-	if err := nc.Flush(); err != nil {
-		_ = svc.Stop()
-		return fmt.Errorf("%s: flushing subscriptions: %w", s.cfg.Name, err)
-	}
-
-	s.mu.Lock()
-	s.svc, s.nc = svc, nc
-	s.mu.Unlock()
-	return nil
-}
-
-// Serve answers until ctx is cancelled, then drains.
-//
-// Shutdown is graceful, and the three steps are in this order for a reason. Stop()
-// DRAINS each subscription rather than unsubscribing, so a call already queued is
-// still delivered -- but Drain returns before that finishes, so a bare wait on
-// in-flight work would see zero and return while a queued call was being answered.
-// Barrier closes that window: it fires only once every pending callback has been
-// dispatched, at which point every handler that will run has registered itself.
-func (s *Service) Serve(ctx context.Context) error {
-	s.mu.Lock()
-	svc, nc := s.svc, s.nc
-	s.mu.Unlock()
-	if svc == nil {
-		return fmt.Errorf("%s: Serve called before Start", s.cfg.Name)
-	}
-
-	<-ctx.Done()
-
-	if err := svc.Stop(); err != nil {
-		return fmt.Errorf("stopping the micro service %q: %w", s.cfg.Name, err)
-	}
-	dispatched := make(chan struct{})
-	if err := nc.Barrier(func() { close(dispatched) }); err != nil {
-		// A closed connection means nothing further will be dispatched, so there
-		// is nothing left to wait for.
-		close(dispatched)
-	}
-	<-dispatched
-	s.inFlight.Wait()
-	// A cancelled context is how a caller asks this to stop, not a failure.
-	return nil
-}
-
-// Run is Start then Serve, for a process that wants neither separately.
-func (s *Service) Run(ctx context.Context, nc *nats.Conn) error {
-	if err := s.Start(nc); err != nil {
-		return err
-	}
-	return s.Serve(ctx)
-}
-
-// answer handles one call. It always replies: a path that returns without
-// responding leaves the caller hanging until its own deadline.
 // A call's context is NOT derived from the one that stops the service.
 //
 // Shutdown cancels that context, and the whole point of Serve's drain is that a call
@@ -285,9 +152,6 @@ func (s *Service) answer(e endpoint, r micro.Request) {
 		ctx, cancel = context.WithTimeout(ctx, e.budget)
 		defer cancel()
 	}
-	s.inFlight.Add(1)
-	defer s.inFlight.Done()
-
 	in := e.newReq()
 	if err := proto.Unmarshal(r.Data(), in); err != nil {
 		// The caller sent bytes this tool cannot read. That is INVALID and the
@@ -342,7 +206,7 @@ func (s *Service) fail(e endpoint, r micro.Request, err error) {
 	if marshalErr != nil {
 		body = nil
 	}
-	if replyErr := r.Error(errorCode(w.GetKind()), description, body); replyErr != nil {
+	if replyErr := r.Error(serve.Code(w.GetKind()), description, body); replyErr != nil {
 		// Reaching here means the caller gets nothing, so it must be visible.
 		s.log.Error("could not reply with the error", "id", id, "tool", e.tool, "error", replyErr)
 	}

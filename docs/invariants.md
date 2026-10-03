@@ -55,6 +55,24 @@ unenforced, in the same table, deliberately.
 | A draining handler is **not** handed a cancelled context | `natsserve.TestAHandlerIsNotHandedACancelledContextDuringTheDrain`. Run's context is cancelled to ask the service to stop; passing it to handlers tells every accepted call to abort at the moment we commit to answering it. Found by re-reading, not by a failure — with the bug, the probe answers `UNAVAILABLE: shutting down` once per deploy, per queued call |
 | `Run` does not return until queued calls are answered | `natsserve.TestRunDrainsCallsThatAreQueuedButNotYetDispatched`. **Two** calls, because one proves nothing: the first version of this test passed with the `Barrier` deleted, since the in-flight counter already covers a handler that has started. See [the decision](decisions/2026-10-03-a-subject-is-derived-from-the-identity.md) |
 
+### rund
+
+| invariant | kept true by |
+|---|---|
+| A caller reaches a tool knowing only its **name** | `rundsvc.TestACallerReachesAToolWithoutKnowingItsSubject` — a real NATS server, a real tool service, rund in front, and the answer comes from the example handler |
+| A sync tool is called with its **declared** budget | `run.TestASyncToolIsCalledWithItsDeclaredBudget`, read from the catalogue rather than invented |
+| The idempotency key **is** the run id | `run.TestTheIdempotencyKeyBecomesTheRunID`. A key rund invented would deduplicate nothing, so the caller must supply it |
+| …and a tool call gets its **own** key, derived from the run's | `run.TestAToolCallGetsItsOwnKeyNotTheRunsOwn`, and end to end in `rundsvc.TestTheIdChainReachesTheToolAcrossTwoHops`. One run may call tools several times, so reusing the run's key would make a second call look like a duplicate |
+| Correlation spans, causation chains, `traceparent` is carried verbatim | `run.TestCausationChainsAndCorrelationSpans` and the two-hop test. A shared correlation says calls belong together; only causation says what caused what |
+| A missing correlation id is minted, not left empty | `run.TestAMissingCorrelationIsMintedNotLeftEmpty` — a call with none has log lines that join to nothing |
+| An unknown tool is `NOT_FOUND` **naming the catalogue** | `run.TestAnUnknownToolIsNotFoundAndNamesTheCatalogue`. "Unknown tool" is unactionable when the real question is which namespace is loaded |
+| An async tool is refused as `UNAVAILABLE` **saying why** | `run.TestAnAsyncToolIsRefusedWithTheReason`, `rundsvc.TestAnAsyncToolIsRefusedBecauseThereIsNoStore`. Not `NOT_FOUND`: the tool exists, and this build cannot hold its run |
+| A tool's error reaches the caller as **its own kind** | `run.TestAToolsErrorReachesTheCallerAsItsOwnKind`, not flattened to INTERNAL |
+| `Fetch` says `NOT_RETAINED` rather than lying | `run.TestFetchSaysNotRetainedRatherThanLying`. The run may well have happened; `NOT_FOUND` would be a lie a caller could act on, and a fabricated result worse |
+| `Code` and `KindOf` round-trip over **every** kind | `serve.TestCodeAndKindRoundTripOverEveryKind`, which walks the enum's own descriptor so a new kind is covered without anybody remembering. Two inverse functions in two packages is how a mapping drifts: a tool reporting UNAVAILABLE would reach a caller as UNSPECIFIED, which `Wire` turns into INTERNAL — a transient outage reported as a broken tool |
+| The catalogue is re-verified at boot, and that is the reload path | `catalogue.TestLoadReRunsTodaysRules` |
+| A call takes **one** catalogue snapshot | `catalogue.TestTheHolderPublishesWholeValues`, `TestConcurrentReadersAndASwapRace` |
+
 ### Errors
 
 | invariant | kept true by |
@@ -98,6 +116,7 @@ for claims the code makes today that nothing checks.
 | Generated code never grows a transport dependency | The import-set test above is the enforcement for what is emitted. What it cannot say is that `serve` itself stays transport-free: today it imports only `context` and two protobuf packages, and nothing fails if a broker is added to it |
 | No per-call timeout | A hung handler holds a goroutine until its caller gives up. Deliberate: the caller's own deadline is the authority, and a timeout here would be a policy with no stated reason. Revisit when something actually suffers from it |
 
+| **Only `rund` calls `garm.tool.<name>`** | The drawings and spec say this and **nothing enforces it**. A caller can publish on a tool subject directly, and protobuf cannot even tell the wrong message apart: an `InvokeRequest` was accepted by a tool because both carry a string in field 1, so the tool forecast the weather for a place named `weather.v1.get_forecast`. What would enforce it is a NATS account permission limiting publish on `garm.tool.>` to rund's credential |
 | A service name should end in `Service` | buf's `SERVICE_SUFFIX`, which `mise run lint` does enforce — but whether an **agent** should be named that way is undecided. An agent is a named actor rather than an RPC service. The fixture and examples comply rather than waive the rule, and the decision is still open |
 
 ## A note on the two fixture trees
