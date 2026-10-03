@@ -5,6 +5,10 @@
 
 **Spec for:** a new component, `cmd/rund`, serving `garm.run.v1`.
 
+**Drawn:** [the logical map](../architecture.html) — declare, compose, call — and
+[the deployment map](../deployment.html), which traces a synchronous call into a core
+banking system and shows DBOS and Temporal side by side.
+
 In this repository rather than a private design record because nothing here is
 secret and it sits beside `docs/decisions/`, which it cites throughout.
 
@@ -612,26 +616,71 @@ oneof runner { ReAct react = 2; Workflow workflow = 3; }
 so `type says X / content says Y` is unrepresentable, and adding a type is
 additive.
 
-### 7.3 Who owns a runner's state
+### 7.3 Who owns a decider's state — and the argument that was wrong
 
-The biggest unresolved question, and it does not block step 9.
+An earlier revision of this spec decided **(a) rund owns everything**, a decider
+being a pure reducer, on these grounds: otherwise every decider kind would carry
+its own copy of guardrails, retry policy and budget accounting and they would
+diverge.
 
-**(a) rund owns everything.** A runner is a stateless worker receiving
-`{run state, event}` and returning `{new state, actions}` — a pure reducer,
-trivially testable, with one store in the system. Costs a persisted blob per
-round trip.
+**That argument is false**, and asking what DBOS and Temporal would look like as
+two implementations is what exposed it. A decider's tool calls go **through rund**
+(§8.3 frame 3), so rund applies guardrails, retries and budget accounting
+regardless of who initiated the call. Nothing is duplicated.
 
-**(b) a runner owns its own durable state**, and rund owns only the run's public
-state. Natural for DBOS, but two stores, and "who is authoritative about a paused
-run" becomes a real question.
+What a decider actually owns is only its own **orchestration position** — which
+step, what history, which timer — and that is exactly what DBOS and Temporal exist
+to own. You do not adopt Temporal in order to run it statelessly.
 
-**Decided: (a)**, and §1.0.1 is why. One store and a pure-function runner are worth
-a great deal on their own, but the argument that settles it is that guardrails,
-retry policy and budget accounting would otherwise be implemented once per runner
-type and diverge. The chattiness is the price, it is quantified in §1.0.1, and it
-is optimisable without a contract change.
+**So the interface permits both, and does not have to choose:**
 
----
+| decider | keeps state between reports | state travels |
+|---|---|---|
+| `react` | no — a pure reducer | round-tripped through rund |
+| `workflow` · DBOS | **yes**, in its own Postgres | never leaves the decider |
+| `workflow` · Temporal | **yes**, in Temporal's store | never leaves the decider |
+
+One `Report` channel (§3.1) serves both: a reducer-style decider includes its state
+in every report and expects it back; a Temporal-style one ignores that field.
+
+The two-store objection **dissolves** rather than being accepted, because the two
+stores hold different facts:
+
+- **rund is authoritative about a run's PUBLIC state** — waiting, finished, the
+  result, the tree. There is no field anywhere in `garm.run.v1` for a decider's
+  position.
+- **a decider is authoritative about its EXECUTION state**, which rund never reads.
+
+What does not dissolve: a decider that dies silently still leaves a run `RUNNING`,
+and the state needed to resume it now sits in a store rund cannot read. With
+Temporal that is Temporal's problem to solve, which is a reason to use it. With a
+hand-rolled decider it is ours, and §3.3 still names two mechanisms and picks
+neither.
+
+### 7.4 Two implementations of one kind, and the hazard
+
+The kind is declared; **which implementation serves it is a subject in rund's
+routing table** — deployment config, in the same place the NATS URL lives.
+
+```
+workflow → garm.runner.workflow.temporal      with per-agent overrides
+react    → garm.runner.react
+```
+
+So migrating an estate from DBOS to Temporal touches no `.proto` and no tool, and
+can proceed agent by agent.
+
+**The hazard, and the reconciliation check of §7.2 does not catch it.** If a DBOS
+service and a Temporal service both register `garm.runner.workflow`, NATS
+queue-groups them and **calls split randomly between two engines** — half the runs
+landing in a store the other cannot read. Both report their kind as `workflow` and
+both are correct, so comparing declared kind against reported kind sees nothing.
+
+What catches it is coarser and has to be written down: **`$SRV.INFO` showing two
+distinct service NAMES answering one kind's subject.** The per-implementation
+subjects above are the structural half of the same answer — `…workflow.dbos` and
+`…workflow.temporal` cannot collide by accident, so sharing a subject becomes a
+deliberate act rather than a deployment slip.
 
 ## 8. Call stacks
 
@@ -733,6 +782,7 @@ runner, no HITL.
 | runner types in `Agent` | a runner |
 | cards of any kind | a renderer |
 | retry policy | the store, for anything outliving a call |
+| a `$SRV.INFO` check for two implementations on one kind's subject | a second implementation existing (§7.4) |
 | guardrails | something to check, i.e. the authority model |
 | cost budgets | an accountant |
 | JetStream replay for late subscribers | a UI that needs history |

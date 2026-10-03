@@ -17,8 +17,12 @@ author implements an interface and writes nothing else.
 - **[docs/invariants.md](docs/invariants.md)** — every invariant with the test that
   keeps it true, and a second table for the ones nothing checks yet.
 - **[docs/architecture.html](docs/architecture.html)** — the map. Four bands, from a
-  `.proto` to a running call, with built / next / designed-only filterable. Published
-  at <https://claude.ai/artifact/8WincMNCabDf7nUJ944SLJ>.
+  `.proto` to a running call, with built / next / designed-only filterable.
+  <https://claude.ai/artifact/8WincMNCabDf7nUJ944SLJ>
+- **[docs/deployment.html](docs/deployment.html)** — the deployment view: DBOS and
+  Temporal as two implementations of one declared kind, and a synchronous call traced
+  frame by frame into a core banking system.
+  <https://claude.ai/artifact/1wsUsYKhDPumcWYNdFNoeK>
 - **[docs/specs/](docs/specs/)** — how a component works, with numbered call
   stacks. **Specs for this repository live in this repository**, not in the private
   design record beside it.

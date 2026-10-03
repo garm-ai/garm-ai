@@ -1,0 +1,450 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<title>Two Durable Engines, One Bus</title>
+<style>
+  :root {
+    --bg: #F5F6F8; --surface: #FFFFFF; --surface-2: #EDEFF3;
+    --ink: #1C232E; --muted: #5A6472; --line: #DDE2E9;
+    --accent: #C25E2E; --accent-soft: #F3E2D6; --accent-ink: #8F4520;
+    --good: #2E7D5B; --good-soft: #E4EFE9;
+    --warn: #A8442F; --warn-soft: #F6E3DE;
+    --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+    --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10141A; --surface: #161C24; --surface-2: #1C232E;
+      --ink: #E8EAEE; --muted: #98A2B0; --line: #2A323D;
+      --accent: #E07938; --accent-soft: #33241A; --accent-ink: #EE9A63;
+      --good: #5BB48C; --good-soft: #172A22; --warn: #E8886B; --warn-soft: #34201A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10141A; --surface: #161C24; --surface-2: #1C232E;
+    --ink: #E8EAEE; --muted: #98A2B0; --line: #2A323D;
+    --accent: #E07938; --accent-soft: #33241A; --accent-ink: #EE9A63;
+    --good: #5BB48C; --good-soft: #172A22; --warn: #E8886B; --warn-soft: #34201A;
+  }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body);
+         font-size: 16px; line-height: 1.62; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding-block: 54px 76px; padding-left: 22px; padding-right: 22px; }
+  h1 { font-family: var(--display); font-weight: 800; font-size: clamp(32px, 5.4vw, 52px);
+       line-height: 1.04; letter-spacing: -.02em; margin: 0 0 18px; text-wrap: balance; }
+  h2 { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 29px);
+       line-height: 1.16; letter-spacing: -.012em; margin: 0 0 14px; text-wrap: balance; }
+  h3 { font-family: var(--display); font-weight: 700; font-size: 17px; margin: 0 0 7px; }
+  p { margin: 0 0 15px; max-width: 68ch; }
+  .kicker { font-family: var(--mono); font-size: 12.5px; letter-spacing: .09em;
+            text-transform: uppercase; color: var(--accent-ink); margin: 0 0 11px; }
+  .tagline { font-size: 19px; color: var(--muted); max-width: 70ch; margin: 0 0 8px; }
+  code { font-family: var(--mono); font-size: .88em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  section { margin-top: 58px; }
+  hr.rule { border: 0; border-top: 1px dashed var(--line); margin: 58px 0 0; }
+  .note { font-size: 14px; color: var(--muted); margin-top: 14px; max-width: 72ch; }
+  .links { margin-top: 26px; font-family: var(--mono); font-size: 13px; }
+  .links a { color: var(--accent-ink); }
+
+  .arch { margin-top: 26px; border: 1px solid var(--line); border-radius: 12px;
+          background: var(--surface); overflow: hidden; }
+  .arch-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+              padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+  .arch-bar .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+                   text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+  .arch-bar button { font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em;
+                     color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+                     border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+  .arch-bar button:hover { border-color: var(--accent); color: var(--accent-ink); }
+  .arch-bar button[aria-pressed="true"] { background: var(--accent-soft);
+                     border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .arch-bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .arch-canvas { padding: 16px 10px 10px; overflow-x: auto; }
+  .arch-canvas svg { display: block; width: 100%; min-width: 880px; height: auto; }
+  .an rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .an .t1 { font-family: var(--display); font-weight: 700; font-size: 13px; fill: var(--ink); }
+  .an .t2 { font-family: var(--mono); font-size: 9.5px; letter-spacing: .04em; fill: var(--muted); }
+  .an.ok rect   { fill: var(--good-soft); stroke: var(--good); stroke-width: 2; }
+  .an.ok .t1    { fill: var(--good); }
+  .an.next rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+  .an.next .t1  { fill: var(--accent-ink); }
+  .an.later rect { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 3 5; }
+  .an.later .t1, .an.later .t2 { opacity: .74; }
+  .ae path { fill: none; stroke-width: 1.8; }
+  .ae.call path { stroke: var(--accent); }
+  .ae.rec path  { stroke: var(--good); stroke-dasharray: 2 4; }
+  .ae.weak path { stroke: var(--muted); stroke-dasharray: 4 5; opacity: .8; }
+  .ae text { font-family: var(--mono); font-size: 9.5px; fill: var(--muted); }
+  .ae text.strong { fill: var(--accent-ink); font-weight: 600; }
+  .bandlbl { font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+             text-transform: uppercase; fill: var(--muted); }
+  .an, .ae { transition: opacity .25s; }
+  .arch.f-ta .an:not(.tA), .arch.f-ta .ae:not(.tA),
+  .arch.f-tb .an:not(.tB), .arch.f-tb .ae:not(.tB) { opacity: .13; }
+
+  .trace { margin-top: 22px; border: 1px solid var(--line); border-radius: 10px;
+           background: var(--surface); overflow: hidden; }
+  .trace h3 { margin: 0; padding: 13px 18px; background: var(--surface-2);
+              border-bottom: 1px solid var(--line); font-size: 15px; }
+  .trace h3 span { font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+                   font-weight: 400; letter-spacing: .04em; }
+  .trace ol { margin: 0; padding: 6px 0; list-style: none; counter-reset: f; }
+  .trace li { counter-increment: f; display: grid; grid-template-columns: 54px 1fr;
+              gap: 14px; padding: 9px 18px; font-size: 14.5px; align-items: baseline; }
+  .trace li + li { border-top: 1px solid var(--line); }
+  .trace li::before { content: counter(f); font-family: var(--mono); font-size: 11.5px;
+              color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px;
+              padding: 2px 0; text-align: center; }
+  .trace li b { color: var(--ink); }
+  .trace li .m { font-family: var(--mono); font-size: 12.5px; color: var(--accent-ink); }
+  .trace li.off::before { color: var(--muted); background: var(--surface-2); }
+  @media (max-width: 620px) { .trace li { grid-template-columns: 1fr; gap: 3px; }
+                              .trace li::before { width: 42px; } }
+
+  .tbl-wrap { overflow-x: auto; margin-top: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px;
+          background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  th, td { text-align: left; padding: 11px 15px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em;
+       color: var(--muted); font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-family: var(--mono); font-size: 13px; color: var(--accent-ink); }
+  td b { color: var(--ink); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+          padding: 17px 19px; margin-top: 22px; }
+  .card.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .card p { margin: 0; font-size: 14.5px; }
+  .card p + p { margin-top: 9px; }
+  pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.65; background: var(--surface-2);
+        border: 1px solid var(--line); border-radius: 9px; padding: 15px 17px; overflow-x: auto; margin: 18px 0 0; }
+  @media (prefers-reduced-motion: reduce) { .an, .ae { transition: none; } }
+</style>
+
+<div class="wrap">
+  <p class="kicker">garm-ai · deployment</p>
+  <h1>Two durable engines, one bus</h1>
+  <p class="tagline">DBOS and Temporal are not two kinds of runner. They are two
+    <em>implementations</em> of one declared kind — and a tool author cannot tell which
+    one a deployment runs, which is the point.</p>
+  <p class="note">Everything below the bus is reached the same way: <code>rund</code>
+    resolves a name to a subject and calls it. Green is built today, terracotta is the
+    next step, dashed is designed and not built.</p>
+
+  <section>
+    <h2>The topology, and what each box keeps</h2>
+    <figure style="margin:0">
+      <div class="arch" id="arch">
+        <div class="arch-bar">
+          <span class="lbl">trace</span>
+          <button data-f="" aria-pressed="true">whole estate</button>
+          <button data-f="f-ta" aria-pressed="false">A · sync get_balance</button>
+          <button data-f="f-tb" aria-pressed="false">B · async agent on Temporal</button>
+        </div>
+        <div class="arch-canvas">
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="dt dd">
+  <title id="dt">garm-ai deployment: two durable decider implementations on one bus</title>
+  <desc id="dd">A caller and rund sit above a NATS cluster; rund alone holds a
+    Postgres of runs, used only for asynchronous calls, and loads the catalogue at boot.
+    Below the bus are four deployables: paymentsd, which is stateless and calls a core
+    banking system; a DBOS-backed workflow decider and a Temporal-backed one, each
+    durable in its own store which rund never sees; and a ReAct decider, which is a pure
+    reducer and keeps nothing. Every hop between them crosses the bus.</desc>')
+  <defs>
+    <marker id="d-call" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/></marker>
+    <marker id="d-rec" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--good)"/></marker>
+    <marker id="d-weak" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+  <text class="bandlbl" x="20" y="18">above the bus · only rund keeps a run</text>
+  <text class="bandlbl" x="20" y="262">below the bus · every service is reached the same way</text>
+  <text class="bandlbl" x="20" y="410">and what each one depends on</text>
+  <g class="ae rec tB"><path d="M600 52 L700 52" marker-end="url(#d-rec)"/>
+  </g>
+  <g class="ae weak tA tB"><path d="M700 110 L640 110 L640 80 L600 80" marker-end="url(#d-weak)"/>
+  </g>
+  <g class="ae call tA tB"><path d="M105 92 L105 170" marker-end="url(#d-call)"/>
+    <text class="strong" x="113" y="128">garm.run.v1.invoke</text>
+  </g>
+  <g class="ae call tA tB"><path d="M460 112 L460 170" marker-end="url(#d-call)"/>
+    <text x="468" y="148">every hop below is rund's</text>
+  </g>
+  <g class="ae call tA tB"><path d="M125 290 L125 232" marker-end="url(#d-call)"/>
+  </g>
+  <g class="ae call"><path d="M372 290 L372 232" marker-end="url(#d-call)"/>
+  </g>
+  <g class="ae call tB"><path d="M622 290 L622 232" marker-end="url(#d-call)"/>
+  </g>
+  <g class="ae call"><path d="M852 290 L852 232" marker-end="url(#d-call)"/>
+  </g>
+  <g class="ae call tA"><path d="M160 290 L160 232" marker-end="url(#d-call)"/>
+    <text class="strong" x="168" y="268">garm.tool.payments.v1.get_balance</text>
+  </g>
+  <g class="ae call tA tB"><path d="M125 366 L125 420" marker-end="url(#d-call)"/>
+    <text x="133" y="398">HTTP · MQ · mainframe</text>
+  </g>
+  <g class="ae rec"><path d="M372 366 L372 420" marker-end="url(#d-rec)"/>
+  </g>
+  <g class="ae call tB"><path d="M622 366 L622 420" marker-end="url(#d-call)"/>
+  </g>
+  <g class="ae rec tB"><path d="M622 490 L622 512" marker-end="url(#d-rec)"/>
+  </g>
+  <g class="ae call"><path d="M852 366 L852 420" marker-end="url(#d-call)"/>
+  </g>
+  <g class="an next tA tB"><rect x="20" y="34" width="170" height="58" rx="9"/>
+    <text class="t1" x="105" y="58" text-anchor="middle">A caller</text>
+    <text class="t2" x="105" y="74" text-anchor="middle">generated client</text>
+  </g>
+  <g class="an next tA tB"><rect x="320" y="26" width="280" height="86" rx="9"/>
+    <text class="t1" x="460" y="50" text-anchor="middle">rund</text>
+    <text class="t2" x="460" y="66" text-anchor="middle">THE ENGINE</text>
+    <text class="t2" x="460" y="80" text-anchor="middle">guardrails · retries · budgets</text>
+    <text class="t2" x="460" y="94" text-anchor="middle">the run tree · public state</text>
+  </g>
+  <g class="an later tB"><rect x="700" y="26" width="240" height="52" rx="9"/>
+    <text class="t1" x="820" y="50" text-anchor="middle">Postgres · runs</text>
+    <text class="t2" x="820" y="66" text-anchor="middle">ASYNC ONLY · rund's own</text>
+  </g>
+  <g class="an ok tA tB"><rect x="700" y="88" width="240" height="44" rx="9"/>
+    <text class="t1" x="820" y="112" text-anchor="middle">catalogue.binpb</text>
+    <text class="t2" x="820" y="128" text-anchor="middle">loaded at boot</text>
+  </g>
+  <g class="an ok tA tB"><rect x="20" y="170" width="920" height="62" rx="9"/>
+    <text class="t1" x="480" y="194" text-anchor="middle">NATS cluster</text>
+    <text class="t2" x="480" y="210" text-anchor="middle">garm.run.v1.*   garm.tool.&lt;name&gt;   garm.runner.&lt;type&gt;.&lt;impl&gt;   garm.run.event.&lt;id&gt;</text>
+  </g>
+  <g class="an ok tA tB"><rect x="20" y="290" width="210" height="76" rx="9"/>
+    <text class="t1" x="125" y="314" text-anchor="middle">paymentsd</text>
+    <text class="t2" x="125" y="330" text-anchor="middle">natsserve + your handler</text>
+    <text class="t2" x="125" y="344" text-anchor="middle">N replicas · stateless</text>
+  </g>
+  <g class="an later"><rect x="265" y="290" width="215" height="76" rx="9"/>
+    <text class="t1" x="372" y="314" text-anchor="middle">workflow · DBOS</text>
+    <text class="t2" x="372" y="330" text-anchor="middle">garm.runner.workflow.dbos</text>
+    <text class="t2" x="372" y="344" text-anchor="middle">durable in ITS OWN store</text>
+  </g>
+  <g class="an later tB"><rect x="515" y="290" width="215" height="76" rx="9"/>
+    <text class="t1" x="622" y="314" text-anchor="middle">workflow · Temporal</text>
+    <text class="t2" x="622" y="330" text-anchor="middle">garm.runner.workflow.temporal</text>
+    <text class="t2" x="622" y="344" text-anchor="middle">durable in ITS OWN store</text>
+  </g>
+  <g class="an later"><rect x="765" y="290" width="175" height="76" rx="9"/>
+    <text class="t1" x="852" y="314" text-anchor="middle">react</text>
+    <text class="t2" x="852" y="330" text-anchor="middle">garm.runner.react</text>
+    <text class="t2" x="852" y="344" text-anchor="middle">a pure reducer</text>
+  </g>
+  <g class="an later tA tB"><rect x="20" y="420" width="210" height="70" rx="9"/>
+    <text class="t1" x="125" y="444" text-anchor="middle">Core banking</text>
+    <text class="t2" x="125" y="460" text-anchor="middle">SOMEBODY ELSE'S SYSTEM</text>
+    <text class="t2" x="125" y="474" text-anchor="middle">where the 2s budget is spent</text>
+  </g>
+  <g class="an later"><rect x="265" y="420" width="215" height="70" rx="9"/>
+    <text class="t1" x="372" y="444" text-anchor="middle">Postgres · DBOS</text>
+    <text class="t2" x="372" y="460" text-anchor="middle">the decider's position</text>
+    <text class="t2" x="372" y="474" text-anchor="middle">never seen by rund</text>
+  </g>
+  <g class="an later tB"><rect x="515" y="420" width="215" height="70" rx="9"/>
+    <text class="t1" x="622" y="444" text-anchor="middle">Temporal server</text>
+    <text class="t2" x="622" y="460" text-anchor="middle">workflows · timers · signals</text>
+  </g>
+  <g class="an later tB"><rect x="515" y="512" width="215" height="56" rx="9"/>
+    <text class="t1" x="622" y="536" text-anchor="middle">Temporal's own store</text>
+    <text class="t2" x="622" y="552" text-anchor="middle">the decider's position</text>
+  </g>
+  <g class="an later"><rect x="765" y="420" width="175" height="70" rx="9"/>
+    <text class="t1" x="852" y="444" text-anchor="middle">LLM provider</text>
+    <text class="t2" x="852" y="460" text-anchor="middle">outside the platform</text>
+  </g>
+</svg>
+        </div>
+      </div>
+    </figure>
+    <p class="note"><b>Three stores, and they hold different things.</b>
+      <code>rund</code>'s Postgres holds a run's <em>public</em> state — waiting,
+      finished, the result, the tree. Each durable decider's store holds its own
+      <em>execution position</em>, which <code>rund</code> never reads and has no field
+      for. The core banking system holds the money, and is somebody else's.</p>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <p class="kicker">trace a</p>
+    <h2>A synchronous call that ends in a mainframe</h2>
+    <p><code>payments.v1.get_balance</code>, declared
+      <code>sync: { budget: 2s }</code>. No decider loop, no run store, no runner
+      deployed — and the budget is spent almost entirely in the last two frames.</p>
+    <div class="trace">
+      <h3>A · <span>garmctl call payments.v1.get_balance '{"account_id":"a-1"}'</span></h3>
+      <ol>
+        <li><span class="m">client</span> marshals the request and sets the deadline to
+          <b>2s — the declared budget</b>, not a number the caller chose. Headers carry
+          correlation, causation, message id, the idempotency key and
+          <code>traceparent</code>.</li>
+        <li><span class="m">bus</span> request on <code>garm.run.v1.invoke</code>.</li>
+        <li><span class="m">rund</span> resolves the name in the catalogue →
+          <code>Sync{2s}</code>. Refuses here if approval policy were attached to a sync
+          tool. Creates run <code>r1</code> and <b>stores nothing</b> — the dashed line to
+          Postgres is not taken.</li>
+        <li><span class="m">rund</span> the built-in single-step decider returns one
+          action: call the tool. In-process, no hop.</li>
+        <li><span class="m">bus</span> request on
+          <code>garm.tool.payments.v1.get_balance</code>, deadline 2s, same correlation,
+          causation now rund's message id.</li>
+        <li><span class="m">paymentsd</span> <code>natsserve</code> unmarshals and calls
+          your handler with a context carrying the ids <b>and the 2s deadline</b>.</li>
+        <li><span class="m">core banking</span> the handler does the real work over
+          HTTP, MQ or a mainframe gateway. <b>This is where the 2s goes.</b> A timeout
+          here returns <code>UNAVAILABLE</code>, which is the one kind that tells the
+          caller a retry is worth it.</li>
+        <li><span class="m">back</span> response marshalled, replied, unmarshalled into
+          <code>*GetBalanceResponse</code>. One run id was logged; nothing was persisted.</li>
+      </ol>
+    </div>
+    <p class="note">Frames 3 and 4 are the whole argument for the built-in decider. A
+      deployed “sync runner” would add two hops and a dependency to a call that is
+      otherwise a single round trip plus whatever the bank's system costs.</p>
+  </section>
+
+  <section>
+    <p class="kicker">trace b</p>
+    <h2>An agent whose durability belongs to Temporal</h2>
+    <p>Declared <code>agent { workflow: {…} }</code>, therefore <code>async</code>.
+      A deployment chose Temporal; the declaration does not mention it.</p>
+    <div class="trace">
+      <h3>B · <span>client.TriagePayment(ctx, req) → run.Ref</span></h3>
+      <ol>
+        <li><span class="m">rund</span> resolves the name → an agent declaring
+          <code>workflow</code>. Its routing table maps that kind to
+          <code>garm.runner.workflow.temporal</code> — <b>deployment config, not a
+          declaration</b>.</li>
+        <li><span class="m">rund</span> creates run <code>r2</code> in <b>its own</b>
+          Postgres: <code>RUNNING</code>, the input, the correlation id, no parent.</li>
+        <li><span class="m">rund</span> replies at once with
+          <code>{run_id: r2, pending}</code>. The caller's <code>Await</code> is its own
+          patience from here; giving up does not cancel anything.</li>
+        <li><span class="m">temporal decider</span> starts a Temporal workflow. From now
+          on <b>Temporal owns where the program is</b> — step, history, timers, signals —
+          in its own store. <code>rund</code> has no field for any of it.</li>
+        <li><span class="m">decider → rund</span> the workflow wants a tool. It does
+          <b>not</b> call <code>paymentsd</code> itself: it invokes through
+          <code>rund</code>, as a <b>child run</b> <code>r3</code> with parent
+          <code>r2</code> and the same correlation id.</li>
+        <li><span class="m">rund</span> and because it goes through rund, the
+          <b>allowlist is checked here, at call time</b> — not only at compose. Guardrails,
+          retries and the tree's budget apply identically to trace A's call.</li>
+        <li><span class="m">paymentsd → core banking</span> frames 5 to 8 of trace A,
+          unchanged. The tool cannot tell it was called by a workflow.</li>
+        <li><span class="m">decider → rund</span> <code>Report(r2, finished{result})</code>
+          — <b>request/reply, acknowledged</b>. A fire-and-forget publish here would leave
+          <code>r2</code> <code>RUNNING</code> forever if it were dropped.</li>
+        <li><span class="m">rund</span> persists <code>SUCCEEDED</code>, <b>then</b>
+          publishes on <code>garm.run.event.r2</code>. Persist before publish, so no
+          subscriber sees a state that did not survive.</li>
+      </ol>
+    </div>
+    <p class="note">Frame 5 is the load-bearing one. Because a decider's tool calls go
+      back through <code>rund</code>, every uniform concern stays in one place — which is
+      what makes two different durable engines safe to run side by side.</p>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <h2>One declared kind, two implementations</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th></th><th>declared by the author</th><th>chosen by the deployment</th></tr></thead>
+        <tbody>
+          <tr><td>the kind</td><td><b>yes</b> — <code>agent { workflow: {…} }</code></td><td>no</td></tr>
+          <tr><td>DBOS or Temporal</td><td><b>never</b></td><td><b>yes</b> — a subject in rund's routing table</td></tr>
+          <tr><td>which replica answers</td><td>no</td><td>registration, by queue group</td></tr>
+          <tr><td>where execution state lives</td><td>no</td><td>the implementation's own store</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:18px">So migrating an estate from DBOS to Temporal touches no
+      <code>.proto</code> and no tool. It is a line of <code>rund</code> config — and it
+      can go agent by agent, because the routing table takes per-agent overrides.</p>
+    <div class="card warn">
+      <h3>The hazard this creates, and why the type check does not catch it</h3>
+      <p>If DBOS and Temporal both register <code>garm.runner.workflow</code>, NATS
+        queue-groups them and <b>calls split randomly between two engines</b>. Half your
+        runs land in a store the other engine cannot read.</p>
+      <p>The reconciliation check from the spec does not see it: both report their kind as
+        <code>workflow</code>, and both are correct. What catches it is coarser and has to
+        be written down — <b><code>$SRV.INFO</code> showing two distinct service names
+        answering one kind's subject</b>. Hence the per-implementation subjects on the map:
+        <code>…workflow.dbos</code> and <code>…workflow.temporal</code> cannot collide by
+        accident, and sharing a subject becomes a deliberate act.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>This corrects the spec, and the argument that was wrong</h2>
+    <p>The spec decided that a decider is a <b>pure reducer</b> with <code>rund</code>
+      owning all state, on the grounds that otherwise each decider kind would carry its
+      own copy of guardrails, retries and budget accounting and they would diverge.</p>
+    <p><b>That argument is false.</b> A decider's tool calls go through
+      <code>rund</code> — frame 5 of trace B — so <code>rund</code> applies all three
+      regardless of who initiated them. What a decider actually owns is only its own
+      orchestration position, which is exactly what DBOS and Temporal exist to own. You
+      do not adopt Temporal in order to run it statelessly.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>decider</th><th>keeps state between reports</th><th>state travels</th></tr></thead>
+        <tbody>
+          <tr><td>react</td><td>no — a pure reducer</td><td>round-tripped through rund</td></tr>
+          <tr><td>workflow · DBOS</td><td><b>yes</b>, in its own Postgres</td><td>never leaves the decider</td></tr>
+          <tr><td>workflow · Temporal</td><td><b>yes</b>, in Temporal's store</td><td>never leaves the decider</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:18px">One <code>Report</code> channel serves both, so the
+      interface does not have to choose. <code>rund</code> is authoritative about a run's
+      <b>public</b> state; a decider is authoritative about its <b>execution</b> state.
+      Different facts, so there is no ambiguity about who to believe — and the two-store
+      objection dissolves rather than being accepted.</p>
+    <p class="note">What does <em>not</em> dissolve: a decider that dies silently still
+      leaves a run <code>RUNNING</code>, and now the state needed to resume it is in a
+      store <code>rund</code> cannot read. With Temporal that is Temporal's problem to
+      solve, which is a reason to use it. With a hand-rolled decider it is ours, and the
+      spec still names two mechanisms and picks neither.</p>
+  </section>
+
+  <section>
+    <h2>What each person sees</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>role</th><th>what they touch</th><th>what they never learn</th></tr></thead>
+        <tbody>
+          <tr><td>tool author</td><td>a <code>.proto</code> and a plain Go function</td><td>NATS, runs, approval, DBOS, Temporal</td></tr>
+          <tr><td>agent author</td><td>a <code>.proto</code>: an allowlist and a kind</td><td>which engine runs it, or where its state lives</td></tr>
+          <tr><td>caller</td><td>a generated client and a tool <b>name</b></td><td>subjects, deciders, runner kinds</td></tr>
+          <tr><td>operator</td><td>rund's routing table, replicas, three stores</td><td>what any tool does</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="links">← <a href="architecture.html">the logical map: declare, compose, call</a>
+     &nbsp;·&nbsp; <a href="specs/2026-10-03-rund-design.md">the rund spec</a></p>
+</div>
+
+<script>
+  (function () {
+    var arch = document.getElementById('arch');
+    var btns = Array.prototype.slice.call(arch.querySelectorAll('.arch-bar button'));
+    var filters = ['f-ta', 'f-tb'];
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var f = b.getAttribute('data-f');
+        var on = b.getAttribute('aria-pressed') === 'true';
+        filters.forEach(function (c) { arch.classList.remove(c); });
+        btns.forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+        if (f && !on) { arch.classList.add(f); b.setAttribute('aria-pressed', 'true'); }
+        else { btns[0].setAttribute('aria-pressed', 'true'); }
+      });
+    });
+  })();
+</script>

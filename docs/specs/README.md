@@ -26,9 +26,12 @@ on, and the rule that none of it may be *declared* before its condition holds.
 Without that a spec becomes a list of promises, which is how the previous estate
 shipped five concepts enforced by nothing.
 
-The map at [../architecture.html](../architecture.html) is the visual index to the
-rund spec — same four bands, same built / next / designed-only distinction. Change
-one and check the other.
+Two drawings are the visual index to the rund spec:
+[../architecture.html](../architecture.html) for the logical flow, and
+[../deployment.html](../deployment.html) for the topology and two traced calls. They
+use the same built / next / designed-only distinction. **Change one and check the
+others** — the deployment page already carries a correction the spec had to be
+amended to match (§7.3).
 
 | spec | status |
 |---|---|
