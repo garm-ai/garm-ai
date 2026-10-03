@@ -13,6 +13,8 @@ unenforced, in the same table, deliberately.
 |---|---|
 | A tool's identity is its `name`; the proto path is an address | `declared.TestIdentityAndAddressAreSeparateFields` — and the fixture's identity and address differ on purpose, so the test refuses to run if they are ever made equal |
 | No two tools share a name | `declared.TestFromRefusesTwoToolsWithOneName`. Not a lint rule but a precondition: `From` cannot build an index at all |
+| A tool name is **routable**: dot-separated `[A-Za-z0-9_-]+` segments | `declared.TestAUsableNameIsAccepted` and `TestAnUnusableNameIsRefusedWithAReason`. A security rule, not a style one: `a.*.b` would be a **broker wildcard subscription receiving other tools' requests**, and NATS micro's own subject check accepts `*`. See [the decision](decisions/2026-10-03-a-tool-name-must-be-routable.md) |
+| …and the refusal says what *would have happened* | `declared.TestTheWildcardReasonSaysWhatWouldHappen`. The charset check alone already rejects `*`; the wildcard branch exists only so the message names the consequence, because a refusal that reads as fussy gets argued with |
 | An allowlist entry names a declared tool | `declared.TestAPartialTreeLeavesTheAllowlistUnresolved`, `TestTheCommittedTreeResolves`, and `mise run examples` in CI |
 | A plain tool has no agent block; an agent has one | `declared.TestFromIndexesBothAPlainToolAndAnAgent` |
 | Images merge by deduplicating file paths | `images.TestTwoImagesMergeIntoOneNamespace` |
@@ -45,7 +47,7 @@ unenforced, in the same table, deliberately.
 
 | claim | why nothing checks it |
 |---|---|
-| A tool name should be `<package>.<tool>` | A convention in the examples only. Nothing validates the shape — only that names are unique. Enforcing it would need a decision about what a legal name is, which nobody has made |
+| A tool name should have the *shape* `<package>.<tool>` | Only the **charset** is enforced (see the row above). The shape is a convention in the examples; enforcing it needs a decision about what a package is that nobody has made, and the charset closes the security hole without it |
 | An agent's method name is never read | Closer than it was: the generator emits nothing for an agent, proved by `generate.TestAnAgentProducesNoGoAtAll`. Still unenforced in the direction that matters — no test asserts that *nothing anywhere* resolves an agent by method name, because the runner that would is the next step |
 | The tool option is read in exactly one place | `declared.ToolOf` is that place, and the generator calls it rather than reaching for `proto.GetExtension` itself. Nothing *checks* that a second reader does not appear. A grep test would, and is worth writing once there are three readers rather than two — the old estate's single most expensive structural bug was one idea implemented twice |
 | Generated code never grows a transport dependency | The import-set test above is the enforcement for what is emitted. What it cannot say is that `serve` itself stays transport-free: today it imports only `context` and two protobuf packages, and nothing fails if a broker is added to it |

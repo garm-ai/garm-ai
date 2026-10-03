@@ -24,8 +24,15 @@ The `name` is how everything else refers to it: an agent's allowlist, a log line
 a policy. Choose it deliberately — it is the identity, and the proto path is not.
 
 Convention in these examples is `<package>.<tool>`, which keeps names unique when
-tools come from different repositories. Nothing enforces that shape yet; what *is*
-enforced is that no two tools share a name.
+tools come from different repositories. The **shape** is not enforced. Two things
+are: no two tools may share a name, and a name must be a dot-separated sequence of
+`[A-Za-z0-9_-]` segments.
+
+That second rule is a security rule rather than a style one. A name like `a.*.b`
+would become a message-broker **wildcard subscription**, so the service mounting it
+would receive *other tools'* requests — and NATS micro's own subject validation
+accepts `*` without complaint. `garmctl compose` refuses it, naming what would have
+happened.
 
 ## 2. An agent
 

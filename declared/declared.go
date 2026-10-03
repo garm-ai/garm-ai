@@ -15,7 +15,9 @@ package declared
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
+	"strings"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -117,6 +119,12 @@ func FromFiles(fds []protoreflect.FileDescriptor) (*Set, error) {
 				if !ok {
 					continue
 				}
+				// Validated before indexing, for the same reason duplicates are:
+				// an index keyed on a name that cannot be used as one is not a
+				// Set with a problem.
+				if err := validateName(t); err != nil {
+					return nil, err
+				}
 				if prev, clash := s.byName[t.Name]; clash {
 					// A TYPED error carrying both descriptors, not a formatted
 					// string. When tool definitions come from different
@@ -206,4 +214,82 @@ func (s *Set) Unresolved() []Unresolved {
 		}
 	}
 	return out
+}
+
+// InvalidName is a declared name that cannot be used as one.
+//
+// It carries the ADDRESS, because the name is the thing that is wrong and
+// repeating it is not where a human has to go to fix it.
+type InvalidName struct {
+	Name   string
+	Reason string
+	Method protoreflect.MethodDescriptor
+}
+
+func (e *InvalidName) Error() string {
+	return fmt.Sprintf("the tool name %q is not usable: %s (declared at %s)",
+		e.Name, e.Reason, e.Method.FullName())
+}
+
+// nameToken is one dot-separated segment of a tool name.
+//
+// The charset is NOT derived from any transport, and that matters: a name is an
+// identifier that ends up in a policy key, a log line, a metric label, a URL path
+// and a subject on a message broker. Choosing the intersection of what those all
+// accept, once, is cheaper than discovering each one separately -- and far cheaper
+// than the alternative found while designing the NATS transport, below.
+var nameToken = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
+// validateName refuses a name that cannot safely be used as an identity.
+//
+// # Why this is a security rule and not a tidiness rule
+//
+// NATS treats `*` and `>` as subscription wildcards. A tool named `a.*.b` becomes
+// a subject containing a wildcard, and the service mounting it would receive OTHER
+// TOOLS' REQUESTS -- a confused-deputy hole opened by a name nobody checked.
+//
+// Nothing downstream catches it. NATS micro's own subject validation is
+// `^[^ >]*[>]?$`, which rejects a space and a bare `>` and happily accepts `*`
+// and an empty token. So micro is not the backstop, and a transport that trusted
+// it would mount the wildcard without complaint.
+//
+// # Why it lives here rather than in the transport
+//
+// Because it fails at COMPOSE, in CI, with somebody to tell -- rather than at
+// service start, which is the shape of failure this repository keeps choosing
+// against. The rule is justified on its own terms (see nameToken) and the
+// transport gets its safety as a consequence rather than owning the rule.
+//
+// What is still NOT enforced is the SHAPE. `<package>.<tool>` remains a
+// convention; only the charset is a rule. Enforcing the shape needs a decision
+// about what a package is that nobody has made.
+func validateName(t Tool) error {
+	reason := nameReason(t.Name)
+	if reason == "" {
+		return nil
+	}
+	return &InvalidName{Name: t.Name, Reason: reason, Method: t.Method}
+}
+
+// nameReason returns why a name is unusable, or "" when it is fine. Split out so
+// the reason is a value a test can assert on rather than a substring of a
+// formatted error.
+func nameReason(name string) string {
+	// An empty name is not reported here: ToolOf treats it as no declaration at
+	// all, so it never reaches this function.
+	for _, segment := range strings.Split(name, ".") {
+		if segment == "" {
+			return "it has an empty segment, so it would address nothing"
+		}
+		if segment == "*" || segment == ">" || strings.ContainsAny(segment, "*>") {
+			// Named explicitly rather than folded into the charset message,
+			// because this one is not a style complaint: it is the case that
+			// silently intercepts other tools' traffic.
+			return "it contains a message-broker wildcard, which would intercept other tools' calls"
+		}
+		if !nameToken.MatchString(segment) {
+			return "each dot-separated segment must be one or more of A-Z a-z 0-9 _ -"
+		}
+	}
+	return ""
 }

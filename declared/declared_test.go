@@ -1,8 +1,11 @@
 package declared_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
+
+	"google.golang.org/protobuf/proto"
 
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -177,3 +180,117 @@ func TestFromRefusesTwoToolsWithOneName(t *testing.T) {
 }
 
 func strPtr(s string) *string { return &s }
+
+// ---------------------------------------------------------------------------
+// A declared name must be usable as one.
+//
+// This arrived with the NATS transport, and the case that forced it is not a
+// style complaint: NATS treats `*` and `>` as subscription wildcards, so a tool
+// named `a.*.b` would mount a WILDCARD SUBSCRIPTION and receive other tools'
+// requests. micro's own subject check is `^[^ >]*[>]?$`, which accepts `*`
+// happily -- so nothing downstream catches it.
+// ---------------------------------------------------------------------------
+
+// named builds a one-tool file declaring name, through real MethodOptions, so the
+// test exercises the path every consumer uses rather than a struct literal.
+func named(t *testing.T, name string) *descriptorpb.FileDescriptorProto {
+	t.Helper()
+	opts := &descriptorpb.MethodOptions{}
+	proto.SetExtension(opts, toolv1.E_Tool, &toolv1.Tool{Name: name})
+	return &descriptorpb.FileDescriptorProto{
+		Name:       proto.String("probe/v1/probe.proto"),
+		Package:    proto.String("probe.v1"),
+		Syntax:     proto.String("proto3"),
+		Dependency: []string{"garm/tool/v1/tool.proto"},
+		MessageType: []*descriptorpb.DescriptorProto{
+			{Name: proto.String("Req")}, {Name: proto.String("Res")},
+		},
+		Service: []*descriptorpb.ServiceDescriptorProto{{
+			Name: proto.String("ProbeService"),
+			Method: []*descriptorpb.MethodDescriptorProto{{
+				Name:       proto.String("Do"),
+				InputType:  proto.String(".probe.v1.Req"),
+				OutputType: proto.String(".probe.v1.Res"),
+				Options:    opts,
+			}},
+		}},
+	}
+}
+
+func setWithName(t *testing.T, name string) (*declared.Set, error) {
+	t.Helper()
+	return declared.From(registry(t,
+		fdp((*descriptorpb.FileDescriptorProto)(nil).ProtoReflect().Descriptor().ParentFile()),
+		fdp(toolv1.File_garm_tool_v1_tool_proto),
+		named(t, name),
+	))
+}
+
+func TestAUsableNameIsAccepted(t *testing.T) {
+	for _, name := range []string{
+		"weather.v1.get_forecast", // the convention
+		"trip-planner",            // a bare name with a hyphen
+		"support_assistant",
+		"a",
+		"A1.b2.C3",
+		"accounts.v1.get_customer",
+	} {
+		if _, err := setWithName(t, name); err != nil {
+			t.Errorf("the name %q was refused: %v", name, err)
+		}
+	}
+}
+
+func TestAnUnusableNameIsRefusedWithAReason(t *testing.T) {
+	for _, tc := range []struct{ name, wants string }{
+		// The two that matter. Neither is caught by NATS micro.
+		{"a.*.b", "wildcard"},
+		{"a.>.b", "wildcard"},
+		{"everything.*", "wildcard"},
+		// An empty segment addresses nothing, and NATS collapses it silently.
+		{"a..b", "empty segment"},
+		{".leading", "empty segment"},
+		{"trailing.", "empty segment"},
+		// Outside the charset.
+		{"get forecast", "segment must be"},
+		{"café.v1.order", "segment must be"},
+		{"a/b", "segment must be"},
+		{"a:b", "segment must be"},
+	} {
+		_, err := setWithName(t, tc.name)
+		if err == nil {
+			t.Errorf("the name %q was accepted", tc.name)
+			continue
+		}
+		var bad *declared.InvalidName
+		if !errors.As(err, &bad) {
+			t.Errorf("the name %q was refused with %T, want *declared.InvalidName", tc.name, err)
+			continue
+		}
+		if bad.Name != tc.name {
+			t.Errorf("the error names %q, want %q", bad.Name, tc.name)
+		}
+		if !strings.Contains(bad.Reason, tc.wants) {
+			t.Errorf("the reason for %q is %q, want it to mention %q", tc.name, bad.Reason, tc.wants)
+		}
+		// The address, so a human knows which file to open. The name is what is
+		// wrong; the address is where to go.
+		if !strings.Contains(bad.Error(), "probe.v1.ProbeService.Do") {
+			t.Errorf("the error for %q does not name the declaration site: %v", tc.name, bad)
+		}
+	}
+}
+
+func TestTheWildcardReasonSaysWhatWouldHappen(t *testing.T) {
+	// Not a charset complaint. A reader of this message has to understand that the
+	// consequence is intercepting other tools' traffic, or they will "fix" it by
+	// relaxing the rule.
+	_, err := setWithName(t, "a.*.b")
+	var bad *declared.InvalidName
+	if !errors.As(err, &bad) {
+		t.Fatalf("want *declared.InvalidName, got %T", err)
+	}
+	if !strings.Contains(bad.Reason, "intercept other tools") {
+		t.Errorf("the reason does not say what would happen: %q", bad.Reason)
+	}
+}
