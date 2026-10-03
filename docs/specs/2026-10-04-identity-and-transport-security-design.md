@@ -165,11 +165,91 @@ Found by a probe that failed. It is written here in the specification, not left 
 a commit message, because a generator that omits it produces an estate that looks
 correct and times out.
 
-### 4.2 `rund`'s own permissions
+### 4.2 When a tool leaves the catalogue
+
+Deriving a permission from the catalogue says what happens when a tool is *added*.
+Removal is the harder half, and **only one of its three effects is automatic**.
+
+**Routing stops at once.** `rund` reloads, the name does not resolve, callers get
+`NOT_FOUND`. Built and tested.
+
+**The permission does not shrink.** A user JWT is a **bearer document held by the
+process**. Regenerating the topology produces a *new* document; the running service
+keeps the old one, with the old permission, until it is replaced *and the old one
+revoked*. **Nothing about editing a catalogue reaches a credential already in a
+process's hands.**
+
+**The subscription survives.** The service is still mounted and still subscribed.
+Harmless only because nothing but `rund` may publish there and `rund` will not —
+which is defence by behaviour rather than by structure, and so does not count.
+
+#### The risk this creates is name reuse
+
+`natsmicro` sets no queue group, so micro's default applies and **every instance
+answering a subject shares one**. If `weather.v1.get_forecast` is retired and that
+name is later reused by a different service, a zombie process still holding the old
+credential **joins the same queue group and takes a share of the calls**. The queue
+group is precisely what makes that silent rather than loud.
+
+`compose` refuses two tools claiming one name *at a point in time*; it cannot see
+across time, and nothing else does either.
+
+#### So removal is an output of the generator, not an operator's memory
+
+The generator takes the **previous topology** alongside the new catalogue and emits
+a delta: which credentials to reissue because their permission set changed, and
+which to **revoke** because a service was retired. `RevokeAt(pubKey, t)` retires one
+user's credentials issued before `t`; `RevokeAt(jwt.All, t)` retires every
+credential of an account before `t`, which is the blunt generation cut-off for a
+compromise or a wholesale rotation.
+
+A removal that produces no revocation is a bug in the generator, not a decision an
+operator gets to make.
+
+#### Ordering: grant before use, revoke after disuse
+
+- **Adding** a tool: the permission lands **before** the service answering it starts,
+  or it cannot subscribe.
+- **Removing** a tool: the service stops **before** its credential is revoked, or it
+  loses its connection mid-call.
+
+Both are the same rule — the permission set is briefly a superset of what is
+running, and never a subset.
+
+### 4.3 A service refuses to start if a mount is not permitted
+
+If a service's generated code still mounts a tool its credential no longer permits,
+`Start` **succeeds** and the subscription is refused **asynchronously** — the same
+shape as §4.1, and just as quiet. In the spike, `LastError()` showed the violation
+only after a sleep, so no timing-dependent check can be the gate.
+
+The process holds its own user JWT, so the check is local and deterministic:
+**decode it, and compare every mounted subject against the credential's own allowed
+subjects before announcing**. A mount not covered is a refusal to start, naming the
+tool.
+
+This turns "boots cleanly and never answers" into "does not boot, and says why",
+and it needs no round trip to the server.
+
+### 4.4 `rund`'s own permissions, and why they are a wildcard
 
 `rund` publishes `garm.tool.>` through its import and subscribes its two run
 patterns. It gets no system-account access and no JetStream permissions; when the
 run store arrives it reaches Postgres, not the bus, for that.
+
+**The wildcard is deliberate.** Were `rund`'s permission to enumerate tools, every
+catalogue change would require reissuing `rund`'s credential — and **hot reload
+would be pointless, because the permission would lag the catalogue it exists to
+track**. What bounds `rund` is the catalogue it loads, not its credential.
+
+The concession is stated plainly: a compromised `rund` can publish on any tool
+subject, including a retired one. It could already call every *declared* tool, so
+the marginal loss is small, and `rund`'s credential is consequently the one worth
+protecting most (§12).
+
+**An agent needs no credential at all.** The generator emits no Go for an agent and
+no service answers one, so adding or removing an agent has no credential
+consequence.
 
 ---
 
@@ -224,6 +304,12 @@ than a story, and it is the reason the generator comes before anything else in �
 It lives in `garmctl` beside `compose`, reading the same artefact. Signing keys are
 an input, never an output: the generator never invents a key it also trusts.
 
+**It takes the previous topology as a second input** (§4.2), because a removal is
+only visible as a difference. A generator that sees one catalogue can emit the
+permissions that should exist; only one that sees two can emit the revocations that
+must. That makes its inputs two things rather than one, which §13 already dislikes
+about caller accounts — but here it is inherent rather than incidental.
+
 ---
 
 ## 8. What changes in the repository
@@ -234,11 +320,13 @@ an input, never an output: the generator never invents a key it also trusts.
 | `internal/estate` | builds the topology, starts the server in operator mode, hands out credentials by role — `Connect(t, RoleCaller)` rather than a bare dial |
 | `rundsvc` | subscribes the wildcard patterns; reads the caller from token 4; maps a key to a name |
 | `natscall` | **nothing** — it publishes the same subject it publishes today |
-| `natsserve` | **nothing** — tool subjects are unchanged |
+| `natsserve` | the startup gate of §4.3 — subjects are unchanged, but a mount outside the credential must refuse to start |
 | `cmd/rund`, `cmd/garmctl`, examples | a credentials flag, and `nats.UserCredentials` on connect |
 
-That `natscall` and `natsserve` are untouched is the single most useful consequence
-of §3, and it was not a given — it is what the sixth probe was for.
+That `natscall` is untouched, and that `natsserve`'s **subjects** are untouched, is
+the single most useful consequence of §3, and it was not a given — it is what the
+sixth probe was for. `natsserve` gains only the startup gate, which is new behaviour
+rather than a changed wire.
 
 ---
 
@@ -258,6 +346,14 @@ before it is trusted.
 7. A tool service **can** reply — the `_R_.>` permission is present. Fails as a
    timeout rather than a refusal if omitted, which is why it is its own property.
 8. A revoked user cannot connect; no other user of that account is affected.
+8a. Removing a tool from the catalogue produces a **revocation** in the generator's
+    output, not merely a smaller next credential.
+8b. A service whose mount is not covered by its own credential **refuses to start**,
+    and names the tool. Proved by generating a credential for a narrower catalogue
+    than the service was built against — the case that otherwise boots and never
+    answers.
+8c. A credential issued for a previous catalogue generation no longer connects once
+    revoked, with a running service holding it — the zombie case in §4.2.
 9. The generator emits, for a catalogue, exactly one subscribe permission per
    declared tool and no others.
 10. No data-path credential carries system-account access.
