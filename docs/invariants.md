@@ -27,6 +27,18 @@ unenforced, in the same table, deliberately.
 | The committed generated Go matches the protos | `mise run gen-check`, which compares `git status --porcelain`. It used `git diff --exit-code`, which cannot see an **untracked** file — so it passed vacuously for generated code that was new, which is exactly the case it exists to catch |
 | The examples in `docs/guide.md` still compose | `mise run examples` — the guide walks through those exact files |
 
+### Errors
+
+| invariant | kept true by |
+|---|---|
+| A bare `error` never reaches the caller | `serve.TestABareErrorNeverReachesTheCaller`, whose fixture wraps a cause containing a connection target and a password, and asserts neither appears on the wire — while the LOCAL error still carries both, so something can be logged |
+| Only an **explicit kind** publishes a message | `serve.TestOnlyAnExplicitKindPublishesAMessage`. Closes the struct-literal path: an `Error` with no `Kind` publishes nothing either |
+| `INTERNAL` never publishes a message, even a deliberate one | `serve.TestAnInternalKindNeverPublishesAMessageEvenADeliberateOne`. `Internal()` has no message parameter; this is what stops a struct literal walking round it |
+| A deliberate kind publishes its own words, and still hides its cause | `serve.TestADeliberateKindPublishesItsMessage` and `TestADeliberateKindStillHidesItsCause` — `Because()` is for the log |
+| The cause is reachable locally, bare or wrapped | `serve.TestTheCauseIsReachableThroughTheChain`, `TestErrorsAsFindsItBareAndWrapped`. Wrapping with `%w` is how a handler adds context for its own logs; a kind that survived only the bare form would work for the half of handlers nobody writes |
+| `Wire` never produces something micro refuses | `serve.TestWireNeverProducesSomethingMicroRefuses`. Not cosmetic: `micro.Request.Error` returns an error and **never replies** on an empty code or description, so the caller would hang to its own deadline |
+| There is nowhere on the wire to put a cause | `invokev1.Error` has three fields and no cause field. Held by the proto's shape, not by a check — a field added later would need a reviewer to catch it, and the decision record says why |
+
 ### The generator
 
 | invariant | kept true by |

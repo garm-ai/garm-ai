@@ -1,0 +1,67 @@
+// What a tool says when it cannot answer.
+//
+// A SEPARATE PACKAGE from garm.tool.v1 on purpose. That one is about DECLARATION:
+// read at compose time, by a linter, to decide what exists. This is about
+// INVOCATION: read at call time, by a transport, to decide what a caller is told.
+// Different lifecycle, different readers, and folding them into one file would
+// make every tool author's compile depend on the invocation surface evolving.
+syntax = "proto3";
+
+package garm.invoke.v1;
+
+option go_package = "github.com/garm-ai/garm-ai/garm/invoke/v1;invokev1";
+
+// ErrorKind is the closed set of reasons a call did not produce an answer.
+//
+// A member is admitted on one test: does a CALLER ACT DIFFERENTLY, or does a HUMAN
+// DIAGNOSE DIFFERENTLY? Five pass. A sixth needs one of those to point at, or it
+// is a taxonomy, and this platform has shipped a taxonomy nothing read before.
+//
+// Deliberately NOT HTTP status codes, which is what the estate this replaces used.
+// "404" for a tool collapses two unrelated things -- the customer does not exist
+// (the tool answering) and the tool does not exist (routing failing) -- and borrows
+// a vocabulary from a protocol this platform does not speak.
+enum ErrorKind {
+  // Never set deliberately. A transport treats it as INTERNAL, so an error that
+  // reached the wire without a kind fails safe rather than silently.
+  ERROR_KIND_UNSPECIFIED = 0;
+
+  // The arguments will never be acceptable. Retrying unchanged cannot work.
+  ERROR_KIND_INVALID = 1;
+
+  // The thing asked about does not exist. The most common honest answer a tool
+  // gives, and an ANSWER rather than a failure.
+  ERROR_KIND_NOT_FOUND = 2;
+
+  // The caller is not permitted -- by THIS TOOL's own rules, about its own data.
+  // Platform authorisation refusing a call before a tool is reached is a different
+  // event and does not appear here, because the tool never ran.
+  ERROR_KIND_DENIED = 3;
+
+  // Transient. The one kind where retrying with backoff is the right response.
+  ERROR_KIND_UNAVAILABLE = 4;
+
+  // The tool broke. Distinct from UNAVAILABLE because retrying probably will not
+  // help, and distinct from the rest because the caller did nothing wrong.
+  ERROR_KIND_INTERNAL = 5;
+}
+
+// Error is what crosses the wire. Every field here is safe for the caller to see.
+//
+// THERE IS NO CAUSE FIELD, and its absence is the design. A cause chain is exactly
+// where the unsafe things live -- a connection string, a SQL fragment, a customer
+// name inside a constraint violation -- so the chain stays in the answering
+// service's own log, correlated by `id`. The caller learns what KIND of thing went
+// wrong and a token to quote; it never learns how.
+message Error {
+  ErrorKind kind = 1;
+
+  // Published VERBATIM. Nothing automatic ever reaches it: a transport fills it
+  // only from a message a tool author chose, and replaces it with a fixed string
+  // for any error that did not name its kind.
+  string message = 2;
+
+  // Correlates to the cause chain in the answering service's log. A caller quotes
+  // it; an operator joins on it.
+  string id = 3;
+}
