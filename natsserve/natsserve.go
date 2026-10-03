@@ -280,7 +280,7 @@ func (s *Service) answer(e endpoint, r micro.Request) {
 	//
 	// Past it the caller has already given up, so the work is unread; for a tool
 	// with side effects, worse than wasted.
-	if false {
+	if e.budget > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, e.budget)
 		defer cancel()
