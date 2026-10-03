@@ -797,6 +797,9 @@ decider, no HITL.
 
 ### 9.2 Later, each waiting on something real
 
+The estate-wide version of this table is [docs/roadmap.md](../roadmap.md); what
+follows is rund's own detail.
+
 | | waits on |
 |---|---|
 | `Async` delivery, `Fetch` meaning something | the store |

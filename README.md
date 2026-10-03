@@ -16,6 +16,9 @@ author implements an interface and writes nothing else.
   guide breaks in CI rather than misleading somebody next month.
 - **[docs/invariants.md](docs/invariants.md)** — every invariant with the test that
   keeps it true, and a second table for the ones nothing checks yet.
+- **[docs/roadmap.md](docs/roadmap.md)** — the single list of what is built, what is
+  next, and **what each unbuilt thing waits on**. That third column is the rule
+  below, made checkable.
 - **[docs/architecture.html](docs/architecture.html)** — the map. Four bands, from a
   `.proto` to a running call, with built / next / designed-only filterable.
   <https://claude.ai/artifact/8WincMNCabDf7nUJ944SLJ>
@@ -128,9 +131,11 @@ exists, is the next step.
 ## What is deliberately absent
 
 No clearance, compartments, verbs, tool sets, principal ceiling, bounds, model,
-prompts, graph, or consent. Every one is real and most will return. They are
-absent because nothing enforces them yet, and in the old estate the authority
-model is where all four of 2026-10-02's bugs lived.
+prompts, graph, or consent — and a dozen other things, each listed in
+**[docs/roadmap.md](docs/roadmap.md)** beside what it waits on.
+
+They are absent because nothing enforces them yet, and in the old estate the
+authority model is where all four of 2026-10-02's bugs lived.
 
 ## Working on this
 

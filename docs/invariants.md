@@ -83,6 +83,10 @@ unenforced, in the same table, deliberately.
 | A mounted handler refuses a request of the wrong type, naming the tool | `generate.TestTheMountedHandlerRefusesTheWrongRequestType` |
 | `Serve` returns on the registrar's first failure | `generate.TestServeStopsOnTheFirstRegistrarFailure` |
 
+Things not built at all are not here — they are in
+[docs/roadmap.md](roadmap.md), beside what each one waits on. This table is only
+for claims the code makes today that nothing checks.
+
 ## Not enforced, and said so
 
 | claim | why nothing checks it |

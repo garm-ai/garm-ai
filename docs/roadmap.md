@@ -1,0 +1,83 @@
+# What is built, what is next, and what each unbuilt thing waits on
+
+**The third column is the point.** This repository's rule is that *a field arrives
+when the thing that enforces it arrives*, so the useful question about anything
+unbuilt is not "when" but **"what has to exist first"**. A row with no answer there
+is a wish, and should be deleted rather than carried.
+
+This is the **single list**. [docs/invariants.md](invariants.md) says what holds
+today and names the test; [docs/decisions/](decisions/) says why; the
+[rund spec](specs/2026-10-03-rund-design.md) §9.2 carries the same staging for that
+one component in more detail. They link here rather than repeating it.
+
+## Built
+
+| | proved by |
+|---|---|
+| A tool is an RPC method carrying one option; an agent is a tool rund runs with a decider | [invariants](invariants.md) · `declared` |
+| A tool's name is its identity; the proto path is an address | `declared.TestIdentityAndAddressAreSeparateFields` |
+| No two tools share a name; a name is routable | `declared` — a security rule, not a style one |
+| The allowlist is enforced, not asserted | `garmctl compose` |
+| Many repositories' images merge into one verified namespace | `images`, `fetch` |
+| An artefact resolves from `file://`, `s3://` or `https://`, digest-pinned | `fetch` |
+| Generated transport glue; a missing tool fails to **compile** | `protoc-gen-garm-go` |
+| A declared tool is reachable over NATS, with a graceful drain | `natsserve` |
+| Errors carry a kind and leave the cause at home | `serve` |
+| A tool declares its delivery; silence is refused | `declared.DeliveryProblems` |
+
+## Being built
+
+| | step |
+|---|---|
+| `rund`: `Invoke`/`Fetch`, catalogue-loaded, sync fast path | **9b** |
+| The budget binds: client deadline, handler deadline, compose check | 9b |
+| Correlation, causation, message ids and `traceparent`, end to end | 9b |
+| The generated client, `garmctl call`, and an example loop that answers | 9c |
+
+## Waiting on something real
+
+| | waits on |
+|---|---|
+| `Async` delivery; `Fetch` returning a result | **the run store** |
+| `Cancel` · `Suspend` · `Resume`, and the `CANCELLING` state | the run store |
+| A run deadline or a decider lease, so a dead decider cannot hang a run | the run store (DBOS timers) |
+| Retry policy, keyed on error **kind** | the run store, for anything outliving a call |
+| Run events, `Progress`, and a per-run subject subscribers read | the run store, and a subscriber |
+| Replay for a late subscriber | a UI that needs history |
+| `Report`, and every terminal state but `SUCCEEDED`/`FAILED` | a decider |
+| `ProvideContext` · `Answer` · `Question` · `NeedsInfo` | a decider |
+| Decider kinds (`ReAct`, `Workflow`) in the declaration | a decider |
+| A `$SRV.INFO` check for two implementations on one kind's subject | a **second** implementation |
+| Approval, `ApprovalNeeded`, and policy that may interpose a human | the run store **and** the authority model |
+| Guardrails before and after a call | something to check — the authority model |
+| Cost budgets across a run tree | an accountant |
+| A run limit, and the check that it is ≥ the largest budget in an allowlist | `Async.run_limit` |
+| Cards of any kind, input, result, approval, context | a renderer |
+| Hot reload of the catalogue, converging every replica | a trigger — a JetStream KV key an operator sets |
+| A descriptor hash over wire shape | two repositories on two contract versions, so drift can exist |
+| Catalogue signing | a threat model that says digest-pinning is not enough |
+
+## The authority model, absent as a block
+
+No clearance, compartments, verbs, tool sets, principal ceiling, bounds, model,
+prompts, graph or consent. Every one is real and most will return.
+
+They are absent together because **that is where all four of 2026-10-02's bugs
+lived** in the estate this replaces, and because an authority model asserted by a
+declaration and enforced by nothing is worse than none — it reads as a guarantee.
+They return one at a time, each with its enforcer, each with a row above naming
+what it waited on.
+
+## Deliberately undecided
+
+| | |
+|---|---|
+| Whether an agent's service should end in `Service` | [parked](decisions/2026-10-03-service-naming-deferred.md) — buf's `STANDARD` against the domain, twice |
+| Whether `testdata/` and `examples/` stay separate | they now have the same *shape*; a third fixture shape is the moment to check |
+
+## How to change this file
+
+Add a row when you decide to build something, with its third column filled in.
+Move it up when it lands, and link the test. **If you cannot say what a row waits
+on, do not add it** — that is the difference between a roadmap and a wish list,
+and the estate this replaces has 273,768 lines of markdown that did not keep it.
