@@ -55,6 +55,17 @@ unenforced, in the same table, deliberately.
 | A draining handler is **not** handed a cancelled context | `natsserve.TestAHandlerIsNotHandedACancelledContextDuringTheDrain`. Run's context is cancelled to ask the service to stop; passing it to handlers tells every accepted call to abort at the moment we commit to answering it. Found by re-reading, not by a failure — with the bug, the probe answers `UNAVAILABLE: shutting down` once per deploy, per queued call |
 | `Run` does not return until queued calls are answered | `natsmicro.TestServeDrainsACallThatIsQueuedButNotYetDispatched`, where the drain lives, and `natsserve.TestRunDrainsCallsThatAreQueuedButNotYetDispatched` over the whole tool path. **Two** calls, because one proves nothing: the first version of this test passed with the `Barrier` deleted, since the in-flight counter already covers a handler that has started. See [the decision](decisions/2026-10-03-a-subject-is-derived-from-the-identity.md) |
 
+### The transport, under operator mode
+
+| invariant | kept true by |
+|---|---|
+| A caller **cannot reach a tool** | `estate.TestACallerCannotReachAToolSubject`, which asserts the server's *Permissions Violation for Publish* — the caller's own credential is the first wall, in front of the account boundary; a timeout alone would not count, since a slow tool times out too. The second wall, isolation, is `topology.TestTOOLSExportsPrivatelyAndOnlyGARMImportsIt`. **Meaningful only beside the next row**: it passes trivially while nothing can reach the tool, and in the spike it did exactly that until the tool's reply permission was fixed |
+| `rund` **reaches the tool it imports**, through the whole chain under operator mode | `estate.TestRundReachesTheToolItImports`. The pair above is why this is its own row |
+| A tool service cannot answer a tool it does not declare | `estate.TestAToolServiceCannotAnswerAnUndeclaredTool` — a *Permissions Violation* from the server, and `topology.TestAToolServiceMaySubscribeExactlyItsDeclaredTools` on the credential itself |
+| A tool service **can send its cross-account reply** | `topology.TestAToolServiceMayPublishTheCrossAccountReply` asserts `_R_.>`; removing it turns the row above into a **timeout**, not a refusal — the failure the permission exists to prevent. Not a test of its own: the estate's tool answers on a connection a test cannot watch, and a test written that way could never fail |
+| The server **refuses a connection that will not speak TLS** | `estate.TestPlainTextIsRefused`, speaking the protocol directly. Not through nats.go, which sees `tls_required` and upgrades on its own — a test written that way passed with TLS made optional, refused by its own certificate check rather than by the server |
+| Every test in the repository runs against a server **configured as production is** — operator mode, TLS, the full resolver | `estate.New`, which every chain test uses, builds its topology with the same generator a deployment runs |
+
 ### rund
 
 | invariant | kept true by |
@@ -140,7 +151,6 @@ for claims the code makes today that nothing checks.
 | Generated code never grows a transport dependency | The import-set test above is the enforcement for what is emitted. What it cannot say is that `serve` itself stays transport-free: today it imports only `context` and two protobuf packages, and nothing fails if a broker is added to it |
 | `Start` returns only once the subjects are **answering** | `Start` ends with `nc.Flush()` and micro never flushes on its own, so the guarantee is real — but **no test can lose the race it closes**. This table claimed "every other test in the package" enforced it; deleting the `Flush` and re-running them was green, because nats.go's flusher reaches the server long before a caller's request travels back. The test written to guard it was deleted rather than left reading as a guard |
 | `Track` is what the drain waits for | `natsmicro.TestAnUntrackedHandlerIsNotWaitedFor` records the **cost** of forgetting it, which is the opposite of enforcing it. `Track` is exported precisely so a caller can forget to call it, and nothing detects a handler that does |
-| **Only `rund` calls `garm.tool.<name>`** | The drawings and spec say this and **nothing enforces it**. A caller can publish on a tool subject directly, and protobuf cannot even tell the wrong message apart: an `InvokeRequest` was accepted by a tool because both carry a string in field 1, so the tool forecast the weather for a place named `weather.v1.get_forecast`. What would enforce it is a NATS account permission limiting publish on `garm.tool.>` to rund's credential |
 | A service name should end in `Service` | buf's `SERVICE_SUFFIX`, which `mise run lint` does enforce — but whether an **agent** should be named that way is undecided. An agent is a named actor rather than an RPC service. The fixture and examples comply rather than waive the rule, and the decision is still open |
 
 ## A note on the two fixture trees
