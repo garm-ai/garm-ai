@@ -720,7 +720,9 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
         <p>Accounts, exports, imports, per-service permissions. No new service, no
           tokens, nothing to verify — the server enforces all of it.</p>
         <p>Closes the hole where a misdirected request was answered because two
-          unrelated types both carry a string in field one.</p>
+          unrelated types both carry a string in field one. It establishes who called
+          and <b>decides nothing with it</b> — any caller may still invoke any tool
+          through rund. Gating is the authority model's job, later.</p>
       </div>
       <div class="card">
         <h3>2 · Connection identity <span class="s s-des">after</span></h3>
@@ -759,7 +761,11 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
         <li><b><code>rund</code>'s subscription moves</b> to the wildcard and begins
           reading the caller identity — which nothing yet <i>uses</i>, so it can be
           wrong without being dangerous.</li>
-        <li><b>Deployment credentials last</b>, when everything above is green.</li>
+        <li><b>Deployment credentials last</b>, when everything above is green — and
+          only once three things that are not code hold: the operator root is offline
+          and accounts are signed by a signing key; the generator runs in a controlled
+          issuance environment, never a laptop; and TLS is on. This is the one-way
+          door — step 2 reverts with a commit, this one is a rollout.</li>
       </ol>
     </div>
   </section>
