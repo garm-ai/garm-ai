@@ -1,16 +1,27 @@
 # garm-ai
 
-A second attempt, built thin and proven one step at a time.
+A second attempt at the garm platform core, built thin and proven one step at a
+time.
+
+Declare a tool as an RPC method carrying one option. Compose many repositories'
+declarations into one verified namespace. Generate the transport glue, so a tool
+author implements an interface and writes nothing else.
 
 ## Documentation
 
 - **[docs/concepts.md](docs/concepts.md)** — what a tool, an agent, an image and a
   catalogue are. Definitions, not descriptions.
 - **[docs/guide.md](docs/guide.md)** — building a tool and an agent, walking through
-  `examples/`, which `mise run ci` composes. Rename a field and the guide breaks in
-  CI rather than misleading somebody next month.
+  `examples/`, which `mise run ci` composes and compiles. Rename a field and the
+  guide breaks in CI rather than misleading somebody next month.
 - **[docs/invariants.md](docs/invariants.md)** — every invariant with the test that
   keeps it true, and a second table for the ones nothing checks yet.
+- **[docs/decisions/](docs/decisions/)** — one file per decision, titled by the
+  decision, each recording what was rejected and why.
+
+The step-by-step history is **`git log`**. Every commit message carries its own
+reasoning, and it is the one record that cannot drift from the code, because it is
+attached to the diff. This README says what exists; it is not a changelog.
 
 The old estate had **273,768 lines of markdown** and still shipped five concepts
 declared and enforced by nothing, a runbook whose tool counts read 10/3/4 where the
@@ -18,6 +29,24 @@ plane measured 14/8/5, and a README asserting artefacts were byte-identical when
 they were not. Volume was never the problem. Prose stating a fact nothing checks
 was. So: definitions are written, invariants name their test, and **numbers are
 generated** — `garmctl compose` prints the count, no document transcribes it.
+
+## What exists
+
+| | | |
+|---|---|---|
+| `proto/garm/tool/v1/tool.proto` | the whole contract | four fields. A tool declares a `name` and optionally an `agent` block |
+| `declared/` | what protobuf cannot express | indexes declarations by name, refuses a duplicate, resolves every allowlist entry |
+| `images/` | many repositories, one namespace | resolves `file://`, `s3://` and `https://`, verifies digests, merges and refuses divergence |
+| `cmd/garmctl` | the command people type | `garmctl compose images.yaml -o build/catalogue.binpb` |
+| `cmd/protoc-gen-garm-go` | the generator | a handler interface, `Serve<Service>`, and the names it answers. No `Unimplemented` embed |
+| `serve/` | the one interface generated code is written against | so generated code imports no broker |
+| `examples/` | the guide, executable | two buf modules, as two repositories |
+
+```
+mise install        the toolchain, from mise.toml and nowhere else
+mise run ci         lint and vet · generated Go matches the protos ·
+                    the declaration check · the examples composed · tests with -race
+```
 
 ## The rule this repository exists to keep
 
@@ -73,221 +102,11 @@ thing they demonstrate.
 Honest caveat: they now have the same *shape* — a tool service plus an agent. If a
 third fixture shape appears, that is the moment to check whether one can go.
 
-## Steps so far
+## What is next
 
-**Step 1 — an agent declares a name and the tools it may call.** Superseded in
-shape by step 2; its two properties survive.
-
-**Step 2 — everything is a tool, and an agent is a tool a runner answers.**
-
-A tool is an RPC method carrying `(garm.tool.v1.tool)`. It declares a `name`, and
-optionally an `agent` block. **Absent: a service answers the call itself.
-Present: a runner answers it, and the block says what that run may call.**
-
-The distinction is not tool-versus-agent. It is **who answers this call** — a
-service, or the platform. That is one optional field, not two option types at two
-attachment levels, which is what the previous estate had and what cost it a lint
-rule (`lintAgentDoorParity`) existing for no other purpose.
-
-Three properties, each with a test proved able to fail:
-
-1. **A tool's `name` is its one identity; its method's proto full name is an
-   address.** Direct fix for the two most expensive bugs of 2026-10-02, where a
-   thing had both and twice one was passed where the other was expected.
-2. **A plain tool declares no agent block**, and an agent declares one.
-3. **One namespace.** An allowlist entry names a tool by the same spelling the
-   tool declares. So an agent in another agent's allowlist needs no special case,
-   and "the allowlist is the only authority" became checkable: an entry either
-   resolves to a declared tool or it does not. Breaking this test by citing an
-   *address* in the allowlist reproduces the old bug exactly, and it fails.
-
-**Step 3 — the allowlist is enforced, not asserted.**
-
-An allowlist entry is a **string**. Protobuf cannot tell you whether any tool has
-that name: there is no import, no type reference, no compile error if it is wrong.
-buf confirmed this directly by rejecting the agent file's import of the tools it
-names as *unused* — the relationship is not expressible in proto.
-
-So `declared/` answers what protobuf cannot:
-
-- `From(files)` indexes every declaration by name, and **refuses two tools
-  claiming one name** — not a lint rule but a precondition, since a name
-  resolving to one thing is what allowlists, policy keys and ledger rows rest on.
-- `Unresolved()` returns every allowlist entry naming a tool nobody declared.
-
-`cmd/garm-check` runs it and **exits non-zero**, wired into `mise run ci` from the
-step it was written. A rule nobody runs is not a rule: the estate this replaces
-accumulated eight checks that were configured and never ran clean, each reading as
-a guarantee.
-
-It is a package rather than code inside the command because a gateway needs the
-same answer at run time that a linter needs at publish — and the previous estate's
-worst structural bug was two implementations of one idea, where a CEL dialect
-existed twice and the copies resolved types differently, so a guard could pass
-lint and fail at load.
-
-The fixture puts the agent in a different file from the tools it names, so a test
-can load a **partial** tree and watch the allowlist fail to resolve. That is not
-contrived: the previous estate shipped a `--proto` flag that compiled one
-directory and then judged it as the whole, reporting valid trees as broken.
-
-**Step 4 — many images become one namespace, at build time.**
-
-Tool definitions will live in different repositories, built by different teams at
-different times. `images.yaml` lists the built images that compose into one
-namespace; `garm-compose` resolves, merges, checks, and emits one artefact.
-
-Three things were established by experiment rather than assumed:
-
-1. **A naive merge always fails.** Every image carries its own copy of the shared
-   dependencies, and `protodesc.NewFiles` refuses a repeated path outright. So
-   deduplication by file path is not an optimisation, it is a precondition.
-2. **Cross-version tool definitions compose for free.** An image built against a
-   `tool.proto` the platform has never seen — carrying an extra field 99 the team
-   set — was read correctly, because options parse against *the reader's*
-   extension type. Protobuf's evolution rules already solve declaration drift.
-   What needs bytes to agree is a later concern: a gateway marshalling a request
-   a tool must unmarshal, which is what the previous estate's descriptor hash
-   protected. Two different problems, easily conflated.
-3. **A shared file with different bytes in two images is refused**, because taking
-   either copy silently means one team's tools are read against a contract they
-   never compiled against.
-
-**The merge happens at build time, not in a gateway at startup.** Nothing
-coordinates naming between repositories, so two teams can each declare
-`accounts.v1.get_customer` and neither will know. In CI that is a failure with
-somebody to tell; at boot it is a plane that will not start — which the previous
-estate experienced, and its own manifest records the date.
-
-So the collision error names **both images**, not just two file paths, since that
-is the only form a stranger in another repository can act on. `declared` reports a
-typed error carrying descriptors because it knows nothing about images; the
-provenance that turns those into sources lives in `garm-compose`.
-
-Remote fetchers (`s3://`, and git tags as `https://` release assets) are step 5,
-and the digest that makes them reproducible arrives with them — because a digest
-nothing verifies is a promise that reads like a guarantee.
-
-**Step 5 — one command, `garmctl`.**
-
-```
-garmctl compose images.yaml -o build/catalogue.binpb
-```
-
-Named `garmctl` rather than `garm` because the estate this replaces publishes a
-`garm` binary; during any migration both would be on `PATH`. The module paths
-differ so Go is untroubled — a shell is not.
-
-Cobra, and the reason was not "more commands are coming". The hand-rolled parsing
-it replaced swallowed unknown flags as positional arguments, did not support
-`-o=value`, and answered `--help` with `open --help: no such file or directory` —
-it tried to read `--help` as a manifest. That is not a thin tool, it is an
-unfinished one.
-
-### Two artefacts, and the difference matters
-
-| | built by | what it is |
-|---|---|---|
-| `build/image.binpb` | `buf build` | **one repository's** protos, compiled. What a team publishes |
-| `build/catalogue.binpb` | `garmctl compose` | **the merged, verified namespace**. What a platform runs |
-
-With one image the bytes are nearly identical, which makes the distinction easy to
-miss — and it is the one that matters. An *image* is one team's output; a
-*catalogue* is many images merged with every collision check passed. It is also
-why the package is `declared` and the artefact is `catalogue`: one is the view
-over descriptors, the other is the thing that was verified.
-
-**Step 6 — images resolve from a file, an S3 bucket, or a git tag.**
-
-```yaml
-schema: v1
-images:
-  - uri: file://build/image.binpb
-  - uri: s3://garm/images/accounts-v1.2.0.binpb
-    sha256: 9f2c…
-  - uri: https://github.com/acme/screening/releases/download/v1.4.0/screening.binpb
-    sha256: 4a81…
-```
-
-**A git tag resolves as an `https://` release asset** — the URL already encodes
-the tag, so there is no git client, no clone, and no credentials beyond whatever
-the forge wants. A `git+` fetcher that clones and reads a path from a tree earns
-its place only if somebody's image is not published as an asset.
-
-**`sha256` is required for remote schemes and optional for `file://`.** The
-asymmetry matches where the trust boundary is: an S3 object and a release asset
-can both be replaced in place, so a remote URI without a digest pins a *location*
-and not bytes. A local file is already in the tree under the same review as the
-code, and a digest to update on every rebuild is friction people route around.
-It is checked at **load**, before anything is downloaded, and verified **before
-unmarshalling** — a digest that only runs on bytes which happened to parse is a
-digest protecting the easy case.
-
-### Why there is no `garm.yaml`
-
-Credentials, region and endpoint are already an environment-level concern with a
-standard resolution order: `AWS_*` variables, `~/.aws/config`, instance roles. A
-file of our own duplicating them would be a second place to look when it does not
-work — and the previous estate's expensive failures were config claiming one thing
-while reality did another.
-
-One decision this forced into the open: path-style S3 addressing is **derived**
-from whether a custom endpoint is configured, not hardcoded. An earlier revision
-of this step set it to `true` unconditionally, because the estate's local plane
-runs an S3-compatible store — a deployment-specific choice made invisibly, and
-wrong against real AWS where path-style is deprecated.
-
-### What is deliberately absent, and why `mode` never arrives
-
-There is no `mode`, `type` or `kind` saying which runner answers an agent. That
-follows from an invariant the previous estate wrote down and then broke —
-`garmd/CLAUDE.md:21`: *"garmd does not know about agents. An agent is a tool: a
-service at a NATS subject."*
-
-If a runner is a NATS micro service like any other, which runner answers a given
-agent is decided by **which service registered the subject**, discovered the same
-way every other service is. The gateway routes by tool name and never learns that
-runners or agent types exist. A `mode` field would hand it that knowledge for
-nothing — and under the rule above it has no enforcer, because nothing reads it
-if routing is registration.
-
-**Step 7 — a generator, so a tool author implements an interface and nothing else.**
-
-`protoc-gen-garm-go`, invoked by `buf generate`. Per service with at least one
-tool it emits a handler interface, a `Serve<Service>` and the list of names that
-service answers. 102 lines for two tools; the estate it replaces emitted 230 for
-one, because cards were welded into the generator later and every consumer
-repository inherited the lot, regenerated, forever.
-
-So the rule, enforced by a test rather than stated: **the generator carries no
-policy opinion, and its output imports an exact set of four packages.** Widening
-that set is the decision to add a dependency to every consumer repository, and it
-takes a failing test to make.
-
-Three things it refuses or omits, none of which a committed artefact can show
-because a correct generator produces none of them:
-
-- **An agent gets no generated Go at all.** `examples/proto/trips` produces
-  `trips.pb.go` and no `trips_garm.pb.go` — a runner answers it, so a handler
-  method would be one nobody may implement. The rule is visible in the tree.
-- **Two tools in one plugin run claiming one name are refused**, through the same
-  `declared` code `garmctl compose` uses, over the smaller set a plugin can see.
-  The generator is **not** the uniqueness gate and cannot be: buf invokes it per
-  module, and naming the two **images** a collision came from needs the provenance
-  only compose holds.
-- **A streaming tool is refused with a sentence.** Emitted, it would fail to
-  compile and the author would read a type error about `proto.Message` instead of
-  the reason.
-
-Deferred deliberately: no `DescriptorHash` and no `ContractVersion` constant. The
-old generator stamped both; the hash is worth having and needs its own definition
-of wire shape plus a golden test that proves it moves on a field change and holds
-on a comment change. That is a step, not a side effect of this one.
-
-A thing this step found: `gen-check` was **green and blind**. It used
-`git diff --exit-code`, which cannot see an untracked file — so it would have
-passed for generated code that was *new*, which is exactly the case it exists to
-catch. It compares `git status --porcelain` now.
+**Nothing implements `serve.Registrar`**, so nothing mounts a handler yet. That is
+the next step: a NATS micro service transport, and the decision record for how a
+subject is derived from a tool name.
 
 ## What is deliberately absent
 
@@ -296,23 +115,12 @@ prompts, graph, or consent. Every one is real and most will return. They are
 absent because nothing enforces them yet, and in the old estate the authority
 model is where all four of 2026-10-02's bugs lived.
 
-## A convention decision deliberately deferred
+## Working on this
 
-buf's `STANDARD` lint has now fought the domain twice in two steps:
-`SERVICE_SUFFIX` wants `SupportAssistantService` where an agent is a named actor;
-`RPC_RESPONSE_STANDARD_NAME` wants `InvokeResponse` where one shared `RunRef`
-across every agent is better design, and `RPC_REQUEST_RESPONSE_UNIQUE` would
-object to the sharing too.
+One person, committing to `main`, with every step gated by review in conversation
+before the code exists — which is a tighter gate than a pull request, and consistent
+with this estate's standing rule that nothing is in production and we fix forward.
 
-The previous estate hit all three, configured `STANDARD` anyway, and **never ran
-it clean** — `examples/bank` emits eight violations today. So the config claimed
-one thing and the tree did another, and nothing noticed.
-
-The decision is not being dodged; it is deferred to the step that writes a real
-proto, with a reason, in the config. Until then **the fixture bends, not the
-ruleset** — because a lint nobody honours is worse than no lint, since it reads
-as a guarantee.
-
-`mise run ci` — lint and `go vet`, a check that the committed generated Go matches
-the protos, the declaration check, the examples composed as two repositories, and
-the tests.
+Branches and pull requests start at the first of: a second committer, or the first
+consumer repository pinning a tag of this one. That is when breaking `main` starts
+costing somebody else.
