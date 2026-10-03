@@ -1,7 +1,15 @@
 # Routing is registration, so there is no `mode` field
 
 **Date:** 2026-10-03
-**Status:** active — **retested by the transport step**, which is the first thing that could force a change
+**Status:** **substantially superseded** by
+[docs/specs/2026-10-03-rund-design.md](../specs/2026-10-03-rund-design.md) §7.0-§7.2,
+on the same day. What survives: a tool author never names somebody else's
+deployment, so *which instance* answers is still settled by registration. What does
+not: rund **must** know an agent is an agent, because driving a decider loop and
+making a call are different acts — and a decider is addressed by TYPE
+(`garm.runner.react`), not at the agent's own subject. The reasoning below was
+sound for a dumb router. rund owns runs, trees, retries and budgets, and is not
+one. — **retested by the transport step**, which is the first thing that could force a change
 
 **Decision.** No `mode`, `type` or `kind` field saying which runner answers an
 agent.

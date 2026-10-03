@@ -62,15 +62,113 @@ The fourth row is a contradiction, not merely unwise: both runner types are
 durable by definition, so an agent can never complete inside a call. Refused by
 `garmctl compose`, not left as a comment in an example.
 
-#### Why not route everything through a runner
+#### "Should everything go through a runner?" — the question equivocates
 
-The uniformity argument is real — one execution path, one place for retries and
-state. It is wrong here because **a plain tool call has no state machine**: one
-call, one answer, nothing to resume. A runner there is an executor for a program
-with one instruction, and it would turn a 2ms balance read into a durable
-multi-write. It would also mean no call works until a runner exists.
+Asked because retries, guardrails and budgets are needed by **every** call, not
+only by agents. That is correct, and it refutes an argument an earlier draft of
+this spec made: *"a plain tool call has no state machine — one call, one answer,
+nothing to resume."* **False the moment retries exist.** Attempt 1 fails
+`UNAVAILABLE`, wait 200ms, attempt 2 is a resumable state machine, and it is there
+for the dullest tool in the catalogue. A cost budget consumed across a run tree is
+stateful too.
 
-The uniformity that argument wants is already present one layer up. It is rund.
+The equivocation is on "runner":
+
+| | what it is | needed by |
+|---|---|---|
+| **the execution engine** | retries, guardrails, budget accounting, approval, state, the run tree, the event stream | **every call** |
+| **a step decider** | what to do next — an LLM loop, a graph | **only a multi-step program** |
+
+Retries and guardrails need the first. "ReAct runner" means the second. And the
+first is **rund itself**, which already resolves a tool, creates a run, applies
+approval policy, calls and stores.
+
+So: **rund is the engine; a runner is a decider plugged into it.** A plain tool's
+decider is the identity function — one step, already known, no code to write. A
+ReAct agent's decider is an LLM; a Workflow's is a graph. Every call gets the same
+lifecycle, and only "what next" varies.
+
+Both answers to the original question are therefore true in different words: every
+call goes through the same execution machinery, and no call goes through an
+*executor of a program* unless there is a program.
+
+### 1.0.1 Retries, guardrails and budgets are the engine's, and that decides §7.1
+
+Three uniform concerns, none of which may be declared yet, all of which belong to
+rund rather than to any runner:
+
+| | where it lives | why not in a runner |
+|---|---|---|
+| **retries** | the engine, keyed on error **kind** — `UNAVAILABLE` retries, `INVALID` never | a per-runner copy would make retry semantics depend on which runner answered |
+| **guardrails** | the engine, before and after each call | a check that only some callers get is not a check |
+| **budgets** | the engine, accounted across the run **tree** | a child cannot know what its siblings have already spent |
+
+**This is the decisive argument for §7.1(a).** If a runner drives its own loop,
+then every runner type must implement guardrails, budget accounting and retry
+policy — ReAct gets a copy, Workflow gets a copy, and they diverge. That is
+exactly the failure this repository was started to avoid: the previous estate's CEL
+dialect existed twice and a guard could pass lint and fail at load. A pure-reducer
+runner cannot diverge, because it contains none of it.
+
+The price is chattiness, and it is real: decide → act → decide means two round
+trips and a persist per step, so an eight-step run is roughly sixteen round trips
+and eight writes. Affordable for runs measured in seconds to minutes that may wait
+on a person — and optimisable later (batched decisions, co-location) **without
+changing the contract**, which is the test that matters.
+
+**Retries interact with delivery, and not as a special case.** A sync call may
+retry *in memory*, bounded by its declared budget: if the next attempt would not
+fit in the remaining budget, it is not made. A retry that must outlive the call
+requires `async`. So the fast path keeps retries without a store, by the same
+budget rule rather than an exception to it.
+
+**A cost budget is not `Sync.budget`.** That one is time. Tokens, money and call
+counts are a different field with a different enforcer — an accountant that does
+not exist — so they are designed here and declared nowhere.
+
+### 1.0.2 What this collapses, and the part that should worry us
+
+`rund` is three of the previous estate's components:
+
+| old | its job | where it went |
+|---|---|---|
+| `garmd` | route by tool name, enforce policy, hot path, **no Postgres** | rund |
+| `agentd` | the durable loop, DBOS, owned no schema | rund (state) + a decider (the loop) |
+| `tasksd` | human approvals, as a tool, with its own schema, migrations and a sweeper | **dissolved** |
+| `sts` | token exchange | **unchanged**, still separate |
+
+`tasksd` dissolving is the clearest win: once runs are durable, "waiting for a
+person" is a **state**, not a subsystem. A daemon with a schema and a sweeper
+becomes two fields on a run and one RPC.
+
+**And the part that should worry us.** That estate's constraint was emphatic —
+garmd was to have no Postgres access and no knowledge of migrations or databases.
+rund takes garmd's job *and* agentd's store, which overturns it. The reasons still
+hold: a component in the hot path of every call now has a database dependency, so
+a slow or unavailable store can take down calls that never needed it, and the
+blast radius of the thing every caller talks to has grown.
+
+Un-collapsing is not the answer — that split cost a ten-step chain between an
+agent and a tool, four bugs in series on one endpoint each masking the next, and a
+day to get the plane back. But the constraint was not arbitrary and this spec does
+not get to wave it away.
+
+**So: collapse the contract, keep the store boundary crossable.** The split falls
+along the sync/async line for free:
+
+| | needs | touches the store |
+|---|---|---|
+| sync | routing, guardrails, in-memory retries, the call | **no** |
+| async | a run, a tree, approval, events | yes |
+
+One proto surface and one logical component, with the property that the stateless
+path *provably* does not need the store. Separating them later is then a deployment
+decision rather than a redesign — one binary with two roles, or two binaries, is a
+question operational reality answers.
+
+Which makes it a **testable invariant rather than an intention**: *a sync call
+touches no store.* Trivially true in step 9, which has no store; the step that adds
+one has to keep it true.
 
 ### 1.1 Two layers
 
@@ -380,7 +478,109 @@ is the named enforcer for "some tools must never allow HITL".
 
 ---
 
-## 7. Runner types, and a partial retraction
+## 7. Runner types, how a decider is addressed, and a substantial retraction
+
+### 7.0 A decider is not addressed like a tool
+
+The engine/decider model of §1.0.1 breaks an invariant this design had been
+protecting, and it is better to say so than to let it erode quietly.
+
+> garmd does not know about agents. An agent is a tool: a service at a NATS
+> subject. — `garmd/CLAUDE.md:21`, the previous estate
+
+rund calls a decider **repeatedly**, and the shapes differ:
+
+```
+a tool subject:     (request)      → response                 answered ONCE
+a decider subject:  (state, event) → (new state, actions)     answered MANY TIMES
+```
+
+You cannot drive a loop against something that answers once. So "an agent is a
+tool at a subject" is false under this model **however deciders are addressed**,
+and the question is only which addressing is better.
+
+**Deciders are addressed by TYPE:**
+
+```
+garm.runner.react       one service, serving EVERY ReAct agent
+garm.runner.workflow
+```
+
+Because a decider is **type-shaped, not agent-shaped**: it is generic machinery
+parameterised by an agent's declaration — prompt, allowlist, step limit — and
+nothing agent-specific lives in it. Deploying one per agent would be absurd.
+
+The operational payoff is the decisive part: **declaring a new ReAct agent
+requires no deployment.** The alternative, a decider subscribing to each agent's
+own subject, means every new agent needs the runner to pick it up.
+
+And note what a **caller** does with any of this: nothing. A client calls
+`garm.run.v1.invoke` with a tool name and knows no subject, no runner and no type.
+A client that routed by runner type would know something it must never need.
+
+### 7.0.1 Three deciders, one of them built in
+
+| decider | where it runs | serves |
+|---|---|---|
+| **single-step** | **in-process in rund** | every plain tool — sync *and* async |
+| **ReAct** | `garm.runner.react` | agents declaring `react` |
+| **Workflow** | `garm.runner.workflow` | agents declaring `workflow` |
+
+One decider *interface*, three implementations, two of them deployed. The same
+shape as `serve.Registrar` and `natsserve`: an interface this repository owns, with
+transports behind it.
+
+**The single-step decider is NOT a deployed service**, and that is deliberate. Its
+entire logic is "call the one tool, you are done", so a round trip to a service for
+it costs two hops on a 2ms read — and worse, it would make a plain call depend on a
+deployed runner, which is exactly what stops step 9 from being thin.
+
+**It is also not called "sync", because that is the wrong axis.**
+`payments.v1.freeze_account` is **single-step AND async**: one tool call, but a
+person may approve it first. Naming the decider after delivery would leave that case
+homeless.
+
+| | steps | decider | delivery |
+|---|---|---|---|
+| `payments.v1.get_balance` | 1 | built-in | sync |
+| `payments.v1.freeze_account` | 1 | built-in | **async** (approval) |
+| `assist.v1.payment_triage` | n | ReAct | async |
+| — | n | ReAct / Workflow | **sync: impossible** (§1.0) |
+
+It needs no new field. `runner` lives inside `Agent`, so absence already says it:
+
+| declaration | decider |
+|---|---|
+| no `agent` block | built-in single-step |
+| `agent { react: {…} }` | `garm.runner.react` |
+| `agent { workflow: {…} }` | `garm.runner.workflow` |
+| `agent {}` with no runner set | **refused at compose** |
+
+So rund has **one code path** — drive a decider — and no `if sync { call directly }`
+branch. That matters beyond tidiness: a second path is where guardrails and budget
+accounting get applied twice, or once.
+
+**And step 9 ships only the built-in**, which is the real reason to do it this way.
+The decider interface is then designed by a working implementation from the start,
+rather than invented when the first ReAct runner arrives and found to be the wrong
+shape. Same discipline as letting a real consumer design the client.
+
+### 7.1 What survives of routing-is-registration
+
+| | decided by |
+|---|---|
+| *what kind of thing* answers — a tool, or a ReAct/Workflow decider | **declared** |
+| *which instance* answers — `react-v2` or `react-experimental` | **registration**, on `garm.runner.react` |
+
+rund must know an agent is an agent, because driving a loop and making a call are
+different acts. That invariant was true of a **dumb router**; rund owns the run,
+the tree, retries and budgets, and is not one.
+
+So [routing-is-registration](../decisions/2026-10-03-routing-is-registration.md) is
+substantially superseded, and the half that survives is the half that was always
+the real point: a tool author never names somebody else's deployment.
+
+### 7.2 Runner types in the declaration
 
 [routing-is-registration](../decisions/2026-10-03-routing-is-registration.md)
 says there is no runner type field because *"nothing reads it if routing is
@@ -412,7 +612,7 @@ oneof runner { ReAct react = 2; Workflow workflow = 3; }
 so `type says X / content says Y` is unrepresentable, and adding a type is
 additive.
 
-### 7.1 OPEN: who owns a runner's state
+### 7.3 Who owns a runner's state
 
 The biggest unresolved question, and it does not block step 9.
 
@@ -425,10 +625,11 @@ round trip.
 state. Natural for DBOS, but two stores, and "who is authoritative about a paused
 run" becomes a real question.
 
-Recommendation leans (a), because one store and a pure-function runner are worth a
-great deal and because a runner calling tools **through rund** is what keeps
-allowlist enforcement in one place. Decide it in the step that builds the first
-runner.
+**Decided: (a)**, and §1.0.1 is why. One store and a pure-function runner are worth
+a great deal on their own, but the argument that settles it is that guardrails,
+retry policy and budget accounting would otherwise be implemented once per runner
+type and diverge. The chattiness is the price, it is quantified in §1.0.1, and it
+is optimisable without a contract change.
 
 ---
 
@@ -506,6 +707,8 @@ made and not only when the tree is composed.
 ### 9.1 Step 9 — the sync fast path, no store
 
 - `garm/run/v1` with **`Invoke` and `Fetch` only**
+- the decider interface, with **only the built-in single-step implementation** — so
+  the interface is proved by a real consumer and no runner need be deployed
 - `cmd/rund`, loading `catalogue.binpb`
 - `call.Invoker` + `natscall`, and a generated typed client
 - correlation + causation + message ids and `traceparent`, caller → rund → tool
@@ -529,6 +732,9 @@ runner, no HITL.
 | `ProvideContext`, `Answer`, `Question`, `NeedsInfo`, `Progress` | a runner |
 | runner types in `Agent` | a runner |
 | cards of any kind | a renderer |
+| retry policy | the store, for anything outliving a call |
+| guardrails | something to check, i.e. the authority model |
+| cost budgets | an accountant |
 | JetStream replay for late subscribers | a UI that needs history |
 
 Every row is a field or an RPC that **must not be declared** before its row's
@@ -549,6 +755,7 @@ is built.
 | Approval policy on a sync tool is refused | rund refuses at load |
 | An agent whose budget is below its allowlist's max is refused | `garmctl compose` |
 | An agent declaring `sync` is refused | `garmctl compose` — both runner types are durable, so it cannot complete inside a call |
+| rund has one execution path, not two | the built-in decider is the only implementation in step 9, and the sync path goes through it — so there is no second path to drift |
 | A sync call reaches the tool with **no runner in the path** | the step 9 e2e test, which runs no runner at all |
 | `Fetch` on a sync run says it is not retained | and does not fabricate a result |
 | A tool name rund cannot resolve is `NOT_FOUND`, naming the catalogue | not `INTERNAL` |

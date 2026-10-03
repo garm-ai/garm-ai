@@ -36,7 +36,7 @@ alternative was considered.
 | [Images resolve from a file, an S3 bucket, or a release asset](2026-10-03-images-resolve-from-three-schemes.md) | active | and why remote requires a digest |
 | [There is no config file of our own](2026-10-03-there-is-no-garm-yaml.md) | active | and the path-style choice that proved the rule |
 | [`garmctl`, and the two artefacts it tells apart](2026-10-03-garmctl-and-the-two-artefacts.md) | active | an image is one team's; a catalogue is verified |
-| [Routing is registration, so there is no `mode` field](2026-10-03-routing-is-registration.md) | active, **retested by the transport step** | the gateway never learns that agents exist |
+| [Routing is registration, so there is no `mode` field](2026-10-03-routing-is-registration.md) | **substantially superseded** by the rund spec §7 | survives only as: a tool author never names somebody else's deployment |
 | [The generator carries no policy opinion](2026-10-03-the-generator-carries-no-policy-opinion.md) | active | 230 lines became 102, and an exact import set |
 | [A subject is derived from the identity, not the address](2026-10-03-a-subject-is-derived-from-the-identity.md) | active | and the three-step drain whose first test was vacuous |
 | [Errors carry a kind, and leave the cause at home](2026-10-03-errors-carry-a-kind-and-leave-the-cause-home.md) | active | five kinds, not HTTP codes; safe by default |
