@@ -34,10 +34,9 @@ description = "Refuse a tree whose declarations do not hold together"
 # nothing but this will tell you an entry resolves to nothing.
 run = """
 set -e
-img=$(mktemp -t garm-image).binpb
-buf build -o "$img"
-go run ./cmd/garm-check "$img"
-rm -f "$img"
+mkdir -p build
+buf build -o build/image.binpb
+go run ./cmd/garm-compose images.yaml -o build/catalogue.binpb
 """
 
 [tasks.lint]

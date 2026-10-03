@@ -1,0 +1,10 @@
+# What composes into this repository's namespace.
+#
+# One image today, built from this repo's own protos. The shape is the same for
+# many: tool definitions will live in different repositories, each publishing a
+# built image, and `garm-compose` merges them into one namespace at BUILD time so
+# a cross-repo name collision is a CI failure rather than a gateway that will not
+# start.
+schema: v1
+images:
+  - uri: file://build/image.binpb

@@ -2,3 +2,4 @@
 # see exactly what the options compile to without running buf. The old estate
 # learned this the hard way -- a descriptor you cannot read is a descriptor
 # nobody checks.
+build/

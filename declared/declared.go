@@ -24,6 +24,21 @@ import (
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
 )
 
+// DuplicateName is two tools claiming one name.
+//
+// It carries both ADDRESSES because the name alone says neither, and a human
+// fixing this has to know which two declarations to open. A caller that knows
+// which image each file came from can turn those into two repositories.
+type DuplicateName struct {
+	Name          string
+	First, Second protoreflect.MethodDescriptor
+}
+
+func (e *DuplicateName) Error() string {
+	return fmt.Sprintf("two tools declare the name %q: %s and %s",
+		e.Name, e.First.FullName(), e.Second.FullName())
+}
+
 // Tool is one declaration, with its identity and its address kept distinct by
 // the type itself.
 //
@@ -77,10 +92,13 @@ func From(files *protoregistry.Files) (*Set, error) {
 					continue
 				}
 				if prev, clash := s.byName[t.Name]; clash {
-					// Both addresses, because a human fixing this needs to know
-					// which two files to open, and the name alone says neither.
-					dup = fmt.Errorf("two tools declare the name %q: %s and %s",
-						t.Name, prev.Method.FullName(), t.Method.FullName())
+					// A TYPED error carrying both descriptors, not a formatted
+					// string. When tool definitions come from different
+					// repositories the useful message names two IMAGES -- and
+					// therefore two teams -- which only a caller holding the
+					// merge's provenance can say. Structured here, presented at
+					// the edge.
+					dup = &DuplicateName{Name: t.Name, First: prev.Method, Second: t.Method}
 					return false
 				}
 				s.byName[t.Name] = t

@@ -89,6 +89,43 @@ can load a **partial** tree and watch the allowlist fail to resolve. That is not
 contrived: the previous estate shipped a `--proto` flag that compiled one
 directory and then judged it as the whole, reporting valid trees as broken.
 
+**Step 4 — many images become one namespace, at build time.**
+
+Tool definitions will live in different repositories, built by different teams at
+different times. `images.yaml` lists the built images that compose into one
+namespace; `garm-compose` resolves, merges, checks, and emits one artefact.
+
+Three things were established by experiment rather than assumed:
+
+1. **A naive merge always fails.** Every image carries its own copy of the shared
+   dependencies, and `protodesc.NewFiles` refuses a repeated path outright. So
+   deduplication by file path is not an optimisation, it is a precondition.
+2. **Cross-version tool definitions compose for free.** An image built against a
+   `tool.proto` the platform has never seen — carrying an extra field 99 the team
+   set — was read correctly, because options parse against *the reader's*
+   extension type. Protobuf's evolution rules already solve declaration drift.
+   What needs bytes to agree is a later concern: a gateway marshalling a request
+   a tool must unmarshal, which is what the previous estate's descriptor hash
+   protected. Two different problems, easily conflated.
+3. **A shared file with different bytes in two images is refused**, because taking
+   either copy silently means one team's tools are read against a contract they
+   never compiled against.
+
+**The merge happens at build time, not in a gateway at startup.** Nothing
+coordinates naming between repositories, so two teams can each declare
+`accounts.v1.get_customer` and neither will know. In CI that is a failure with
+somebody to tell; at boot it is a plane that will not start — which the previous
+estate experienced, and its own manifest records the date.
+
+So the collision error names **both images**, not just two file paths, since that
+is the only form a stranger in another repository can act on. `declared` reports a
+typed error carrying descriptors because it knows nothing about images; the
+provenance that turns those into sources lives in `garm-compose`.
+
+Remote fetchers (`s3://`, and git tags as `https://` release assets) are step 5,
+and the digest that makes them reproducible arrives with them — because a digest
+nothing verifies is a promise that reads like a guarantee.
+
 ### What is deliberately absent, and why `mode` never arrives
 
 There is no `mode`, `type` or `kind` saying which runner answers an agent. That
