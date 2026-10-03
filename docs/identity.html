@@ -321,6 +321,18 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
       <p>It is also the architectural reason the standing rule holds: the token is
         attached by the engine's own call path, below anything a model can influence.
         A model cannot set it for the same reason it cannot set an idempotency key.</p>
+      <p><b>A naming problem, inherited.</b> <code>cnf</code> is RFC 7800's
+        <i>confirmation</i> claim, and it means something precise: the presenter
+        possesses a particular key and the recipient can <b>cryptographically
+        confirm</b> it. Its registered members are key representations —
+        <code>jwk</code>, <code>kid</code>, <code>jkt</code>. The previous estate wrote
+        <code>cnf = { sub: runner }</code>, which is not a key and confirms nothing
+        cryptographically: it borrows the name and drops the mechanism. The property
+        is real here all the same, and arrives from a better place — NATS proves
+        possession of the presenter's key at connect, and the account identity is
+        placed in the subject by the server. Either conform to the RFC or rename the
+        claim; keeping the name without the mechanism is the one option to rule
+        out.</p>
     </div>
   </section>
 

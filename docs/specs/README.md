@@ -26,13 +26,15 @@ on, and the rule that none of it may be *declared* before its condition holds.
 Without that a spec becomes a list of promises, which is how the previous estate
 shipped five concepts enforced by nothing.
 
-Two drawings are the visual index to the rund spec:
-[../architecture.html](../architecture.html) for the logical flow, and
-[../deployment.html](../deployment.html) for the topology and two traced calls. They
-use the same built / next / designed-only distinction. **Change one and check the
+Three drawings are the visual index:
+[../architecture.html](../architecture.html) for the logical flow,
+[../deployment.html](../deployment.html) for the topology and two traced calls, and
+[../identity.html](../identity.html) for the identity model and the transport
+security it rests on. They use the same built / next / designed-only distinction. **Change one and check the
 others** — the deployment page already carries a correction the spec had to be
 amended to match (§7.3).
 
 | spec | status |
 |---|---|
 | [rund — the run manager](2026-10-03-rund-design.md) | active — step 9 builds §9.1 only |
+| [identity and transport security](2026-10-04-identity-and-transport-security-design.md) | active — §2–§10 are step 9d; §11 sketches what follows |

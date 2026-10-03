@@ -56,7 +56,7 @@ generated client it did not write, over a transport it does not import.
 | Approval, `ApprovalNeeded`, and policy that may interpose a human | the run store **and** the authority model |
 | Guardrails before and after a call | something to check — the authority model |
 | Cost budgets across a run tree | an accountant |
-| Enforcing that only rund calls `garm.tool.>` | NATS account permissions. Today the two-layer split is a convention, and protobuf cannot distinguish a wrongly-addressed message from a right one |
+| Enforcing that only rund calls `garm.tool.>` | **nothing — it is next.** [Designed and proved](specs/2026-10-04-identity-and-transport-security-design.md) as step 9d: NATS accounts make the subject absent from a caller's namespace rather than refused |
 | Refusing a reused idempotency key whose **input differs** | the run store. DBOS ignores the new input and returns the old result, which is a correct-looking answer to a question nobody asked |
 | A task list filtered by **compartment and principal** | the authority model — and a projection table, since JSONB containment is AND-only and cannot express "any of my compartments" |
 | rund owning a schema and migrations | a listing surface that needs OR queries and real pagination. A deliberate step, because it concedes the second half of the original no-database constraint |
@@ -65,6 +65,8 @@ generated client it did not write, over a transport it does not import.
 | Hot reload of the catalogue, converging every replica | a trigger — a JetStream KV key an operator sets |
 | A descriptor hash over wire shape | two repositories on two contract versions, so drift can exist |
 | Catalogue signing | a threat model that says digest-pinning is not enough |
+| A caller's identity, proved rather than asserted | **nothing — it is next.** §3 of the identity spec: the server puts the caller's account key in the subject |
+| A person's identity, and standing grants | the identity spec's slices 2 and 3 — an auth-callout service, then a grant store |
 
 ## The authority model, absent as a block
 
