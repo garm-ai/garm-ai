@@ -115,6 +115,8 @@
   pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.65; background: var(--surface-2);
         border: 1px solid var(--line); border-radius: 9px; padding: 15px 17px; overflow-x: auto; margin: 18px 0 0; }
   .note { font-size: 14px; color: var(--muted); margin-top: 14px; }
+  .links { margin-top: 40px; font-family: var(--mono); font-size: 13px; }
+  .links a { color: var(--accent-ink); }
   @media (prefers-reduced-motion: reduce) { .an, .ae, .ae path { transition: none; } }
 </style>
 
@@ -255,9 +257,10 @@
     <text x="480" y="510">persist, THEN publish</text></g>
   <g class="ae rec"><path d="M770 572 L790 572" marker-end="url(#a-rec)"/></g>
 
-  <g class="an later"><rect x="250" y="540" width="200" height="64" rx="9"/>
-    <text class="t1" x="350" y="566" text-anchor="middle">The run store</text>
-    <text class="t2" x="350" y="583" text-anchor="middle">runs · steps · the tree</text></g>
+  <g class="an later"><rect x="250" y="540" width="200" height="66" rx="9"/>
+    <text class="t1" x="350" y="562" text-anchor="middle">The run store</text>
+    <text class="t2" x="350" y="578" text-anchor="middle">DBOS · Postgres · ASYNC ONLY</text>
+    <text class="t2" x="350" y="592" text-anchor="middle">runs · steps · the tree</text></g>
   <g class="an later"><rect x="560" y="540" width="210" height="64" rx="9"/>
     <text class="t1" x="665" y="566" text-anchor="middle">garm.run.event.&lt;id&gt;</text>
     <text class="t2" x="665" y="583" text-anchor="middle">progress · questions · done</text></g>
@@ -318,7 +321,7 @@
       </table>
     </div>
     <p class="note">The last row is a contradiction, not merely unwise: both decider
-      types are durable by definition, so an agent can never complete inside a call.
+      kinds are durable by definition, so an agent can never complete inside a call.
       Refused by <code>garmctl compose</code>.</p>
   </section>
 
@@ -359,15 +362,21 @@
       and it is <code>rund</code>. A <b>decider</b> only answers “what next”, and only a
       multi-step program has one.</p>
     <div class="card warn" style="margin-top:22px">
-      <h3>And that settles who owns a decider's state</h3>
-      <p>If a decider drove its own loop, every decider kind would carry its own copy of
-        guardrails, retry policy and budget accounting — and they would diverge. That is
-        the exact failure this repository was started to avoid: in the estate it replaces,
-        one CEL dialect existed twice and a guard could pass lint then fail at load.</p>
-      <p>So a decider is a <b>pure reducer</b>: <code>(state, event) → (new state, actions)</code>.
-        It cannot diverge, because it contains none of it. The price is chattiness —
-        roughly two round trips and one write per step — which is affordable for runs
-        measured in minutes, and optimisable later without a contract change.</p>
+      <h3>An earlier version of this page got the next bit wrong</h3>
+      <p>It said a decider must therefore be a <b>pure reducer</b>, because otherwise each
+        kind would carry its own guardrails, retries and budget accounting and they would
+        diverge. <b>That is false.</b> A decider's tool calls go back <em>through</em>
+        <code>rund</code>, so <code>rund</code> applies all three whoever started the call.
+        Nothing was ever duplicated. Asking how DBOS and Temporal would both be deployed is
+        what exposed it.</p>
+      <p>What a decider actually owns is only its own orchestration position — which is
+        exactly what DBOS and Temporal exist to own. So a decider may keep durable state of
+        its own, <em>or</em> be a reducer whose state <code>rund</code> checkpoints. One
+        <code>Report</code> channel serves both, and the interface does not have to choose.</p>
+      <p><b><code>rund</code> has no such choice.</b> A single-step <code>async</code> call
+        has no decider in its path at all, so there is nobody else to hold the run. That is
+        why <code>rund</code> uses <b>DBOS</b>, behind a narrow port — with Postgres on the
+        asynchronous path and <b>nothing whatsoever on the synchronous one</b>.</p>
     </div>
   </section>
 
@@ -432,6 +441,10 @@ res, err := ref.Await(ctx)
       handler interface having no <code>Unimplemented</code> embed. The alternative is a
       caller waiting forever for an answer that has quietly become a receipt.</p>
   </section>
+  <p class="links">→ <a href="deployment.html">the deployment view: DBOS and Temporal, and a
+     call traced into a core banking system</a>
+     &nbsp;·&nbsp; <a href="specs/2026-10-03-rund-design.md">the rund spec</a>
+     &nbsp;·&nbsp; <a href="decisions/">the decisions, with what each one rejected</a></p>
 </div>
 
 <script>
