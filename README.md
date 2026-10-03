@@ -16,6 +16,9 @@ author implements an interface and writes nothing else.
   guide breaks in CI rather than misleading somebody next month.
 - **[docs/invariants.md](docs/invariants.md)** — every invariant with the test that
   keeps it true, and a second table for the ones nothing checks yet.
+- **[docs/specs/](docs/specs/)** — how a component works, with numbered call
+  stacks. **Specs for this repository live in this repository**, not in the private
+  design record beside it.
 - **[docs/decisions/](docs/decisions/)** — one file per decision, titled by the
   decision, each recording what was rejected and why. Each carries a `**Status:**`
   line from `active · parked · superseded by <file>` — grep it before trusting a
