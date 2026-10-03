@@ -17,6 +17,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"os"
@@ -77,8 +78,90 @@ type Estate struct {
 	tls     *tls.Config
 	topo    *topology.Output
 	creds   map[Role]topology.Credential
+	keys    topology.Keys
 	rundLog *lockedBuffer
 	caPEM   []byte
+}
+
+// Reissue runs the generator again, against THIS estate's manifest and keys, for a
+// different catalogue -- which is what a deployment does when a tool is added or
+// retired. The output's revocations are in its account JWTs; PushAccount is how
+// they reach the server.
+func (e *Estate) Reissue(t *testing.T, cat *catalogue.Catalogue) *topology.Output {
+	t.Helper()
+	out, err := topology.Generate(topology.Input{
+		Catalogue: cat, Callers: []string{string(RoleCaller)},
+		Previous: &e.topo.Manifest, Keys: e.keys, Now: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("reissuing: %v", err)
+	}
+	e.topo = out
+	return out
+}
+
+// PushAccount updates one account on the running server the way operations does:
+// over $SYS, with the operations credential, through the full resolver. A revoked
+// user's live connection closes as a result (spec §5) -- that is what the test
+// that calls this is watching.
+func (e *Estate) PushAccount(t *testing.T, encoded string) {
+	t.Helper()
+	ac, err := jwt.DecodeAccountClaims(encoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ops := e.Connect(t, RoleOps)
+	reply, err := ops.Request("$SYS.REQ.ACCOUNT."+ac.Subject+".CLAIMS.UPDATE", []byte(encoded), 5*time.Second)
+	if err != nil {
+		t.Fatalf("pushing %s: %v", ac.Name, err)
+	}
+	var resp struct {
+		Error *struct {
+			Description string `json:"description"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(reply.Data, &resp); err != nil {
+		t.Fatalf("pushing %s: unreadable reply %q", ac.Name, reply.Data)
+	}
+	if resp.Error != nil {
+		t.Fatalf("pushing %s: the server refused it: %s", ac.Name, resp.Error.Description)
+	}
+}
+
+// EmptyCatalogue has files but declares no tool -- the catalogue a deployment has
+// after retiring everything, which is the sharpest case for a reissue.
+func EmptyCatalogue(t *testing.T) *catalogue.Catalogue {
+	t.Helper()
+	dep := weatherv1.File_weather_v1_weather_proto.Imports().Get(0).FileDescriptor
+	var all []*descriptorpb.FileDescriptorProto
+	seen := map[string]bool{}
+	var add func(protoreflect.FileDescriptor)
+	add = func(fd protoreflect.FileDescriptor) {
+		if seen[fd.Path()] {
+			return
+		}
+		seen[fd.Path()] = true
+		for i := 0; i < fd.Imports().Len(); i++ {
+			add(fd.Imports().Get(i).FileDescriptor)
+		}
+		all = append(all, protodesc.ToFileDescriptorProto(fd))
+	}
+	add(dep)
+	raw, err := proto.Marshal(&descriptorpb.FileDescriptorSet{File: all})
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "e.binpb"), raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(raw)
+	c, err := catalogue.Load(context.Background(), &fetch.Resolver{Dir: dir},
+		fetch.Artefact{URI: "file://e.binpb", SHA256: hex.EncodeToString(sum[:])})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
 }
 
 // CredsFile writes a role's credential in NATS creds format -- what a command's
@@ -152,7 +235,7 @@ func New(t *testing.T) *Estate {
 	if err != nil {
 		t.Fatalf("generating the topology: %v", err)
 	}
-	e.topo = topo
+	e.topo, e.keys = topo, keys
 	e.creds = map[Role]topology.Credential{}
 	for _, c := range topo.Credentials {
 		e.creds[Role(c.Name)] = c
@@ -243,12 +326,21 @@ func New(t *testing.T) *Estate {
 // the test.
 func (e *Estate) Connect(t *testing.T, as Role) *nats.Conn {
 	t.Helper()
+	return e.ConnectWith(t, as)
+}
+
+// ConnectWith is Connect plus options a test needs to observe the connection --
+// nats.NoReconnect and a ClosedHandler, for a test watching a revocation land.
+func (e *Estate) ConnectWith(t *testing.T, as Role, extra ...nats.Option) *nats.Conn {
+	t.Helper()
 	c, ok := e.creds[as]
 	if !ok {
 		t.Fatalf("no credential for role %q", as)
 	}
-	nc, err := nats.Connect(e.URL,
-		nats.UserJWTAndSeed(c.JWT, c.Seed), nats.Secure(e.tls), nats.Name(string(as)))
+	opts := append([]nats.Option{
+		nats.UserJWTAndSeed(c.JWT, c.Seed), nats.Secure(e.tls), nats.Name(string(as)),
+	}, extra...)
+	nc, err := nats.Connect(e.URL, opts...)
 	if err != nil {
 		t.Fatalf("%s could not connect: %v", as, err)
 	}
