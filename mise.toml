@@ -100,7 +100,7 @@ description = "Refuse a tool author's build that can reach a message broker"
 # which existed for the same reason and is the one boundary check there that worked.
 run = """
 set -e
-for pkg in ./serve ./declared ./images ./examples/gen/...; do
+for pkg in ./serve ./declared ./images ./fetch ./examples/gen/...; do
   if go list -deps "$pkg" 2>/dev/null | grep -q 'nats-io'; then
     echo "$pkg reaches a NATS package:" >&2
     go list -deps "$pkg" | grep 'nats-io' >&2

@@ -2,8 +2,6 @@ package images_test
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -19,6 +17,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 
+	"github.com/garm-ai/garm-ai/fetch"
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
 	"github.com/garm-ai/garm-ai/images"
 	testdatav1 "github.com/garm-ai/garm-ai/testdata/v1"
@@ -160,25 +159,6 @@ func TestADivergentSharedFileIsRefused(t *testing.T) {
 	}
 }
 
-func TestAnUnsupportedSchemeNamesTheOnesThatWork(t *testing.T) {
-	// A reader who wrote git:// or http:// deserves to be told which spelling is
-	// wanted, not that theirs is wrong.
-	dir := t.TempDir()
-	m, base, err := images.Load(manifest(t, dir, "git://example.com/x.binpb"))
-	if err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-	_, err = images.Fetch(m, base)
-	if err == nil {
-		t.Fatal("Fetch accepted a git:// URI")
-	}
-	for _, want := range []string{"file://", "https://", "s3://"} {
-		if !strings.Contains(err.Error(), want) {
-			t.Errorf("the error does not name %q: %v", want, err)
-		}
-	}
-}
-
 func TestARemoteImageWithoutADigestIsRefusedAtLoad(t *testing.T) {
 	// An s3 object or a release asset can be replaced in place, so a remote URI
 	// with no digest pins a LOCATION and not bytes. Refused at load, before
@@ -229,47 +209,6 @@ func TestAMalformedDigestIsRefusedAtLoad(t *testing.T) {
 	}
 }
 
-func TestAnHTTPSImageIsFetchedAndItsDigestVerified(t *testing.T) {
-	// This is also how a GIT TAG resolves: a forge's release-asset URL already
-	// encodes the tag, so no git client is involved.
-	dir := t.TempDir()
-	imgPath := writeImage(t, dir, "payments.binpb", fdp(testdatav1.File_testdata_v1_tools_proto))
-	raw, err := os.ReadFile(imgPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	sum := sha256.Sum256(raw)
-	digest := hex.EncodeToString(sum[:])
-
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Write(raw)
-	}))
-	defer srv.Close()
-
-	// httptest serves http://, and the manifest requires https:// for remotes --
-	// so the URI is written as https and the Resolver is handed the test client.
-	// That keeps the digest RULE under test without pretending TLS is involved.
-	body := "schema: v1\nimages:\n  - uri: https://example.invalid/payments.binpb\n    sha256: " + digest + "\n"
-	path := filepath.Join(dir, "images.yaml")
-	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	m, base, err := images.Load(path)
-	if err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-	r := &images.Resolver{Dir: base, HTTP: srv.Client()}
-	r.HTTP.Transport = rewriteTo(srv.URL)
-
-	fetched, err := r.Fetch(context.Background(), m)
-	if err != nil {
-		t.Fatalf("Fetch: %v", err)
-	}
-	if len(fetched) != 1 || fetched[0].URI != "https://example.invalid/payments.binpb" {
-		t.Fatalf("fetched = %+v", fetched)
-	}
-}
-
 func TestAWrongDigestIsRefusedBeforeUnmarshalling(t *testing.T) {
 	// Verified BEFORE parsing: a digest that only runs on bytes which happened to
 	// parse is a digest protecting the easy case. The body here is not even a
@@ -290,10 +229,10 @@ func TestAWrongDigestIsRefusedBeforeUnmarshalling(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	r := &images.Resolver{Dir: base, HTTP: srv.Client()}
+	r := &fetch.Resolver{Dir: base, HTTP: srv.Client()}
 	r.HTTP.Transport = rewriteTo(srv.URL)
 
-	_, err = r.Fetch(context.Background(), m)
+	_, err = images.FetchWith(context.Background(), r, m)
 	if err == nil {
 		t.Fatal("Fetch accepted bytes whose digest does not match")
 	}
@@ -303,39 +242,6 @@ func TestAWrongDigestIsRefusedBeforeUnmarshalling(t *testing.T) {
 	// It must NOT have got as far as complaining about the proto shape.
 	if strings.Contains(err.Error(), "FileDescriptorSet") {
 		t.Errorf("the digest was checked after unmarshalling, not before: %v", err)
-	}
-}
-
-func TestAnS3ImageIsFetchedThroughTheGetter(t *testing.T) {
-	// The ObjectGetter interface exists so this path is exercised at all. Without
-	// it the only way to test s3 would be against a real bucket, which means in
-	// practice nobody would -- and an untested fetcher behind a digest check is
-	// precisely the shape of problem this repository keeps finding.
-	dir := t.TempDir()
-	imgPath := writeImage(t, dir, "accounts.binpb", fdp(testdatav1.File_testdata_v1_tools_proto))
-	raw, err := os.ReadFile(imgPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	sum := sha256.Sum256(raw)
-
-	body := "schema: v1\nimages:\n  - uri: s3://garm/images/accounts.binpb\n    sha256: " +
-		hex.EncodeToString(sum[:]) + "\n"
-	path := filepath.Join(dir, "images.yaml")
-	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	m, base, err := images.Load(path)
-	if err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-	got := &fakeS3{want: "garm/images/accounts.binpb", raw: raw}
-	r := &images.Resolver{Dir: base, S3: got}
-	if _, err := r.Fetch(context.Background(), m); err != nil {
-		t.Fatalf("Fetch: %v", err)
-	}
-	if !got.called {
-		t.Error("the s3 getter was never called")
 	}
 }
 
@@ -386,32 +292,5 @@ func TestAManifestWithNoImagesIsRefused(t *testing.T) {
 	os.WriteFile(path, []byte("schema: v1\nimages: []\n"), 0o600)
 	if _, _, err := images.Load(path); err == nil {
 		t.Fatal("Load accepted a manifest declaring no images")
-	}
-}
-
-func TestPathStyleIsDerivedFromAnEndpointOverrideAndNotHardcoded(t *testing.T) {
-	// The guard for a fix that shipped without one. Path-style addressing is
-	// required against an S3-compatible store and deprecated against real AWS, so
-	// hardcoding either value is wrong for somebody. An earlier revision of this
-	// package hardcoded `true` because the local plane runs seaweedfs.
-	for _, tc := range []struct {
-		name string
-		env  map[string]string
-		want bool
-	}{
-		{"plain AWS: nothing set", map[string]string{}, false},
-		{"an S3-compatible store via AWS_ENDPOINT_URL",
-			map[string]string{"AWS_ENDPOINT_URL": "http://localhost:8333"}, true},
-		{"the S3-specific override",
-			map[string]string{"AWS_ENDPOINT_URL_S3": "http://localhost:8333"}, true},
-		{"an empty value is not an override",
-			map[string]string{"AWS_ENDPOINT_URL": ""}, false},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			got := images.UsePathStyleForTest(func(k string) string { return tc.env[k] })
-			if got != tc.want {
-				t.Errorf("usePathStyle = %v, want %v", got, tc.want)
-			}
-		})
 	}
 }

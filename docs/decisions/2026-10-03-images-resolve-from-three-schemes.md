@@ -5,6 +5,14 @@
 
 **Decision.** Three schemes, and a digest that is required for two of them.
 
+**The mechanism lives in `fetch/`, not `images/`.** An image is one team's output
+and a catalogue is many images merged and verified — [a distinction this estate is
+emphatic about](2026-10-03-garmctl-and-the-two-artefacts.md) — and both are fetched
+identically. Leaving the fetcher in `images` would mean `rund` loading a catalogue
+through a type called `Image`, which is code contradicting a decision record in the
+one place people actually read. So: one fetcher, two artefacts, neither package
+named for the other's.
+
 ```yaml
 schema: v1
 images:

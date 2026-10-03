@@ -48,7 +48,8 @@ generated** — `garmctl compose` prints the count, no document transcribes it.
 |---|---|---|
 | `proto/garm/tool/v1/tool.proto` | the whole contract | four fields. A tool declares a `name` and optionally an `agent` block |
 | `declared/` | what protobuf cannot express | indexes declarations by name, refuses a duplicate, resolves every allowlist entry |
-| `images/` | many repositories, one namespace | resolves `file://`, `s3://` and `https://`, verifies digests, merges and refuses divergence |
+| `fetch/` | bytes from a URI, verified | `file://` `s3://` `https://`, digest required for remote. **One fetcher, two artefacts** — an image and a catalogue are fetched alike and are not the same thing |
+| `images/` | many repositories, one namespace | what a manifest means: merge, dedup, refuse divergence |
 | `cmd/garmctl` | the command people type | `garmctl compose images.yaml -o build/catalogue.binpb` |
 | `cmd/protoc-gen-garm-go` | the generator | a handler interface, `Serve<Service>`, and the names it answers. No `Unimplemented` embed |
 | `serve/` | the interface generated code is written against, and the error kinds | so generated code imports no broker |
