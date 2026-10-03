@@ -88,17 +88,23 @@
   .trace h3 span { font-family: var(--mono); font-size: 11.5px; color: var(--muted);
                    font-weight: 400; letter-spacing: .04em; }
   .trace ol { margin: 0; padding: 6px 0; list-style: none; counter-reset: f; }
-  .trace li { counter-increment: f; display: grid; grid-template-columns: 54px 1fr;
-              gap: 14px; padding: 9px 18px; font-size: 14.5px; align-items: baseline; }
+  .trace li { counter-increment: f; position: relative;
+              padding: 9px 18px 9px 86px; font-size: 14.5px; }
   .trace li + li { border-top: 1px solid var(--line); }
-  .trace li::before { content: counter(f); font-family: var(--mono); font-size: 11.5px;
+  /* The number is ABSOLUTE, not a grid cell. A grid li makes every inline child and
+     every run of bare text its own grid item, so the prose following a <b> dropped
+     into the narrow number column and wrapped one word per line. Normal inline flow
+     is immune to whatever markup a frame happens to contain. */
+  .trace li::before { content: counter(f); position: absolute; left: 18px; top: 10px;
+              width: 54px; font-family: var(--mono); font-size: 11.5px;
               color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px;
               padding: 2px 0; text-align: center; }
   .trace li b { color: var(--ink); }
   .trace li .m { font-family: var(--mono); font-size: 12.5px; color: var(--accent-ink); }
   .trace li.off::before { color: var(--muted); background: var(--surface-2); }
-  @media (max-width: 620px) { .trace li { grid-template-columns: 1fr; gap: 3px; }
-                              .trace li::before { width: 42px; } }
+  @media (max-width: 620px) { .trace li { padding-left: 18px; }
+                              .trace li::before { position: static; display: inline-block;
+                                width: 42px; margin-right: 9px; vertical-align: 1px; } }
 
   .tbl-wrap { overflow-x: auto; margin-top: 20px; }
   table { width: 100%; border-collapse: collapse; font-size: 14.5px;

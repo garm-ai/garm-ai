@@ -1,0 +1,625 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<title>One Token, Three Origins</title>
+<style>
+  :root {
+    --bg: #F5F6F8; --surface: #FFFFFF; --surface-2: #EDEFF3;
+    --ink: #1C232E; --muted: #5A6472; --line: #DDE2E9;
+    --accent: #C25E2E; --accent-soft: #F3E2D6; --accent-ink: #8F4520;
+    --good: #2E7D5B; --good-soft: #E4EFE9;
+    --warn: #A8442F; --warn-soft: #F6E3DE;
+    --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+    --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10141A; --surface: #161C24; --surface-2: #1C232E;
+      --ink: #E8EAEE; --muted: #98A2B0; --line: #2A323D;
+      --accent: #E07938; --accent-soft: #33241A; --accent-ink: #EE9A63;
+      --good: #5BB48C; --good-soft: #172A22;
+      --warn: #E8886B; --warn-soft: #34201A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10141A; --surface: #161C24; --surface-2: #1C232E;
+    --ink: #E8EAEE; --muted: #98A2B0; --line: #2A323D;
+    --accent: #E07938; --accent-soft: #33241A; --accent-ink: #EE9A63;
+    --good: #5BB48C; --good-soft: #172A22;
+    --warn: #E8886B; --warn-soft: #34201A;
+  }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--body);
+         font-size: 16px; line-height: 1.62; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding-block: 54px 76px;
+          padding-left: 22px; padding-right: 22px; }
+  h1 { font-family: var(--display); font-weight: 800; font-size: clamp(32px, 5.4vw, 52px);
+       line-height: 1.04; letter-spacing: -.02em; margin: 0 0 18px; text-wrap: balance; }
+  h2 { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 29px);
+       line-height: 1.16; letter-spacing: -.012em; margin: 0 0 14px; text-wrap: balance; }
+  h3 { font-family: var(--display); font-weight: 700; font-size: 17px; margin: 0 0 7px; }
+  p { margin: 0 0 15px; max-width: 68ch; }
+  .kicker { font-family: var(--mono); font-size: 12.5px; letter-spacing: .09em;
+            text-transform: uppercase; color: var(--accent-ink); margin: 0 0 11px; }
+  .tagline { font-size: 19px; color: var(--muted); max-width: 70ch; margin: 0 0 8px; }
+  code { font-family: var(--mono); font-size: .88em; background: var(--surface-2);
+         padding: 1px 5px; border-radius: 4px; }
+  section { margin-top: 58px; }
+  hr.rule { border: 0; border-top: 1px dashed var(--line); margin: 58px 0 0; }
+  .note { font-size: 14px; color: var(--muted); margin-top: 14px; max-width: 72ch; }
+  .links { margin-top: 30px; font-family: var(--mono); font-size: 13px; }
+  .links a { color: var(--accent-ink); }
+
+  /* verdict band */
+  .verdict { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+             margin-top: 26px; }
+  .v { border: 1px solid var(--line); border-radius: 11px; background: var(--surface);
+       padding: 16px 18px; border-left-width: 4px; }
+  .v.yes { border-left-color: var(--good); }
+  .v.part { border-left-color: var(--accent); }
+  .v.no { border-left-color: var(--warn); }
+  .v .who { font-family: var(--display); font-weight: 700; font-size: 16px; margin: 0 0 2px; }
+  .v .ans { font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+            text-transform: uppercase; margin: 0 0 8px; }
+  .v.yes .ans { color: var(--good); }
+  .v.part .ans { color: var(--accent-ink); }
+  .v.no .ans { color: var(--warn); }
+  .v p { margin: 0; font-size: 14px; color: var(--muted); max-width: none; }
+
+  /* status chips */
+  .s { font-family: var(--mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
+       padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+  .s-ver { color: var(--good); background: var(--good-soft); }
+  .s-des { color: var(--accent-ink); background: var(--accent-soft); }
+  .s-gap { color: var(--warn); background: var(--warn-soft); }
+
+  /* the map */
+  .arch { margin-top: 26px; border: 1px solid var(--line); border-radius: 12px;
+          background: var(--surface); overflow: hidden; }
+  .arch-cap { padding: 11px 15px; border-bottom: 1px solid var(--line);
+              background: var(--surface-2); font-family: var(--mono); font-size: 11px;
+              letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .arch-canvas { padding: 16px 10px 10px; overflow-x: auto; }
+  .arch-canvas svg { display: block; width: 100%; min-width: 880px; height: auto; }
+  .an rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .an .t1 { font-family: var(--display); font-weight: 700; font-size: 13px; fill: var(--ink); }
+  .an .t2 { font-family: var(--mono); font-size: 9.5px; letter-spacing: .04em; fill: var(--muted); }
+  .an.ok rect { fill: var(--good-soft); stroke: var(--good); stroke-width: 2; }
+  .an.ok .t1 { fill: var(--good); }
+  .an.hot rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+  .an.hot .t1 { fill: var(--accent-ink); }
+  .an.gap rect { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 2; stroke-dasharray: 4 4; }
+  .an.gap .t1 { fill: var(--warn); }
+  .an.band rect { fill: var(--surface-2); stroke: var(--line); stroke-dasharray: 4 4; }
+  .an.band .t1 { font-size: 11px; fill: var(--muted); }
+  .ae path { fill: none; stroke-width: 1.8; }
+  .ae.flow path { stroke: var(--accent); }
+  .ae.weak path { stroke: var(--muted); stroke-dasharray: 4 5; opacity: .85; }
+  .ae text { font-family: var(--mono); font-size: 9.5px; fill: var(--muted); }
+  .ae text.strong { fill: var(--accent-ink); font-weight: 600; }
+
+  /* traces */
+  .trace { margin-top: 22px; border: 1px solid var(--line); border-radius: 10px;
+           background: var(--surface); overflow: hidden; }
+  .trace > h3 { margin: 0; padding: 13px 18px; background: var(--surface-2);
+                border-bottom: 1px solid var(--line); font-size: 15px;
+                display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .trace > h3 .sub { font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+                     font-weight: 400; letter-spacing: .04em; }
+  .trace ol { margin: 0; padding: 6px 0; list-style: none; counter-reset: f; }
+  .trace li { counter-increment: f; position: relative;
+              padding: 9px 18px 9px 84px; font-size: 14.5px; }
+  .trace li + li { border-top: 1px solid var(--line); }
+  /* The number is ABSOLUTE, not a grid cell. A grid li makes every inline child and
+     every run of bare text its own grid item, so the prose following a <b> dropped
+     into the narrow number column and wrapped one word per line. Normal inline flow
+     is immune to whatever markup a frame happens to contain. */
+  .trace li::before { content: counter(f); position: absolute; left: 18px; top: 10px;
+              width: 52px; font-family: var(--mono); font-size: 11.5px;
+              color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px;
+              padding: 2px 0; text-align: center; }
+  .trace li b { color: var(--ink); }
+  .trace li .m { font-family: var(--mono); font-size: 12.5px; color: var(--accent-ink); }
+  .trace.gapped li::before { color: var(--warn); background: var(--warn-soft); }
+  @media (max-width: 620px) {
+    .trace li { padding-left: 18px; }
+    .trace li::before { position: static; display: inline-block; width: 40px;
+                        margin-right: 9px; vertical-align: 1px; }
+  }
+
+  .tbl-wrap { overflow-x: auto; margin-top: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 620px;
+          background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  th, td { text-align: left; padding: 11px 15px; border-bottom: 1px solid var(--line);
+           vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase;
+       letter-spacing: .06em; color: var(--muted); font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-family: var(--mono); font-size: 12.5px; color: var(--accent-ink); }
+  td b { color: var(--ink); }
+  .no { color: var(--warn); font-weight: 600; }
+  .yes { color: var(--good); font-weight: 600; }
+
+  pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.6; background: var(--surface-2);
+        border: 1px solid var(--line); border-radius: 9px; padding: 15px 17px;
+        overflow-x: auto; margin: 18px 0 0; }
+  pre b { color: var(--accent-ink); font-weight: 600; }
+  pre i { color: var(--muted); font-style: normal; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+          padding: 17px 19px; margin-top: 20px; }
+  .card.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .card.good { border-color: var(--good); background: var(--good-soft); }
+  .card > h3 { margin-top: 0; }
+  .card p { margin: 0; font-size: 14.5px; }
+  .card p + p { margin-top: 9px; }
+  .two { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+  .two .card { margin-top: 0; }
+  ul.tight { margin: 12px 0 0; padding-left: 22px; }
+  ul.tight li { margin-bottom: 8px; font-size: 14.5px; max-width: 68ch; }
+</style>
+
+<div class="wrap">
+
+  <p class="kicker">garm · identity · research note · 2026-10-03</p>
+  <h1>One token, three origins</h1>
+  <p class="tagline">Whether one identity model can carry a human at a keyboard, an
+    agent running at 03:00 with nobody present, and a batch job that answers to no
+    person at all.</p>
+
+  <p>The short answer is that <b>two of the three are designed and one is explicitly
+    out of scope</b> — and the one that is missing is the one that looks easiest.
+    What follows is why, what the mechanism actually is, and the four gaps worth
+    knowing before anything gets built.</p>
+
+  <div class="verdict">
+    <div class="v yes">
+      <p class="who">A user at a keyboard</p>
+      <p class="ans">Covered</p>
+      <p>Live token exchange. Their own identity provider token is verified, their
+        authority folded, and a short-lived call token minted. The human is present,
+        so nothing has to outlive them.</p>
+    </div>
+    <div class="v yes">
+      <p class="who">An agent, for a person</p>
+      <p class="ans">Covered · the hard case</p>
+      <p>A standing grant holds the person's authority as a signed snapshot. At
+        03:00 the run needs <i>neither a token of theirs nor an authority
+        lookup</i>. This is the case the design was written for.</p>
+    </div>
+    <div class="v no">
+      <p class="who">Service to service</p>
+      <p class="ans">Not covered</p>
+      <p>A batch job that <i>is</i> the principal has no consenting person, so there
+        is no grant and no ceiling. The spec names this and declines it:
+        <i>"an agent that must act for nobody is a different design."</i></p>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <section>
+    <h2>The constraint that shapes everything</h2>
+    <p>Before any of this: <b>a NATS message does not say who sent it.</b> The
+      <code>Msg</code> struct carries a subject, a reply subject, headers and bytes.
+      There is no client info, no authenticated-user field, nothing. I read the
+      struct rather than assuming it, because the whole design rests on it.</p>
+
+    <p>So identity has to be made visible deliberately. There are exactly three ways,
+      and they are not equivalent:</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Mechanism</th><th>What it proves</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>in the subject</td>
+            <td><b>Unforgeable.</b> The server refuses a publish on a subject that is
+              not yours, so the subject <i>is</i> the identity claim</td>
+            <td>A credential and a subject per caller; the subject space grows</td>
+          </tr>
+          <tr>
+            <td>in a signed token</td>
+            <td><b>Cryptographic.</b> Forgeable only by whoever holds the signing key</td>
+            <td>A verifier, a JWKS cache, clock skew, key rotation, revocation</td>
+          </tr>
+          <tr>
+            <td>asserted in a header</td>
+            <td><b>Nothing, on its own.</b> It is worth exactly what the right to
+              publish on that subject is worth</td>
+            <td>None — which is the problem</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="note">The third is not useless; it is the second collapsed into the
+      first. A header is trustworthy precisely when a subject permission makes it so,
+      and never on its own merits.</p>
+
+    <div class="card good">
+      <h3>NATS supplies the first one properly <span class="s s-ver">verified</span></h3>
+      <p>Two features matter, and together they remove the need to trust any
+        caller.</p>
+      <p><b>Auth callout</b> hands the connection decision to a service you run. The
+        server packages what the client presented and asks for a verdict; the service
+        replies with a signed user JWT that places the client in an account. So the
+        same service that issues application identity can issue transport identity —
+        one identity system, not two bolted together.</p>
+      <p><b><code>account_token_position</code></b> is the sharper one. On a
+        cross-account service export, NATS <i>guarantees the account key on the
+        subject belongs to the account doing the import</i>. The caller's identity
+        arrives in the subject, placed there by the server rather than by the caller.
+        That is server-enforced, unforgeable caller identity — and it is what makes
+        the binding check in the next section possible at all.</p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <h2>Three objects, not one</h2>
+    <p>The reflex when a run outlives a session is to lengthen the token. That is the
+      wrong move, and the design does the opposite: it makes the token <i>shorter</i>
+      and moves durability into a different object.</p>
+
+    <div class="two">
+      <div class="card">
+        <h3>1 · The consent template <span class="s s-des">designed</span></h3>
+        <p>Ships <i>with the agent</i>, in its declaration. What it will ask for:
+          description, scope, default period, default limits, which triggers.</p>
+        <p>Nothing is hand-written per agent. The consent screen is rendered from the
+          catalogue, and the template's defaults are <b>maxima</b> — a person may
+          tighten them and is never offered the chance to loosen them.</p>
+      </div>
+      <div class="card">
+        <h3>2 · The standing grant <span class="s s-des">designed</span></h3>
+        <p>A signed document, minted once when the person consents, stored in the
+          token service's own database. It is <b>never sent anywhere</b> — it is cited
+          by id, and the service reads it from its own store.</p>
+        <p>This is the durable object. Revocable, countable, auditable.</p>
+      </div>
+      <div class="card">
+        <h3>3 · The per-call token <span class="s s-des">designed</span></h3>
+        <p>Minted <i>at use</i>, lives for <b>minutes</b>, bound to whoever presents
+          it. Nothing holds one; it is re-minted whenever the engine needs to act.</p>
+        <p>Its short life <b>is</b> the revocation window. A long token would make
+          revocation meaningless.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:34px">Why 03:00 works</h3>
+    <p>The grant carries a <b>ceiling</b>: the person's folded authority <i>on the day
+      they consented</i>, carried forward signed. That one idea is what removes both
+      problems at once — the run needs no token of theirs, and no authority lookup
+      either. The ceiling can only ever shrink: a change that narrows their authority
+      narrows every later run, and one that would widen it changes nothing.</p>
+
+    <pre><i>the per-call token, minted at 03:00 on a Sunday</i>
+
+sub   = customer:cust_ab12cd        <i>whose authority this is</i>
+act   = [agent:weekly-digest]       <i>who is acting — a chain, not a name</i>
+exec  = runner:rund                 <i>which process is carrying it</i>
+grant = grt_01j…                    <i>which standing grant authorised this</i>
+<b>cnf</b>   = { sub: runner:rund }       <i>bound to the presenter — cannot be lifted</i>
+exp   = now + minutes               <i>the revocation window</i>
+garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
+
+    <p class="note">Three nested narrowings in that last line. The person's consent
+      (<code>scope</code>), the agent's current release (<code>manifest</code>, read
+      <i>now</i> — so narrowing an agent narrows runs already granted), and the
+      person's authority at consent (<code>ceiling</code>). Whichever is tightest
+      wins.</p>
+
+    <div class="card">
+      <h3>Why <code>cnf</code> matters more here than anywhere else</h3>
+      <p>An agent is driven by a model. Without presenter binding, a decider that got
+        hold of a token could act as the person on its own account. <code>cnf</code>
+        names the process the token was minted for, and the receiver refuses a token
+        presented by anything else — <i>"presented by a workload it was not minted
+        for."</i></p>
+      <p>It is also the architectural reason the standing rule holds: the token is
+        attached by the engine's own call path, below anything a model can influence.
+        A model cannot set it for the same reason it cannot set an idempotency key.</p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <h2>One token, three origins</h2>
+    <p>Here is the claim worth testing, because if it holds the model is simple and if
+      it fails the model is three models: <b>all three callers produce the same token
+      shape.</b> They differ only in where authority came from, and the engine treats
+      what arrives identically.</p>
+
+    <div class="arch">
+      <div class="arch-cap">Where authority comes from · what the engine sees is the same in every case</div>
+      <div class="arch-canvas">
+        <svg viewBox="0 0 960 470" role="img"
+             aria-label="Three authority sources converge on one token service, which mints one token shape presented to rund and then to a tool.">
+          <g class="an band">
+            <rect x="14" y="14" width="236" height="300" rx="10"/>
+            <text class="t1" x="132" y="36" text-anchor="middle">WHERE AUTHORITY COMES FROM</text>
+          </g>
+
+          <g class="an ok">
+            <rect x="32" y="56" width="200" height="66" rx="9"/>
+            <text class="t1" x="132" y="82" text-anchor="middle">A person's IdP token</text>
+            <text class="t2" x="132" y="100" text-anchor="middle">verified · they are present</text>
+            <text class="t2" x="132" y="114" text-anchor="middle">live exchange</text>
+          </g>
+          <g class="an ok">
+            <rect x="32" y="146" width="200" height="66" rx="9"/>
+            <text class="t1" x="132" y="172" text-anchor="middle">A standing grant</text>
+            <text class="t2" x="132" y="190" text-anchor="middle">cited by id · nobody present</text>
+            <text class="t2" x="132" y="204" text-anchor="middle">ceiling snapshot</text>
+          </g>
+          <g class="an gap">
+            <rect x="32" y="236" width="200" height="62" rx="9"/>
+            <text class="t1" x="132" y="262" text-anchor="middle">A client assertion</text>
+            <text class="t2" x="132" y="280" text-anchor="middle">the service IS the principal</text>
+          </g>
+
+          <g class="an hot">
+            <rect x="322" y="120" width="186" height="124" rx="10"/>
+            <text class="t1" x="415" y="152" text-anchor="middle">The token service</text>
+            <text class="t2" x="415" y="174" text-anchor="middle">verify · fold · sign</text>
+            <text class="t2" x="415" y="190" text-anchor="middle">count · refuse</text>
+            <text class="t2" x="415" y="212" text-anchor="middle">owns the grant store</text>
+            <text class="t2" x="415" y="228" text-anchor="middle">and nothing else reads it</text>
+          </g>
+
+          <g class="an hot">
+            <rect x="574" y="128" width="166" height="108" rx="10"/>
+            <text class="t1" x="657" y="156" text-anchor="middle">One token shape</text>
+            <text class="t2" x="657" y="178" text-anchor="middle">sub · act · exec</text>
+            <text class="t2" x="657" y="194" text-anchor="middle">cnf · exp · garm</text>
+            <text class="t2" x="657" y="216" text-anchor="middle">minutes, never held</text>
+          </g>
+
+          <g class="an ok">
+            <rect x="806" y="60" width="140" height="62" rx="9"/>
+            <text class="t1" x="876" y="86" text-anchor="middle">rund</text>
+            <text class="t2" x="876" y="104" text-anchor="middle">checks cnf, folds</text>
+          </g>
+          <g class="an ok">
+            <rect x="806" y="166" width="140" height="62" rx="9"/>
+            <text class="t1" x="876" y="192" text-anchor="middle">A tool</text>
+            <text class="t2" x="876" y="210" text-anchor="middle">sees sub, act, exec</text>
+          </g>
+
+          <g class="ae flow">
+            <path d="M232 89 C 276 89, 288 150, 322 160"/>
+            <path d="M232 179 L 322 179"/>
+            <path d="M508 182 L 574 182"/>
+            <path d="M740 170 C 772 170, 778 100, 806 94"/>
+            <path d="M740 196 L 806 196"/>
+            <text class="strong" x="250" y="150">verify</text>
+            <text class="strong" x="246" y="172">cite by id</text>
+            <text class="strong" x="516" y="174">mint</text>
+          </g>
+          <g class="ae weak">
+            <path d="M232 266 C 280 266, 292 216, 322 208"/>
+            <text x="246" y="236">no grant exists</text>
+          </g>
+
+          <g class="an band">
+            <rect x="14" y="336" width="932" height="118" rx="10"/>
+            <text class="t1" x="36" y="360" text-anchor="start">WHAT IS THE SAME IN ALL THREE</text>
+            <text class="t2" x="36" y="386" text-anchor="start">The engine never learns which door a token came through. It verifies the signature, checks cnf against the caller identity the server put in the subject,</text>
+            <text class="t2" x="36" y="404" text-anchor="start">and applies the fold. grant and trigger are attribution for the ledger — never authorization. That is what makes one model rather than three.</text>
+            <text class="t2" x="36" y="430" text-anchor="start">The dashed path is the gap: a client assertion proves WHICH service is calling, but nothing today says what a service principal may DO.</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <h2>The three traces</h2>
+    <p>Frame by frame, so the differences are concrete rather than asserted.</p>
+
+    <div class="trace">
+      <h3>A · A person is present <span class="sub">live exchange · no grant needed</span></h3>
+      <ol>
+        <li><b>Alice → the front door.</b> She is signed in. The front door holds
+          <i>one</i> credential; she is one of many people behind it.</li>
+        <li><b>Front door → token service.</b> Its own client assertion, plus Alice's
+          identity-provider token. Two identities in one request: <span class="m">who is
+          calling</span> and <span class="m">on whose behalf</span>.</li>
+        <li><b>The service verifies and folds.</b> Her token's signature and audience
+          against a configured trusted issuer, then her claims mapped to authority
+          through the policy.</li>
+        <li><b>A call token is minted.</b> <span class="m">sub=alice</span>,
+          <span class="m">exec=front-door</span>, no <code>act</code>, no
+          <code>grant</code>, minutes to live.</li>
+        <li><b>The call runs.</b> She is present, so if it expires the front door mints
+          another. Nothing durable is needed, and nothing is stored.</li>
+      </ol>
+    </div>
+
+    <div class="trace">
+      <h3>B · Nobody is present <span class="sub">the case that justifies the whole design</span></h3>
+      <ol>
+        <li><b>Consent, once, weeks earlier.</b> Alice is re-authenticated — consent is
+          a strong-auth moment — and confirms a scope, a period and limits she may
+          only tighten.</li>
+        <li><b>The grant is minted and stored.</b> Her authority is folded <i>now</i>
+          and that fold <b>is the ceiling</b>. Signed, row inserted, consent evidence
+          recorded. Only the <span class="m">id</span> comes back; the document itself
+          never leaves.</li>
+        <li><b>03:00 Sunday. A schedule fires.</b> No external input reached this
+          frame — the trigger is the platform's own clock.</li>
+        <li><b>Engine → token service.</b> Its client assertion plus
+          <span class="m">{ grant id, trigger }</span>. <b>No subject token and no
+          on-behalf-of</b> — the grant says whose authority this is. Passing a subject
+          token here is refused, because the only way to widen is to consent again.</li>
+        <li><b>Seven refusals, in order.</b> Signature verifies; not revoked; inside
+          its period; runs remaining; the <i>person is still active</i> — one cached
+          liveness lookup, which is liveness and not authority; the trigger kind is
+          permitted; and if the grant pinned the agent's digest, the mounted
+          catalogue still matches — otherwise the agent was re-released and this
+          needs re-consent.</li>
+        <li><b>Mint.</b> Runs-used incremented atomically, token minted with
+          <code>cnf</code> naming the engine, <span class="m">garm = scope ∩ manifest ∩
+          ceiling</span>.</li>
+        <li><b>The tool call.</b> The receiver checks <code>cnf</code> against the
+          caller identity the server placed in the subject. The tool sees
+          <span class="m">sub=alice</span> and runs its own per-record checks
+          <i>for her</i>. <b>It cannot tell this from a live call, and that is
+          correct</b> — the authority is hers, narrowed.</li>
+        <li><b>The ledger.</b> The row carries the grant and the trigger, so "why did
+          my account do that at 3am" has a real answer: <i>your weekly-digest grant,
+          on the 5 October schedule</i>.</li>
+      </ol>
+    </div>
+
+    <div class="trace gapped">
+      <h3>C · A service is the principal <span class="sub">where the design stops</span></h3>
+      <ol>
+        <li><b>A batch job starts.</b> On a schedule, or triggered by another system.
+          There is no person anywhere in this story.</li>
+        <li><b>Job → token service.</b> Its client assertion. This part is solved and
+          built: the service's <i>identity</i> is proven exactly as any client's is.</li>
+        <li><b class="no">And then nothing.</b> There is no consenting principal, so
+          there is no grant, no ceiling, and no fold. Authority has nowhere to come
+          from: the claims policy maps a <i>person's</i> claims to authority, and a
+          service has no such claims to map.</li>
+        <li><b>The spec names this and declines it.</b> <i>"It does not let an agent act
+          with authority no person has… an agent that must act for nobody is a
+          different design, and the register chose not to build it."</i></li>
+        <li><b>What would fill it</b> is a service principal whose authority comes from
+          its own registration rather than from a consent — standard enough, but it is
+          a new source of authority, not a reuse of an existing one. That is the
+          decision to take, not a detail to implement.</li>
+      </ol>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <h2>What actually differs</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th></th><th>Person present</th><th>Agent, for a person</th><th>Service as principal</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>authority from</td><td>their live token</td><td>the grant's ceiling</td><td class="no">nowhere yet</td></tr>
+          <tr><td>needs a grant</td><td>no</td><td><b>yes</b></td><td>no — and that is the problem</td></tr>
+          <tr><td><code>sub</code></td><td>the person</td><td>the person</td><td>the service</td></tr>
+          <tr><td><code>act</code></td><td>absent</td><td>the agent chain</td><td>absent</td></tr>
+          <tr><td>token life</td><td>minutes</td><td>minutes</td><td>minutes</td></tr>
+          <tr><td>revocation</td><td>sign them out</td><td>revoke the grant; one token life</td><td>revoke the client</td></tr>
+          <tr><td>survives 3 days</td><td>n/a — they are present</td><td><b class="yes">yes</b></td><td>yes, trivially</td></tr>
+          <tr><td>built today</td><td class="no">exchange yes, on NATS no</td><td class="no">no — grant store never built</td><td class="no">identity yes, authority no</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">The bottom row is the honest one. The exchange machinery exists and
+      is tested; the grant store, the presenter binding and the transport layer do
+      not.</p>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <h2>Four gaps found while researching this</h2>
+
+    <div class="card warn">
+      <h3>1 · The presenter binding was never implemented <span class="s s-gap">gap</span></h3>
+      <p>The security property is stated as a test — <i>"a token presented by a
+        workload other than <code>cnf.sub</code> is refused"</i> — and
+        <code>cnf</code> appears nowhere in the code. Not in the token service, not in
+        the grant contract. The property that stops a model-driven decider from lifting
+        a token is the one that does not exist.</p>
+    </div>
+
+    <div class="card warn">
+      <h3>2 · The check depends on a mechanism the spec never names <span class="s s-gap">gap</span></h3>
+      <p>That same frame says to compare <code>cnf.sub</code> against
+        <i>"the connection's identity"</i>. But a receiver cannot read the connection's
+        identity off a message — I verified the struct. So the check as written is not
+        implementable, and the fix is not in the token at all: the caller identity has
+        to be put in the <i>subject</i> by the server, via the cross-account mechanism
+        above. Good news, in that it exists; worth knowing, in that the design assumed
+        something it never specified.</p>
+    </div>
+
+    <div class="card warn">
+      <h3>3 · A deployment cannot limit what any call may do <span class="s s-gap">open · named</span></h3>
+      <p>Caveats live on a grant, and a grant is one person's — so a caveat binds only
+        that person's calls, and most calls carry no grant at all. <i>"Never above €1m,
+        whoever asks, whoever approves"</i> cannot be expressed as a caveat, and there
+        is nowhere else to put it either: the authority model carries clearance,
+        compartments, verbs and tool sets, and <b>no predicates</b>. The spec flags this
+        itself rather than letting a reader assume caveats cover it.</p>
+    </div>
+
+    <div class="card warn">
+      <h3>4 · Two kinds of caveat, and only one is enforceable centrally <span class="s s-des">designed</span></h3>
+      <p><i>"At most €500"</i> is a predicate over one request — enforceable by whatever
+        holds no database. <i>"At most €500 per month"</i> requires counting, which
+        needs a store. So stateful caveats are forwarded to the owning tool, and only to
+        a tool that <b>declared</b> it enforces that kind. Both halves have to be
+        refusals: a grant carrying a caveat the tool never declared, and a tool that
+        declared one and received no grant. <b>Either half alone fails open.</b></p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <h2>What this means for sequencing</h2>
+    <p>Nothing above changes the first step, and that is the useful result.</p>
+
+    <ul class="tight">
+      <li><b>Transport authentication comes first, and still waits on nothing.</b>
+        Credentials and subject permissions establish <i>which process</i> is which.
+        That is the <code>exec</code> identity the token binds itself to with
+        <code>cnf</code>, and the server-placed caller identity the binding is checked
+        against. It is a prerequisite for the grant model rather than an alternative to
+        it — and it closes the hole where a misdirected message was accepted because
+        two unrelated types both carry a string in field one.</li>
+      <li><b>A run records a grant reference and a trigger</b>, not a principal string.
+        The principal is derived; authority is the fold at mint time. Getting that
+        column right the first time is the whole reason to design this before the store
+        lands.</li>
+      <li><b>The grant store belongs to the token service</b>, and nothing else reads
+        it. So the engine takes a database for <i>runs</i> and never for grants —
+        which keeps the one constraint that survived from the previous estate.</li>
+      <li><b>Adapt the exchange machinery; do not rewrite it.</b> The issuer, keyring,
+        discovery document, claims fold and client assertions exist and are tested.
+        What is new is the grant store, the presenter binding, and a door the engine can
+        mint through without leaving the bus.</li>
+      <li><b>Decide the service-principal question explicitly.</b> It is the gap that
+        looks smallest and is actually a new source of authority. It should not be
+        discovered during implementation.</li>
+    </ul>
+
+    <div class="card">
+      <h3>The one-line version</h3>
+      <p>Short tokens are not the problem to solve — they are the mechanism. Durability
+        belongs in a signed, revocable, countable grant that never travels; the token
+        that travels should live for minutes and be bound to the process carrying it.
+        That covers a person at a keyboard and an agent at 03:00 with the same
+        machinery. It does not yet cover a service that answers to nobody.</p>
+    </div>
+  </section>
+
+  <p class="links">
+    sources ·
+    <a href="https://docs.nats.io/learn/security/auth-callout">NATS auth callout</a> ·
+    <a href="https://docs.nats.io/learn/security/cross-account">NATS cross-account exports</a> ·
+    <a href="https://docs.nats.io/running-a-nats-service/configuration/securing_nats/accounts">multi-tenancy with accounts</a>
+  </p>
+  <p class="note">Status marks: <span class="s s-ver">verified</span> read from code or
+    vendor documentation in this session · <span class="s s-des">designed</span> written
+    down in the previous estate's spec, not built ·
+    <span class="s s-gap">gap</span> named here, with nothing behind it yet.</p>
+
+</div>
