@@ -24,20 +24,30 @@ buf generate --template buf.gen.examples.yaml
 description = "Fail if the committed generated Go is not what the protos produce"
 # The generated code is committed, so a reader sees what the options compile to
 # without running buf. That is only true if something checks the two agree.
-# `git status --porcelain`, NOT `git diff --exit-code`. git diff cannot see an
-# untracked file, so the previous form passed vacuously for generated code that
-# was NEW -- which is precisely the case a check like this exists to catch, and
-# precisely what the first run of protoc-gen-garm-go produced. It was green and
-# blind at the same time.
+# A generated file that exists but was never added is stale in exactly the way
+# this check exists to catch, so the untracked check sits beside the diff.
+#
+# Both halves are needed and neither alone is enough. `git diff` cannot see an
+# untracked file -- the earlier form here used `git diff --exit-code` alone and so
+# passed vacuously for generated code that was NEW, which was the first thing this
+# repository generated. And `git status --porcelain` folds an untracked directory
+# into one `?? examples/gen/` line, naming no file a reader can open, which is why
+# `ls-files --others` does the second half. This is the shape artefactd, tasksd and
+# tools already use; contracts and examples still have the diff half only.
 run = """
 set -e
+paths="garm testdata examples/gen"
 buf generate
 buf generate --template buf.gen.examples.yaml
-dirty="$(git status --porcelain -- garm/ testdata/ examples/gen/)"
-if [ -n "$dirty" ]; then
-  echo "$dirty" >&2
-  echo "the committed tree is not what the protos produce." >&2
-  echo "If you just ran 'mise run gen', the files above are its output -- commit them." >&2
+if ! git diff --quiet -- $paths; then
+  git diff --stat -- $paths >&2
+  echo "generated Go is stale: run 'mise run gen' and commit the result" >&2
+  exit 1
+fi
+untracked=$(git ls-files --others --exclude-standard -- $paths)
+if [ -n "$untracked" ]; then
+  printf '%s\n' "$untracked" >&2
+  echo "generated Go is untracked: run 'git add' on the files above" >&2
   exit 1
 fi
 """
