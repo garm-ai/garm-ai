@@ -25,3 +25,13 @@ type Entry struct {
 // Empty is the explicit first manifest. Explicit, because a generator that treated
 // "no manifest" as "nothing was issued before" would never revoke anything.
 func Empty() *Manifest { return &Manifest{} }
+
+// delta is completed in Task 3; this records what was issued and revokes nothing.
+func delta(in Input, gen int, creds []Credential) (Manifest, []Revocation) {
+	m := Manifest{Generation: gen, CatalogueSHA256: in.Catalogue.SHA256, IssuedAt: in.Now}
+	for _, c := range creds {
+		m.Entries = append(m.Entries, Entry{Name: c.Name, Account: c.Account, Public: c.Public,
+			CatalogueSHA256: in.Catalogue.SHA256, Generation: gen})
+	}
+	return m, nil
+}

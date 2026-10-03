@@ -1,0 +1,204 @@
+package topology
+
+import (
+	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/nats-io/jwt/v2"
+	"github.com/nats-io/nkeys"
+
+	"github.com/garm-ai/garm-ai/declared"
+)
+
+// Generate builds the topology for a catalogue. It is deterministic given its
+// inputs except for user keys, which are fresh on every issuance -- that is what
+// makes "reissue" and "revoke the old" distinct operations.
+func Generate(in Input) (*Output, error) {
+	if in.Catalogue == nil || in.Previous == nil || in.Keys.Operator == nil {
+		return nil, fmt.Errorf("topology: a catalogue, a previous manifest and an operator signing key are all required")
+	}
+	if in.Expiry == 0 {
+		in.Expiry = DefaultExpiry
+	}
+	for _, c := range in.Callers {
+		if u := strings.ToUpper(c); u == AccountSYS || u == AccountGARM || u == AccountTOOLS || c == "" {
+			return nil, fmt.Errorf("topology: caller %q would shadow an account name", c)
+		}
+	}
+	opPub, err := in.Keys.Operator.PublicKey()
+	if err != nil {
+		return nil, err
+	}
+	accKey := func(name string) (nkeys.KeyPair, string, error) {
+		kp, ok := in.Keys.Accounts[name]
+		if !ok {
+			return nil, "", fmt.Errorf("topology: no signing key for account %s", name)
+		}
+		p, err := kp.PublicKey()
+		return kp, p, err
+	}
+
+	sysKP, sysPub, err := accKey(AccountSYS)
+	if err != nil {
+		return nil, err
+	}
+	garmKP, garmPub, err := accKey(AccountGARM)
+	if err != nil {
+		return nil, err
+	}
+	toolsKP, toolsPub, err := accKey(AccountTOOLS)
+	if err != nil {
+		return nil, err
+	}
+
+	gen := in.Previous.Generation + 1
+	tags := jwt.TagList{"catalogue:" + in.Catalogue.SHA256, fmt.Sprintf("generation:%d", gen)}
+	exp := in.Now.Add(in.Expiry).Unix()
+
+	// ---- accounts
+	sys := jwt.NewAccountClaims(sysPub)
+	sys.Name = AccountSYS
+
+	tools := jwt.NewAccountClaims(toolsPub)
+	tools.Name = AccountTOOLS
+	tools.Exports = jwt.Exports{{
+		Name: "tools", Subject: "garm.tool.>", Type: jwt.Service,
+		TokenReq: true, // private: an import needs an activation TOOLS signed (§2.2)
+	}}
+
+	garm := jwt.NewAccountClaims(garmPub)
+	garm.Name = AccountGARM
+	garm.Exports = jwt.Exports{{
+		Name: "run", Subject: "garm.run.v1.*.>", Type: jwt.Service,
+		AccountTokenPosition: 4, // the caller's account key, placed by the server (§3)
+	}}
+	act := jwt.NewActivationClaims(garmPub)
+	act.ImportSubject = "garm.tool.>"
+	act.ImportType = jwt.Service
+	actToken, err := act.Encode(toolsKP)
+	if err != nil {
+		return nil, fmt.Errorf("topology: signing the tools activation: %w", err)
+	}
+	garm.Imports = jwt.Imports{{
+		Name: "tools", Subject: "garm.tool.>", Account: toolsPub, Type: jwt.Service,
+		Token: actToken,
+	}}
+
+	accounts := map[string]*jwt.AccountClaims{AccountSYS: sys, AccountGARM: garm, AccountTOOLS: tools}
+	keys := map[string]nkeys.KeyPair{AccountSYS: sysKP, AccountGARM: garmKP, AccountTOOLS: toolsKP}
+	for _, c := range in.Callers {
+		name := CallerPrefix + c
+		kp, p, err := accKey(name)
+		if err != nil {
+			return nil, err
+		}
+		ac := jwt.NewAccountClaims(p)
+		ac.Name = name
+		ac.Imports = jwt.Imports{{
+			Name:    "run",
+			Subject: jwt.Subject(fmt.Sprintf("garm.run.v1.%s.>", p)),
+			Account: garmPub, Type: jwt.Service,
+			LocalSubject: "garm.run.v1.>", // what the caller publishes today, unchanged
+		}}
+		accounts[name] = ac
+		keys[name] = kp
+	}
+
+	// ---- users
+	var creds []Credential
+	issue := func(account, name string, p jwt.Permissions) error {
+		kp, err := nkeys.CreateUser()
+		if err != nil {
+			return err
+		}
+		upub, err := kp.PublicKey()
+		if err != nil {
+			return err
+		}
+		seed, err := kp.Seed()
+		if err != nil {
+			return err
+		}
+		uc := jwt.NewUserClaims(upub)
+		uc.Name = name
+		uc.Permissions = p
+		uc.Tags = tags
+		uc.Expires = exp
+		apub, err := keys[account].PublicKey()
+		if err != nil {
+			return err
+		}
+		uc.IssuerAccount = apub
+		tok, err := uc.Encode(keys[account])
+		if err != nil {
+			return fmt.Errorf("topology: encoding user %s: %w", name, err)
+		}
+		creds = append(creds, Credential{Name: name, Account: account, Public: upub, JWT: tok, Seed: string(seed)})
+		return nil
+	}
+	if err := issue(AccountSYS, "ops", ops()); err != nil {
+		return nil, err
+	}
+	if err := issue(AccountGARM, "rund", rund()); err != nil {
+		return nil, err
+	}
+	services := toolServices(in.Catalogue.Tools)
+	svcNames := make([]string, 0, len(services))
+	for svc := range services {
+		svcNames = append(svcNames, svc)
+	}
+	sort.Strings(svcNames)
+	for _, svc := range svcNames {
+		if err := issue(AccountTOOLS, svc, toolService(services[svc])); err != nil {
+			return nil, err
+		}
+	}
+	for _, c := range in.Callers {
+		if err := issue(CallerPrefix+c, c, caller()); err != nil {
+			return nil, err
+		}
+	}
+	sort.Slice(creds, func(i, j int) bool { return creds[i].Name < creds[j].Name })
+
+	// ---- the delta against the previous manifest
+	manifest, revoke := delta(in, gen, creds)
+	for _, r := range revoke {
+		accounts[r.Account].RevokeAt(r.Public, r.At)
+	}
+
+	// ---- encode
+	out := &Output{Accounts: map[string]string{}, Credentials: creds, Manifest: manifest, Revoke: revoke}
+	for name, ac := range accounts {
+		s, err := ac.Encode(in.Keys.Operator)
+		if err != nil {
+			return nil, fmt.Errorf("topology: encoding account %s: %w", name, err)
+		}
+		out.Accounts[name] = s
+	}
+	op := jwt.NewOperatorClaims(opPub)
+	op.Name = "garm"
+	op.SystemAccount = sysPub
+	if out.OperatorJWT, err = op.Encode(in.Keys.Operator); err != nil {
+		return nil, fmt.Errorf("topology: encoding the operator: %w", err)
+	}
+	return out, nil
+}
+
+// toolServices groups the catalogue's NON-agent tools by the proto service that
+// declares them. A service whose only methods are agents has no entry: no Go is
+// generated for an agent and nothing answers one.
+func toolServices(set *declared.Set) map[string][]string {
+	by := map[string][]string{}
+	for _, t := range set.Tools() {
+		if t.IsAgent() {
+			continue
+		}
+		svc := string(t.Method.Parent().FullName())
+		by[svc] = append(by[svc], t.Name)
+	}
+	for _, names := range by {
+		sort.Strings(names)
+	}
+	return by
+}
