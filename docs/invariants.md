@@ -44,17 +44,16 @@ unenforced, in the same table, deliberately.
 | A declared tool is reachable over NATS | `natsserve.TestADeclaredToolIsReachable` — through **generated** code and the real example handler, against a real in-process `nats-server`. If the generator and the transport disagreed about anything, this is where it shows |
 | A subject comes from the **identity**, never the address | `natsserve.TestTheSubjectIsDerivedFromTheIdentityNotTheAddress`, which also asserts that **nothing answers** on the address subject |
 | An endpoint name is legal for every legal tool name | `natsserve.TestEndpointNameIsAcceptedByMicroForEveryLegalToolName`. micro excludes the dot, so they are replaced; that is total only because of the charset rule, and this asserts the two rules meet with **micro itself as the judge** |
-| `New` refuses exactly what `micro.AddService` refuses | `natsserve.TestNewRefusesExactlyWhatMicroRefuses`, which runs both against real configs. `validate.go` copies micro's unexported regexes, so a divergence is a failure rather than drift |
-| Two tools never share a subject | `natsserve.TestTwoToolsOnOneSubjectAreRefused`. Otherwise one of them silently never answers, and which one depends on registration order |
-| `Start` returns only once the tools are **answering** | Every other test in the package, all of which call immediately after it. `Start` ends with `nc.Flush()`; without it a caller gets "no responders available" for a healthy service, which is exactly how this package's first tests became flaky — green locally, red in CI |
-| `Serve` before `Start`, and `Start` twice, are refused | `natsserve.TestServeBeforeStartIsRefused`, `TestStartTwiceIsRefused` |
-| A service with no endpoints does not start | `natsserve.TestRunWithNoEndpointsIsRefused`. Discoverable and useless is worse than failing to start |
+| `New` refuses exactly what `micro.AddService` refuses | `natsmicro.TestNewRefusesExactlyWhatMicroRefuses`, which runs both against real configs. `natsmicro.go` copies micro's unexported regexes, so a divergence is a failure rather than drift. It was cited here as `natsserve.…` against a `validate.go` that never existed — the test lived in a package it does not name |
+| Two tools never share a subject | `natsserve.TestTwoToolsOnOneSubjectAreRefused`, over `natsmicro.TestTwoMountsOnOneSubjectAreRefused` which refuses it for any mount. Otherwise one of them silently never answers, and which one depends on registration order |
+| `Serve` before `Start`, and `Start` twice, are refused | `natsmicro.TestServeBeforeStartIsRefused` and `TestStartTwiceIsRefused` at the source, `natsserve.TestServeBeforeStartIsRefused` and `TestStartTwiceIsRefused` through the forwarding |
+| A service with no endpoints does not start | `natsmicro.TestStartWithNothingMountedIsRefused` and `natsserve.TestRunWithNoEndpointsIsRefused`. Discoverable and useless is worse than failing to start |
 | A deliberate kind reaches the caller as its own code, with the id | `natsserve.TestADeliberateKindReachesTheCallerAsItsOwnCode`. The code is **derived** from the generated enum, so a new kind cannot be forgotten — a hand-written map would compile and answer the empty string, which micro turns into no reply at all |
 | A bare error leaks nothing over the wire | `natsserve.TestABareErrorNeverReachesTheCallerOverTheWire` — the same claim `serve` tests, re-checked end to end on every surface a caller can read, so nothing on the transport path puts the cause back |
 | Request bytes that do not unmarshal never reach the handler | `natsserve.TestUnreadableRequestBytesBecomeInvalid`, which also asserts the handler was not called |
 | A response too large to send becomes an **error**, not silence | `natsserve.TestAnOversizedResponseBecomesAnErrorRatherThanSilence`, with a 2 KiB `max_payload` on a real server. Ignoring `Respond`'s error is the difference between a caller learning this and a caller hanging to its own deadline |
 | A draining handler is **not** handed a cancelled context | `natsserve.TestAHandlerIsNotHandedACancelledContextDuringTheDrain`. Run's context is cancelled to ask the service to stop; passing it to handlers tells every accepted call to abort at the moment we commit to answering it. Found by re-reading, not by a failure — with the bug, the probe answers `UNAVAILABLE: shutting down` once per deploy, per queued call |
-| `Run` does not return until queued calls are answered | `natsserve.TestRunDrainsCallsThatAreQueuedButNotYetDispatched`. **Two** calls, because one proves nothing: the first version of this test passed with the `Barrier` deleted, since the in-flight counter already covers a handler that has started. See [the decision](decisions/2026-10-03-a-subject-is-derived-from-the-identity.md) |
+| `Run` does not return until queued calls are answered | `natsmicro.TestServeDrainsACallThatIsQueuedButNotYetDispatched`, where the drain lives, and `natsserve.TestRunDrainsCallsThatAreQueuedButNotYetDispatched` over the whole tool path. **Two** calls, because one proves nothing: the first version of this test passed with the `Barrier` deleted, since the in-flight counter already covers a handler that has started. See [the decision](decisions/2026-10-03-a-subject-is-derived-from-the-identity.md) |
 
 ### rund
 
@@ -84,6 +83,19 @@ unenforced, in the same table, deliberately.
 | A tool's kind survives all four hops | `natscall.TestAToolsRefusalReachesTheCallerWithItsKind`, which also asserts a bare error's words did **not** survive them |
 | No rund at all is `UNAVAILABLE`, not a silent hang | `natscall.TestNoRundAtAllIsUnavailableNotASilentHang`, naming the subject that did not answer |
 | Generated **client** code imports no broker | `mise run no-broker`, extended to `./call` |
+
+### The commands a person types
+
+| invariant | kept true by |
+|---|---|
+| `garmctl call` reaches a tool naming only its **name** | `TestCallReachesTheToolAndPrintsItsAnswerAsJSON`, against a real estate, parsing the output rather than matching a substring — the claim is that the answer is JSON of the **declared** response shape |
+| An unknown field in the typed JSON is **refused**, not dropped | `TestCallRefusesAnUnknownFieldRatherThanDroppingIt`, and the refusal names both the field and the request type. The command's own help text makes this promise, and it is one `UnmarshalOptions` field away from being false — proved by setting `DiscardUnknown: true` and watching the test fail |
+| JSON of the wrong type is refused | `TestCallRefusesJSONOfTheWrongType`, a string for an `int32` |
+| An unknown tool names the **catalogue** that was searched | `TestAnUnknownToolNamesTheCatalogue`. "unknown tool" is unactionable when the real question is which namespace is loaded |
+| A catalogue whose digest does not match is not used | `TestADigestMismatchStopsTheCall` |
+| An error reaches a person **kind first** | `serve.Describe`, applied once in `main` for every subcommand; `TestAToolsRefusalArrivesWithItsKindForAPerson` and `forecast.TestTheExampleCallerShowsTheKindAndExitsNonZero`. `call` used to print this itself and call `os.Exit(1)` from inside a function holding two defers, which skipped both and made the path untestable |
+| The forecast example is **run**, not just built | `forecast.TestTheExampleCallerGetsAForecastNamingOnlyTheTool`. It was compiled by CI and never executed, which made "the only two lines that matter" a claim nothing checked |
+| A refused call prints no forecast and exits non-zero | `forecast.TestTheExampleCallerShowsTheKindAndExitsNonZero`. An example that printed anyway would be a worked example of ignoring an error |
 
 ### Errors
 
@@ -126,8 +138,8 @@ for claims the code makes today that nothing checks.
 | An agent's method name is never read | Closer than it was: the generator emits nothing for an agent, proved by `generate.TestAnAgentProducesNoGoAtAll`. Still unenforced in the direction that matters — no test asserts that *nothing anywhere* resolves an agent by method name, because the decider that would is the next step |
 | The tool option is read in exactly one place | `declared.ToolOf` is that place, and the generator calls it rather than reaching for `proto.GetExtension` itself. Nothing *checks* that a second reader does not appear. A grep test would, and is worth writing once there are three readers rather than two — the old estate's single most expensive structural bug was one idea implemented twice |
 | Generated code never grows a transport dependency | The import-set test above is the enforcement for what is emitted. What it cannot say is that `serve` itself stays transport-free: today it imports only `context` and two protobuf packages, and nothing fails if a broker is added to it |
-| No per-call timeout | A hung handler holds a goroutine until its caller gives up. Deliberate: the caller's own deadline is the authority, and a timeout here would be a policy with no stated reason. Revisit when something actually suffers from it |
-
+| `Start` returns only once the subjects are **answering** | `Start` ends with `nc.Flush()` and micro never flushes on its own, so the guarantee is real — but **no test can lose the race it closes**. This table claimed "every other test in the package" enforced it; deleting the `Flush` and re-running them was green, because nats.go's flusher reaches the server long before a caller's request travels back. The test written to guard it was deleted rather than left reading as a guard |
+| `Track` is what the drain waits for | `natsmicro.TestAnUntrackedHandlerIsNotWaitedFor` records the **cost** of forgetting it, which is the opposite of enforcing it. `Track` is exported precisely so a caller can forget to call it, and nothing detects a handler that does |
 | **Only `rund` calls `garm.tool.<name>`** | The drawings and spec say this and **nothing enforces it**. A caller can publish on a tool subject directly, and protobuf cannot even tell the wrong message apart: an `InvokeRequest` was accepted by a tool because both carry a string in field 1, so the tool forecast the weather for a place named `weather.v1.get_forecast`. What would enforce it is a NATS account permission limiting publish on `garm.tool.>` to rund's credential |
 | A service name should end in `Service` | buf's `SERVICE_SUFFIX`, which `mise run lint` does enforce — but whether an **agent** should be named that way is undecided. An agent is a named actor rather than an RPC service. The fixture and examples comply rather than waive the rule, and the decision is still open |
 

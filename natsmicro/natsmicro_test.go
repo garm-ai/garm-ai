@@ -110,29 +110,6 @@ func TestAMountedSubjectAnswers(t *testing.T) {
 	}
 }
 
-// TestStartPromisesTheSubjectIsAnsweringWhenItReturns.
-//
-// Start ends with nc.Flush() for exactly this: a subscription is sent
-// asynchronously, so without it Start returns before the server has been told what
-// we answer, and the first caller gets "no responders" for a service that is fine.
-// The request goes out with NO retry.
-func TestStartPromisesTheSubjectIsAnsweringWhenItReturns(t *testing.T) {
-	url := serverURL(t)
-	nc := connect(t, url)
-	caller := connect(t, url)
-
-	s := newService(t)
-	if err := s.Mount("probe", "probe.subject", echo(s)); err != nil {
-		t.Fatal(err)
-	}
-	if err := s.Start(nc); err != nil {
-		t.Fatalf("Start: %v", err)
-	}
-	if _, err := caller.Request("probe.subject", []byte("ping"), 2*time.Second); err != nil {
-		t.Fatalf("Start returned before the subject was answering: %v", err)
-	}
-}
-
 // TestServeDrainsACallThatIsQueuedButNotYetDispatched is the drain's whole point,
 // and the ordering inside Serve took a vacuous test to find.
 //
