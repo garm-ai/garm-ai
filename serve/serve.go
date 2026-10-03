@@ -16,6 +16,7 @@ package serve
 
 import (
 	"context"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -24,7 +25,7 @@ import (
 // Registrar is what a transport offers to generated code: a way to say "this
 // tool is answered here".
 //
-// The four arguments are the four facts that cannot be derived from each other.
+// The five arguments are the five facts that cannot be derived from each other.
 // Everything else a transport wants -- a subject, a queue group, a service
 // version -- it derives or holds itself, and deliberately does NOT receive here.
 //
@@ -45,6 +46,18 @@ type Registrar interface {
 	// newRequest constructs an empty request message to unmarshal into. The
 	// generated closure, not this interface, owns knowing the concrete type.
 	//
+	// budget is how long this tool declared it may take, zero for a tool whose
+	// delivery is not Sync.
+	//
+	// IT COMES FROM THE GENERATOR, not from the wire, and that is the point: the
+	// tool enforces the number its OWN .proto declared, rather than one a caller
+	// asserted. rund reads the same number independently from the catalogue and
+	// uses it as its request timeout, so there are two enforcers, one declaration
+	// and nothing trusted across the hop.
+	//
+	// Past it the caller has already given up, so continuing is work nobody will
+	// read -- and for a tool with side effects, worse than wasted.
+	//
 	// handle dispatches to the author's method. It receives the unmarshalled
 	// request and returns the response to marshal. A nil response with a nil
 	// error is an error, and the generated closure is what says so -- a
@@ -53,6 +66,7 @@ type Registrar interface {
 	Endpoint(
 		name string,
 		method protoreflect.FullName,
+		budget time.Duration,
 		newRequest func() proto.Message,
 		handle func(context.Context, proto.Message) (proto.Message, error),
 	) error

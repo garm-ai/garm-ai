@@ -17,6 +17,7 @@ import (
 	fmt "fmt"
 	serve "github.com/garm-ai/garm-ai/serve"
 	proto "google.golang.org/protobuf/proto"
+	time "time"
 )
 
 // AccountsServiceHandler implements every tool AccountsService declares, in plain proto
@@ -39,6 +40,7 @@ func ServeAccountsService(r serve.Registrar, h AccountsServiceHandler) error {
 	if err := r.Endpoint(
 		"accounts.v1.get_customer",
 		"testdata.v1.AccountsService.GetCustomer",
+		2*time.Second,
 		func() proto.Message { return new(GetCustomerRequest) },
 		func(ctx context.Context, m proto.Message) (proto.Message, error) {
 			in, ok := m.(*GetCustomerRequest)
@@ -80,6 +82,7 @@ func ServePaymentsService(r serve.Registrar, h PaymentsServiceHandler) error {
 	if err := r.Endpoint(
 		"payments.v1.get_payment_status",
 		"testdata.v1.PaymentsService.GetPaymentStatus",
+		5*time.Second,
 		func() proto.Message { return new(GetPaymentStatusRequest) },
 		func(ctx context.Context, m proto.Message) (proto.Message, error) {
 			in, ok := m.(*GetPaymentStatusRequest)

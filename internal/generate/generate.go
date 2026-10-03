@@ -34,6 +34,7 @@ package generate
 
 import (
 	"fmt"
+	"time"
 
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -48,6 +49,7 @@ import (
 const servePackage protogen.GoImportPath = "github.com/garm-ai/garm-ai/serve"
 
 const (
+	timePackage    protogen.GoImportPath = "time"
 	contextPackage protogen.GoImportPath = "context"
 	fmtPackage     protogen.GoImportPath = "fmt"
 	protoPackage   protogen.GoImportPath = "google.golang.org/protobuf/proto"
@@ -80,6 +82,7 @@ func Run(gen *protogen.Plugin) error {
 // tool pairs a declared identity with the method that answers it.
 type tool struct {
 	name   string
+	budget time.Duration // zero unless delivery is Sync
 	method *protogen.Method
 }
 
@@ -106,7 +109,7 @@ func file(gen *protogen.Plugin, f *protogen.File) error {
 				return fmt.Errorf("%s declares the tool %q and streams: a tool is one request and one response",
 					m.Desc.FullName(), t.Name)
 			}
-			tools = append(tools, tool{name: t.Name, method: m})
+			tools = append(tools, tool{name: t.Name, budget: t.Budget(), method: m})
 		}
 		if len(tools) > 0 {
 			services = append(services, service{svc: s, tools: tools})
@@ -194,6 +197,9 @@ func serve(g *protogen.GeneratedFile, s service) {
 		// .proto disagree with the wire.
 		g.P(strconv(t.name), ",")
 		g.P(strconv(string(t.method.Desc.FullName())), ",")
+		// The budget the .proto declared, so the tool enforces its own number
+		// rather than one a caller asserted. Zero for anything not Sync.
+		g.P(budgetLiteral(g, t.budget), ",")
 		g.P("func() ", msg, " { return new(", in, ") },")
 		g.P("func(ctx ", g.QualifiedGoIdent(contextPackage.Ident("Context")), ", m ", msg, ") (", msg, ", error) {")
 		g.P("in, ok := m.(*", in, ")")
@@ -221,6 +227,34 @@ func serve(g *protogen.GeneratedFile, s service) {
 	g.P("return nil")
 	g.P("}")
 	g.P()
+}
+
+// budgetLiteral writes a Duration a human can check against the .proto.
+//
+// `5 * time.Second`, not 5000000000: generated code is read, and a reader
+// comparing it to a declaration should not have to divide.
+func budgetLiteral(g *protogen.GeneratedFile, d time.Duration) string {
+	if d == 0 {
+		return "0"
+	}
+	for _, u := range []struct {
+		d    time.Duration
+		name string
+	}{
+		{time.Hour, "Hour"}, {time.Minute, "Minute"},
+		{time.Second, "Second"}, {time.Millisecond, "Millisecond"},
+	} {
+		if d%u.d == 0 {
+			unit := g.QualifiedGoIdent(timePackage.Ident(u.name))
+			if n := int64(d / u.d); n == 1 {
+				return unit
+			} else {
+				return fmt.Sprintf("%d * %s", n, unit)
+			}
+		}
+	}
+	// Nothing divides evenly, so say it exactly rather than approximately.
+	return fmt.Sprintf("%s(%d)", g.QualifiedGoIdent(timePackage.Ident("Duration")), int64(d))
 }
 
 // strconv quotes a Go string literal. Named for what it does rather than

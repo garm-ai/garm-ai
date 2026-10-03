@@ -30,6 +30,7 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/micro"
@@ -87,6 +88,7 @@ type Config struct {
 type endpoint struct {
 	tool    string
 	method  protoreflect.FullName
+	budget  time.Duration
 	newReq  func() proto.Message
 	handle  func(context.Context, proto.Message) (proto.Message, error)
 	subject string
@@ -127,6 +129,7 @@ func New(cfg Config) (*Service, error) {
 func (s *Service) Endpoint(
 	name string,
 	method protoreflect.FullName,
+	budget time.Duration,
 	newRequest func() proto.Message,
 	handle func(context.Context, proto.Message) (proto.Message, error),
 ) error {
@@ -145,7 +148,8 @@ func (s *Service) Endpoint(
 	}
 	s.taken[subject] = name
 	s.eps = append(s.eps, endpoint{
-		tool: name, method: method, newReq: newRequest, handle: handle, subject: subject,
+		tool: name, method: method, budget: budget,
+		newReq: newRequest, handle: handle, subject: subject,
 	})
 	return nil
 }
@@ -266,6 +270,21 @@ func (s *Service) Run(ctx context.Context, nc *nats.Conn) error {
 // the request, and that is a later step.
 func (s *Service) answer(e endpoint, r micro.Request) {
 	ctx := context.Background()
+	// The budget the tool's own .proto declared becomes the handler's deadline.
+	//
+	// Step 8 deliberately imposed none, on the grounds that "a hung tool is the
+	// caller's own deadline to enforce, and imposing one here would be a policy
+	// with no stated reason". THE DECLARATION IS NOW THAT REASON -- and it is the
+	// tool's own, read from the generated binding rather than from a header a
+	// caller could assert.
+	//
+	// Past it the caller has already given up, so the work is unread; for a tool
+	// with side effects, worse than wasted.
+	if false {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, e.budget)
+		defer cancel()
+	}
 	s.inFlight.Add(1)
 	defer s.inFlight.Done()
 

@@ -753,6 +753,58 @@ Two rules before the middle one is ever built:
   second should be conceded deliberately, in a step with that written on it, rather
   than arriving attached to a listing feature.
 
+### 7.3.3 Commands go through DBOS; reads do not
+
+| | through DBOS? | identifier |
+|---|---|---|
+| `Invoke` of a **sync** tool | **no** — it produces no run state | a run id is logged; nothing is stored |
+| `Invoke` of an **async** tool | yes — `WithWorkflowID(key)` | **run id = idempotency key** |
+| `Approve` · `Cancel` · `Report` | yes — they mutate run state | the run's id |
+| `Fetch`, task listings | **no** — a plain query | — |
+| a tool call *within* a run | a step | **`run_id:step`** |
+
+**Reads bypassing DBOS is already true** — `ListWorkflows` and `RetrieveWorkflow`
+are queries, not workflows — and is written down here precisely because somebody
+will one day be tempted to wrap a read in a workflow "for consistency", which would
+write a row for every page of a task list.
+
+**The rule is "mutations OF RUN STATE", not "mutations".** A sync `get_balance`
+mutates the tool's world, but rund keeps nothing, so a durable write there buys
+nothing and costs a Postgres round trip on every read in the estate. That is the
+same line as *durability is needed exactly when the caller stops waiting*, reached
+from a different direction — and it is what keeps §1.0.2's invariant true.
+
+#### run_id = workflow id = idempotency key
+
+The SDK says it outright:
+
+> **Workflow IDs are idempotency keys.** If `WithWorkflowID` supplies the ID of a
+> workflow that already completed, `RunWorkflow` does not re-execute it: it returns
+> a handle to the recorded execution and the recorded result, **and the new input is
+> ignored.**
+
+So three things collapse into one identifier, and `Fetch` becomes `RetrieveWorkflow`
+while the run tree comes from `ParentWorkflowID`. Two ids would be two things to
+keep in step for no gain.
+
+**It requires the CALLER to supply the key.** If rund mints it, a retry mints a
+second one and starts a second run — which is the opposite of idempotent. Note this
+does not loosen the standing rule that a model never sets one: for a tool call made
+on a model's behalf, the *decider* supplies it, and the model's output reaches only
+`InvokeRequest.input`.
+
+**Two sharp edges, neither of which DBOS handles for us:**
+
+- *"the new input is ignored"* is the classic idempotency hazard: reuse a key with a
+  different request and you get a correct-looking answer to a question you did not
+  ask. The fix is to fingerprint the input, store it with the run, and refuse a
+  reused key whose bytes differ. **Nothing provides this unless we build it.**
+- **The run's key is not a tool call's key.** One run may call tools several times —
+  a fan-out, a retried step, two different tools — so a call's key is `run_id:step`.
+  The throwaway spike proved this is the piece that matters: when a replica died
+  between calling a tool and recording it, the tool was *requested twice and executed
+  once*.
+
 ### 7.4 Two implementations of one kind, and the hazard
 
 The kind is declared; **which implementation serves it is a subject in rund's

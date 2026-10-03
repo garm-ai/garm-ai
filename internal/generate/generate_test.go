@@ -9,14 +9,18 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/pluginpb"
 
+	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
+	"github.com/garm-ai/garm-ai/examples/weatherd"
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
 	"github.com/garm-ai/garm-ai/internal/generate"
 	"github.com/garm-ai/garm-ai/serve"
@@ -68,6 +72,7 @@ func TestTheHandlerHasExactlyTheDeclaredTools(t *testing.T) {
 type mount struct {
 	name   string
 	method protoreflect.FullName
+	budget time.Duration
 	newReq func() proto.Message
 	handle func(context.Context, proto.Message) (proto.Message, error)
 }
@@ -83,10 +88,11 @@ type registrar struct {
 func (r *registrar) Endpoint(
 	name string,
 	method protoreflect.FullName,
+	budget time.Duration,
 	newRequest func() proto.Message,
 	handle func(context.Context, proto.Message) (proto.Message, error),
 ) error {
-	r.mounts = append(r.mounts, mount{name, method, newRequest, handle})
+	r.mounts = append(r.mounts, mount{name, method, budget, newRequest, handle})
 	return r.fail
 }
 
@@ -337,7 +343,10 @@ var _ serve.Registrar = (*registrar)(nil)
 // decision to put something in every repository forever, so it should take a
 // failing test to make.
 func TestGeneratedCodeImportsOnlyWhatItNeeds(t *testing.T) {
-	resp, err := probe(t, toolMethod(t, "Do", &toolv1.Tool{Name: "probe.v1.do"}, false))
+	resp, err := probe(t, toolMethod(t, "Do", &toolv1.Tool{
+		Name:     "probe.v1.do",
+		Delivery: &toolv1.Tool_Sync{Sync: &toolv1.Sync{Budget: durationpb.New(5 * time.Second)}},
+	}, false))
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -361,6 +370,11 @@ func TestGeneratedCodeImportsOnlyWhatItNeeds(t *testing.T) {
 		"fmt":                              true, // the two refusals in the dispatch closure
 		"google.golang.org/protobuf/proto": true, // proto.Message, the transport's currency
 		"github.com/garm-ai/garm-ai/serve": true, // Registrar, and deliberately nothing else
+		// ADDED DELIBERATELY, and this test is why it was a decision rather than a
+		// drift: the declared budget is emitted as `5 * time.Second` so a reader can
+		// check it against the .proto without dividing. stdlib, zero cost, present
+		// everywhere -- and the fifth entry anybody adds should have to argue here.
+		"time": true,
 	}
 	for path := range got {
 		if !want[path] {
@@ -371,5 +385,67 @@ func TestGeneratedCodeImportsOnlyWhatItNeeds(t *testing.T) {
 		if !got[path] {
 			t.Errorf("generated code no longer imports %q", path)
 		}
+	}
+}
+
+// TestTheDeclaredBudgetIsEmittedReadably. The tool enforces its OWN number, so it
+// has to be in the generated binding -- and a reader comparing it to the .proto
+// should not have to divide.
+func TestTheDeclaredBudgetIsEmittedReadably(t *testing.T) {
+	for _, tc := range []struct {
+		d    time.Duration
+		want string
+	}{
+		// as gofmt leaves them -- it tightens the spaces around *, and the
+		// assertion is on the whole argument line so "time.Second" cannot match
+		// inside "5*time.Second".
+		{5 * time.Second, "5*time.Second"},
+		{time.Second, "time.Second"},
+		{2 * time.Minute, "2*time.Minute"},
+		{1500 * time.Millisecond, "1500*time.Millisecond"},
+	} {
+		resp, err := probe(t, toolMethod(t, "Do", &toolv1.Tool{
+			Name:     "probe.v1.do",
+			Delivery: &toolv1.Tool_Sync{Sync: &toolv1.Sync{Budget: durationpb.New(tc.d)}},
+		}, false))
+		if err != nil {
+			t.Fatalf("Run: %v", err)
+		}
+		got := resp.GetFile()[0].GetContent()
+		if !strings.Contains(got, "\n\t\t"+tc.want+",\n") {
+			t.Errorf("%v is not emitted as the argument %q", tc.d, tc.want)
+		}
+	}
+}
+
+// TestAnAsyncToolGetsNoDeadline: a budget is a Sync concept, and emitting one for
+// an async tool would cut off a call that was never promised to finish in time.
+func TestAnAsyncToolGetsNoDeadline(t *testing.T) {
+	resp, err := probe(t, toolMethod(t, "Do", &toolv1.Tool{
+		Name:     "probe.v1.freeze",
+		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}},
+	}, false))
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	got := resp.GetFile()[0].GetContent()
+	if strings.Contains(got, "time.Second") || strings.Contains(got, "time.Duration") {
+		t.Errorf("an async tool was given a deadline:\n%s", got)
+	}
+}
+
+// TestTheBudgetReachesTheRegistrar, through the real generated binding rather than
+// through the generator's output as text.
+func TestTheBudgetReachesTheRegistrar(t *testing.T) {
+	var r registrar
+	if err := weatherv1.ServeWeatherService(&r, weatherd.Service{}); err != nil {
+		t.Fatalf("Serve: %v", err)
+	}
+	if len(r.mounts) != 1 {
+		t.Fatalf("mounted %d", len(r.mounts))
+	}
+	// weather.proto declares sync: { budget: { seconds: 5 } }
+	if r.mounts[0].budget != 5*time.Second {
+		t.Errorf("budget reached the registrar as %v, want 5s", r.mounts[0].budget)
 	}
 }

@@ -51,6 +51,7 @@ one component in more detail. They link here rather than repeating it.
 | Approval, `ApprovalNeeded`, and policy that may interpose a human | the run store **and** the authority model |
 | Guardrails before and after a call | something to check — the authority model |
 | Cost budgets across a run tree | an accountant |
+| Refusing a reused idempotency key whose **input differs** | the run store. DBOS ignores the new input and returns the old result, which is a correct-looking answer to a question nobody asked |
 | A task list filtered by **compartment and principal** | the authority model — and a projection table, since JSONB containment is AND-only and cannot express "any of my compartments" |
 | rund owning a schema and migrations | a listing surface that needs OR queries and real pagination. A deliberate step, because it concedes the second half of the original no-database constraint |
 | A run limit, and the check that it is ≥ the largest budget in an allowlist | `Async.run_limit` |

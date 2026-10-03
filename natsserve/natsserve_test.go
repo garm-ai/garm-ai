@@ -112,6 +112,7 @@ func service(t *testing.T, tool string, handle func(context.Context, proto.Messa
 	}
 	err = s.Endpoint(tool,
 		protoreflect.FullName("weather.v1.WeatherService.GetForecast"),
+		0, // no budget: these probes are about the transport, not the deadline
 		func() proto.Message { return new(weatherv1.GetForecastRequest) },
 		handle)
 	if err != nil {
@@ -400,7 +401,7 @@ func TestTwoToolsOnOneSubjectAreRefused(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 	add := func(name string) error {
-		return s.Endpoint(name, "a.b.C.D",
+		return s.Endpoint(name, "a.b.C.D", 0,
 			func() proto.Message { return new(weatherv1.GetForecastRequest) },
 			func(context.Context, proto.Message) (proto.Message, error) { return nil, nil })
 	}
@@ -573,5 +574,106 @@ func TestStartTwiceIsRefused(t *testing.T) {
 	// second is ever stopped.
 	if err := s.Start(nc); err == nil {
 		t.Fatal("Start mounted the same endpoints twice")
+	}
+}
+
+// TestADeclaredBudgetBecomesTheHandlersDeadline.
+//
+// Step 8 gave handlers no deadline on the grounds that imposing one would be "a
+// policy with no stated reason". The tool's own declaration is now that reason --
+// and it arrives through the GENERATED BINDING, not a header, so the number is the
+// one the author wrote rather than one a caller asserted.
+func TestADeclaredBudgetBecomesTheHandlersDeadline(t *testing.T) {
+	nc := conn(t, 0)
+	const budget = 300 * time.Millisecond
+
+	var (
+		mu       sync.Mutex
+		deadline time.Time
+		hadOne   bool
+	)
+	s, err := natsserve.New(natsserve.Config{Name: "probed", Version: "0.1.0", Logger: quiet()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = s.Endpoint("probe.tool", "a.b.C.D", budget,
+		func() proto.Message { return new(weatherv1.GetForecastRequest) },
+		func(ctx context.Context, _ proto.Message) (proto.Message, error) {
+			mu.Lock()
+			deadline, hadOne = ctx.Deadline()
+			mu.Unlock()
+			return &weatherv1.GetForecastResponse{Summary: "x", HighCelsius: 1}, nil
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run(t, s, nc)
+	call(t, nc, "garm.tool.probe.tool", &weatherv1.GetForecastRequest{Place: "x"})
+
+	mu.Lock()
+	defer mu.Unlock()
+	if !hadOne {
+		t.Fatal("the handler got no deadline, so a tool outliving its own declared budget is unbounded")
+	}
+	if d := time.Until(deadline); d > budget || d < budget/2 {
+		t.Errorf("the deadline is %v away, want about %v", d, budget)
+	}
+}
+
+// TestAHandlerPastItsBudgetIsCancelled. Past the budget the caller has given up,
+// so the work is unread -- and for a tool with side effects, worse than wasted.
+func TestAHandlerPastItsBudgetIsCancelled(t *testing.T) {
+	nc := conn(t, 0)
+	s, err := natsserve.New(natsserve.Config{Name: "probed", Version: "0.1.0", Logger: quiet()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cancelled := make(chan error, 1)
+	err = s.Endpoint("probe.tool", "a.b.C.D", 150*time.Millisecond,
+		func() proto.Message { return new(weatherv1.GetForecastRequest) },
+		func(ctx context.Context, _ proto.Message) (proto.Message, error) {
+			<-ctx.Done() // a handler that would otherwise run forever
+			cancelled <- ctx.Err()
+			return nil, serve.Unavailable("gave up")
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run(t, s, nc)
+	call(t, nc, "garm.tool.probe.tool", &weatherv1.GetForecastRequest{Place: "x"})
+
+	select {
+	case err := <-cancelled:
+		if err != context.DeadlineExceeded {
+			t.Errorf("the handler was cancelled with %v, want DeadlineExceeded", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("the handler was never cancelled")
+	}
+}
+
+// TestAnAsyncToolsHandlerKeepsNoDeadline: a budget is a Sync concept, and zero
+// means "do not impose one" rather than "impose zero".
+func TestAnAsyncToolsHandlerKeepsNoDeadline(t *testing.T) {
+	nc := conn(t, 0)
+	s, err := natsserve.New(natsserve.Config{Name: "probed", Version: "0.1.0", Logger: quiet()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := make(chan bool, 1)
+	err = s.Endpoint("probe.tool", "a.b.C.D", 0,
+		func() proto.Message { return new(weatherv1.GetForecastRequest) },
+		func(ctx context.Context, _ proto.Message) (proto.Message, error) {
+			_, has := ctx.Deadline()
+			got <- has
+			return &weatherv1.GetForecastResponse{Summary: "x", HighCelsius: 1}, nil
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run(t, s, nc)
+	call(t, nc, "garm.tool.probe.tool", &weatherv1.GetForecastRequest{Place: "x"})
+	if <-got {
+		t.Error("a zero budget produced a deadline, so an async handler would be cut off")
 	}
 }

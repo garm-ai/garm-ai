@@ -17,6 +17,7 @@ import (
 	fmt "fmt"
 	serve "github.com/garm-ai/garm-ai/serve"
 	proto "google.golang.org/protobuf/proto"
+	time "time"
 )
 
 // WeatherServiceHandler implements every tool WeatherService declares, in plain proto
@@ -39,6 +40,7 @@ func ServeWeatherService(r serve.Registrar, h WeatherServiceHandler) error {
 	if err := r.Endpoint(
 		"weather.v1.get_forecast",
 		"weather.v1.WeatherService.GetForecast",
+		5*time.Second,
 		func() proto.Message { return new(GetForecastRequest) },
 		func(ctx context.Context, m proto.Message) (proto.Message, error) {
 			in, ok := m.(*GetForecastRequest)
