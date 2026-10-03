@@ -27,6 +27,19 @@ git diff --exit-code -- garm/ || {
 }
 """
 
+[tasks.check]
+description = "Refuse a tree whose declarations do not hold together"
+# buf compiles; garm-check answers what protobuf cannot express. An allowlist
+# cites tools by NAME, so it creates no proto dependency and no proto error --
+# nothing but this will tell you an entry resolves to nothing.
+run = """
+set -e
+img=$(mktemp -t garm-image).binpb
+buf build -o "$img"
+go run ./cmd/garm-check "$img"
+rm -f "$img"
+"""
+
 [tasks.lint]
 description = "buf lint"
 run = "buf lint"
@@ -37,4 +50,4 @@ run = "go test ./... -race"
 
 [tasks.ci]
 description = "Everything CI runs, in order"
-depends = ["lint", "gen-check", "test"]
+depends = ["lint", "gen-check", "check", "test"]

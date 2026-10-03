@@ -1,0 +1,26 @@
+// Plain tools: a service answers each call itself.
+syntax = "proto3";
+
+package testdata.v1;
+
+import "garm/tool/v1/tool.proto";
+
+option go_package = "github.com/garm-ai/garm-ai/testdata/v1;testdatav1";
+
+message GetCustomerRequest  { string customer_id = 1; }
+message GetCustomerResponse { string display_name = 1; }
+
+message GetPaymentStatusRequest  { string payment_id = 1; }
+message GetPaymentStatusResponse { string status = 1; }
+
+service AccountsService {
+  rpc GetCustomer(GetCustomerRequest) returns (GetCustomerResponse) {
+    option (garm.tool.v1.tool) = { name: "accounts.v1.get_customer" };
+  }
+}
+
+service PaymentsService {
+  rpc GetPaymentStatus(GetPaymentStatusRequest) returns (GetPaymentStatusResponse) {
+    option (garm.tool.v1.tool) = { name: "payments.v1.get_payment_status" };
+  }
+}

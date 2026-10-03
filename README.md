@@ -59,6 +59,36 @@ Three properties, each with a test proved able to fail:
    resolves to a declared tool or it does not. Breaking this test by citing an
    *address* in the allowlist reproduces the old bug exactly, and it fails.
 
+**Step 3 — the allowlist is enforced, not asserted.**
+
+An allowlist entry is a **string**. Protobuf cannot tell you whether any tool has
+that name: there is no import, no type reference, no compile error if it is wrong.
+buf confirmed this directly by rejecting the agent file's import of the tools it
+names as *unused* — the relationship is not expressible in proto.
+
+So `declared/` answers what protobuf cannot:
+
+- `From(files)` indexes every declaration by name, and **refuses two tools
+  claiming one name** — not a lint rule but a precondition, since a name
+  resolving to one thing is what allowlists, policy keys and ledger rows rest on.
+- `Unresolved()` returns every allowlist entry naming a tool nobody declared.
+
+`cmd/garm-check` runs it and **exits non-zero**, wired into `mise run ci` from the
+step it was written. A rule nobody runs is not a rule: the estate this replaces
+accumulated eight checks that were configured and never ran clean, each reading as
+a guarantee.
+
+It is a package rather than code inside the command because a gateway needs the
+same answer at run time that a linter needs at publish — and the previous estate's
+worst structural bug was two implementations of one idea, where a CEL dialect
+existed twice and the copies resolved types differently, so a guard could pass
+lint and fail at load.
+
+The fixture puts the agent in a different file from the tools it names, so a test
+can load a **partial** tree and watch the allowlist fail to resolve. That is not
+contrived: the previous estate shipped a `--proto` flag that compiled one
+directory and then judged it as the whole, reporting valid trees as broken.
+
 ### What is deliberately absent, and why `mode` never arrives
 
 There is no `mode`, `type` or `kind` saying which runner answers an agent. That

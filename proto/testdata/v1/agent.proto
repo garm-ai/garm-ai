@@ -1,0 +1,64 @@
+// An agent: a tool a runner answers.
+//
+// IN A SEPARATE FILE FROM THE TOOLS IT CALLS, and NOTE THAT IT DOES NOT IMPORT
+// THEM -- it cannot. An allowlist cites tools by NAME, so it creates no
+// proto-level dependency, and buf correctly rejects the import as unused.
+//
+// That is the whole reason a resolver has a job: **the relationship between an
+// agent and the tools it may call is one the proto system cannot express.**
+// Nothing in protobuf will tell you a name resolves to nothing. So something
+// else has to, which is `declared`.
+//
+// It is also why a partial tree is a real hazard rather than a contrived one.
+// The previous estate shipped exactly this bug: a `--proto` flag compiled one
+// directory and then ran the full rule set over it, so an agent naming an
+// adopted tool was refused for naming a tool it could not see -- a valid tree
+// reported broken, with no proto error to explain it.
+syntax = "proto3";
+
+package testdata.v1;
+
+import "garm/tool/v1/tool.proto";
+
+option go_package = "github.com/garm-ai/garm-ai/testdata/v1;testdatav1";
+
+message InvokeRequest { string request = 1; }
+
+// Named InvokeResponse rather than RunRef purely to satisfy buf's
+// RPC_RESPONSE_STANDARD_NAME. That is the SECOND naming rule STANDARD has fought
+// in two steps, and the pattern is worth recording before real protos arrive:
+//
+//   - SERVICE_SUFFIX wants `SupportAssistantService`, where an agent is a named
+//     actor and reads better without the suffix.
+//   - RPC_RESPONSE_STANDARD_NAME wants InvokeResponse, where every agent's Invoke
+//     returning one shared `RunRef` is good design -- and
+//     RPC_REQUEST_RESPONSE_UNIQUE would then object to the sharing too.
+//
+// The previous estate hit all three, configured STANDARD anyway, and never ran
+// it clean. The decision is NOT dodged, it is deferred to the step that writes a
+// real proto -- and until then the fixture bends, not the ruleset.
+message InvokeResponse { string run_id = 1; }
+
+service SupportAssistantService {
+  rpc Invoke(InvokeRequest) returns (InvokeResponse) {
+    // NOTE THE DELIBERATE MISMATCH between identity and address. This method's
+    // proto full name is `testdata.v1.SupportAssistantService.Invoke`; the tool's
+    // name is `support-assistant`. Different on purpose, so code that confuses an
+    // address for an identity fails a test rather than failing in production
+    // three services away. The previous estate had that bug twice in one day.
+    //
+    // Both entries name tools tools.proto declares, by the same spelling. One
+    // namespace -- which is what makes "an agent is a tool" a fact rather than a
+    // slogan, and means this tree RESOLVES, so the repository's own check passes
+    // on it rather than needing an exception.
+    option (garm.tool.v1.tool) = {
+      name: "support-assistant"
+      agent: {
+        tools: [
+          { name: "accounts.v1.get_customer" },
+          { name: "payments.v1.get_payment_status" }
+        ]
+      }
+    };
+  }
+}
