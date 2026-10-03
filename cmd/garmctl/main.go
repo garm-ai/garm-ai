@@ -18,6 +18,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/garm-ai/garm-ai/serve"
 )
 
 func main() {
@@ -28,7 +30,13 @@ func main() {
 		// printed a bare newline instead -- so `garmctl compose x --nonsense`
 		// exited 1 in silence. The config contradicted its own comment, which is
 		// the exact failure mode this repository was started to stop repeating.
-		fmt.Fprintln(os.Stderr, "garmctl: "+err.Error())
+		//
+		// serve.Describe puts the KIND first when there is one, which is what a
+		// person decides on: retry, fix what was typed, or go and deploy
+		// something. Here rather than in `call` because every subcommand that
+		// reaches a service wants it, and `call` had its own copy that reached it
+		// by calling os.Exit from inside a function holding two defers.
+		fmt.Fprintln(os.Stderr, "garmctl: "+serve.Describe(err))
 		os.Exit(1)
 	}
 }

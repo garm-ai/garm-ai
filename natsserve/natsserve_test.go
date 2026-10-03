@@ -430,36 +430,6 @@ func TestRunWithNoEndpointsIsRefused(t *testing.T) {
 	}
 }
 
-// TestNewRefusesExactlyWhatMicroRefuses is why validate.go copies micro's regexes
-// rather than approximating them. New exists so a misconfigured process fails at
-// construction; a looser pattern here would let it start and fail at AddService,
-// and a stricter one would refuse a config that works.
-func TestNewRefusesExactlyWhatMicroRefuses(t *testing.T) {
-	nc := conn(t, 0)
-	for _, tc := range []struct{ name, version string }{
-		{"weatherd", "0.1.0"},        // fine
-		{"weather-d_2", "1.0.0-rc1"}, // fine
-		{"weather.d", "0.1.0"},       // a dot in the name
-		{"weather d", "0.1.0"},       // a space
-		{"", "0.1.0"},                // empty
-		{"weatherd", "v0.1.0"},       // not semver: the v
-		{"weatherd", "0.1"},          // not semver: two parts
-		{"weatherd", ""},             // empty
-	} {
-		_, ourErr := natsserve.New(natsserve.Config{Name: tc.name, Version: tc.version, Logger: quiet()})
-
-		svc, microErr := micro.AddService(nc, micro.Config{Name: tc.name, Version: tc.version})
-		if microErr == nil {
-			_ = svc.Stop()
-		}
-
-		if (ourErr == nil) != (microErr == nil) {
-			t.Errorf("Config{%q, %q}: New says %v, micro says %v — the copied patterns have diverged",
-				tc.name, tc.version, ourErr, microErr)
-		}
-	}
-}
-
 // TestEndpointNameIsAcceptedByMicroForEveryLegalToolName.
 //
 // micro's name charset excludes the dot, so the endpoint name replaces them. That

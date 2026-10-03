@@ -126,8 +126,9 @@
     <em>implementations</em> of one declared kind — and a tool author cannot tell which
     one a deployment runs, which is the point.</p>
   <p class="note">Everything below the bus is reached the same way: <code>rund</code>
-    resolves a name to a subject and calls it. Green is built today, terracotta is the
-    next step, dashed is designed and not built.</p>
+    resolves a name to a subject and calls it. Green is built today — the synchronous
+    path, trace A, runs end to end. Terracotta is <b>next</b>: the run store, without
+    which trace B cannot happen at all. Dashed is designed and not built.</p>
 
   <section>
     <h2>The topology, and what each box keeps</h2>
@@ -191,17 +192,17 @@
   </g>
   <g class="ae call"><path d="M852 366 L852 420" marker-end="url(#d-call)"/>
   </g>
-  <g class="an next tA tB"><rect x="20" y="34" width="170" height="58" rx="9"/>
+  <g class="an ok tA tB"><rect x="20" y="34" width="170" height="58" rx="9"/>
     <text class="t1" x="105" y="58" text-anchor="middle">A caller</text>
     <text class="t2" x="105" y="74" text-anchor="middle">generated client</text>
   </g>
-  <g class="an next tA tB"><rect x="320" y="26" width="280" height="86" rx="9"/>
+  <g class="an ok tA tB"><rect x="320" y="26" width="280" height="86" rx="9"/>
     <text class="t1" x="460" y="50" text-anchor="middle">rund</text>
     <text class="t2" x="460" y="66" text-anchor="middle">THE ENGINE</text>
     <text class="t2" x="460" y="80" text-anchor="middle">guardrails · retries · budgets</text>
     <text class="t2" x="460" y="94" text-anchor="middle">the run tree · public state</text>
   </g>
-  <g class="an later tB"><rect x="700" y="26" width="240" height="52" rx="9"/>
+  <g class="an next tB"><rect x="700" y="26" width="240" height="52" rx="9"/>
     <text class="t1" x="820" y="50" text-anchor="middle">Postgres · runs</text>
     <text class="t2" x="820" y="66" text-anchor="middle">ASYNC ONLY · DBOS</text>
   </g>

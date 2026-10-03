@@ -90,11 +90,6 @@
   .arch.f-call .ae:not(.call), .arch.f-rec .ae:not(.rec) { opacity: .1; }
 
   /* ---- prose furniture ---- */
-  .s { font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
-       padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-  .s-built  { color: var(--good); background: var(--good-soft); }
-  .s-next   { color: var(--accent-ink); background: var(--accent-soft); }
-  .s-later  { color: var(--muted); background: var(--surface-2); }
   .tbl-wrap { overflow-x: auto; margin-top: 20px; }
   table { width: 100%; border-collapse: collapse; font-size: 14.5px;
           background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
@@ -126,9 +121,11 @@
   <p class="tagline">A tool author writes a plain function. Everything that makes a
     call durable, approvable, retryable or budgeted happens somewhere else — and that
     somewhere is one component.</p>
-  <p class="note">Green is built and tested. Terracotta is the next step. Dashed is
-    designed and deliberately not built, because in this repository a field arrives
-    when the thing that enforces it arrives.</p>
+  <p class="note">Green is built and tested — a caller now names a tool and gets an
+    answer through every green box. Terracotta is <b>next</b>: the run store, which
+    turns <code>async</code> on. Dashed is designed and deliberately not built,
+    because in this repository a field arrives when the thing that enforces it
+    arrives.</p>
 
   <section>
     <h2>Solid is a call, dotted is a record, dashed is loaded or derived</h2>
@@ -221,17 +218,17 @@
   <g class="ae call"><path d="M330 372 L330 402 L844 402 L844 296" marker-end="url(#a-call)"/>
     <text class="strong" x="560" y="396">garm.tool.&lt;name&gt;  ·  the only caller of this</text></g>
 
-  <g class="an next"><rect x="20" y="206" width="150" height="58" rx="9"/>
+  <g class="an ok"><rect x="20" y="206" width="150" height="58" rx="9"/>
     <text class="t1" x="95" y="232" text-anchor="middle">A caller</text>
     <text class="t2" x="95" y="249" text-anchor="middle">generated client</text></g>
 
   <!-- rund is a CONTAINER: what sits inside it runs in its process -->
-  <g class="an next"><rect x="210" y="196" width="240" height="176" rx="10"/>
+  <g class="an ok"><rect x="210" y="196" width="240" height="176" rx="10"/>
     <text class="t1" x="330" y="222" text-anchor="middle">rund</text>
     <text class="t2" x="330" y="238" text-anchor="middle">THE ENGINE · ONE DEPLOYABLE</text>
     <text class="t2" x="330" y="252" text-anchor="middle">runs · retries · guardrails</text>
     <text class="t2" x="330" y="266" text-anchor="middle">budgets · the tree · DBOS</text></g>
-  <g class="an next"><rect x="226" y="286" width="208" height="46" rx="8"/>
+  <g class="an ok"><rect x="226" y="286" width="208" height="46" rx="8"/>
     <text class="t1" x="330" y="306" text-anchor="middle">single-step decider</text>
     <text class="t2" x="330" y="321" text-anchor="middle">IN THIS PROCESS · no hop</text></g>
   <text class="bandlbl" x="226" y="352">in rund's own binary</text>
@@ -264,7 +261,7 @@
     <text x="480" y="510">persist, THEN publish</text></g>
   <g class="ae rec"><path d="M770 572 L790 572" marker-end="url(#a-rec)"/></g>
 
-  <g class="an later"><rect x="250" y="540" width="200" height="66" rx="9"/>
+  <g class="an next"><rect x="250" y="540" width="200" height="66" rx="9"/>
     <text class="t1" x="350" y="562" text-anchor="middle">The run store</text>
     <text class="t2" x="350" y="578" text-anchor="middle">DBOS · Postgres · ASYNC ONLY</text>
     <text class="t2" x="350" y="592" text-anchor="middle">runs · steps · the tree</text></g>

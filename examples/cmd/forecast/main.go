@@ -6,9 +6,9 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/nats-io/nats.go"
@@ -23,11 +23,20 @@ func main() {
 	place := flag.String("place", "Ghent", "where")
 	days := flag.Int("days", 3, "how many days")
 	flag.Parse()
+	os.Exit(forecast(*url, *place, *days, os.Stdout, os.Stderr))
+}
 
-	nc, err := nats.Connect(*url)
+// forecast is main with its edges passed in, so a test can RUN the example rather
+// than only compile it.
+//
+// It was one closure around os.Exit until an audit found that this example was
+// built by CI and never executed -- so "the only two lines that matter" were a
+// claim nothing checked. An example nobody runs is documentation that compiles.
+func forecast(url, place string, days int, stdout, stderr io.Writer) int {
+	nc, err := nats.Connect(url)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		fmt.Fprintln(stderr, err)
+		return 1
 	}
 	defer nc.Close()
 
@@ -36,18 +45,14 @@ func main() {
 	// read from the same declaration rund did.
 	client := weatherv1.NewWeatherServiceClient(natscall.Client{NC: nc})
 	out, err := client.GetForecast(context.Background(),
-		&weatherv1.GetForecastRequest{Place: *place, Days: int32(*days)})
+		&weatherv1.GetForecastRequest{Place: place, Days: int32(days)})
 
 	if err != nil {
-		// The KIND first, because it is what a caller decides on: retry, fix the
+		// Kind first, because it is what a caller decides on: retry, fix the
 		// request, or go and deploy something.
-		var e *serve.Error
-		if errors.As(err, &e) {
-			fmt.Fprintf(os.Stderr, "%s: %s\n", serve.Code(e.Kind), e.Message)
-		} else {
-			fmt.Fprintln(os.Stderr, err)
-		}
-		os.Exit(1)
+		fmt.Fprintln(stderr, serve.Describe(err))
+		return 1
 	}
-	fmt.Printf("%s (high %d°C)\n", out.GetSummary(), out.GetHighCelsius())
+	fmt.Fprintf(stdout, "%s (high %d°C)\n", out.GetSummary(), out.GetHighCelsius())
+	return 0
 }

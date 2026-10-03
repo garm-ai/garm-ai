@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -17,7 +16,6 @@ import (
 	"github.com/garm-ai/garm-ai/catalogue"
 	"github.com/garm-ai/garm-ai/fetch"
 	"github.com/garm-ai/garm-ai/natscall"
-	"github.com/garm-ai/garm-ai/serve"
 )
 
 func callCmd() *cobra.Command {
@@ -93,14 +91,12 @@ func callCmd() *cobra.Command {
 			out, err := natscall.Client{NC: nc}.Invoke(ctx, tool.Name, raw,
 				call.Options{Idempotency: idempotency})
 			if err != nil {
-				// The KIND, because it is what a person decides on: retry, or fix the
-				// request, or go and deploy something.
-				var e *serve.Error
-				if errors.As(err, &e) {
-					fmt.Fprintf(cmd.ErrOrStderr(), "%s: %s\n",
-						serve.Code(e.Kind), e.Message)
-					os.Exit(1)
-				}
+				// RETURNED, not printed-and-exited. An earlier revision called
+				// os.Exit(1) here to get the kind in front of the person, which
+				// jumped over this function's own deferred Close and cancel, and
+				// made the one interesting path in this command untestable. main
+				// renders the kind now, through serve.Describe, for every
+				// subcommand rather than this one.
 				return err
 			}
 

@@ -123,6 +123,26 @@ func KindOf(code string) invokev1.ErrorKind {
 	return invokev1.ErrorKind_ERROR_KIND_UNSPECIFIED
 }
 
+// Describe renders an error for a PERSON, kind first.
+//
+// The kind leads because it is what a person decides on: retry (UNAVAILABLE), fix
+// what was typed (INVALID), or go and deploy something (NOT_FOUND). A bare message
+// buries that under prose.
+//
+// It lives here rather than in either command because TWO of them needed the same
+// three lines -- garmctl and the forecast example -- and each had its own copy with
+// its own os.Exit. The second consumer is where this moves.
+func Describe(err error) string {
+	if err == nil {
+		return ""
+	}
+	var e *Error
+	if errors.As(err, &e) {
+		return Code(e.Kind) + ": " + e.Message
+	}
+	return err.Error()
+}
+
 // Wire is the ONLY path from a handler's error to what a caller sees.
 //
 // Total: a non-nil error always produces a non-nil Error with a kind that is never
