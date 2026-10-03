@@ -51,6 +51,8 @@ one component in more detail. They link here rather than repeating it.
 | Approval, `ApprovalNeeded`, and policy that may interpose a human | the run store **and** the authority model |
 | Guardrails before and after a call | something to check — the authority model |
 | Cost budgets across a run tree | an accountant |
+| A task list filtered by **compartment and principal** | the authority model — and a projection table, since JSONB containment is AND-only and cannot express "any of my compartments" |
+| rund owning a schema and migrations | a listing surface that needs OR queries and real pagination. A deliberate step, because it concedes the second half of the original no-database constraint |
 | A run limit, and the check that it is ≥ the largest budget in an allowlist | `Async.run_limit` |
 | Cards of any kind, input, result, approval, context | a renderer |
 | Hot reload of the catalogue, converging every replica | a trigger — a JetStream KV key an operator sets |

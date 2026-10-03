@@ -684,6 +684,75 @@ or be a pure reducer, because its tool calls go through rund either way. **rund*
 has no such choice — there is no one else to hold a run for a single-step async
 call.
 
+### 7.3.2 Where run state actually lives, and how it is queried
+
+Checked against `dbos-transact-golang v1.4.0` rather than assumed.
+
+**DBOS's own workflow store is a queryable run store**, and several of its
+dimensions are exactly what rund needs rather than near-misses:
+
+| rund needs | DBOS gives |
+|---|---|
+| the **run tree** | `ParentWorkflowID`, `WithFilterParentWorkflowID`, `WithFilterHasParent` |
+| idempotency | `WithDeduplicationID` — first-class, not something we build |
+| state | `WithFilterStatus` |
+| tags: correlation, tool, tenant, compartments | `WithWorkflowAttributes`, queried by `WithFilterAttributes` |
+| time ranges, pagination, payload control | `CreatedAfter/Before`, `Limit/Offset/SortDesc`, `LoadInput/LoadOutput` |
+| which replica, how many attempts | `ExecutorID`, `Attempts` |
+
+So **`RunState` is a projection of `WorkflowStatusType`, not a parallel table**, and
+`run_id` should BE the DBOS workflow id (`WithWorkflowID`) — two id spaces would be
+two things to keep in step for no gain.
+
+#### The one real limit: containment is AND, never OR
+
+`WithFilterAttributes` compiles to `attributes @> $1::jsonb`, served by a GIN index.
+That gives array containment — `{"compartments":["payments"]}` matches a row tagged
+`["payments","cards","eu"]` — which is exactly right for one compartment.
+
+It **cannot** express *"anything any of my five compartments can see"*. And that is
+the query an authority-aware task list is actually made of.
+
+**Where that lands: the authority decision belongs in rund, not in a SQL
+predicate.** DBOS narrows on the cheap indexed dimensions — tenant, status, time,
+parent, one compartment — and rund applies what the principal may see. That keeps
+grant logic in one place, which is the lesson from the estate where `inScope` lived
+in the gateway rather than scattered into queries.
+
+**The honest cost is pagination**: ask for 50, show 30. Mitigated by pushing the
+cheap part down and over-fetching, and recorded here rather than discovered while
+building a UI.
+
+Smaller finding: `AuthenticatedUser`, `AssumedRole` and `AuthenticatedRoles` are
+native columns, but **only user is exposed as a filter**. Roles must be duplicated
+into attributes to be queryable.
+
+#### Our own tables, if it ever comes to that
+
+`RunAsTransaction(ctx, ds, fn)` wraps a pool we own so **one transaction writes both
+our tables and DBOS's durability record**. So our own bookkeeping would be
+**exactly-once**, not at-least-once-plus-idempotency — an asymmetry worth naming,
+because the world's side effects can never be: a tool call stays at-least-once with
+an idempotency key, and nothing fixes that.
+
+Three options, and the middle one is deferred rather than rejected:
+
+| | queries | cost |
+|---|---|---|
+| **attributes only** — today | containment, AND-only | **no schema of ours** |
+| **our own projection table** | full SQL: OR, joins, real pagination | rund acquires **migrations** |
+| direct SQL over DBOS's `workflow_status` | full power, no schema of ours | **rejected** — that schema is under `internal/` and versioned, so it breaks on a patch bump with no compile error |
+
+Two rules before the middle one is ever built:
+
+- **DBOS is authoritative for execution state; our table is a projection** — derived,
+  rebuildable, never the source of truth. Treating it as authoritative is two state
+  machines, which is the shape of bug this design keeps avoiding.
+- **That step is where rund acquires migrations.** The original constraint on garmd
+  was no database *and* no knowledge of migrations; §1.0.2 conceded the first. The
+  second should be conceded deliberately, in a step with that written on it, rather
+  than arriving attached to a listing feature.
+
 ### 7.4 Two implementations of one kind, and the hazard
 
 The kind is declared; **which implementation serves it is a subject in rund's
