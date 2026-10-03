@@ -27,6 +27,8 @@ func run(t *testing.T, e *estate.Estate, args ...string) (stdout, stderr string,
 	cmd.SilenceErrors = true // main is what prints an error, exactly once
 	cmd.SetArgs(append([]string{
 		"--nats", e.URL,
+		"--creds", e.CredsFile(t, estate.RoleCaller),
+		"--tls-ca", e.CAFile(t),
 		"--catalogue", e.CatalogueURI,
 		"--catalogue-sha256", e.CatalogueSHA,
 		"--catalogue-dir", e.Dir,
@@ -37,7 +39,6 @@ func run(t *testing.T, e *estate.Estate, args ...string) (stdout, stderr string,
 
 // TestCallReachesTheToolAndPrintsItsAnswerAsJSON, naming only the tool.
 func TestCallReachesTheToolAndPrintsItsAnswerAsJSON(t *testing.T) {
-	t.Skip("awaiting --creds; Task 8 removes this skip")
 	e := estate.New(t)
 	stdout, _, err := run(t, e, "weather.v1.get_forecast", `{"place":"Ghent","days":3}`)
 	if err != nil {
@@ -63,7 +64,6 @@ func TestCallReachesTheToolAndPrintsItsAnswerAsJSON(t *testing.T) {
 // TestCallDefaultsToAnEmptyRequest. The tool refuses it, which is the proof the
 // empty body was really sent rather than the command refusing to send one.
 func TestCallDefaultsToAnEmptyRequest(t *testing.T) {
-	t.Skip("awaiting --creds; Task 8 removes this skip")
 	e := estate.New(t)
 	if _, _, err := run(t, e, "weather.v1.get_forecast"); err == nil {
 		t.Fatal("an empty request was answered; weatherd refuses a missing place")
@@ -149,7 +149,6 @@ func TestADigestMismatchStopsTheCall(t *testing.T) {
 // not be tested at all. serve.Describe is what main applies, so that is what is
 // asserted.
 func TestAToolsRefusalArrivesWithItsKindForAPerson(t *testing.T) {
-	t.Skip("awaiting --creds; Task 8 removes this skip")
 	e := estate.New(t)
 	_, _, err := run(t, e, "weather.v1.get_forecast", `{"place":""}`)
 	if err == nil {

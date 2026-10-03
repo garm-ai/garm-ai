@@ -17,27 +17,30 @@ import (
 
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	"github.com/garm-ai/garm-ai/examples/weatherd"
+	"github.com/garm-ai/garm-ai/natsconn"
 	"github.com/garm-ai/garm-ai/natsserve"
 )
 
 func main() {
 	url := flag.String("nats", nats.DefaultURL, "NATS URL")
+	creds := flag.String("creds", "", "this service's credentials file, as `garmctl topology` wrote it")
+	ca := flag.String("tls-ca", "", "PEM the server's certificate chains to; empty means the system roots")
 	name := flag.String("name", "weatherd", "this service's name, as $SRV.INFO reports it")
 	version := flag.String("version", "0.1.0", "this service's version (semver)")
 	flag.Parse()
 
 	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	// Every value, defaults included, so nobody has to guess which one is in force.
-	log.Info("starting", "nats", *url, "name", *name, "version", *version)
+	log.Info("starting", "nats", *url, "creds", *creds, "tls_ca", *ca, "name", *name, "version", *version)
 
-	if err := run(*url, *name, *version, log); err != nil {
+	if err := run(*url, natsconn.Options{Creds: *creds, CA: *ca}, *name, *version, log); err != nil {
 		log.Error("stopped", "error", err)
 		os.Exit(1)
 	}
 	log.Info("stopped cleanly")
 }
 
-func run(url, name, version string, log *slog.Logger) error {
+func run(url string, conn natsconn.Options, name, version string, log *slog.Logger) error {
 	svc, err := natsserve.New(natsserve.Config{Name: name, Version: version, Logger: log})
 	if err != nil {
 		return err
@@ -50,7 +53,7 @@ func run(url, name, version string, log *slog.Logger) error {
 		return err
 	}
 
-	nc, err := nats.Connect(url)
+	nc, err := natsconn.Connect(url, conn)
 	if err != nil {
 		return err
 	}

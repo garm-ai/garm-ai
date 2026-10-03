@@ -18,5 +18,6 @@ func root() *cobra.Command {
 	}
 	cmd.AddCommand(composeCmd())
 	cmd.AddCommand(callCmd())
+	cmd.AddCommand(topologyCmd())
 	return cmd
 }

@@ -154,13 +154,27 @@ The last line is what makes this an example rather than a claim: it is compiled 
 
 ## 4. Run it
 
+The bus runs in **operator mode**: every process connects with a credential whose
+permissions were derived from the catalogue, over TLS. Locally, `garmctl topology
+--dev` mints a throwaway set and says so — a deployment's keys are an input the
+generator never produces.
+
 ```bash
-nats-server &
-go run ./examples/cmd/weatherd
+garmctl compose examples/images.yaml -o build/catalogue.binpb
+garmctl topology --dev --catalogue file://build/catalogue.binpb --callers forecast -o build/topo
+nats-server --operator build/topo/operator.jwt --resolver_preload ... --tls ... &
+go run ./examples/cmd/weatherd --creds build/topo/creds/weather.v1.WeatherService.creds --tls-ca ca.pem
+go run ./examples/cmd/rund     --creds build/topo/creds/rund.creds --tls-ca ca.pem --catalogue file://build/catalogue.binpb
+go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds --tls-ca ca.pem
 ```
 
+The server's own configuration — the operator, the resolver, TLS — is the
+deployment's; the [identity spec](specs/2026-10-04-identity-and-transport-security-design.md)
+§5–§7 says what each is for, and the test estate (`internal/estate`) is the same
+topology stood up in process, which is how every test runs against it.
+
 ```
-level=INFO msg=starting nats=nats://127.0.0.1:4222 name=weatherd version=0.1.0
+level=INFO msg=starting nats=nats://127.0.0.1:4222 creds=build/topo/creds/weather.v1.WeatherService.creds name=weatherd version=0.1.0
 level=INFO msg="tool mounted" tool=weather.v1.get_forecast subject=garm.tool.weather.v1.get_forecast declared_at=weather.v1.WeatherService.GetForecast
 ```
 

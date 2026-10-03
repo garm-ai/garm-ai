@@ -78,6 +78,37 @@ type Estate struct {
 	topo    *topology.Output
 	creds   map[Role]topology.Credential
 	rundLog *lockedBuffer
+	caPEM   []byte
+}
+
+// CredsFile writes a role's credential in NATS creds format -- what a command's
+// --creds flag takes -- and returns the path. The file lives in the test's temp
+// dir and dies with it.
+func (e *Estate) CredsFile(t *testing.T, as Role) string {
+	t.Helper()
+	c, ok := e.creds[as]
+	if !ok {
+		t.Fatalf("no credential for role %q", as)
+	}
+	body, err := jwt.FormatUserConfig(c.JWT, []byte(c.Seed))
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), string(as)+".creds")
+	if err := os.WriteFile(path, body, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+// CAFile writes the estate's CA as PEM -- what a command's --tls-ca flag takes.
+func (e *Estate) CAFile(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "ca.pem")
+	if err := os.WriteFile(path, e.caPEM, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
 }
 
 // lockedBuffer captures rund's log so a test can assert what rund was told --
@@ -151,8 +182,8 @@ func New(t *testing.T) *Estate {
 		}
 	}
 
-	serverTLS, clientTLS := tlsPair(t)
-	e.tls = clientTLS
+	serverTLS, clientTLS, caPEM := tlsPair(t)
+	e.tls, e.caPEM = clientTLS, caPEM
 	srv, err := natsserver.NewServer(&natsserver.Options{
 		Host: "127.0.0.1", Port: -1, NoLog: true, NoSigs: true,
 		TrustedOperators: []*jwt.OperatorClaims{op},

@@ -16,11 +16,14 @@ import (
 	"github.com/garm-ai/garm-ai/catalogue"
 	"github.com/garm-ai/garm-ai/fetch"
 	"github.com/garm-ai/garm-ai/natscall"
+	"github.com/garm-ai/garm-ai/natsconn"
 )
 
 func callCmd() *cobra.Command {
 	var (
 		natsURL     string
+		creds       string
+		tlsCA       string
 		catURI      string
 		catSHA      string
 		catDir      string
@@ -74,7 +77,7 @@ func callCmd() *cobra.Command {
 				return err
 			}
 
-			nc, err := nats.Connect(natsURL)
+			nc, err := natsconn.Connect(natsURL, natsconn.Options{Creds: creds, CA: tlsCA})
 			if err != nil {
 				return err
 			}
@@ -113,6 +116,8 @@ func callCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&natsURL, "nats", nats.DefaultURL, "NATS URL")
+	cmd.Flags().StringVar(&creds, "creds", "", "this caller's credentials file, as `garmctl topology` wrote it")
+	cmd.Flags().StringVar(&tlsCA, "tls-ca", "", "PEM the server's certificate chains to; empty means the system roots")
 	cmd.Flags().StringVar(&catURI, "catalogue", "", "catalogue URI: file://, s3:// or https://")
 	cmd.Flags().StringVar(&catSHA, "catalogue-sha256", "", "hex digest the catalogue must have; REQUIRED for remote")
 	cmd.Flags().StringVar(&catDir, "catalogue-dir", ".", "what a relative file:// catalogue resolves against")

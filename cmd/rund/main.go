@@ -17,6 +17,7 @@ import (
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	"github.com/garm-ai/garm-ai/fetch"
+	"github.com/garm-ai/garm-ai/natsconn"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundsvc"
@@ -25,6 +26,8 @@ import (
 func main() {
 	var (
 		natsURL = flag.String("nats", nats.DefaultURL, "NATS URL")
+		creds   = flag.String("creds", "", "this process's credentials file, as `garmctl topology` wrote it")
+		tlsCA   = flag.String("tls-ca", "", "PEM the server's certificate chains to; empty means the system roots")
 		catURI  = flag.String("catalogue", "", "catalogue URI: file://, s3:// or https://")
 		catSHA  = flag.String("catalogue-sha256", "", "hex digest the catalogue must have; REQUIRED for remote")
 		catDir  = flag.String("catalogue-dir", ".", "what a relative file:// catalogue resolves against")
@@ -35,21 +38,21 @@ func main() {
 
 	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	// Every value, defaults included, so nobody has to guess which one is in force.
-	log.Info("starting", "nats", *natsURL, "catalogue", *catURI, "catalogue_dir", *catDir,
+	log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
 		"name", *name, "version", *version, "run_store", "none")
 
 	if *catURI == "" {
 		log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
 		os.Exit(2)
 	}
-	if err := serveRund(*natsURL, *catURI, *catSHA, *catDir, *name, *version, log); err != nil {
+	if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, log); err != nil {
 		log.Error("stopped", "error", err)
 		os.Exit(1)
 	}
 	log.Info("stopped cleanly")
 }
 
-func serveRund(natsURL, catURI, catSHA, catDir, name, version string, log *slog.Logger) error {
+func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version string, log *slog.Logger) error {
 	ctx := context.Background()
 
 	// Loaded and RE-VERIFIED before anything is mounted. compose may have run with
@@ -90,7 +93,7 @@ func serveRund(natsURL, catURI, catSHA, catDir, name, version string, log *slog.
 	if err != nil {
 		return err
 	}
-	nc, err := nats.Connect(natsURL)
+	nc, err := natsconn.Connect(natsURL, conn)
 	if err != nil {
 		return err
 	}

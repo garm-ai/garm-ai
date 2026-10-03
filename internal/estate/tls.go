@@ -7,16 +7,18 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"math/big"
 	"net"
 	"testing"
 	"time"
 )
 
-// tlsPair is a self-signed server certificate and a client config that trusts it.
-// Tests run TLS because production requires it (spec §6), and the configuration
-// that is tested must be the configuration that is deployed.
-func tlsPair(t *testing.T) (server *tls.Config, client *tls.Config) {
+// tlsPair is a self-signed server certificate, a client config that trusts it,
+// and the CA as PEM for a command that takes a file. Tests run TLS because
+// production requires it (spec §6), and the configuration that is tested must be
+// the configuration that is deployed.
+func tlsPair(t *testing.T) (server *tls.Config, client *tls.Config, caPEM []byte) {
 	t.Helper()
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -48,5 +50,5 @@ func tlsPair(t *testing.T) (server *tls.Config, client *tls.Config) {
 			MinVersion:   tls.VersionTLS13,
 		}, &tls.Config{
 			RootCAs: pool, ServerName: "127.0.0.1", MinVersion: tls.VersionTLS13,
-		}
+		}, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
 }
