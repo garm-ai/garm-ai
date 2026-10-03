@@ -26,6 +26,10 @@ on, and the rule that none of it may be *declared* before its condition holds.
 Without that a spec becomes a list of promises, which is how the previous estate
 shipped five concepts enforced by nothing.
 
+The map at [../architecture.html](../architecture.html) is the visual index to the
+rund spec — same four bands, same built / next / designed-only distinction. Change
+one and check the other.
+
 | spec | status |
 |---|---|
 | [rund — the run manager](2026-10-03-rund-design.md) | active — step 9 builds §9.1 only |

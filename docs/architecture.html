@@ -1,0 +1,453 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<title>One Engine, Three Deciders</title>
+<style>
+  :root {
+    --bg: #F5F6F8; --surface: #FFFFFF; --surface-2: #EDEFF3;
+    --ink: #1C232E; --muted: #5A6472; --line: #DDE2E9;
+    --accent: #C25E2E; --accent-soft: #F3E2D6; --accent-ink: #8F4520;
+    --good: #2E7D5B; --good-soft: #E4EFE9;
+    --warn: #A8442F; --warn-soft: #F6E3DE;
+    --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+    --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10141A; --surface: #161C24; --surface-2: #1C232E;
+      --ink: #E8EAEE; --muted: #98A2B0; --line: #2A323D;
+      --accent: #E07938; --accent-soft: #33241A; --accent-ink: #EE9A63;
+      --good: #5BB48C; --good-soft: #172A22;
+      --warn: #E8886B; --warn-soft: #34201A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10141A; --surface: #161C24; --surface-2: #1C232E;
+    --ink: #E8EAEE; --muted: #98A2B0; --line: #2A323D;
+    --accent: #E07938; --accent-soft: #33241A; --accent-ink: #EE9A63;
+    --good: #5BB48C; --good-soft: #172A22;
+    --warn: #E8886B; --warn-soft: #34201A;
+  }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--body);
+         font-size: 16px; line-height: 1.62; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding-block: 54px 76px; padding-left: 22px; padding-right: 22px; }
+  h1 { font-family: var(--display); font-weight: 800; font-size: clamp(32px, 5.4vw, 52px);
+       line-height: 1.04; letter-spacing: -.02em; margin: 0 0 18px; text-wrap: balance; }
+  h2 { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 29px);
+       line-height: 1.16; letter-spacing: -.012em; margin: 0 0 14px; text-wrap: balance; }
+  h3 { font-family: var(--display); font-weight: 700; font-size: 17px; margin: 0 0 7px; }
+  p { margin: 0 0 15px; max-width: 68ch; }
+  .kicker { font-family: var(--mono); font-size: 12.5px; letter-spacing: .09em;
+            text-transform: uppercase; color: var(--accent-ink); margin: 0 0 11px; }
+  .tagline { font-size: 19px; color: var(--muted); max-width: 70ch; margin: 0 0 8px; }
+  code, .m { font-family: var(--mono); font-size: .88em; }
+  code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  section { margin-top: 58px; }
+  .rule { border: 0; border-top: 1px dashed var(--line); margin: 58px 0 0; }
+
+  /* ---- the map ---- */
+  .arch { margin-top: 26px; border: 1px solid var(--line); border-radius: 12px;
+          background: var(--surface); overflow: hidden; }
+  .arch-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+              padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+  .arch-bar .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+                   text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+  .arch-bar button { font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em;
+                     color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+                     border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+  .arch-bar button:hover { border-color: var(--accent); color: var(--accent-ink); }
+  .arch-bar button[aria-pressed="true"] { background: var(--accent-soft);
+                     border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .arch-bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .arch-canvas { padding: 16px 10px 10px; overflow-x: auto; }
+  .arch-canvas svg { display: block; width: 100%; min-width: 880px; height: auto; }
+
+  .an rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  .an .t1 { font-family: var(--display); font-weight: 700; font-size: 13px; fill: var(--ink); }
+  .an .t2 { font-family: var(--mono); font-size: 9.5px; letter-spacing: .04em; fill: var(--muted); }
+  .an.band rect { fill: var(--surface-2); stroke: var(--line); stroke-dasharray: 4 4; }
+  .an.band .t1 { font-size: 11px; fill: var(--muted); }
+  .an.ok rect   { fill: var(--good-soft); stroke: var(--good); stroke-width: 2; }
+  .an.ok .t1    { fill: var(--good); }
+  .an.next rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+  .an.next .t1  { fill: var(--accent-ink); }
+  .an.later rect { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 3 5; }
+  .an.later .t1, .an.later .t2 { opacity: .72; }
+
+  .ae path { fill: none; stroke-width: 1.8; transition: opacity .25s; }
+  .ae.call path { stroke: var(--accent); }
+  .ae.rec path  { stroke: var(--good); stroke-dasharray: 2 4; }
+  .ae.weak path { stroke: var(--muted); stroke-dasharray: 4 5; opacity: .8; }
+  .ae text { font-family: var(--mono); font-size: 9.5px; fill: var(--muted); }
+  .ae text.strong { fill: var(--accent-ink); font-weight: 600; }
+  .bandlbl { font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+             text-transform: uppercase; fill: var(--muted); }
+  .an, .ae { transition: opacity .25s; }
+  .arch.f-ok    .an:not(.ok):not(.band),
+  .arch.f-next  .an:not(.next):not(.band),
+  .arch.f-later .an:not(.later):not(.band) { opacity: .15; }
+  .arch.f-call .ae:not(.call), .arch.f-rec .ae:not(.rec) { opacity: .1; }
+
+  /* ---- prose furniture ---- */
+  .s { font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+       padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .s-built  { color: var(--good); background: var(--good-soft); }
+  .s-next   { color: var(--accent-ink); background: var(--accent-soft); }
+  .s-later  { color: var(--muted); background: var(--surface-2); }
+  .tbl-wrap { overflow-x: auto; margin-top: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px;
+          background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  th, td { text-align: left; padding: 11px 15px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em;
+       color: var(--muted); font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-family: var(--mono); font-size: 13px; color: var(--accent-ink); }
+  td b { color: var(--ink); }
+  .no { color: var(--muted); }
+  .yes { color: var(--accent-ink); font-weight: 600; }
+  .never { color: var(--warn); font-weight: 600; }
+  .two { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); margin-top: 24px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 17px 19px; }
+  .card.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .card p { margin: 0; font-size: 14.5px; }
+  .card p + p { margin-top: 9px; }
+  pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.65; background: var(--surface-2);
+        border: 1px solid var(--line); border-radius: 9px; padding: 15px 17px; overflow-x: auto; margin: 18px 0 0; }
+  .note { font-size: 14px; color: var(--muted); margin-top: 14px; }
+  @media (prefers-reduced-motion: reduce) { .an, .ae, .ae path { transition: none; } }
+</style>
+
+<div class="wrap">
+  <p class="kicker">garm-ai · architecture</p>
+  <h1>One engine, three deciders</h1>
+  <p class="tagline">A tool author writes a plain function. Everything that makes a
+    call durable, approvable, retryable or budgeted happens somewhere else — and that
+    somewhere is one component.</p>
+  <p class="note">Green is built and tested. Terracotta is the next step. Dashed is
+    designed and deliberately not built, because in this repository a field arrives
+    when the thing that enforces it arrives.</p>
+
+  <section>
+    <h2>Solid is a call, dotted is a record, dashed is loaded or derived</h2>
+    <figure style="margin:0">
+      <div class="arch" id="arch">
+        <div class="arch-bar">
+          <span class="lbl">show</span>
+          <button data-f="" aria-pressed="true">everything</button>
+          <button data-f="f-ok" aria-pressed="false">built</button>
+          <button data-f="f-next" aria-pressed="false">step 9</button>
+          <button data-f="f-later" aria-pressed="false">designed only</button>
+          <span class="lbl" style="margin-left:10px">edges</span>
+          <button data-f="f-call" aria-pressed="false">calls</button>
+          <button data-f="f-rec" aria-pressed="false">records</button>
+        </div>
+        <div class="arch-canvas">
+<svg viewBox="0 0 960 724" role="img" aria-labelledby="mt md">
+  <title id="mt">garm-ai: declare, compose, call</title>
+  <desc id="md">Four bands. In the first, one .proto feeds two paths: buf build
+    produces an image per repository which garmctl compose merges into a catalogue,
+    and protoc-gen-garm-go produces a handler interface the author implements. In
+    the second, a caller reaches rund on garm.run.v1.invoke and never addresses a
+    tool directly; rund loads the catalogue at boot, drives a decider — built-in
+    single-step, or a deployed ReAct or Workflow service — and makes the actual tool
+    call on garm.tool.name to a tool service. In the third, rund keeps runs and the
+    run tree in a store used only for asynchronous calls, and publishes events per
+    run which subscribers read. The fourth band holds what is designed and not
+    built: cards and a renderer, approval policy, cost budgets and the authority
+    model.</desc>
+
+  <defs>
+    <marker id="a-call" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/></marker>
+    <marker id="a-rec" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--good)"/></marker>
+    <marker id="a-weak" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+
+  <!-- ============ band 1 ============ -->
+  <text class="bandlbl" x="20" y="18">1 · declare — one .proto, two paths</text>
+
+  <g class="ae weak"><path d="M160 76 L180 76 L180 53 L200 53" marker-end="url(#a-weak)"/></g>
+  <g class="ae weak"><path d="M160 104 L180 104 L180 127 L200 127" marker-end="url(#a-weak)"/></g>
+  <g class="ae weak"><path d="M350 53 L390 53" marker-end="url(#a-weak)"/></g>
+  <g class="ae weak"><path d="M540 53 L580 53" marker-end="url(#a-weak)"/></g>
+  <g class="ae weak"><path d="M740 53 L780 53" marker-end="url(#a-weak)"/></g>
+  <g class="ae weak"><path d="M380 127 L420 127" marker-end="url(#a-weak)"/></g>
+  <g class="ae weak"><path d="M590 127 L660 127 L660 206" marker-end="url(#a-weak)"/>
+    <text x="668" y="178">you implement it</text></g>
+
+  <g class="an ok"><rect x="20" y="62" width="140" height="56" rx="9"/>
+    <text class="t1" x="90" y="88" text-anchor="middle">Your .proto</text>
+    <text class="t2" x="90" y="104" text-anchor="middle">tools · agents</text></g>
+
+  <g class="an ok"><rect x="200" y="30" width="150" height="46" rx="9"/>
+    <text class="t1" x="275" y="52" text-anchor="middle">buf build</text>
+    <text class="t2" x="275" y="67" text-anchor="middle">per repository</text></g>
+  <g class="an ok"><rect x="390" y="30" width="150" height="46" rx="9"/>
+    <text class="t1" x="465" y="52" text-anchor="middle">image.binpb</text>
+    <text class="t2" x="465" y="67" text-anchor="middle">one team's output</text></g>
+  <g class="an ok"><rect x="580" y="30" width="160" height="46" rx="9"/>
+    <text class="t1" x="660" y="52" text-anchor="middle">garmctl compose</text>
+    <text class="t2" x="660" y="67" text-anchor="middle">merge · resolve · refuse</text></g>
+  <g class="an ok"><rect x="780" y="30" width="160" height="46" rx="9"/>
+    <text class="t1" x="860" y="52" text-anchor="middle">catalogue.binpb</text>
+    <text class="t2" x="860" y="67" text-anchor="middle">the verified namespace</text></g>
+
+  <g class="an ok"><rect x="200" y="104" width="180" height="46" rx="9"/>
+    <text class="t1" x="290" y="126" text-anchor="middle">protoc-gen-garm-go</text>
+    <text class="t2" x="290" y="141" text-anchor="middle">102 lines for 2 tools</text></g>
+  <g class="an ok"><rect x="420" y="104" width="170" height="46" rx="9"/>
+    <text class="t1" x="505" y="126" text-anchor="middle">Handler interface</text>
+    <text class="t2" x="505" y="141" text-anchor="middle">no Unimplemented embed</text></g>
+
+  <!-- ============ band 2 ============ -->
+  <text class="bandlbl" x="20" y="186">2 · call — rund is in every path</text>
+
+  <g class="ae weak"><path d="M860 76 L860 196 L350 196" marker-end="url(#a-weak)"/>
+    <text x="700" y="191">loaded at boot</text></g>
+
+  <g class="ae call"><path d="M170 235 L250 235" marker-end="url(#a-call)"/>
+    <text class="strong" x="176" y="228">garm.run.v1.invoke</text></g>
+  <g class="ae call"><path d="M450 240 L610 240" marker-end="url(#a-call)"/>
+    <text class="strong" x="460" y="233">garm.tool.&lt;name&gt;</text>
+    <text x="460" y="256">the only caller of this</text></g>
+  <g class="ae call"><path d="M430 282 L430 350 L500 350" marker-end="url(#a-call)"/>
+    <text x="438" y="328">(state, event)</text></g>
+  <g class="ae call"><path d="M500 440 L400 440 L400 282" marker-end="url(#a-call)"/>
+    <text x="408" y="432">actions</text></g>
+
+  <g class="an next"><rect x="20" y="206" width="150" height="58" rx="9"/>
+    <text class="t1" x="95" y="232" text-anchor="middle">A caller</text>
+    <text class="t2" x="95" y="249" text-anchor="middle">generated client</text></g>
+
+  <g class="an next"><rect x="250" y="196" width="200" height="86" rx="10"/>
+    <text class="t1" x="350" y="226" text-anchor="middle">rund</text>
+    <text class="t2" x="350" y="244" text-anchor="middle">THE ENGINE</text>
+    <text class="t2" x="350" y="258" text-anchor="middle">runs · retries · guardrails</text>
+    <text class="t2" x="350" y="272" text-anchor="middle">budgets · the tree</text></g>
+
+  <g class="an ok"><rect x="610" y="206" width="200" height="68" rx="9"/>
+    <text class="t1" x="710" y="234" text-anchor="middle">Your tool service</text>
+    <text class="t2" x="710" y="251" text-anchor="middle">natsserve + your handler</text>
+    <text class="t2" x="710" y="265" text-anchor="middle">plain · synchronous · no store</text></g>
+
+  <g class="an band"><rect x="500" y="306" width="230" height="184" rx="10"/>
+    <text class="t1" x="514" y="324">deciders · one interface</text></g>
+  <g class="an next"><rect x="514" y="332" width="202" height="42" rx="8"/>
+    <text class="t1" x="615" y="351" text-anchor="middle">single-step</text>
+    <text class="t2" x="615" y="365" text-anchor="middle">BUILT IN · in-process</text></g>
+  <g class="an later"><rect x="514" y="382" width="202" height="42" rx="8"/>
+    <text class="t1" x="615" y="401" text-anchor="middle">ReAct</text>
+    <text class="t2" x="615" y="415" text-anchor="middle">garm.runner.react</text></g>
+  <g class="an later"><rect x="514" y="432" width="202" height="42" rx="8"/>
+    <text class="t1" x="615" y="451" text-anchor="middle">Workflow</text>
+    <text class="t2" x="615" y="465" text-anchor="middle">garm.runner.workflow</text></g>
+
+  <!-- ============ band 3 ============ -->
+  <text class="bandlbl" x="20" y="528">3 · state and records — asynchronous calls only</text>
+
+  <g class="ae rec"><path d="M300 282 L300 540" marker-end="url(#a-rec)"/>
+    <text x="196" y="420">a sync call</text>
+    <text x="196" y="432">never gets here</text></g>
+  <g class="ae rec"><path d="M450 268 L470 268 L470 516 L665 516 L665 540" marker-end="url(#a-rec)"/>
+    <text x="480" y="510">persist, THEN publish</text></g>
+  <g class="ae rec"><path d="M770 572 L790 572" marker-end="url(#a-rec)"/></g>
+
+  <g class="an later"><rect x="250" y="540" width="200" height="64" rx="9"/>
+    <text class="t1" x="350" y="566" text-anchor="middle">The run store</text>
+    <text class="t2" x="350" y="583" text-anchor="middle">runs · steps · the tree</text></g>
+  <g class="an later"><rect x="560" y="540" width="210" height="64" rx="9"/>
+    <text class="t1" x="665" y="566" text-anchor="middle">garm.run.event.&lt;id&gt;</text>
+    <text class="t2" x="665" y="583" text-anchor="middle">progress · questions · done</text></g>
+  <g class="an later"><rect x="790" y="540" width="150" height="64" rx="9"/>
+    <text class="t1" x="865" y="566" text-anchor="middle">Subscribers</text>
+    <text class="t2" x="865" y="583" text-anchor="middle">a UI · a log</text></g>
+
+  <!-- ============ band 4 ============ -->
+  <text class="bandlbl" x="20" y="640">4 · designed, and deliberately not built</text>
+
+  <g class="an later"><rect x="20" y="658" width="215" height="46" rx="9"/>
+    <text class="t1" x="127" y="680" text-anchor="middle">Cards</text>
+    <text class="t2" x="127" y="695" text-anchor="middle">waits on a renderer</text></g>
+  <g class="an later"><rect x="255" y="658" width="215" height="46" rx="9"/>
+    <text class="t1" x="362" y="680" text-anchor="middle">Approval · HITL</text>
+    <text class="t2" x="362" y="695" text-anchor="middle">waits on the store</text></g>
+  <g class="an later"><rect x="490" y="658" width="200" height="46" rx="9"/>
+    <text class="t1" x="590" y="680" text-anchor="middle">Cost budgets</text>
+    <text class="t2" x="590" y="695" text-anchor="middle">waits on an accountant</text></g>
+  <g class="an later"><rect x="710" y="658" width="230" height="46" rx="9"/>
+    <text class="t1" x="825" y="680" text-anchor="middle">The authority model</text>
+    <text class="t2" x="825" y="695" text-anchor="middle">clearance · verbs · sets</text></g>
+</svg>
+        </div>
+      </div>
+    </figure>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <p class="kicker">the thing to read off the map</p>
+    <h2>A tool handler is a plain function. It never learns a human was asked.</h2>
+    <p>Three requirements arrived together: approval may apply to <em>any</em> call,
+      both runner types are durable, and a tool author implements an interface and
+      nothing else. Only one arrangement satisfies all three —
+      <b>asynchrony is imposed on a tool, never implemented by one.</b></p>
+    <p><code>freeze_account</code> is declared <code>async</code> and its handler is
+      an ordinary synchronous function. <code>rund</code> creates the run, waits for a
+      person, <em>then</em> makes the call on the right of the map. The alternative puts
+      a database in every tool service.</p>
+  </section>
+
+  <section>
+    <h2>Who is in the path, and when</h2>
+    <p><code>rund</code> is in the path of every call. A decider that is a <em>loop</em>
+      appears only when the thing invoked is an agent — so <code>async</code> does not
+      imply a runner.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>invoked</th><th>delivery</th><th>decider</th><th>a deployed runner?</th></tr></thead>
+        <tbody>
+          <tr><td>payments.v1.get_balance</td><td>sync</td><td>built-in single-step</td><td class="no">no</td></tr>
+          <tr><td>payments.v1.freeze_account</td><td><b>async</b> — a person may approve</td><td>built-in single-step</td><td class="no">no</td></tr>
+          <tr><td>assist.v1.payment_triage</td><td>async, always</td><td>ReAct</td><td class="yes">yes</td></tr>
+          <tr><td>any agent</td><td>sync</td><td>—</td><td class="never">impossible</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">The last row is a contradiction, not merely unwise: both runner
+      types are durable by definition, so an agent can never complete inside a call.
+      Refused by <code>garmctl compose</code>.</p>
+  </section>
+
+  <section>
+    <h2><code>sync</code> is a safety claim, not a speed one</h2>
+    <p><code>freeze_account</code> takes milliseconds and is async.
+      <code>list_payments</code> pages a ledger for ten seconds and is sync. The axis is
+      whether <b>state outlives the call</b>.</p>
+    <div class="two">
+      <div class="card">
+        <h3>Declaring <code>sync</code> forbids interposing a human</h3>
+        <p>Without that, a deployment's approval policy could turn a truthful
+          <code>budget: 2s</code> into four hours with the author doing nothing wrong.
+          So the declaration is a <em>constraint on policy</em>, which is what keeps the
+          budget honest — and it is the named enforcer for “some tools must never allow
+          a human in the loop”.</p>
+      </div>
+      <div class="card">
+        <h3>The budget binds in three places</h3>
+        <p>The generated client uses it as the deadline, so no caller invents a number.
+          The tool's transport cancels past it, because the caller has already given up.
+          And <code>compose</code> refuses an agent whose budget is below the
+          <em>largest</em> in its allowlist — the max, not the sum, because summing needs
+          to know whether calls are sequential, and nothing knows that until something
+          orders them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why one engine and not a runner per call</h2>
+    <p>Retries, guardrails and budgets are needed by every call — which refutes an
+      earlier draft of this design that claimed a plain tool call has no state machine.
+      It has one the moment retries exist: attempt 1 fails <code>UNAVAILABLE</code>,
+      wait, attempt 2.</p>
+    <p>But “runner” was doing two jobs. The <b>engine</b> — retries, guardrails, budget
+      accounting, approval, state, the tree, the event stream — is needed by everything,
+      and it is <code>rund</code>. A <b>decider</b> only answers “what next”, and only a
+      multi-step program has one.</p>
+    <div class="card warn" style="margin-top:22px">
+      <h3>And that settles who owns a runner's state</h3>
+      <p>If a decider drove its own loop, every decider type would carry its own copy of
+        guardrails, retry policy and budget accounting — and they would diverge. That is
+        the exact failure this repository was started to avoid: in the estate it replaces,
+        one CEL dialect existed twice and a guard could pass lint then fail at load.</p>
+      <p>So a decider is a <b>pure reducer</b>: <code>(state, event) → (new state, actions)</code>.
+        It cannot diverge, because it contains none of it. The price is chattiness —
+        roughly two round trips and one write per step — which is affordable for runs
+        measured in minutes, and optimisable later without a contract change.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>A run is a tree</h2>
+    <p>A decider calls tools <em>through</em> <code>rund</code>, and a nested call may
+      itself need approval. So it needs its own state, which means its own run.</p>
+<pre>r1  assist.v1.payment_triage        correlation c1 · no parent
+├── r2  payments.v1.get_balance     correlation c1 · parent r1
+└── r3  payments.v1.list_payments   correlation c1 · parent r1</pre>
+    <p class="note">One correlation id across the whole tree; causation ids are its
+      edges. Three things follow: a nested call gets its own approval state, the
+      allowlist is checked <b>per nested call at call time</b>, and this is the real
+      reason a run id comes back even from a synchronous call. The cost is real — a
+      ReAct agent making eight calls is nine runs.</p>
+  </section>
+
+  <section>
+    <h2>What this collapses, and the part that should worry us</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>previously</th><th>its job</th><th>now</th></tr></thead>
+        <tbody>
+          <tr><td>garmd</td><td>route by tool name, enforce policy, hot path, <b>no Postgres</b></td><td>rund</td></tr>
+          <tr><td>agentd</td><td>the durable loop, DBOS, owned no schema</td><td>rund, plus a decider</td></tr>
+          <tr><td>tasksd</td><td>human approvals — a schema, migrations, a sweeper</td><td><b>dissolved</b></td></tr>
+          <tr><td>sts</td><td>token exchange</td><td>unchanged, still separate</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:18px"><code>tasksd</code> dissolving is the clearest win: once
+      runs are durable, “waiting for a person” is a <b>state</b>, not a subsystem.</p>
+    <div class="card warn">
+      <h3>But that estate's constraint was emphatic, and it was not arbitrary</h3>
+      <p><code>garmd</code> was to have no database access at all. <code>rund</code> takes
+        its job <em>and</em> <code>agentd</code>'s store, so a component in the hot path of
+        every call now has a database dependency, and the blast radius of the thing every
+        caller talks to has grown.</p>
+      <p>Un-collapsing is not the answer — that split cost a ten-step chain between an
+        agent and a tool, four bugs in series on one endpoint each masking the next, and a
+        day to get the plane back. So instead: <b>collapse the contract, keep the store
+        boundary crossable.</b> The split falls along the sync/async line for free, which
+        turns it into a testable claim rather than an intention —
+        <b>a sync call touches no store</b>, which is the dotted line on the map that
+        stops short.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What a caller knows: a name, and nothing else</h2>
+<pre>client := paymentsv1.NewPaymentsClient(rund)
+
+bal, err := client.GetBalance(ctx, &amp;GetBalanceRequest{AccountId: "a-1"})
+<span style="color:var(--muted)">// sync  -&gt; (*GetBalanceResponse, error).  Deadline is the DECLARED 2s.</span>
+
+ref, err := client.FreezeAccount(ctx, &amp;FreezeAccountRequest{…})
+<span style="color:var(--muted)">// async -&gt; (*run.Ref, error).  A DIFFERENT SIGNATURE, from the declaration.</span>
+res, err := ref.Await(ctx)
+<span style="color:var(--muted)">// the caller's own patience. Giving up does NOT cancel the run.</span></pre>
+    <p class="note">No subject, no decider, no runner type. And flipping a tool from
+      sync to async makes <b>every caller fail to compile</b> — the same discipline as the
+      handler interface having no <code>Unimplemented</code> embed. The alternative is a
+      caller waiting forever for an answer that has quietly become a receipt.</p>
+  </section>
+</div>
+
+<script>
+  (function () {
+    var arch = document.getElementById('arch');
+    var btns = Array.prototype.slice.call(arch.querySelectorAll('.arch-bar button'));
+    var filters = ['f-ok', 'f-next', 'f-later', 'f-call', 'f-rec'];
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var f = b.getAttribute('data-f');
+        var on = b.getAttribute('aria-pressed') === 'true';
+        filters.forEach(function (c) { arch.classList.remove(c); });
+        btns.forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+        if (f && !on) { arch.classList.add(f); b.setAttribute('aria-pressed', 'true'); }
+        else { btns[0].setAttribute('aria-pressed', 'true'); }
+      });
+    });
+  })();
+</script>
