@@ -1,5 +1,8 @@
 # Service naming, deliberately deferred
 
+**Date:** 2026-10-03
+**Status:** **parked** — deliberately undecided until a step writes a real proto
+
 **Decision.** `buf lint` runs `STANDARD`, the fixtures and examples **comply rather
 than waive**, and the naming question stays open until a step writes a real proto.
 

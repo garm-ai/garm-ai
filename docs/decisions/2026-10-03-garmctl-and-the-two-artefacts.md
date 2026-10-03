@@ -1,5 +1,8 @@
 # `garmctl`, and the two artefacts it tells apart
 
+**Date:** 2026-10-03
+**Status:** active
+
 **Decision.** One command, `garmctl`, on cobra.
 
 ```

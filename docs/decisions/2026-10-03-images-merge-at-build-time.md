@@ -1,5 +1,8 @@
 # Images merge at build time, never at boot
 
+**Date:** 2026-10-03
+**Status:** active
+
 **Decision.** `images.yaml` lists the built images that compose into one namespace.
 `garmctl compose` resolves, merges, checks, and emits one artefact — in CI.
 

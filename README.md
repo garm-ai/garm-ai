@@ -17,7 +17,9 @@ author implements an interface and writes nothing else.
 - **[docs/invariants.md](docs/invariants.md)** — every invariant with the test that
   keeps it true, and a second table for the ones nothing checks yet.
 - **[docs/decisions/](docs/decisions/)** — one file per decision, titled by the
-  decision, each recording what was rejected and why.
+  decision, each recording what was rejected and why. Each carries a `**Status:**`
+  line from `active · parked · superseded by <file>` — grep it before trusting a
+  file, because a stale decision reads as current.
 
 The step-by-step history is **`git log`**. Every commit message carries its own
 reasoning, and it is the one record that cannot drift from the code, because it is

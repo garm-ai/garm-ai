@@ -1,5 +1,8 @@
 # There is no config file of our own
 
+**Date:** 2026-10-03
+**Status:** active
+
 **Decision.** No `garm.yaml`. Credentials, region and endpoint resolve the standard
 AWS way: `AWS_*` variables, `~/.aws/config`, instance roles.
 

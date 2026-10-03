@@ -1,5 +1,8 @@
 # Routing is registration, so there is no `mode` field
 
+**Date:** 2026-10-03
+**Status:** active — **retested by the transport step**, which is the first thing that could force a change
+
 **Decision.** No `mode`, `type` or `kind` field saying which runner answers an
 agent.
 
@@ -21,6 +24,6 @@ previous estate shipped declared and unenforced.
 
 **Consequence for the generator.** A method whose option carries `agent` produces no
 generated Go at all — see
-[the generator carries no policy opinion](the-generator-carries-no-policy-opinion.md).
+[the generator carries no policy opinion](2026-10-03-the-generator-carries-no-policy-opinion.md).
 A runner answers it, so a handler method would be one nobody may implement, and
 implementing it would put a second answerer on the subject.

@@ -1,5 +1,8 @@
 # Images resolve from a file, an S3 bucket, or a release asset
 
+**Date:** 2026-10-03
+**Status:** active
+
 **Decision.** Three schemes, and a digest that is required for two of them.
 
 ```yaml

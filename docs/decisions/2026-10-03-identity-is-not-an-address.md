@@ -1,5 +1,8 @@
 # A tool's name is its identity; its proto path is an address
 
+**Date:** 2026-10-03
+**Status:** active
+
 **Decision.** The declared `name` is the one identity. Policy keys on it,
 allowlists cite it, logs name it, a caller asks for it. The method's proto full
 name is an **address** — where the declaration lives — and is never used as

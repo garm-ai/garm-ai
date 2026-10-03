@@ -1,5 +1,8 @@
 # The allowlist is enforced, not asserted
 
+**Date:** 2026-10-03
+**Status:** active
+
 **Decision.** `declared/` resolves every allowlist entry against every declaration,
 and `garmctl compose` exits non-zero on an entry that names nothing. Wired into
 `mise run ci` from the step it was written.

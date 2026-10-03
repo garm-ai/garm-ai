@@ -1,5 +1,8 @@
 # Everything is a tool, and an agent is a tool a runner answers
 
+**Date:** 2026-10-03
+**Status:** active
+
 **Decision.** A tool is an RPC method carrying `(garm.tool.v1.tool)`. The option
 declares a `name`, and optionally an `agent` block. **Absent: a service answers the
 call itself. Present: a runner answers it, and the block says what that run may
@@ -24,7 +27,7 @@ split telling you it was wrong.
 **Consequence worth keeping straight.** An agent appearing in another agent's
 allowlist needs no special case, because both are tools in one namespace and an
 entry either resolves to a declared tool or it does not. See
-[the allowlist is enforced](the-allowlist-is-enforced.md).
+[the allowlist is enforced](2026-10-03-the-allowlist-is-enforced.md).
 
 **Also rejected: a `tools` field that is a bare repeated string.** It is
 `repeated ToolRef`, a message, so an entry can gain fields — a version floor, a

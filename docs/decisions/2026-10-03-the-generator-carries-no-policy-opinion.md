@@ -1,5 +1,8 @@
 # The generator carries no policy opinion
 
+**Date:** 2026-10-03
+**Status:** active
+
 **Decision.** `protoc-gen-garm-go`, invoked by `buf generate`, emits per service
 with at least one tool: a handler interface, a `Serve<Service>` function, and the
 list of names that service answers. **Nothing else, ever.** Its output imports an
