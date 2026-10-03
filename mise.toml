@@ -89,10 +89,31 @@ buf lint
 go vet ./...
 """
 
+[tasks."no-broker"]
+description = "Refuse a tool author's build that can reach a message broker"
+# serve/serve.go's doc comment claims a tool module does not inherit a transport's
+# dependency tree. That claim was true when written and nothing kept it true: one
+# import added to serve for convenience would make every tool service resolve
+# nats.go, and the comment would still read as a guarantee.
+#
+# The shape is copied from the previous estate's `no-daemon-dependency` CI job,
+# which existed for the same reason and is the one boundary check there that worked.
+run = """
+set -e
+for pkg in ./serve ./declared ./images ./examples/gen/...; do
+  if go list -deps "$pkg" 2>/dev/null | grep -q 'nats-io'; then
+    echo "$pkg reaches a NATS package:" >&2
+    go list -deps "$pkg" | grep 'nats-io' >&2
+    echo "generated code and the seam it is written against must not import a broker" >&2
+    exit 1
+  fi
+done
+"""
+
 [tasks.test]
 description = "go test"
 run = "go test ./... -race"
 
 [tasks.ci]
 description = "Everything CI runs, in order"
-depends = ["lint", "gen-check", "check", "examples", "test"]
+depends = ["lint", "gen-check", "no-broker", "check", "examples", "test"]

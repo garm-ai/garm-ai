@@ -6,6 +6,7 @@ If a field is renamed, this guide breaks in CI rather than misleading you.
 - `examples/proto/weather/v1/weather.proto` — a tool
 - `examples/proto/trips/v1/trips.proto` — an agent that calls it
 - `examples/weatherd/weatherd.go` — everything a tool author writes
+- `examples/cmd/weatherd/main.go` — the whole process that serves it
 - `examples/images.yaml` — how they compose
 
 ## 1. A tool
@@ -127,7 +128,64 @@ it would put a second answerer on the subject.
 The last line is what makes this an example rather than a claim: it is compiled by
 `mise run ci`, so renaming the method in the `.proto` breaks this package.
 
-## 4. Compose, and let it check
+## 4. Run it
+
+```bash
+nats-server &
+go run ./examples/cmd/weatherd
+```
+
+```
+level=INFO msg=starting nats=nats://127.0.0.1:4222 name=weatherd version=0.1.0
+level=INFO msg="tool mounted" tool=weather.v1.get_forecast subject=garm.tool.weather.v1.get_forecast declared_at=weather.v1.WeatherService.GetForecast
+```
+
+**The subject comes from the tool's name, not from the proto path.** Re-home
+`GetForecast` to another package, service or method and the subject does not move,
+because the *name* did not. That is what separating identity from address buys, and
+the estate this replaces gave it away by routing on the path.
+
+The whole process is forty lines, and the only line that mentions this service's
+tools is generated:
+
+```go
+svc, err := natsserve.New(natsserve.Config{Name: name, Version: version, Logger: log})
+...
+err = weatherv1.ServeWeatherService(svc, weatherd.Service{})   // generated
+...
+err = svc.Start(nc)          // returns only once the tools are ANSWERING
+log.Info("ready")            // a readiness probe hangs off this line
+return svc.Serve(ctx)        // until SIGTERM, then drains
+```
+
+`Run` returns only once every in-flight call has been answered — including a call
+that was queued behind a slow one. That is why `main` closes the connection with
+`defer` *after* `Run`, and not before: closing early turns a deploy into a handful
+of caller timeouts.
+
+### Telling the caller what went wrong
+
+A handler returns a plain `error` and gets `INTERNAL` with a correlation id — its
+own words never reach the caller, because that is where connection strings and
+constraint values live. To say something to the caller, say it deliberately:
+
+```go
+if in.GetPlace() == "" {
+	return nil, serve.Invalid("place is required")
+}
+if !known(in.GetPlace()) {
+	return nil, serve.NotFound("no forecast for %q", in.GetPlace())
+}
+if err := upstream(ctx); err != nil {
+	return nil, serve.Unavailable("the forecast service is not answering").Because(err)
+}
+```
+
+`Because` is for your log, not for the wire. Five kinds exist — `INVALID`,
+`NOT_FOUND`, `DENIED`, `UNAVAILABLE`, `INTERNAL` — and `UNAVAILABLE` is the only
+one that tells a caller retrying is worth it.
+
+## 5. Compose, and let it check
 
 ```yaml
 # examples/images.yaml
@@ -159,7 +217,7 @@ and checked. What it refuses:
 Try it: rename `weather.v1.get_forecast` and run `mise run examples`. The agent's
 allowlist stops resolving, and the error names the image to look in.
 
-## 5. Images from elsewhere
+## 6. Images from elsewhere
 
 `file://` is one of three schemes.
 
@@ -186,12 +244,11 @@ of our own duplicating that.
 
 ## What does not exist yet
 
-**Nothing implements `serve.Registrar`**, so nothing mounts the handler you just
-wrote — that is the next step, and it is why the interface takes a Registrar
-rather than a connection: the generated code names no broker and will not be
-regenerated when one arrives.
+**Nothing calls a tool for you.** There is no generated client, so a caller
+marshals a request and does `nc.Request(natsserve.Subject(name), body, timeout)`
+itself. That is the next step.
 
-There is also no gateway, no runner, no clearance, compartments, verbs, tool sets
-or approvals. Those are real and most are coming —
+There is also no gateway, no runner, no discovery, no descriptor hash, no clearance,
+compartments, verbs, tool sets or approvals. Those are real and most are coming —
 they are absent because nothing enforces them yet, and a declaration nothing acts
 on is a promise the platform breaks silently.

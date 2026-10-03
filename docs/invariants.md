@@ -27,6 +27,26 @@ unenforced, in the same table, deliberately.
 | The committed generated Go matches the protos | `mise run gen-check`, which compares `git status --porcelain`. It used `git diff --exit-code`, which cannot see an **untracked** file — so it passed vacuously for generated code that was new, which is exactly the case it exists to catch |
 | The examples in `docs/guide.md` still compose | `mise run examples` — the guide walks through those exact files |
 
+### The transport
+
+| invariant | kept true by |
+|---|---|
+| A tool author's build cannot reach a broker | `mise run no-broker`, which fails if `serve`, `declared`, `images` or any generated package reaches `nats-io`. `serve/serve.go` claims this in prose; one convenience import would have made every tool service resolve nats.go while the comment still read as a guarantee. Shape copied from the old estate's `no-daemon-dependency` job |
+| A declared tool is reachable over NATS | `natsserve.TestADeclaredToolIsReachable` — through **generated** code and the real example handler, against a real in-process `nats-server`. If the generator and the transport disagreed about anything, this is where it shows |
+| A subject comes from the **identity**, never the address | `natsserve.TestTheSubjectIsDerivedFromTheIdentityNotTheAddress`, which also asserts that **nothing answers** on the address subject |
+| An endpoint name is legal for every legal tool name | `natsserve.TestEndpointNameIsAcceptedByMicroForEveryLegalToolName`. micro excludes the dot, so they are replaced; that is total only because of the charset rule, and this asserts the two rules meet with **micro itself as the judge** |
+| `New` refuses exactly what `micro.AddService` refuses | `natsserve.TestNewRefusesExactlyWhatMicroRefuses`, which runs both against real configs. `validate.go` copies micro's unexported regexes, so a divergence is a failure rather than drift |
+| Two tools never share a subject | `natsserve.TestTwoToolsOnOneSubjectAreRefused`. Otherwise one of them silently never answers, and which one depends on registration order |
+| `Start` returns only once the tools are **answering** | Every other test in the package, all of which call immediately after it. `Start` ends with `nc.Flush()`; without it a caller gets "no responders available" for a healthy service, which is exactly how this package's first tests became flaky — green locally, red in CI |
+| `Serve` before `Start`, and `Start` twice, are refused | `natsserve.TestServeBeforeStartIsRefused`, `TestStartTwiceIsRefused` |
+| A service with no endpoints does not start | `natsserve.TestRunWithNoEndpointsIsRefused`. Discoverable and useless is worse than failing to start |
+| A deliberate kind reaches the caller as its own code, with the id | `natsserve.TestADeliberateKindReachesTheCallerAsItsOwnCode`. The code is **derived** from the generated enum, so a new kind cannot be forgotten — a hand-written map would compile and answer the empty string, which micro turns into no reply at all |
+| A bare error leaks nothing over the wire | `natsserve.TestABareErrorNeverReachesTheCallerOverTheWire` — the same claim `serve` tests, re-checked end to end on every surface a caller can read, so nothing on the transport path puts the cause back |
+| Request bytes that do not unmarshal never reach the handler | `natsserve.TestUnreadableRequestBytesBecomeInvalid`, which also asserts the handler was not called |
+| A response too large to send becomes an **error**, not silence | `natsserve.TestAnOversizedResponseBecomesAnErrorRatherThanSilence`, with a 2 KiB `max_payload` on a real server. Ignoring `Respond`'s error is the difference between a caller learning this and a caller hanging to its own deadline |
+| A draining handler is **not** handed a cancelled context | `natsserve.TestAHandlerIsNotHandedACancelledContextDuringTheDrain`. Run's context is cancelled to ask the service to stop; passing it to handlers tells every accepted call to abort at the moment we commit to answering it. Found by re-reading, not by a failure — with the bug, the probe answers `UNAVAILABLE: shutting down` once per deploy, per queued call |
+| `Run` does not return until queued calls are answered | `natsserve.TestRunDrainsCallsThatAreQueuedButNotYetDispatched`. **Two** calls, because one proves nothing: the first version of this test passed with the `Barrier` deleted, since the in-flight counter already covers a handler that has started. See [the decision](decisions/2026-10-03-a-subject-is-derived-from-the-identity.md) |
+
 ### Errors
 
 | invariant | kept true by |
@@ -63,6 +83,8 @@ unenforced, in the same table, deliberately.
 | An agent's method name is never read | Closer than it was: the generator emits nothing for an agent, proved by `generate.TestAnAgentProducesNoGoAtAll`. Still unenforced in the direction that matters — no test asserts that *nothing anywhere* resolves an agent by method name, because the runner that would is the next step |
 | The tool option is read in exactly one place | `declared.ToolOf` is that place, and the generator calls it rather than reaching for `proto.GetExtension` itself. Nothing *checks* that a second reader does not appear. A grep test would, and is worth writing once there are three readers rather than two — the old estate's single most expensive structural bug was one idea implemented twice |
 | Generated code never grows a transport dependency | The import-set test above is the enforcement for what is emitted. What it cannot say is that `serve` itself stays transport-free: today it imports only `context` and two protobuf packages, and nothing fails if a broker is added to it |
+| No per-call timeout | A hung handler holds a goroutine until its caller gives up. Deliberate: the caller's own deadline is the authority, and a timeout here would be a policy with no stated reason. Revisit when something actually suffers from it |
+
 | A service name should end in `Service` | buf's `SERVICE_SUFFIX`, which `mise run lint` does enforce — but whether an **agent** should be named that way is undecided. An agent is a named actor rather than an RPC service. The fixture and examples comply rather than waive the rule, and the decision is still open |
 
 ## A note on the two fixture trees

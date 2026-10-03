@@ -41,13 +41,16 @@ generated** — `garmctl compose` prints the count, no document transcribes it.
 | `images/` | many repositories, one namespace | resolves `file://`, `s3://` and `https://`, verifies digests, merges and refuses divergence |
 | `cmd/garmctl` | the command people type | `garmctl compose images.yaml -o build/catalogue.binpb` |
 | `cmd/protoc-gen-garm-go` | the generator | a handler interface, `Serve<Service>`, and the names it answers. No `Unimplemented` embed |
-| `serve/` | the one interface generated code is written against | so generated code imports no broker |
+| `serve/` | the interface generated code is written against, and the error kinds | so generated code imports no broker |
+| `natsserve/` | the transport | mounts a tool at `garm.tool.<name>`, drains on shutdown. **The only package that imports a broker** |
+| `proto/garm/invoke/v1/` | what a tool says when it cannot answer | five kinds. No cause field, deliberately |
 | `examples/` | the guide, executable | two buf modules, as two repositories |
 
 ```
 mise install        the toolchain, from mise.toml and nowhere else
-mise run ci         lint and vet · generated Go matches the protos ·
-                    the declaration check · the examples composed · tests with -race
+mise run ci         lint and vet · generated Go matches the protos · no broker in a
+                    tool author's build · the declaration check · the examples
+                    composed · tests with -race against a real nats-server
 ```
 
 ## The rule this repository exists to keep
@@ -106,9 +109,10 @@ third fixture shape appears, that is the moment to check whether one can go.
 
 ## What is next
 
-**Nothing implements `serve.Registrar`**, so nothing mounts a handler yet. That is
-the next step: a NATS micro service transport, and the decision record for how a
-subject is derived from a tool name.
+**Nothing calls a tool for you.** A caller marshals a request and does
+`nc.Request(natsserve.Subject(name), body, timeout)` itself. A generated client, and
+whether discovery (`$SRV.INFO`) or a composed catalogue is how a caller learns what
+exists, is the next step.
 
 ## What is deliberately absent
 
