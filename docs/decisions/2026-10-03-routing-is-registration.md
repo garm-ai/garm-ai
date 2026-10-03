@@ -9,7 +9,7 @@ not: rund **must** know an agent is an agent, because driving a decider loop and
 making a call are different acts — and a decider is addressed by TYPE
 (`garm.runner.react`), not at the agent's own subject. The reasoning below was
 sound for a dumb router. rund owns runs, trees, retries and budgets, and is not
-one. — **retested by the transport step**, which is the first thing that could force a change
+one.
 
 **Decision.** No `mode`, `type` or `kind` field saying which runner answers an
 agent.
