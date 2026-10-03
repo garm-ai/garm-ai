@@ -48,7 +48,7 @@ func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Op
 
 	reply, err := c.NC.RequestMsgWithContext(ctx, m)
 	if err != nil {
-		return nil, serve.Unavailable("rund did not answer on %s", rundsvc.SubjectInvoke).Because(err)
+		return nil, serve.Unavailable("nothing is answering %s -- is rund running?", rundsvc.PatternInvoke).Because(err)
 	}
 	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
 		return nil, wireError(code, reply)
@@ -72,7 +72,7 @@ func (c Client) Fetch(ctx context.Context, runID string) (*runv1.FetchResponse, 
 
 	reply, err := c.NC.RequestMsgWithContext(ctx, m)
 	if err != nil {
-		return nil, serve.Unavailable("rund did not answer on %s", rundsvc.SubjectFetch).Because(err)
+		return nil, serve.Unavailable("nothing is answering %s -- is rund running?", rundsvc.PatternFetch).Because(err)
 	}
 	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
 		return nil, wireError(code, reply)

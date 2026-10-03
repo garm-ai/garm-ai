@@ -105,7 +105,9 @@ func serveRund(natsURL, catURI, catSHA, catDir, name, version string, log *slog.
 	if err := svc.Start(nc); err != nil {
 		return err
 	}
-	log.Info("ready", "invoke", rundsvc.SubjectInvoke, "fetch", rundsvc.SubjectFetch)
+	// What rund ANSWERS on. A caller publishes the flat subject; the server inserts
+	// the caller's account key on the way in (spec §3).
+	log.Info("ready", "invoke", rundsvc.PatternInvoke, "fetch", rundsvc.PatternFetch)
 
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()

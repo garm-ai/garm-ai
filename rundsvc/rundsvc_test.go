@@ -137,8 +137,10 @@ func theCatalogue(t *testing.T) *catalogue.Holder {
 	return &h
 }
 
-// estate stands up the whole chain: a tool service, and rund in front of it.
-func estate(t *testing.T) (caller *nats.Conn, stop func()) {
+// bareServer stands up the whole chain on an OPEN server -- no accounts, no TLS.
+// The subject rewrite an account import does is done by hand here (asRewritten);
+// internal/estate is where the real topology is exercised.
+func bareServer(t *testing.T) (caller *nats.Conn, stop func()) {
 	t.Helper()
 	url := server(t)
 
@@ -215,7 +217,7 @@ func invoke(t *testing.T, nc *nats.Conn, tool string, in proto.Message, hdr map[
 // garm.run.v1.invoke with a NAME, and the answer comes back from a tool service the
 // caller never addressed.
 func TestACallerReachesAToolWithoutKnowingItsSubject(t *testing.T) {
-	nc, _ := estate(t)
+	nc, _ := bareServer(t)
 
 	reply := invoke(t, nc, "weather.v1.get_forecast",
 		&weatherv1.GetForecastRequest{Place: "Ghent", Days: 3}, nil)
@@ -305,7 +307,7 @@ func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
 }
 
 func TestAnUnknownToolIsNotFound(t *testing.T) {
-	nc, _ := estate(t)
+	nc, _ := bareServer(t)
 	reply := invoke(t, nc, "weather.v1.nope", &weatherv1.GetForecastRequest{}, nil)
 
 	code := reply.Header.Get(micro.ErrorCodeHeader)
@@ -317,7 +319,7 @@ func TestAnUnknownToolIsNotFound(t *testing.T) {
 // TestAnAsyncToolIsRefusedBecauseThereIsNoStore, and says so -- rather than
 // pretending the tool does not exist, which a caller would act on wrongly.
 func TestAnAsyncToolIsRefusedBecauseThereIsNoStore(t *testing.T) {
-	nc, _ := estate(t)
+	nc, _ := bareServer(t)
 	for _, tool := range []string{"extra.v1.freeze", "extra.v1.planner"} {
 		reply := invoke(t, nc, tool, &weatherv1.GetForecastRequest{}, nil)
 		code := reply.Header.Get(micro.ErrorCodeHeader)
@@ -331,7 +333,7 @@ func TestAnAsyncToolIsRefusedBecauseThereIsNoStore(t *testing.T) {
 }
 
 func TestFetchSaysNotRetained(t *testing.T) {
-	nc, _ := estate(t)
+	nc, _ := bareServer(t)
 	body, _ := proto.Marshal(&runv1.FetchRequest{RunId: "r1"})
 	m := nats.NewMsg(asRewritten(rundsvc.SubjectFetch))
 	m.Data = body

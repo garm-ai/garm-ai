@@ -8,10 +8,12 @@ package rundsvc
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/micro"
+	"github.com/nats-io/nkeys"
 	"google.golang.org/protobuf/proto"
 
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
@@ -42,6 +44,39 @@ const (
 	PatternInvoke = "garm.run.v1.*.invoke"
 	PatternFetch  = "garm.run.v1.*.fetch"
 )
+
+// CallerKey is the context key under which a handler finds the calling account.
+type CallerKey struct{}
+
+// CallerFromSubject reads the caller's account key off a subject the server
+// rewrote on the way in. It is the ONLY place identity enters rund, and it trusts
+// the subject for one reason: a caller's account can import the run service only
+// at its own key, so token 4 is the importing account's or the message does not
+// arrive (spec §3). Nothing a caller writes can put another key there.
+//
+// A subject whose token 4 is not a public ACCOUNT key carries no caller -- the flat
+// subject a bare server delivers, or a user key -- and is reported as such rather
+// than as an empty caller, which would read as a guarantee.
+func CallerFromSubject(subject string) (account string, ok bool) {
+	parts := strings.Split(subject, ".")
+	if len(parts) != 5 || !nkeys.IsValidPublicAccountKey(parts[3]) {
+		return "", false
+	}
+	return parts[3], true
+}
+
+// withCaller is what every handler does first: learn who called, say so, and put
+// it where the engine can reach it. Nothing uses it yet beyond the log line; this
+// slice establishes identity and makes no decision with it (spec §0).
+func withCaller(e *run.Engine, r micro.Request, op string) context.Context {
+	acc, ok := CallerFromSubject(r.Subject())
+	if !ok {
+		e.Log.Warn("a call arrived without a caller account in its subject", "op", op, "subject", r.Subject())
+		return context.Background()
+	}
+	e.Log.Info(op, "caller", acc)
+	return context.WithValue(context.Background(), CallerKey{}, acc)
+}
 
 // Headers carrying the envelope.
 //
@@ -74,7 +109,7 @@ func invoke(e *run.Engine, r micro.Request) {
 		reply(r, serve.Wire(serve.Invalid("the request could not be read as garm.run.v1.InvokeRequest"), ""))
 		return
 	}
-	resp, failure := e.Invoke(context.Background(), &req, headersOf(r))
+	resp, failure := e.Invoke(withCaller(e, r, "invoke"), &req, headersOf(r))
 	if failure != nil {
 		reply(r, failure)
 		return
@@ -88,7 +123,7 @@ func fetch(e *run.Engine, r micro.Request) {
 		reply(r, serve.Wire(serve.Invalid("the request could not be read as garm.run.v1.FetchRequest"), ""))
 		return
 	}
-	resp, failure := e.Fetch(context.Background(), &req)
+	resp, failure := e.Fetch(withCaller(e, r, "fetch"), &req)
 	if failure != nil {
 		reply(r, failure)
 		return

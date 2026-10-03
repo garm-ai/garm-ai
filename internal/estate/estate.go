@@ -12,6 +12,7 @@
 package estate
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
@@ -20,6 +21,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -71,11 +73,35 @@ type Estate struct {
 	// rather than running it.
 	Catalogue *catalogue.Holder
 
-	srv   *natsserver.Server
-	tls   *tls.Config
-	topo  *topology.Output
-	creds map[Role]topology.Credential
+	srv     *natsserver.Server
+	tls     *tls.Config
+	topo    *topology.Output
+	creds   map[Role]topology.Credential
+	rundLog *lockedBuffer
 }
+
+// lockedBuffer captures rund's log so a test can assert what rund was told --
+// which account called, in particular. Locked because rund logs from handler
+// goroutines while the test reads.
+type lockedBuffer struct {
+	mu sync.Mutex
+	b  bytes.Buffer
+}
+
+func (l *lockedBuffer) Write(p []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.b.Write(p)
+}
+
+func (l *lockedBuffer) String() string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.b.String()
+}
+
+// RundLog is everything rund has logged so far in this estate.
+func (e *Estate) RundLog() string { return e.rundLog.String() }
 
 // New starts a server in operator mode, a tool service and rund, and tears all
 // three down with the test. The tool service is the EXAMPLE one, deployed exactly
@@ -161,10 +187,11 @@ func New(t *testing.T) *Estate {
 		t.Fatal(err)
 	}
 	rundNC := e.Connect(t, RoleRund)
+	e.rundLog = &lockedBuffer{}
 	if err := rundsvc.Serve(svc, &run.Engine{
 		Catalogue: e.Catalogue,
 		Tools:     rundsvc.ToolCaller{NC: rundNC},
-		Log:       Quiet(),
+		Log:       slog.New(slog.NewTextHandler(e.rundLog, nil)),
 	}); err != nil {
 		t.Fatal(err)
 	}
