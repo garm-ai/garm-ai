@@ -574,17 +574,197 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
   <hr class="rule">
 
   <section>
+    <h2>How it gets built — the foundation, proved</h2>
+    <p>Everything above is <i>what</i>. This is <i>how</i>, and none of it is taken
+      on trust: the mechanism below was built in a throwaway spike against a real
+      server in operator mode, and one probe failed in a way that would otherwise
+      have shipped.</p>
+
+    <p><b>Accounts are the isolation boundary.</b> A subject does not cross one
+      except through an explicit export <i>and</i> a matching import. That turns the
+      two-layer rule from a convention somebody could break into a subject that
+      simply does not exist in a caller's namespace.</p>
+
+    <div class="arch">
+      <div class="arch-cap">The publish path · and the one the server refuses</div>
+      <div class="arch-canvas">
+        <svg viewBox="0 0 960 436" role="img"
+             aria-label="A caller publishes a subject; the server inserts its account key; rund receives it and calls a tool. The caller's direct path to a tool is refused.">
+
+          <g class="an band">
+            <rect x="14" y="14" width="932" height="150" rx="10"/>
+            <text class="t1" x="34" y="38" text-anchor="start">THE PATH THAT WORKS</text>
+          </g>
+
+          <g class="an ok">
+            <rect x="34" y="56" width="212" height="88" rx="9"/>
+            <text class="t1" x="140" y="82" text-anchor="middle">A caller</text>
+            <text class="t2" x="140" y="104" text-anchor="middle">publishes</text>
+            <text class="t2" x="140" y="120" text-anchor="middle">garm.run.v1.invoke</text>
+            <text class="t2" x="140" y="136" text-anchor="middle">unchanged from today</text>
+          </g>
+
+          <g class="an hot">
+            <rect x="372" y="56" width="256" height="88" rx="9"/>
+            <text class="t1" x="500" y="82" text-anchor="middle">rund, in GARM</text>
+            <text class="t2" x="500" y="104" text-anchor="middle">receives</text>
+            <text class="t2" x="500" y="120" text-anchor="middle">garm.run.v1.&lt;ACCOUNT&gt;.invoke</text>
+            <text class="t2" x="500" y="136" text-anchor="middle">reads the caller off the subject</text>
+          </g>
+
+          <g class="an ok">
+            <rect x="754" y="56" width="192" height="88" rx="9"/>
+            <text class="t1" x="850" y="82" text-anchor="middle">A tool, in TOOLS</text>
+            <text class="t2" x="850" y="104" text-anchor="middle">answers</text>
+            <text class="t2" x="850" y="120" text-anchor="middle">garm.tool.&lt;name&gt;</text>
+            <text class="t2" x="850" y="136" text-anchor="middle">unchanged from today</text>
+          </g>
+
+          <g class="ae flow">
+            <path d="M246 100 L 372 100"/>
+            <path d="M628 100 L 754 100"/>
+            <text class="strong" x="252" y="86">the SERVER inserts</text>
+            <text class="strong" x="252" y="120">the account key</text>
+            <text class="strong" x="640" y="86">GARM imports</text>
+            <text class="strong" x="640" y="120">garm.tool.&gt;</text>
+          </g>
+
+          <g class="an band">
+            <rect x="14" y="182" width="932" height="110" rx="10"/>
+            <text class="t1" x="34" y="206" text-anchor="start">WHAT THE SERVER GUARANTEES — NOT WHAT WE CHECK</text>
+            <text class="t2" x="34" y="232" text-anchor="start">The account key at token 4 belongs to the account that imported the service. A caller cannot write another account's key there, cannot omit it,</text>
+            <text class="t2" x="34" y="250" text-anchor="start">and never writes it at all — it publishes the same subject it publishes today and the server rewrites it. There is no header to verify and nothing to forge.</text>
+            <text class="t2" x="34" y="276" text-anchor="start">This is the mechanism the previous estate's spec needed for its presenter binding, assumed it had, and never named.</text>
+          </g>
+
+          <g class="an band">
+            <rect x="14" y="310" width="932" height="112" rx="10"/>
+            <text class="t1" x="34" y="334" text-anchor="start">THE PATH THAT IS REFUSED</text>
+          </g>
+          <g class="an ok">
+            <rect x="34" y="348" width="212" height="58" rx="9"/>
+            <text class="t1" x="140" y="374" text-anchor="middle">A caller</text>
+            <text class="t2" x="140" y="392" text-anchor="middle">publishes garm.tool.&lt;name&gt;</text>
+          </g>
+          <g class="an gap">
+            <rect x="500" y="348" width="446" height="58" rx="9"/>
+            <text class="t1" x="723" y="372" text-anchor="middle">no responders available</text>
+            <text class="t2" x="723" y="392" text-anchor="middle">TOOLS exports it; only GARM imports it; it is not in the caller's namespace</text>
+          </g>
+          <g class="ae weak">
+            <path d="M246 377 L 500 377"/>
+            <text x="300" y="366">nothing to refuse — the subject is not there</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <h3 style="margin-top:34px">Proved, not assumed</h3>
+    <p>Six probes against an in-process server configured exactly as production would
+      be — a trusted operator, a resolver, and a system account.</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Probe</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>the caller's key arrives</td><td><b>yes</b> — <code>garm.run.v1.&lt;ACC…&gt;.invoke</code>, placed by the server</td></tr>
+          <tr><td>two callers differ</td><td><b>yes</b> — each arrives as its own account key</td></tr>
+          <tr><td>a caller reaches a tool</td><td><b class="yes">refused</b> — <i>no responders available</i></td></tr>
+          <tr><td>rund reaches the tool</td><td><b>yes</b> — and this one is why the row above means anything</td></tr>
+          <tr><td>a tool answers an undeclared tool</td><td><b class="yes">refused</b> — <i>Permissions Violation for Subscription</i></td></tr>
+          <tr><td>callers must change</td><td><b>no</b> — today's subject still works; only rund's subscription moves</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card warn">
+      <h3>The trap that would have shipped <span class="s s-ver">found by a failing probe</span></h3>
+      <p>A cross-account service reply arrives on <code>_R_.&lt;x&gt;.&lt;y&gt;</code> —
+        <b>not</b> <code>_INBOX.&gt;</code>. A tool whose publish permission allows only
+        the inbox prefix <i>receives the call and is silently refused the reply</i>.
+        The caller sees a hung tool and waits out its own deadline.</p>
+      <p>Worth dwelling on, because the isolation probe beside it was <b>vacuous while
+        this was broken</b>: "a caller cannot reach the tool" passes trivially when
+        nothing can reach the tool. An isolation test only means something next to a
+        test that the intended path works.</p>
+    </div>
+
+    <h3 style="margin-top:34px">One generator, two consumers</h3>
+    <p>The account topology is not written by hand. It is <b>generated from the
+      catalogue</b>, which already knows every tool's name — and a subject comes from
+      a name. So a tool service's credential permits answering exactly the tools it
+      declares, and declaring a new one is what creates its permission. A service
+      physically cannot answer a tool that is not in the catalogue.</p>
+    <p>The same generator serves both consumers: tests build the topology in process
+      against a memory resolver, deployment emits the same documents for a real one.
+      <b>The configuration that is tested is the configuration that is deployed</b>,
+      which is the difference between this being enforcement and being a story we
+      tell. It lives beside <code>compose</code>, reading the same artefact.</p>
+
+    <h3 style="margin-top:34px">Three slices, each complete on its own</h3>
+    <div class="two">
+      <div class="card">
+        <h3>1 · Process identity <span class="s s-des">next</span></h3>
+        <p>Accounts, exports, imports, per-service permissions. No new service, no
+          tokens, nothing to verify — the server enforces all of it.</p>
+        <p>Closes the hole where a misdirected request was answered because two
+          unrelated types both carry a string in field one.</p>
+      </div>
+      <div class="card">
+        <h3>2 · Connection identity <span class="s s-des">after</span></h3>
+        <p>Auth callout: a small service swapping an external token for a NATS user
+          JWT, so human and service identity is established <i>at connect</i>.</p>
+        <p>Two things are day-one requirements rather than hardening: the request
+          crosses a system subject where <b>base64 is encoding, not encryption</b>, so
+          it needs account isolation and <code>xkey</code>; and it blocks every new
+          connection, so it is HA before anything depends on it.</p>
+      </div>
+      <div class="card">
+        <h3>3 · Delegated identity <span class="s s-des">later</span></h3>
+        <p>Grants and the per-call token — everything in the first half of this page —
+          when agents must act for people who are not there.</p>
+        <p>The presenter binding becomes checkable here, because slice 1 is what puts
+          a trustworthy caller identity in the subject to check it against.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:34px">Migration order</h3>
+    <p>Chosen so the repository is never in a state where the tests pass and nothing
+      is enforced.</p>
+    <div class="trace">
+      <h3>Slice 1, step by step <span class="sub">only the last step touches anything running</span></h3>
+      <ol>
+        <li><b>The generator, with no server involved.</b> It emits the topology from
+          the catalogue; a test asserts a tool gets exactly its declared subjects and
+          no more.</li>
+        <li><b>The test estate switches to operator mode.</b> No production change.
+          Every existing test then runs against a production-shaped server — and this
+          is the step that would expose a wrong assumption, while still being
+          reversible.</li>
+        <li><b>The isolation tests land.</b> A caller publishing on a tool subject must
+          fail <i>and</i> <code>rund</code> must still succeed. Both, because the first
+          alone passes when nothing works.</li>
+        <li><b><code>rund</code>'s subscription moves</b> to the wildcard and begins
+          reading the caller identity — which nothing yet <i>uses</i>, so it can be
+          wrong without being dangerous.</li>
+        <li><b>Deployment credentials last</b>, when everything above is green.</li>
+      </ol>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
     <h2>What this means for sequencing</h2>
-    <p>Nothing above changes the first step, and that is the useful result.</p>
+    <p>Nothing in the identity model changes the first step, and that is the useful
+      result — the foundation above is a prerequisite for the grant model rather than
+      an alternative to it.</p>
 
     <ul class="tight">
-      <li><b>Transport authentication comes first, and still waits on nothing.</b>
-        Credentials and subject permissions establish <i>which process</i> is which.
-        That is the <code>exec</code> identity the token binds itself to with
-        <code>cnf</code>, and the server-placed caller identity the binding is checked
-        against. It is a prerequisite for the grant model rather than an alternative to
-        it — and it closes the hole where a misdirected message was accepted because
-        two unrelated types both carry a string in field one.</li>
+      <li><b>Transport authentication comes first, and waits on nothing.</b> It
+        establishes the <code>exec</code> identity a token binds itself to, and the
+        server-placed caller identity that binding is checked against. Detailed
+        above, and proved.</li>
       <li><b>A run records a grant reference and a trigger</b>, not a principal string.
         The principal is derived; authority is the fold at mint time. Getting that
         column right the first time is the whole reason to design this before the store
@@ -592,10 +772,18 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
       <li><b>The grant store belongs to the token service</b>, and nothing else reads
         it. So the engine takes a database for <i>runs</i> and never for grants —
         which keeps the one constraint that survived from the previous estate.</li>
-      <li><b>Adapt the exchange machinery; do not rewrite it.</b> The issuer, keyring,
-        discovery document, claims fold and client assertions exist and are tested.
-        What is new is the grant store, the presenter binding, and a door the engine can
-        mint through without leaving the bus.</li>
+      <li><b>Build thin and build up, rather than porting an authorization server.</b>
+        The existing one is 4,281 lines, most of it features whose enforcers do not
+        exist here — and it is missing both of the things most needed: transport
+        authentication and the presenter binding. Thin has one rule, though: few
+        features, never hand-rolled crypto. Slice 2 issues NATS user JWTs with the same
+        libraries the server itself uses.</li>
+      <li><b>The development identity provider is not ported either.</b> Its own notes
+        name the hazard — a minter and a verifier drifting apart <i>"silently until
+        every dev token stops verifying for a reason nobody can see"</i> — and porting
+        a minter before a verifier exists is building the half nothing can check. It
+        returns as a fixture beside the verifier, with a round-trip test, which closes
+        that gap rather than inheriting it.</li>
       <li><b>Decide the service-principal question explicitly.</b> It is the gap that
         looks smallest and is actually a new source of authority. It should not be
         discovered during implementation.</li>
