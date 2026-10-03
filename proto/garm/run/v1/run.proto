@@ -1,0 +1,94 @@
+// The platform's own front door.
+//
+// DELIBERATELY NOT A SET OF TOOLS, and the reason is recursion: invoking a tool
+// goes THROUGH this, so if `invoke` were itself a tool then invoking it would
+// create a run that invoked it. "Everything is a tool" governs what the platform
+// serves on behalf of others, not the door you come in by.
+syntax = "proto3";
+
+package garm.run.v1;
+
+import "garm/invoke/v1/error.proto";
+
+option go_package = "github.com/garm-ai/garm-ai/garm/run/v1;runv1";
+
+service RunService {
+  // Invoke starts a run. THE ONLY WAY A CALLER REACHES A TOOL.
+  //
+  // A caller never addresses `garm.tool.<name>` itself. That subject is the
+  // INTERNAL calling convention between rund and a tool service, which is what
+  // lets asynchrony and approval be imposed later on a tool that knows about
+  // neither.
+  rpc Invoke(InvokeRequest) returns (InvokeResponse);
+
+  // Fetch is what happened. Today it answers honestly that a synchronous run is
+  // not retained; it returns a result when there is a store to hold one.
+  rpc Fetch(FetchRequest) returns (FetchResponse);
+}
+
+message InvokeRequest {
+  // The tool's declared NAME. Identity, never an address: a caller asks for
+  // `payments.v1.get_balance` and never for a proto path.
+  string tool = 1;
+
+  // The tool's request message, marshalled.
+  //
+  // `bytes`, NOT google.protobuf.Any. An Any carries a type URL, which is a
+  // SECOND statement of a type the tool name already determines -- two sources
+  // that can disagree, about the one thing this platform refuses to state twice.
+  // rund holds the catalogue, so it can decode this for a log line without the
+  // wire carrying a redundant claim.
+  //
+  // THIS IS THE ONLY FIELD A MODEL'S OUTPUT EVER REACHES. Everything that governs
+  // a call -- the ids, the budget, an idempotency key -- travels in NATS HEADERS,
+  // which the caller's runtime sets and a model cannot. That is structural rather
+  // than a rule somebody has to remember: a model produces arguments, and
+  // arguments are in here.
+  bytes input = 2;
+}
+
+message InvokeResponse {
+  // Always set. Every call has a run, whether or not anything is stored under it.
+  //
+  // Distinct from the correlation id: a correlation spans one caller's flow,
+  // which may start several runs.
+  string run_id = 1;
+
+  // A ONEOF WITH ONE ARM TODAY, on purpose. `Pending` joins it when a run store
+  // exists, which is purely additive -- where adding a oneof around an existing
+  // field later would not be.
+  oneof outcome {
+    // The tool answered within its declared budget. Only possible for a tool
+    // whose delivery is Sync.
+    bytes result = 2;
+  }
+}
+
+message FetchRequest {
+  string run_id = 1;
+}
+
+message FetchResponse {
+  RunState state = 1;
+
+  oneof outcome {
+    bytes result = 2;
+    garm.invoke.v1.Error error = 3;
+  }
+}
+
+enum RunState {
+  RUN_STATE_UNSPECIFIED = 0;
+
+  // The run happened and nothing was kept. The honest answer for a synchronous
+  // call in a build with no store: NOT a lie that it never existed, and not a
+  // fabricated result.
+  RUN_STATE_NOT_RETAINED = 1;
+
+  RUN_STATE_RUNNING = 2;
+  RUN_STATE_SUCCEEDED = 3;
+  RUN_STATE_FAILED = 4;
+
+  // WAITING_FOR_APPROVAL, WAITING_FOR_INFO, CANCELLING, CANCELLED and TIMED_OUT
+  // arrive with the run store that can hold them. See docs/roadmap.md.
+}
