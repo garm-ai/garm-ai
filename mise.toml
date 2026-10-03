@@ -35,8 +35,25 @@ description = "Refuse a tree whose declarations do not hold together"
 run = """
 set -e
 mkdir -p build
-buf build -o build/image.binpb
+# `proto` as an INPUT, not via --path: examples/proto is a second module now,
+# and building the whole tree would put the examples in this repo's own image,
+# making the tool count mean two things at once. buf refuses --path for a path
+# that IS a module, which is how this was found.
+buf build proto -o build/image.binpb
 go run ./cmd/garmctl compose images.yaml -o build/catalogue.binpb
+"""
+
+[tasks.examples]
+description = "Compose the example namespace, the way two repositories would"
+# The guide in docs/guide.md walks through exactly these files. Running it in CI
+# is what stops the guide from lying: rename a field and the guide breaks here
+# rather than misleading somebody next month.
+run = """
+set -e
+mkdir -p build
+buf build --path examples/proto/weather -o build/weather.binpb
+buf build --path examples/proto/trips   -o build/trips.binpb
+go run ./cmd/garmctl compose examples/images.yaml
 """
 
 [tasks.lint]
@@ -49,4 +66,4 @@ run = "go test ./... -race"
 
 [tasks.ci]
 description = "Everything CI runs, in order"
-depends = ["lint", "gen-check", "check", "test"]
+depends = ["lint", "gen-check", "check", "examples", "test"]

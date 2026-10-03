@@ -1,0 +1,28 @@
+// A tool: something a service answers itself.
+syntax = "proto3";
+
+package weather.v1;
+
+import "garm/tool/v1/tool.proto";
+
+option go_package = "github.com/garm-ai/garm-ai/examples/gen/weather/v1;weatherv1";
+
+message GetForecastRequest {
+  string place = 1;
+  int32 days = 2;
+}
+
+message GetForecastResponse {
+  string summary = 1;
+  int32 high_celsius = 2;
+}
+
+service WeatherService {
+  rpc GetForecast(GetForecastRequest) returns (GetForecastResponse) {
+    // The name is how everything else refers to this tool: an agent's allowlist,
+    // a policy, a log line. The method's proto full name
+    // (`weather.v1.WeatherService.GetForecast`) is where the declaration LIVES
+    // and is never used as identity.
+    option (garm.tool.v1.tool) = { name: "weather.v1.get_forecast" };
+  }
+}

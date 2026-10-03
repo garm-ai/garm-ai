@@ -1,0 +1,10 @@
+# What composes into the example namespace.
+#
+# Two images from two directories, the way two REPOSITORIES would each publish
+# one. `trip-planner` names a tool declared in the other image, and nothing in
+# protobuf links them -- an allowlist cites names, so there is no import to
+# follow. `garmctl compose` is what checks the reference resolves.
+schema: v1
+images:
+  - uri: file://../build/weather.binpb
+  - uri: file://../build/trips.binpb

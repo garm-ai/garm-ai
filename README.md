@@ -2,6 +2,23 @@
 
 A second attempt, built thin and proven one step at a time.
 
+## Documentation
+
+- **[docs/concepts.md](docs/concepts.md)** — what a tool, an agent, an image and a
+  catalogue are. Definitions, not descriptions.
+- **[docs/guide.md](docs/guide.md)** — building a tool and an agent, walking through
+  `examples/`, which `mise run ci` composes. Rename a field and the guide breaks in
+  CI rather than misleading somebody next month.
+- **[docs/invariants.md](docs/invariants.md)** — every invariant with the test that
+  keeps it true, and a second table for the ones nothing checks yet.
+
+The old estate had **273,768 lines of markdown** and still shipped five concepts
+declared and enforced by nothing, a runbook whose tool counts read 10/3/4 where the
+plane measured 14/8/5, and a README asserting artefacts were byte-identical when
+they were not. Volume was never the problem. Prose stating a fact nothing checks
+was. So: definitions are written, invariants name their test, and **numbers are
+generated** — `garmctl compose` prints the count, no document transcribes it.
+
 ## The rule this repository exists to keep
 
 **A field arrives when the thing that enforces it arrives. Never before.**

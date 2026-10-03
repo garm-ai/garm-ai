@@ -1,0 +1,52 @@
+// An agent: a tool a runner answers, rather than a service.
+syntax = "proto3";
+
+package trips.v1;
+
+import "garm/tool/v1/tool.proto";
+
+option go_package = "github.com/garm-ai/garm-ai/examples/gen/trips/v1;tripsv1";
+
+message PlanTripRequest { string request = 1; }
+
+// The call returns a REFERENCE, not an answer: a run can take minutes and may
+// wait on a human, so starting one returns immediately.
+message PlanTripResponse { string run_id = 1; }
+
+service TripPlannerService {
+  // THE METHOD IS CALLED PlanTrip, NOT Invoke, and that is worth a word.
+  //
+  // The estate this replaces required every agent to expose `rpc Invoke`, because
+  // its runner looked the method up by that name. Here the TOOL OPTION carries
+  // the identity, so the method name is an address and nothing reads it -- which
+  // means it is free to say what the call does.
+  //
+  // That also dissolves a tension rather than bending to it. buf's STANDARD lint
+  // wants an RPC's messages named after the RPC, so `rpc Invoke` forces
+  // `InvokeRequest` -- a worse name, and one that collides the moment a package
+  // holds two agents. Naming the method for the act gives `PlanTripRequest` and
+  // a clean lint at once. The rule and the domain only disagreed while the method
+  // name was doing a job the option now does.
+  rpc PlanTrip(PlanTripRequest) returns (PlanTripResponse) {
+    option (garm.tool.v1.tool) = {
+      name: "trip-planner"
+
+      // The presence of this block is the whole of what makes this an agent: a
+      // runner answers the call instead of a service. Its absence, as in
+      // weather.proto, means the service answers for itself.
+      agent: {
+        // What a run may call, and nothing widens it -- not a prompt, not a
+        // graph, not a runtime decision.
+        //
+        // Note this names a tool declared in a DIFFERENT proto package, by the
+        // same spelling that proto declares. One namespace. And note that no
+        // `import` of weather.proto is needed or possible: an allowlist cites
+        // names, so there is no proto-level dependency -- which is exactly why
+        // `garmctl compose` has to check it.
+        tools: [
+          { name: "weather.v1.get_forecast" }
+        ]
+      }
+    };
+  }
+}
