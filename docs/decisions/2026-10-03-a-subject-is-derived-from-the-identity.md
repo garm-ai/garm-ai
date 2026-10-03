@@ -30,7 +30,7 @@ otherwise both offer an endpoint called Get — and it is the SECOND registratio
 that fails, long after the first looked fine."* Names are unique across a composed
 namespace, so the collision cannot happen.
 
-**An agent is a tool**, so a runner mounts one through this same interface and
+**An agent is a tool**, so a decider mounts one through this same interface and
 nothing in the transport knows which is which. That is what keeps
 [routing is registration](2026-10-03-routing-is-registration.md) true rather than
 aspirational.
@@ -157,6 +157,6 @@ hanging, and it has a test with a 2 KiB `max_payload` on a real server.
 
 ## What step 8 does not do
 
-No generated client, no `$SRV.INFO` consumption, no descriptor hash, no runner, no
+No generated client, no `$SRV.INFO` consumption, no descriptor hash, no decider, no
 gateway, and **no per-call timeout** — a hung tool is the caller's own deadline to
 enforce, and imposing one here would be a policy with no stated reason.

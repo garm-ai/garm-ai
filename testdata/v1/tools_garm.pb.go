@@ -7,7 +7,7 @@
 // caller at run time. The embed grpc-go emits buys source compatibility and
 // pays for it with half-implemented services that start cleanly.
 //
-// A tool whose option carries `agent` appears nowhere here: a runner answers it,
+// A tool whose option carries `agent` appears nowhere here: rund runs it with a decider,
 // so a handler method would be one nobody may implement.
 
 package testdatav1

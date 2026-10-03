@@ -250,7 +250,7 @@ func probe(t *testing.T, methods ...*descriptorpb.MethodDescriptorProto) (*plugi
 }
 
 func TestAnAgentProducesNoGoAtAll(t *testing.T) {
-	// A tool a runner answers. If the generator emitted a handler for it, a tool
+	// A tool rund runs with a decider. If the generator emitted a handler for it, a tool
 	// author would see a method they must never implement -- and implementing it
 	// would put a second answerer on the subject.
 	resp, err := probe(t, toolMethod(t, "PlanTrip", &toolv1.Tool{

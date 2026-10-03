@@ -7,9 +7,15 @@ on the same day. What survives: a tool author never names somebody else's
 deployment, so *which instance* answers is still settled by registration. What does
 not: rund **must** know an agent is an agent, because driving a decider loop and
 making a call are different acts — and a decider is addressed by TYPE
-(`garm.runner.react`), not at the agent's own subject. The reasoning below was
+(`garm.decider.react`), not at the agent's own subject. The reasoning below was
 sound for a dumb router. rund owns runs, trees, retries and budgets, and is not
 one.
+
+**Vocabulary:** the body below says *runner* throughout, which is what the concept
+was called when this was written. It is now a **decider**, because `rund` is the
+thing that actually runs a call. A superseded record is left in the words it was
+written in; renaming them would make it read as if it had been written knowing what
+it did not.
 
 **Decision.** No `mode`, `type` or `kind` field saying which runner answers an
 agent.

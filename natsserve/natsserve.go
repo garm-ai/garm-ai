@@ -18,7 +18,7 @@
 // would otherwise both offer an endpoint called Get". Names are unique, so that
 // cannot happen.
 //
-// An agent is a tool, so a runner mounts one through this same interface. Nothing
+// An agent is a tool, so a decider mounts one through this same interface. Nothing
 // here knows which is which, which is what keeps routing-is-registration true.
 package natsserve
 

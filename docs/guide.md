@@ -37,8 +37,8 @@ happened.
 
 ## 2. An agent
 
-An agent is a tool with an `agent` block. The block's presence means a runner
-answers the call rather than a service.
+An agent is a tool with an `agent` block. The block's presence means `rund` runs the
+call and asks a decider what to do next, rather than a service answering it.
 
 ```proto
 service TripPlannerService {
@@ -121,8 +121,8 @@ handler that named itself would be the second.
 tool author choosing one would be choosing one per transport.
 
 **An agent gets no interface.** `trips.proto` declares only an agent, so
-`buf generate` produces `trips.pb.go` and no `trips_garm.pb.go`. A runner answers
-it, so a handler method would be one you must never implement — and implementing
+`buf generate` produces `trips.pb.go` and no `trips_garm.pb.go`. `rund` runs it with
+a decider, so a handler method would be one you must never implement — and implementing
 it would put a second answerer on the subject.
 
 The last line is what makes this an example rather than a claim: it is compiled by
@@ -248,7 +248,7 @@ of our own duplicating that.
 marshals a request and does `nc.Request(natsserve.Subject(name), body, timeout)`
 itself. That is the next step.
 
-There is also no gateway, no runner, no discovery, no descriptor hash, no clearance,
+There is also no gateway, no decider, no discovery, no descriptor hash, no clearance,
 compartments, verbs, tool sets or approvals. Those are real and most are coming —
 they are absent because nothing enforces them yet, and a declaration nothing acts
 on is a promise the platform breaks silently.

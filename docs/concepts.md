@@ -14,7 +14,7 @@ rpc GetForecast(GetForecastRequest) returns (GetForecastResponse) {
 There is no registry, no manifest of tools, no list to keep in step. The
 declaration lives on the thing it describes, so the two cannot disagree.
 
-## An agent is a tool a runner answers
+## An agent is a tool rund runs with a decider
 
 ```proto
 option (garm.tool.v1.tool) = {
@@ -24,7 +24,8 @@ option (garm.tool.v1.tool) = {
 ```
 
 The `agent` block's **presence** is the whole of what makes something an agent.
-Absent, a service answers the call itself. Present, a runner answers it, and the
+Absent, a service answers the call itself. Present, rund runs it and asks a decider
+what to do next, and the
 block says what that run may call in turn.
 
 So the distinction is not tool-versus-agent. It is **who answers this call** — a

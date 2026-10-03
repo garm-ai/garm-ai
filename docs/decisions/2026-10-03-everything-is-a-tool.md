@@ -1,12 +1,12 @@
-# Everything is a tool, and an agent is a tool a runner answers
+# Everything is a tool, and an agent is a tool rund runs with a decider
 
 **Date:** 2026-10-03
 **Status:** active
 
 **Decision.** A tool is an RPC method carrying `(garm.tool.v1.tool)`. The option
 declares a `name`, and optionally an `agent` block. **Absent: a service answers the
-call itself. Present: a runner answers it, and the block says what that run may
-call.**
+call itself. Present: **rund runs it, asking a decider what to do next**, and the
+block says what that run may call.**
 
 ```proto
 message Tool {

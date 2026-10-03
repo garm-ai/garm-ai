@@ -67,19 +67,17 @@ message Tool {
   Agent agent = 2;
 }
 
-// How a runner answers a tool call.
+// What rund runs when a tool declares one.
 //
-// NOTE WHAT IS ABSENT: there is no `mode`, `type` or `kind` field saying which
-// KIND of runner. That is deliberate and it follows from an invariant the
-// previous estate wrote down and then broke -- "garmd does not know about
-// agents. An agent is a tool: a service at a NATS subject."
+// NOTE WHAT IS ABSENT: no field names WHICH IMPLEMENTATION decides this agent's
+// steps -- DBOS or Temporal, react-v2 or react-experimental. That is a
+// deployment's topology, settled by rund's own routing table, and a tool author
+// who could name it would be choosing somebody else's deployment.
 //
-// If a runner is a NATS micro service like any other, then which runner answers
-// a given agent is decided by WHICH SERVICE REGISTERED THE SUBJECT, discovered
-// the same way every other service is. The gateway routes by tool name and never
-// learns that runners or agent types exist. A `mode` field would hand it that
-// knowledge for nothing, and under the rule at the top of this file it has no
-// enforcer anyway: nothing reads it if routing is registration.
+// A field naming the KIND -- ReAct, Workflow -- will arrive when a decider does,
+// because by then it has readers: compose can refuse a Workflow declaring no
+// steps, and a declared kind can be reconciled against what is actually serving.
+// It is absent today for the reason at the top of this file, and for no other.
 message Agent {
   // What a run may call, and the only thing currently enforced.
   //

@@ -240,10 +240,10 @@
     <text class="t2" x="615" y="365" text-anchor="middle">BUILT IN · in-process</text></g>
   <g class="an later"><rect x="514" y="382" width="202" height="42" rx="8"/>
     <text class="t1" x="615" y="401" text-anchor="middle">ReAct</text>
-    <text class="t2" x="615" y="415" text-anchor="middle">garm.runner.react</text></g>
+    <text class="t2" x="615" y="415" text-anchor="middle">garm.decider.react</text></g>
   <g class="an later"><rect x="514" y="432" width="202" height="42" rx="8"/>
     <text class="t1" x="615" y="451" text-anchor="middle">Workflow</text>
-    <text class="t2" x="615" y="465" text-anchor="middle">garm.runner.workflow</text></g>
+    <text class="t2" x="615" y="465" text-anchor="middle">garm.decider.workflow</text></g>
 
   <!-- ============ band 3 ============ -->
   <text class="bandlbl" x="20" y="528">3 · state and records — asynchronous calls only</text>
@@ -292,7 +292,7 @@
     <p class="kicker">the thing to read off the map</p>
     <h2>A tool handler is a plain function. It never learns a human was asked.</h2>
     <p>Three requirements arrived together: approval may apply to <em>any</em> call,
-      both runner types are durable, and a tool author implements an interface and
+      both decider kinds are durable, and a tool author implements an interface and
       nothing else. Only one arrangement satisfies all three —
       <b>asynchrony is imposed on a tool, never implemented by one.</b></p>
     <p><code>freeze_account</code> is declared <code>async</code> and its handler is
@@ -305,10 +305,10 @@
     <h2>Who is in the path, and when</h2>
     <p><code>rund</code> is in the path of every call. A decider that is a <em>loop</em>
       appears only when the thing invoked is an agent — so <code>async</code> does not
-      imply a runner.</p>
+      imply a decider.</p>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>invoked</th><th>delivery</th><th>decider</th><th>a deployed runner?</th></tr></thead>
+        <thead><tr><th>invoked</th><th>delivery</th><th>decider</th><th>a deployed decider?</th></tr></thead>
         <tbody>
           <tr><td>payments.v1.get_balance</td><td>sync</td><td>built-in single-step</td><td class="no">no</td></tr>
           <tr><td>payments.v1.freeze_account</td><td><b>async</b> — a person may approve</td><td>built-in single-step</td><td class="no">no</td></tr>
@@ -317,7 +317,7 @@
         </tbody>
       </table>
     </div>
-    <p class="note">The last row is a contradiction, not merely unwise: both runner
+    <p class="note">The last row is a contradiction, not merely unwise: both decider
       types are durable by definition, so an agent can never complete inside a call.
       Refused by <code>garmctl compose</code>.</p>
   </section>
@@ -349,18 +349,18 @@
   </section>
 
   <section>
-    <h2>Why one engine and not a runner per call</h2>
+    <h2>Why one engine and not a decider per call</h2>
     <p>Retries, guardrails and budgets are needed by every call — which refutes an
       earlier draft of this design that claimed a plain tool call has no state machine.
       It has one the moment retries exist: attempt 1 fails <code>UNAVAILABLE</code>,
       wait, attempt 2.</p>
-    <p>But “runner” was doing two jobs. The <b>engine</b> — retries, guardrails, budget
+    <p>But “decider” was doing two jobs. The <b>engine</b> — retries, guardrails, budget
       accounting, approval, state, the tree, the event stream — is needed by everything,
       and it is <code>rund</code>. A <b>decider</b> only answers “what next”, and only a
       multi-step program has one.</p>
     <div class="card warn" style="margin-top:22px">
-      <h3>And that settles who owns a runner's state</h3>
-      <p>If a decider drove its own loop, every decider type would carry its own copy of
+      <h3>And that settles who owns a decider's state</h3>
+      <p>If a decider drove its own loop, every decider kind would carry its own copy of
         guardrails, retry policy and budget accounting — and they would diverge. That is
         the exact failure this repository was started to avoid: in the estate it replaces,
         one CEL dialect existed twice and a guard could pass lint then fail at load.</p>
@@ -427,7 +427,7 @@ ref, err := client.FreezeAccount(ctx, &amp;FreezeAccountRequest{…})
 <span style="color:var(--muted)">// async -&gt; (*run.Ref, error).  A DIFFERENT SIGNATURE, from the declaration.</span>
 res, err := ref.Await(ctx)
 <span style="color:var(--muted)">// the caller's own patience. Giving up does NOT cancel the run.</span></pre>
-    <p class="note">No subject, no decider, no runner type. And flipping a tool from
+    <p class="note">No subject, no decider, no decider kind. And flipping a tool from
       sync to async makes <b>every caller fail to compile</b> — the same discipline as the
       handler interface having no <code>Unimplemented</code> embed. The alternative is a
       caller waiting forever for an answer that has quietly become a receipt.</p>

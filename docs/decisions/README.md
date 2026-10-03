@@ -29,7 +29,7 @@ alternative was considered.
 
 | decision | status | |
 |---|---|---|
-| [Everything is a tool, and an agent is a tool a runner answers](2026-10-03-everything-is-a-tool.md) | active | one option, one optional field |
+| [Everything is a tool, and an agent is a tool rund runs with a decider](2026-10-03-everything-is-a-tool.md) | active | one option, one optional field |
 | [A tool's name is its identity; its proto path is an address](2026-10-03-identity-is-not-an-address.md) | active | the two most expensive bugs of 2026-10-02 |
 | [The allowlist is enforced, not asserted](2026-10-03-the-allowlist-is-enforced.md) | active | why `declared` is a package and not code in a command |
 | [Images merge at build time, never at boot](2026-10-03-images-merge-at-build-time.md) | active | and why a collision names both images |

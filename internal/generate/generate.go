@@ -28,7 +28,7 @@
 // a smaller set.
 //
 // It does not emit anything for an agent. A tool whose option carries `agent` is
-// answered by a runner, not by the author of the proto, so a handler method here
+// answered by rund driving a decider, not by the author of the proto, so a method here
 // would be one nobody may implement.
 package generate
 
@@ -113,7 +113,7 @@ func file(gen *protogen.Plugin, f *protogen.File) error {
 		}
 	}
 	// No file at all rather than an empty one. A proto holding only agents
-	// produces no Go, which is what makes "a runner answers this" visible in the
+	// produces no Go, which is what makes "a decider chooses this one's steps" visible in the
 	// tree instead of only in a comment.
 	if len(services) == 0 {
 		return nil
@@ -132,7 +132,7 @@ func file(gen *protogen.Plugin, f *protogen.File) error {
 	g.P("// caller at run time. The embed grpc-go emits buys source compatibility and")
 	g.P("// pays for it with half-implemented services that start cleanly.")
 	g.P("//")
-	g.P("// A tool whose option carries `agent` appears nowhere here: a runner answers it,")
+	g.P("// A tool whose option carries `agent` appears nowhere here: rund runs it with a decider,")
 	g.P("// so a handler method would be one nobody may implement.")
 	g.P()
 	g.P("package ", f.GoPackageName)

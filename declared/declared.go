@@ -59,11 +59,13 @@ type Tool struct {
 	Method protoreflect.MethodDescriptor
 
 	// Agent is nil when a service answers this tool itself, and non-nil when a
-	// runner answers it. That is the whole of what "an agent" is.
+	// rund runs it, asking a decider what to do next. That is the whole of what
+	// "an agent" is.
 	Agent *toolv1.Agent
 }
 
-// IsAgent reports whether a runner answers this tool rather than a service.
+// IsAgent reports whether rund runs this tool with a decider, rather than a service
+// answering it.
 func (t Tool) IsAgent() bool { return t.Agent != nil }
 
 // Set is every tool a descriptor set declares, indexed by name.

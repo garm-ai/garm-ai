@@ -122,7 +122,7 @@
 <div class="wrap">
   <p class="kicker">garm-ai · deployment</p>
   <h1>Two durable engines, one bus</h1>
-  <p class="tagline">DBOS and Temporal are not two kinds of runner. They are two
+  <p class="tagline">DBOS and Temporal are not two kinds of decider. They are two
     <em>implementations</em> of one declared kind — and a tool author cannot tell which
     one a deployment runs, which is the point.</p>
   <p class="note">Everything below the bus is reached the same way: <code>rund</code>
@@ -211,7 +211,7 @@
   </g>
   <g class="an ok tA tB"><rect x="20" y="170" width="920" height="62" rx="9"/>
     <text class="t1" x="480" y="194" text-anchor="middle">NATS cluster</text>
-    <text class="t2" x="480" y="210" text-anchor="middle">garm.run.v1.*   garm.tool.&lt;name&gt;   garm.runner.&lt;type&gt;.&lt;impl&gt;   garm.run.event.&lt;id&gt;</text>
+    <text class="t2" x="480" y="210" text-anchor="middle">garm.run.v1.*   garm.tool.&lt;name&gt;   garm.decider.&lt;type&gt;.&lt;impl&gt;   garm.run.event.&lt;id&gt;</text>
   </g>
   <g class="an ok tA tB"><rect x="20" y="290" width="210" height="76" rx="9"/>
     <text class="t1" x="125" y="314" text-anchor="middle">paymentsd</text>
@@ -220,17 +220,17 @@
   </g>
   <g class="an later"><rect x="265" y="290" width="215" height="76" rx="9"/>
     <text class="t1" x="372" y="314" text-anchor="middle">workflow · DBOS</text>
-    <text class="t2" x="372" y="330" text-anchor="middle">garm.runner.workflow.dbos</text>
+    <text class="t2" x="372" y="330" text-anchor="middle">garm.decider.workflow.dbos</text>
     <text class="t2" x="372" y="344" text-anchor="middle">durable in ITS OWN store</text>
   </g>
   <g class="an later tB"><rect x="515" y="290" width="215" height="76" rx="9"/>
     <text class="t1" x="622" y="314" text-anchor="middle">workflow · Temporal</text>
-    <text class="t2" x="622" y="330" text-anchor="middle">garm.runner.workflow.temporal</text>
+    <text class="t2" x="622" y="330" text-anchor="middle">garm.decider.workflow.temporal</text>
     <text class="t2" x="622" y="344" text-anchor="middle">durable in ITS OWN store</text>
   </g>
   <g class="an later"><rect x="765" y="290" width="175" height="76" rx="9"/>
     <text class="t1" x="852" y="314" text-anchor="middle">react</text>
-    <text class="t2" x="852" y="330" text-anchor="middle">garm.runner.react</text>
+    <text class="t2" x="852" y="330" text-anchor="middle">garm.decider.react</text>
     <text class="t2" x="852" y="344" text-anchor="middle">a pure reducer</text>
   </g>
   <g class="an later tA tB"><rect x="20" y="420" width="210" height="70" rx="9"/>
@@ -278,7 +278,7 @@
     <p class="kicker">trace a</p>
     <h2>A synchronous call that ends in a mainframe</h2>
     <p><code>payments.v1.get_balance</code>, declared
-      <code>sync: { budget: 2s }</code>. No decider loop, no run store, no runner
+      <code>sync: { budget: 2s }</code>. No decider loop, no run store, no decider
       deployed — and the budget is spent almost entirely in the last two frames.</p>
     <div class="trace">
       <h3>A · <span>garmctl call payments.v1.get_balance '{"account_id":"a-1"}'</span></h3>
@@ -308,7 +308,7 @@
       </ol>
     </div>
     <p class="note">Frames 3 and 4 are the whole argument for the built-in decider. A
-      deployed “sync runner” would add two hops and a dependency to a call that is
+      deployed “sync decider” would add two hops and a dependency to a call that is
       otherwise a single round trip plus whatever the bank's system costs.</p>
   </section>
 
@@ -322,7 +322,7 @@
       <ol>
         <li><span class="m">rund</span> resolves the name → an agent declaring
           <code>workflow</code>. Its routing table maps that kind to
-          <code>garm.runner.workflow.temporal</code> — <b>deployment config, not a
+          <code>garm.decider.workflow.temporal</code> — <b>deployment config, not a
           declaration</b>.</li>
         <li><span class="m">rund</span> creates run <code>r2</code> in <b>its own</b>
           Postgres: <code>RUNNING</code>, the input, the correlation id, no parent.</li>
@@ -374,7 +374,7 @@
       can go agent by agent, because the routing table takes per-agent overrides.</p>
     <div class="card warn">
       <h3>The hazard this creates, and why the type check does not catch it</h3>
-      <p>If DBOS and Temporal both register <code>garm.runner.workflow</code>, NATS
+      <p>If DBOS and Temporal both register <code>garm.decider.workflow</code>, NATS
         queue-groups them and <b>calls split randomly between two engines</b>. Half your
         runs land in a store the other engine cannot read.</p>
       <p>The reconciliation check from the spec does not see it: both report their kind as
@@ -426,7 +426,7 @@
         <tbody>
           <tr><td>tool author</td><td>a <code>.proto</code> and a plain Go function</td><td>NATS, runs, approval, DBOS, Temporal</td></tr>
           <tr><td>agent author</td><td>a <code>.proto</code>: an allowlist and a kind</td><td>which engine runs it, or where its state lives</td></tr>
-          <tr><td>caller</td><td>a generated client and a tool <b>name</b></td><td>subjects, deciders, runner kinds</td></tr>
+          <tr><td>caller</td><td>a generated client and a tool <b>name</b></td><td>subjects, deciders, decider kinds</td></tr>
           <tr><td>operator</td><td>rund's routing table, replicas, three stores</td><td>what any tool does</td></tr>
         </tbody>
       </table>

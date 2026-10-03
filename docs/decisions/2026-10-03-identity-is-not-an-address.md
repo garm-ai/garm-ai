@@ -32,5 +32,5 @@ is the same fixture discipline applied to emitted code.
 
 **Consequence.** An agent's method name is free to say what the call does. The
 examples use `rpc PlanTrip`, not `rpc Invoke` — the estate this replaces required
-`Invoke` because its runner looked the method up by name, which made the address
+`Invoke` because its decider looked the method up by name, which made the address
 load-bearing. Here nothing reads it.

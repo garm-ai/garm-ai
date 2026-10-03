@@ -1,4 +1,4 @@
-// An agent: a tool a runner answers.
+// An agent: a tool rund runs, asking a decider what to do next.
 //
 // IN A SEPARATE FILE FROM THE TOOLS IT CALLS, and NOTE THAT IT DOES NOT IMPORT
 // THEM -- it cannot. An allowlist cites tools by NAME, so it creates no

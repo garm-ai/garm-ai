@@ -1,4 +1,4 @@
-// An agent: a tool a runner answers, rather than a service.
+// An agent: a tool rund runs with a decider, rather than a service answering it.
 syntax = "proto3";
 
 package trips.v1;
@@ -17,7 +17,7 @@ service TripPlannerService {
   // THE METHOD IS CALLED PlanTrip, NOT Invoke, and that is worth a word.
   //
   // The estate this replaces required every agent to expose `rpc Invoke`, because
-  // its runner looked the method up by that name. Here the TOOL OPTION carries
+  // its decider looked the method up by that name. Here the TOOL OPTION carries
   // the identity, so the method name is an address and nothing reads it -- which
   // means it is free to say what the call does.
   //
@@ -32,7 +32,7 @@ service TripPlannerService {
       name: "trip-planner"
 
       // The presence of this block is the whole of what makes this an agent: a
-      // runner answers the call instead of a service. Its absence, as in
+      // rund runs the call with a decider instead of a service answering it. Its absence, as in
       // weather.proto, means the service answers for itself.
       agent: {
         // What a run may call, and nothing widens it -- not a prompt, not a

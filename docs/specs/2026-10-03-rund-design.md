@@ -21,7 +21,7 @@ Three requirements arrived together and none of them can be met by a tool servic
 **Human-in-the-loop may apply to any call.** So *something other than the tool*
 must be able to pause a call before it happens.
 
-**Both runner types are durable.** ReAct and Workflow need state by definition, so
+**Both decider kinds are durable.** ReAct and Workflow need state by definition, so
 an agent's run outlives its call.
 
 **A tool author implements an interface and nothing else.** So durability and
@@ -43,30 +43,30 @@ person was asked.
 
 ### 1.0 Who is in the path, and when
 
-**rund is in the path of every call. A runner is in the path only when the thing
+**rund is in the path of every call. A decider is in the path only when the thing
 invoked is an agent.** Written out because the first draft left it to inference:
 
-| invoked | delivery | answers `garm.tool.<name>` | runner? |
+| invoked | delivery | answers `garm.tool.<name>` | decider? |
 |---|---|---|---|
 | a plain tool | `sync` | the tool service | **no** |
 | a plain tool | `async` — approval may apply | the tool service | **no** |
-| an agent | `async`, always | a runner | **yes** |
+| an agent | `async`, always | a decider | **yes** |
 | an agent | `sync` | — | **refused at compose** |
 
-So **`async` does not imply a runner.** `FreezeAccount` is async and no runner
+So **`async` does not imply a decider.** `FreezeAccount` is async and no decider
 goes near it: rund creates the run, waits for a person, then calls the ordinary
 step-8 handler. Durability lives in rund, not in an executor.
 
-And **rund cannot tell a runner from a tool service.** It resolves a name to a
+And **rund cannot tell a decider from a tool service.** It resolves a name to a
 subject and calls it; whoever registered that subject answers. That is
-routing-is-registration in one sentence — a runner is the thing that happened to
+routing-is-registration in one sentence — a decider is the thing that happened to
 register an agent's subject.
 
-The fourth row is a contradiction, not merely unwise: both runner types are
+The fourth row is a contradiction, not merely unwise: both decider kinds are
 durable by definition, so an agent can never complete inside a call. Refused by
 `garmctl compose`, not left as a comment in an example.
 
-#### "Should everything go through a runner?" — the question equivocates
+#### "Should everything go through a decider?" — the question equivocates
 
 Asked because retries, guardrails and budgets are needed by **every** call, not
 only by agents. That is correct, and it refutes an argument an earlier draft of
@@ -76,18 +76,18 @@ nothing to resume."* **False the moment retries exist.** Attempt 1 fails
 for the dullest tool in the catalogue. A cost budget consumed across a run tree is
 stateful too.
 
-The equivocation is on "runner":
+The equivocation is on "decider":
 
 | | what it is | needed by |
 |---|---|---|
 | **the execution engine** | retries, guardrails, budget accounting, approval, state, the run tree, the event stream | **every call** |
 | **a step decider** | what to do next — an LLM loop, a graph | **only a multi-step program** |
 
-Retries and guardrails need the first. "ReAct runner" means the second. And the
+Retries and guardrails need the first. "ReAct decider" means the second. And the
 first is **rund itself**, which already resolves a tool, creates a run, applies
 approval policy, calls and stores.
 
-So: **rund is the engine; a runner is a decider plugged into it.** A plain tool's
+So: **rund is the engine; a decider is a decider plugged into it.** A plain tool's
 decider is the identity function — one step, already known, no code to write. A
 ReAct agent's decider is an LLM; a Workflow's is a graph. Every call gets the same
 lifecycle, and only "what next" varies.
@@ -99,20 +99,20 @@ call goes through the same execution machinery, and no call goes through an
 ### 1.0.1 Retries, guardrails and budgets are the engine's, and that decides §7.1
 
 Three uniform concerns, none of which may be declared yet, all of which belong to
-rund rather than to any runner:
+rund rather than to any decider:
 
-| | where it lives | why not in a runner |
+| | where it lives | why not in a decider |
 |---|---|---|
-| **retries** | the engine, keyed on error **kind** — `UNAVAILABLE` retries, `INVALID` never | a per-runner copy would make retry semantics depend on which runner answered |
+| **retries** | the engine, keyed on error **kind** — `UNAVAILABLE` retries, `INVALID` never | a per-decider copy would make retry semantics depend on which decider answered |
 | **guardrails** | the engine, before and after each call | a check that only some callers get is not a check |
 | **budgets** | the engine, accounted across the run **tree** | a child cannot know what its siblings have already spent |
 
-**This is the decisive argument for §7.1(a).** If a runner drives its own loop,
-then every runner type must implement guardrails, budget accounting and retry
+**This is the decisive argument for §7.1(a).** If a decider drives its own loop,
+then every decider kind must implement guardrails, budget accounting and retry
 policy — ReAct gets a copy, Workflow gets a copy, and they diverge. That is
 exactly the failure this repository was started to avoid: the previous estate's CEL
 dialect existed twice and a guard could pass lint and fail at load. A pure-reducer
-runner cannot diverge, because it contains none of it.
+decider cannot diverge, because it contains none of it.
 
 The price is chattiness, and it is real: decide → act → decide means two round
 trips and a persist per step, so an eight-step run is roughly sixteen round trips
@@ -182,7 +182,7 @@ remains of the original constraint.
 
 | | subjects | who talks to it |
 |---|---|---|
-| **external** | `garm.run.v1.*` | callers, UIs, runners |
+| **external** | `garm.run.v1.*` | callers, UIs, deciders |
 | **internal** | `garm.tool.<name>` | **only** rund |
 
 A caller never addresses `garm.tool.<name>`. That is what makes layer 2 free to
@@ -191,13 +191,13 @@ stay the dumb synchronous thing step 8 built.
 Both committed decisions survive.
 [routing-is-registration](../decisions/2026-10-03-routing-is-registration.md) is
 *strengthened*: rund routes by tool name to a subject and still never learns that
-agents or runners exist — an agent is a tool whose subject a runner registered.
+agents or deciders exist — an agent is a tool whose subject a decider registered.
 [a-subject-is-derived-from-the-identity](../decisions/2026-10-03-a-subject-is-derived-from-the-identity.md)
 now describes layer 2.
 
 ### 1.1.1 A run is a tree
 
-A runner calls tools **through rund** (§8.3 frame 3), and such a call may itself
+A decider calls tools **through rund** (§8.3 frame 3), and such a call may itself
 need approval — human-in-the-loop applies to any call, including a nested one. So
 it needs its own state, which means **its own run**.
 
@@ -267,26 +267,26 @@ and conflating them is a correctness bug, not a design preference.
 
 | | direction | delivery | why |
 |---|---|---|---|
-| **report** | runner → rund | **request/reply, acknowledged** | rund is authoritative for a run's state. A lost report leaves a run `RUNNING` forever |
+| **report** | decider → rund | **request/reply, acknowledged** | rund is authoritative for a run's state. A lost report leaves a run `RUNNING` forever |
 | **event** | rund → subscribers | fire-and-forget pub/sub | a UI missing a frame is a cosmetic loss; `Fetch` is the source of truth |
 
-The first draft of this spec had only the second, which would have made a runner's
+The first draft of this spec had only the second, which would have made a decider's
 "I am finished" a publish that rund happened to be subscribed to. That is a
 durable state machine advanced by an unacknowledged message.
 
-### 3.1 Reports: what a runner tells rund
+### 3.1 Reports: what a decider tells rund
 
 ```proto
 rpc Report(ReportRequest) returns (ReportResponse);
 
 message ReportRequest {
   string run_id = 1;
-  uint64 sequence = 2;          // the runner's own counter, so rund rejects a replay
+  uint64 sequence = 2;          // the decider's own counter, so rund rejects a replay
   oneof report {
     Progress  progress  = 3;    // an intermediate result
     NeedsInfo needs_info = 4;   // blocked: context the agent declared a type for
     Question  question  = 5;    // blocked: a specific question, with an id to answer
-    Finished  finished  = 6;    // terminal, and the runner says WHICH terminal
+    Finished  finished  = 6;    // terminal, and the decider says WHICH terminal
   }
 }
 
@@ -295,12 +295,12 @@ message Finished {
     bytes result = 1;                  // SUCCEEDED
     garm.invoke.v1.Error error = 2;    // FAILED
     Cancelled cancelled = 3;           // CANCELLED — confirming a request to stop
-    TimedOut timed_out = 4;            // TIMED_OUT — the runner gave up on itself
+    TimedOut timed_out = 4;            // TIMED_OUT — the decider gave up on itself
   }
 }
 ```
 
-rund validates that the reporting runner owns the run, persists, **then** fans the
+rund validates that the reporting decider owns the run, persists, **then** fans the
 event out. Persist-before-publish, so a subscriber never sees a state that did not
 survive.
 
@@ -343,13 +343,13 @@ enum RunState {
 ```
 
 **Cancellation is cooperative, which is why `CANCELLING` exists.** `Cancel(run_id)`
-cannot force a runner to stop in the middle of a tool call — the call is already in
-flight and the tool will answer. So rund records `CANCELLING`, the runner notices
+cannot force a decider to stop in the middle of a tool call — the call is already in
+flight and the tool will answer. So rund records `CANCELLING`, the decider notices
 at its next step and reports `Finished{cancelled}`. A design with no intermediate
-state has to either lie about having stopped or block the caller until the runner
+state has to either lie about having stopped or block the caller until the decider
 agrees.
 
-**A run nobody reports on must still terminate.** If a runner dies, no report ever
+**A run nobody reports on must still terminate.** If a decider dies, no report ever
 arrives and the run sits in `RUNNING` forever — the one failure mode this whole
 section exists to prevent, reappearing by omission.
 
@@ -359,9 +359,9 @@ crash recovery and timers are DBOS's. A run whose decider never reports hits a
 workflow timer. That was an open question through four revisions of this spec and
 is the clearest single thing the framework buys.
 
-Either way `TIMED_OUT` has two authors: the runner giving up on itself, and rund
-giving up on a runner. Both are the same terminal state and a `Finished` record
-should say which, or an operator cannot tell a slow tool from a dead runner.
+Either way `TIMED_OUT` has two authors: the decider giving up on itself, and rund
+giving up on a decider. Both are the same terminal state and a `Finished` record
+should say which, or an operator cannot tell a slow tool from a dead decider.
 
 ## 4. Typed payloads without a typed wire
 
@@ -486,7 +486,7 @@ is the named enforcer for "some tools must never allow HITL".
 
 ---
 
-## 7. Runner types, how a decider is addressed, and a substantial retraction
+## 7. Decider kinds, how a decider is addressed, and a substantial retraction
 
 ### 7.0 A decider is not addressed like a tool
 
@@ -510,8 +510,8 @@ and the question is only which addressing is better.
 **Deciders are addressed by TYPE:**
 
 ```
-garm.runner.react       one service, serving EVERY ReAct agent
-garm.runner.workflow
+garm.decider.react       one service, serving EVERY ReAct agent
+garm.decider.workflow
 ```
 
 Because a decider is **type-shaped, not agent-shaped**: it is generic machinery
@@ -520,19 +520,19 @@ nothing agent-specific lives in it. Deploying one per agent would be absurd.
 
 The operational payoff is the decisive part: **declaring a new ReAct agent
 requires no deployment.** The alternative, a decider subscribing to each agent's
-own subject, means every new agent needs the runner to pick it up.
+own subject, means every new agent needs the decider to pick it up.
 
 And note what a **caller** does with any of this: nothing. A client calls
-`garm.run.v1.invoke` with a tool name and knows no subject, no runner and no type.
-A client that routed by runner type would know something it must never need.
+`garm.run.v1.invoke` with a tool name and knows no subject, no decider and no type.
+A client that routed by decider kind would know something it must never need.
 
 ### 7.0.1 Three deciders, one of them built in
 
 | decider | where it runs | serves |
 |---|---|---|
 | **single-step** | **in-process in rund** | every plain tool — sync *and* async |
-| **ReAct** | `garm.runner.react` | agents declaring `react` |
-| **Workflow** | `garm.runner.workflow` | agents declaring `workflow` |
+| **ReAct** | `garm.decider.react` | agents declaring `react` |
+| **Workflow** | `garm.decider.workflow` | agents declaring `workflow` |
 
 One decider *interface*, three implementations, two of them deployed. The same
 shape as `serve.Registrar` and `natsserve`: an interface this repository owns, with
@@ -541,7 +541,7 @@ transports behind it.
 **The single-step decider is NOT a deployed service**, and that is deliberate. Its
 entire logic is "call the one tool, you are done", so a round trip to a service for
 it costs two hops on a 2ms read — and worse, it would make a plain call depend on a
-deployed runner, which is exactly what stops step 9 from being thin.
+deployed decider, which is exactly what stops step 9 from being thin.
 
 **It is also not called "sync", because that is the wrong axis.**
 `payments.v1.freeze_account` is **single-step AND async**: one tool call, but a
@@ -555,14 +555,14 @@ homeless.
 | `assist.v1.payment_triage` | n | ReAct | async |
 | — | n | ReAct / Workflow | **sync: impossible** (§1.0) |
 
-It needs no new field. `runner` lives inside `Agent`, so absence already says it:
+It needs no new field. `decider` lives inside `Agent`, so absence already says it:
 
 | declaration | decider |
 |---|---|
 | no `agent` block | built-in single-step |
-| `agent { react: {…} }` | `garm.runner.react` |
-| `agent { workflow: {…} }` | `garm.runner.workflow` |
-| `agent {}` with no runner set | **refused at compose** |
+| `agent { react: {…} }` | `garm.decider.react` |
+| `agent { workflow: {…} }` | `garm.decider.workflow` |
+| `agent {}` with no decider set | **refused at compose** |
 
 So rund has **one code path** — drive a decider — and no `if sync { call directly }`
 branch. That matters beyond tidiness: a second path is where guardrails and budget
@@ -570,7 +570,7 @@ accounting get applied twice, or once.
 
 **And step 9 ships only the built-in**, which is the real reason to do it this way.
 The decider interface is then designed by a working implementation from the start,
-rather than invented when the first ReAct runner arrives and found to be the wrong
+rather than invented when the first ReAct decider arrives and found to be the wrong
 shape. Same discipline as letting a real consumer design the client.
 
 ### 7.1 What survives of routing-is-registration
@@ -578,7 +578,7 @@ shape. Same discipline as letting a real consumer design the client.
 | | decided by |
 |---|---|
 | *what kind of thing* answers — a tool, or a ReAct/Workflow decider | **declared** |
-| *which instance* answers — `react-v2` or `react-experimental` | **registration**, on `garm.runner.react` |
+| *which instance* answers — `react-v2` or `react-experimental` | **registration**, on `garm.decider.react` |
 
 rund must know an agent is an agent, because driving a loop and making a call are
 different acts. That invariant was true of a **dumb router**; rund owns the run,
@@ -588,12 +588,12 @@ So [routing-is-registration](../decisions/2026-10-03-routing-is-registration.md)
 substantially superseded, and the half that survives is the half that was always
 the real point: a tool author never names somebody else's deployment.
 
-### 7.2 Runner types in the declaration
+### 7.2 Decider kinds in the declaration
 
 [routing-is-registration](../decisions/2026-10-03-routing-is-registration.md)
-says there is no runner type field because *"nothing reads it if routing is
+says there is no decider kind field because *"nothing reads it if routing is
 registration."* That was true when written and is no longer, for a reason not
-visible then: there was no runner-specific declaration content, so there was
+visible then: there was no decider-specific declaration content, so there was
 genuinely nothing to check.
 
 Two enforcers now exist, so the type is declared:
@@ -601,9 +601,9 @@ Two enforcers now exist, so the type is declared:
 **Compose-time completeness.** A `Workflow` with no steps, or a `ReAct` with no
 prompt, is refusable — but only if the type is known.
 
-**Catalogue ↔ discovery reconciliation.** If a ReAct runner registers a subject
+**Catalogue ↔ discovery reconciliation.** If a ReAct decider registers a subject
 declared `workflow`, NATS hides it behind a queue group and calls are answered by
-the wrong kind of runner. Declared type versus what `$SRV.INFO` reports is
+the wrong kind of decider. Declared type versus what `$SRV.INFO` reports is
 checkable.
 
 The part that record was right about **stands**: the *implementation* is never
@@ -614,7 +614,7 @@ somebody else's deployment.
 The type is carried by **which message is set**, not an enum beside the content:
 
 ```proto
-oneof runner { ReAct react = 2; Workflow workflow = 3; }
+oneof decider { ReAct react = 2; Workflow workflow = 3; }
 ```
 
 so `type says X / content says Y` is unrepresentable, and adding a type is
@@ -683,15 +683,15 @@ The kind is declared; **which implementation serves it is a subject in rund's
 routing table** — deployment config, in the same place the NATS URL lives.
 
 ```
-workflow → garm.runner.workflow.temporal      with per-agent overrides
-react    → garm.runner.react
+workflow → garm.decider.workflow.temporal      with per-agent overrides
+react    → garm.decider.react
 ```
 
 So migrating an estate from DBOS to Temporal touches no `.proto` and no tool, and
 can proceed agent by agent.
 
 **The hazard, and the reconciliation check of §7.2 does not catch it.** If a DBOS
-service and a Temporal service both register `garm.runner.workflow`, NATS
+service and a Temporal service both register `garm.decider.workflow`, NATS
 queue-groups them and **calls split randomly between two engines** — half the runs
 landing in a store the other cannot read. Both report their kind as `workflow` and
 both are correct, so comparing declared kind against reported kind sees nothing.
@@ -749,18 +749,18 @@ call, which a correlation id alone cannot say.
 
 ```
 0  caller      client.TriagePayment(...) → run r3, pending
-1  rund        resolves assist.v1.payment_triage → a runner registered the subject
-2  rund        hands the work to the runner; THE CALL IS SHORT, THE RUN IS LONG
-3  runner      calls payments.v1.get_balance — THROUGH rund, so the allowlist is
+1  rund        resolves assist.v1.payment_triage → a decider registered the subject
+2  rund        hands the work to the decider; THE CALL IS SHORT, THE RUN IS LONG
+3  decider      calls payments.v1.get_balance — THROUGH rund, so the allowlist is
                enforced at call time and the ids chain
-4  runner      needs something only a person knows
+4  decider      needs something only a person knows
                Report(r3, seq=4, question{question_id=q1})   ← ACKNOWLEDGED
 5  rund        persists WAITING_FOR_INFO, THEN publishes Event{r3, seq=4, question}
                persist-before-publish, so no subscriber sees a state that did not survive
 6  UI          GetCard(r3, CARD_KIND_QUESTION) → derived from the declared answer
                type, or a generic text card when none is declared
 7  person      Answer(r3, q1, payload)
-8  runner      resumes, finishes
+8  decider      resumes, finishes
                Report(r3, seq=N, finished{result})           ← ACKNOWLEDGED
 9  rund        persists SUCCEEDED, publishes Event{r3, seq=N, finished}
 ```
@@ -777,7 +777,7 @@ made and not only when the tree is composed.
 
 - `garm/run/v1` with **`Invoke` and `Fetch` only**
 - the decider interface, with **only the built-in single-step implementation** — so
-  the interface is proved by a real consumer and no runner need be deployed
+  the interface is proved by a real consumer and no decider need be deployed
 - `cmd/rund`, loading `catalogue.binpb`
 - `call.Invoker` + `natscall`, and a generated typed client
 - correlation + causation + message ids and `traceparent`, caller → rund → tool
@@ -786,7 +786,7 @@ made and not only when the tree is composed.
 - `Fetch` on a sync run says it is not retained, rather than lying
 
 Deliberately absent and stated: no store, no `Async`, no events, no cards, no
-runner, no HITL.
+decider, no HITL.
 
 ### 9.2 Later, each waiting on something real
 
@@ -795,11 +795,11 @@ runner, no HITL.
 | `Async` delivery, `Fetch` meaning something | the store |
 | events, `Progress` | the store, and a subscriber |
 | `Cancel` / `Suspend` / `Resume`, and `CANCELLING` | the store |
-| `Report`, and therefore every terminal state but `SUCCEEDED`/`FAILED` | a runner |
-| a run deadline or a runner lease | the store, and a sweeper |
+| `Report`, and therefore every terminal state but `SUCCEEDED`/`FAILED` | a decider |
+| a run deadline or a decider lease | the store, and a sweeper |
 | `Approve`, `ApprovalNeeded`, approval policy | the store **and** the authority model |
-| `ProvideContext`, `Answer`, `Question`, `NeedsInfo`, `Progress` | a runner |
-| runner types in `Agent` | a runner |
+| `ProvideContext`, `Answer`, `Question`, `NeedsInfo`, `Progress` | a decider |
+| decider kinds in `Agent` | a decider |
 | cards of any kind | a renderer |
 | retry policy | the store, for anything outliving a call |
 | a `$SRV.INFO` check for two implementations on one kind's subject | a second implementation existing (§7.4) |
@@ -824,19 +824,19 @@ is built.
 | …and the handler's context carries it | the handler observes a deadline equal to the budget |
 | Approval policy on a sync tool is refused | rund refuses at load |
 | An agent whose budget is below its allowlist's max is refused | `garmctl compose` |
-| An agent declaring `sync` is refused | `garmctl compose` — both runner types are durable, so it cannot complete inside a call |
+| An agent declaring `sync` is refused | `garmctl compose` — both decider kinds are durable, so it cannot complete inside a call |
 | rund has one execution path, not two | the built-in decider is the only implementation in step 9, and the sync path goes through it — so there is no second path to drift |
-| A sync call reaches the tool with **no runner in the path** | the step 9 e2e test, which runs no runner at all |
+| A sync call reaches the tool with **no decider in the path** | the step 9 e2e test, which runs no decider at all |
 | `Fetch` on a sync run says it is not retained | and does not fabricate a result |
 | A tool name rund cannot resolve is `NOT_FOUND`, naming the catalogue | not `INTERNAL` |
 | Generated client code imports no broker | `mise run no-broker` |
 
 ## 11. Risks worth writing down
 
-**A runner that dies silently is the failure this design must not have.** §3.3
+**A decider that dies silently is the failure this design must not have.** §3.3
 names two mechanisms and picks neither; until one exists, every terminal state
-other than `SUCCEEDED` and `FAILED` depends on a cooperative runner, and a crashed
-one leaves a run `RUNNING`. That is acceptable only while no runner exists.
+other than `SUCCEEDED` and `FAILED` depends on a cooperative decider, and a crashed
+one leaves a run `RUNNING`. That is acceptable only while no decider exists.
 
 **This spec designs eight operations and builds two.** The risk is the other six
 arriving as a pile rather than as steps, which is how the previous estate reached
