@@ -37,6 +37,41 @@ caller ──▶ garm.run.v1.invoke ──▶ rund ──┐ creates the run
 `FreezeAccount`'s handler is a plain synchronous function. It never learns a
 person was asked.
 
+### 1.0 Who is in the path, and when
+
+**rund is in the path of every call. A runner is in the path only when the thing
+invoked is an agent.** Written out because the first draft left it to inference:
+
+| invoked | delivery | answers `garm.tool.<name>` | runner? |
+|---|---|---|---|
+| a plain tool | `sync` | the tool service | **no** |
+| a plain tool | `async` — approval may apply | the tool service | **no** |
+| an agent | `async`, always | a runner | **yes** |
+| an agent | `sync` | — | **refused at compose** |
+
+So **`async` does not imply a runner.** `FreezeAccount` is async and no runner
+goes near it: rund creates the run, waits for a person, then calls the ordinary
+step-8 handler. Durability lives in rund, not in an executor.
+
+And **rund cannot tell a runner from a tool service.** It resolves a name to a
+subject and calls it; whoever registered that subject answers. That is
+routing-is-registration in one sentence — a runner is the thing that happened to
+register an agent's subject.
+
+The fourth row is a contradiction, not merely unwise: both runner types are
+durable by definition, so an agent can never complete inside a call. Refused by
+`garmctl compose`, not left as a comment in an example.
+
+#### Why not route everything through a runner
+
+The uniformity argument is real — one execution path, one place for retries and
+state. It is wrong here because **a plain tool call has no state machine**: one
+call, one answer, nothing to resume. A runner there is an executor for a program
+with one instruction, and it would turn a 2ms balance read into a durable
+multi-write. It would also mean no call works until a runner exists.
+
+The uniformity that argument wants is already present one layer up. It is rund.
+
 ### 1.1 Two layers
 
 | | subjects | who talks to it |
@@ -53,6 +88,31 @@ Both committed decisions survive.
 agents or runners exist — an agent is a tool whose subject a runner registered.
 [a-subject-is-derived-from-the-identity](../decisions/2026-10-03-a-subject-is-derived-from-the-identity.md)
 now describes layer 2.
+
+### 1.1.1 A run is a tree
+
+A runner calls tools **through rund** (§8.3 frame 3), and such a call may itself
+need approval — human-in-the-loop applies to any call, including a nested one. So
+it needs its own state, which means **its own run**.
+
+```
+r1  assist.v1.payment_triage        correlation c1, no parent
+├── r2  payments.v1.get_balance     correlation c1, parent r1
+└── r3  payments.v1.list_payments   correlation c1, parent r2   (causation: after r2)
+```
+
+One correlation id across the whole tree; causation ids are its edges. A `Run`
+therefore carries `parent_run_id`, empty at the root.
+
+Three things follow. A nested call gets a per-call record and its own approval
+state for free. The allowlist is checked **per nested call**, at call time, which
+is where the contract's loudest claim finally has an enforcer. And it is the real
+reason `run_id` is on every `InvokeResponse` including a synchronous one —
+uniformity, not decoration.
+
+The cost: a tree of runs is a tree of rows. A ReAct agent making eight calls is
+nine runs. That is the price of approval being possible on any one of them, and
+it is a reason the store's shape matters.
 
 ### 1.2 rund is the catalogue's first consumer
 
@@ -488,6 +548,8 @@ is built.
 | …and the handler's context carries it | the handler observes a deadline equal to the budget |
 | Approval policy on a sync tool is refused | rund refuses at load |
 | An agent whose budget is below its allowlist's max is refused | `garmctl compose` |
+| An agent declaring `sync` is refused | `garmctl compose` — both runner types are durable, so it cannot complete inside a call |
+| A sync call reaches the tool with **no runner in the path** | the step 9 e2e test, which runs no runner at all |
 | `Fetch` on a sync run says it is not retained | and does not fabricate a result |
 | A tool name rund cannot resolve is `NOT_FOUND`, naming the catalogue | not `INTERNAL` |
 | Generated client code imports no broker | `mise run no-broker` |
