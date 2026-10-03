@@ -46,7 +46,10 @@ import (
 // imports it. A generator writing an import path is the normal shape -- the text
 // is emitted for a build that happens elsewhere, and is not a dependency of this
 // package.
-const servePackage protogen.GoImportPath = "github.com/garm-ai/garm-ai/serve"
+const (
+	servePackage protogen.GoImportPath = "github.com/garm-ai/garm-ai/serve"
+	callPackage  protogen.GoImportPath = "github.com/garm-ai/garm-ai/call"
+)
 
 const (
 	timePackage    protogen.GoImportPath = "time"
@@ -144,8 +147,82 @@ func file(gen *protogen.Plugin, f *protogen.File) error {
 		handler(g, s)
 		names(g, s)
 		serve(g, s)
+		client(g, s)
 	}
 	return nil
+}
+
+// client emits the typed caller.
+//
+// ONLY SYNC TOOLS GET A METHOD. An async tool's caller receives a reference rather
+// than an answer, which is a different signature -- and there is no run store to
+// give it meaning yet, so emitting one would be a method that cannot work. When
+// Async lands, flipping a tool's delivery changes this signature and every caller
+// FAILS TO COMPILE, which is the whole point of declaring delivery at all.
+func client(g *protogen.GeneratedFile, s service) {
+	var sync []tool
+	for _, t := range s.tools {
+		if t.budget > 0 {
+			sync = append(sync, t)
+		}
+	}
+	if len(sync) == 0 {
+		return
+	}
+	name := s.svc.GoName + "Client"
+	invoker := g.QualifiedGoIdent(callPackage.Ident("Invoker"))
+	options := g.QualifiedGoIdent(callPackage.Ident("Options"))
+	deadline := g.QualifiedGoIdent(callPackage.Ident("Deadline"))
+	ctxType := g.QualifiedGoIdent(contextPackage.Ident("Context"))
+
+	g.P("// ", name, " calls the tools ", s.svc.GoName, " declares, by NAME.")
+	g.P("//")
+	g.P("// It knows no subject and no broker: it holds a call.Invoker, and which")
+	g.P("// transport that is remains the process's business.")
+	g.P("type ", name, " struct{ Invoker ", invoker, " }")
+	g.P()
+	g.P("// New", name, " builds a client over any transport.")
+	g.P("func New", name, "(i ", invoker, ") ", name, " { return ", name, "{Invoker: i} }")
+	g.P()
+	for _, t := range sync {
+		in := g.QualifiedGoIdent(t.method.Input.GoIdent)
+		out := g.QualifiedGoIdent(t.method.Output.GoIdent)
+		g.P("// ", t.method.GoName, " calls the tool ", strconv(t.name), ".")
+		g.P("//")
+		g.P("// The deadline is ", t.budget.String(), " -- the budget this tool DECLARED --")
+		g.P("// plus the hops. No caller invents a number. A shorter deadline already on")
+		g.P("// ctx still wins, because a caller's own patience is its own business.")
+		g.P("//")
+		g.P("// Only the first Options is used.")
+		g.P("func (c ", name, ") ", t.method.GoName, "(ctx ", ctxType, ", in *", in,
+			", opts ...", options, ") (*", out, ", error) {")
+		g.P("body, err := ", g.QualifiedGoIdent(protoPackage.Ident("Marshal")), "(in)")
+		g.P("if err != nil {")
+		g.P("return nil, ", g.QualifiedGoIdent(fmtPackage.Ident("Errorf")),
+			"(", strconv(t.name+": marshalling the request: %w"), ", err)")
+		g.P("}")
+		g.P("var o ", options)
+		g.P("if len(opts) > 0 {")
+		g.P("o = opts[0]")
+		g.P("}")
+		g.P("ctx, cancel := ", g.QualifiedGoIdent(contextPackage.Ident("WithTimeout")),
+			"(ctx, ", deadline, "(", budgetLiteral(g, t.budget), "))")
+		g.P("defer cancel()")
+		g.P("raw, err := c.Invoker.Invoke(ctx, ", strconv(t.name), ", body, o)")
+		g.P("if err != nil {")
+		// The tool's own error, carried through rather than wrapped: wrapping would
+		// bury the kind a caller is meant to act on.
+		g.P("return nil, err")
+		g.P("}")
+		g.P("var resp ", out)
+		g.P("if err := ", g.QualifiedGoIdent(protoPackage.Ident("Unmarshal")), "(raw, &resp); err != nil {")
+		g.P("return nil, ", g.QualifiedGoIdent(fmtPackage.Ident("Errorf")),
+			"(", strconv(t.name+": the answer is not a %T: %w"), ", &resp, err)")
+		g.P("}")
+		g.P("return &resp, nil")
+		g.P("}")
+		g.P()
+	}
 }
 
 // handler emits the interface the author implements.

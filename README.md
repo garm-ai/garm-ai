@@ -55,7 +55,12 @@ generated** — `garmctl compose` prints the count, no document transcribes it.
 | `images/` | many repositories, one namespace | what a manifest means: merge, dedup, refuse divergence |
 | `cmd/garmctl` | the command people type | `garmctl compose images.yaml -o build/catalogue.binpb` |
 | `cmd/protoc-gen-garm-go` | the generator | a handler interface, `Serve<Service>`, and the names it answers. No `Unimplemented` embed |
-| `serve/` | the interface generated code is written against, and the error kinds | so generated code imports no broker |
+| `serve/` | the seam a generated **server** is written against, plus the error kinds | so generated code imports no broker |
+| `call/` | the seam a generated **client** is written against | and `call.Deadline`, which adds the hops to a declared budget |
+| `catalogue/` | the verified namespace rund serves | immutable, digest-identified, behind an atomic pointer |
+| `run/` | rund's engine | no NATS type in any signature |
+| `rundsvc/`, `natscall/` | rund on NATS, and reaching it | the only packages a caller or server need not import |
+| `cmd/rund` | the run manager | the only way a caller reaches a tool |
 | `natsserve/` | the transport | mounts a tool at `garm.tool.<name>`, drains on shutdown. **The only package that imports a broker** |
 | `proto/garm/invoke/v1/` | what a tool says when it cannot answer | five kinds. No cause field, deliberately |
 | `examples/` | the guide, executable | two buf modules, as two repositories |

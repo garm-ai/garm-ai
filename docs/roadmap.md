@@ -32,9 +32,14 @@ one component in more detail. They link here rather than repeating it.
 | `rund`: `Invoke`/`Fetch`, catalogue-loaded, sync fast path | ✅ **9b** |
 | The budget binds: handler deadline and compose check | ✅ 9b — the client deadline lands with the client, in 9c |
 | Correlation, causation, message ids and `traceparent`, end to end | ✅ 9b |
-| The generated client, `garmctl call`, and an example loop that answers | 9c |
+| The generated client, `garmctl call`, and an example loop that answers | ✅ **9c** |
 
 ## Waiting on something real
+
+**Step 9 is complete**: a caller names a tool and gets an answer, through a
+generated client it did not write, over a transport it does not import.
+
+
 
 | | waits on |
 |---|---|

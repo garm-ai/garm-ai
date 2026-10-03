@@ -17,5 +17,6 @@ func root() *cobra.Command {
 		SilenceErrors: true, // main prints it once
 	}
 	cmd.AddCommand(composeCmd())
+	cmd.AddCommand(callCmd())
 	return cmd
 }

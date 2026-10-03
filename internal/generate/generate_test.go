@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/pluginpb"
 
+	"github.com/garm-ai/garm-ai/call"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	"github.com/garm-ai/garm-ai/examples/weatherd"
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
@@ -370,11 +371,13 @@ func TestGeneratedCodeImportsOnlyWhatItNeeds(t *testing.T) {
 		"fmt":                              true, // the two refusals in the dispatch closure
 		"google.golang.org/protobuf/proto": true, // proto.Message, the transport's currency
 		"github.com/garm-ai/garm-ai/serve": true, // Registrar, and deliberately nothing else
-		// ADDED DELIBERATELY, and this test is why it was a decision rather than a
+		// ADDED DELIBERATELY, and this test is why each was a decision rather than a
 		// drift: the declared budget is emitted as `5 * time.Second` so a reader can
-		// check it against the .proto without dividing. stdlib, zero cost, present
-		// everywhere -- and the fifth entry anybody adds should have to argue here.
-		"time": true,
+		// check it against the .proto without dividing, and the generated client
+		// needs the seam it is written against. Both are this module's own or
+		// stdlib; the next entry anybody adds should have to argue here.
+		"time":                            true,
+		"github.com/garm-ai/garm-ai/call": true,
 	}
 	for path := range got {
 		if !want[path] {
@@ -448,4 +451,96 @@ func TestTheBudgetReachesTheRegistrar(t *testing.T) {
 	if r.mounts[0].budget != 5*time.Second {
 		t.Errorf("budget reached the registrar as %v, want 5s", r.mounts[0].budget)
 	}
+}
+
+// TestTheGeneratedClientSetsTheDeclaredBudgetAsItsDeadline. The third place the
+// budget binds: the client's deadline, the tool's handler deadline, and compose.
+// One declaration, read by three different things, none of them inventing it.
+func TestTheGeneratedClientSetsTheDeclaredBudgetAsItsDeadline(t *testing.T) {
+	resp, err := probe(t, toolMethod(t, "Do", &toolv1.Tool{
+		Name:     "probe.v1.do",
+		Delivery: &toolv1.Tool_Sync{Sync: &toolv1.Sync{Budget: durationpb.New(7 * time.Second)}},
+	}, false))
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	got := resp.GetFile()[0].GetContent()
+	// call.Deadline adds the hops, so the client does not expire at the same
+	// instant rund does and see a bare transport timeout instead of the error rund
+	// was in the middle of sending.
+	if !strings.Contains(got, "call.Deadline(7*time.Second)") {
+		t.Errorf("the client does not set the declared budget as its deadline:\n%s", got)
+	}
+}
+
+// TestAnAsyncToolGetsNoClientMethod. Its caller receives a reference, not an
+// answer -- a different signature, and no run store gives it meaning yet. Emitting
+// one would be a method that cannot work.
+func TestAnAsyncToolGetsNoClientMethod(t *testing.T) {
+	resp, err := probe(t, toolMethod(t, "Freeze", &toolv1.Tool{
+		Name:     "probe.v1.freeze",
+		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}},
+	}, false))
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	got := resp.GetFile()[0].GetContent()
+	if strings.Contains(got, "Client") {
+		t.Errorf("an async tool got a client method:\n%s", got)
+	}
+	// but it still gets a HANDLER: a service answers it, rund just cannot hold its run
+	if !strings.Contains(got, "ProbeServiceHandler") {
+		t.Error("an async tool lost its handler interface")
+	}
+}
+
+// TestTheGeneratedClientTypeChecksEndToEnd, through the real binding rather than
+// through emitted text.
+func TestTheGeneratedClientTypeChecksEndToEnd(t *testing.T) {
+	var inv fakeInvoker
+	c := weatherv1.NewWeatherServiceClient(&inv)
+	out, _ := proto.Marshal(&weatherv1.GetForecastResponse{Summary: "sunny", HighCelsius: 21})
+	inv.out = out
+
+	resp, err := c.GetForecast(context.Background(),
+		&weatherv1.GetForecastRequest{Place: "Ghent", Days: 2})
+	if err != nil {
+		t.Fatalf("GetForecast: %v", err)
+	}
+	if resp.GetSummary() != "sunny" {
+		t.Errorf("summary is %q", resp.GetSummary())
+	}
+	if inv.tool != "weather.v1.get_forecast" {
+		t.Errorf("the client asked for %q", inv.tool)
+	}
+	// the DECLARED budget reaches the transport as a deadline
+	d, ok := inv.deadline()
+	if !ok {
+		t.Fatal("the client set no deadline, so a caller would wait forever on a slow tool")
+	}
+	if want := call.Deadline(5 * time.Second); d > want || d < want/2 {
+		t.Errorf("the deadline is %v away, want about %v", d, want)
+	}
+}
+
+type fakeInvoker struct {
+	tool string
+	out  []byte
+	ctx  context.Context
+}
+
+func (f *fakeInvoker) Invoke(ctx context.Context, tool string, _ []byte, _ call.Options) ([]byte, error) {
+	f.tool, f.ctx = tool, ctx
+	return f.out, nil
+}
+
+func (f *fakeInvoker) deadline() (time.Duration, bool) {
+	if f.ctx == nil {
+		return 0, false
+	}
+	dl, ok := f.ctx.Deadline()
+	if !ok {
+		return 0, false
+	}
+	return time.Until(dl), true
 }

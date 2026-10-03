@@ -15,6 +15,7 @@ package testdatav1
 import (
 	context "context"
 	fmt "fmt"
+	call "github.com/garm-ai/garm-ai/call"
 	serve "github.com/garm-ai/garm-ai/serve"
 	proto "google.golang.org/protobuf/proto"
 	time "time"
@@ -62,6 +63,46 @@ func ServeAccountsService(r serve.Registrar, h AccountsServiceHandler) error {
 	return nil
 }
 
+// AccountsServiceClient calls the tools AccountsService declares, by NAME.
+//
+// It knows no subject and no broker: it holds a call.Invoker, and which
+// transport that is remains the process's business.
+type AccountsServiceClient struct{ Invoker call.Invoker }
+
+// NewAccountsServiceClient builds a client over any transport.
+func NewAccountsServiceClient(i call.Invoker) AccountsServiceClient {
+	return AccountsServiceClient{Invoker: i}
+}
+
+// GetCustomer calls the tool "accounts.v1.get_customer".
+//
+// The deadline is 2s -- the budget this tool DECLARED --
+// plus the hops. No caller invents a number. A shorter deadline already on
+// ctx still wins, because a caller's own patience is its own business.
+//
+// Only the first Options is used.
+func (c AccountsServiceClient) GetCustomer(ctx context.Context, in *GetCustomerRequest, opts ...call.Options) (*GetCustomerResponse, error) {
+	body, err := proto.Marshal(in)
+	if err != nil {
+		return nil, fmt.Errorf("accounts.v1.get_customer: marshalling the request: %w", err)
+	}
+	var o call.Options
+	if len(opts) > 0 {
+		o = opts[0]
+	}
+	ctx, cancel := context.WithTimeout(ctx, call.Deadline(2*time.Second))
+	defer cancel()
+	raw, err := c.Invoker.Invoke(ctx, "accounts.v1.get_customer", body, o)
+	if err != nil {
+		return nil, err
+	}
+	var resp GetCustomerResponse
+	if err := proto.Unmarshal(raw, &resp); err != nil {
+		return nil, fmt.Errorf("accounts.v1.get_customer: the answer is not a %T: %w", &resp, err)
+	}
+	return &resp, nil
+}
+
 // PaymentsServiceHandler implements every tool PaymentsService declares, in plain proto
 // signatures with no transport wrapper.
 type PaymentsServiceHandler interface {
@@ -102,4 +143,44 @@ func ServePaymentsService(r serve.Registrar, h PaymentsServiceHandler) error {
 		return err
 	}
 	return nil
+}
+
+// PaymentsServiceClient calls the tools PaymentsService declares, by NAME.
+//
+// It knows no subject and no broker: it holds a call.Invoker, and which
+// transport that is remains the process's business.
+type PaymentsServiceClient struct{ Invoker call.Invoker }
+
+// NewPaymentsServiceClient builds a client over any transport.
+func NewPaymentsServiceClient(i call.Invoker) PaymentsServiceClient {
+	return PaymentsServiceClient{Invoker: i}
+}
+
+// GetPaymentStatus calls the tool "payments.v1.get_payment_status".
+//
+// The deadline is 5s -- the budget this tool DECLARED --
+// plus the hops. No caller invents a number. A shorter deadline already on
+// ctx still wins, because a caller's own patience is its own business.
+//
+// Only the first Options is used.
+func (c PaymentsServiceClient) GetPaymentStatus(ctx context.Context, in *GetPaymentStatusRequest, opts ...call.Options) (*GetPaymentStatusResponse, error) {
+	body, err := proto.Marshal(in)
+	if err != nil {
+		return nil, fmt.Errorf("payments.v1.get_payment_status: marshalling the request: %w", err)
+	}
+	var o call.Options
+	if len(opts) > 0 {
+		o = opts[0]
+	}
+	ctx, cancel := context.WithTimeout(ctx, call.Deadline(5*time.Second))
+	defer cancel()
+	raw, err := c.Invoker.Invoke(ctx, "payments.v1.get_payment_status", body, o)
+	if err != nil {
+		return nil, err
+	}
+	var resp GetPaymentStatusResponse
+	if err := proto.Unmarshal(raw, &resp); err != nil {
+		return nil, fmt.Errorf("payments.v1.get_payment_status: the answer is not a %T: %w", &resp, err)
+	}
+	return &resp, nil
 }

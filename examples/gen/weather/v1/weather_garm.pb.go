@@ -15,6 +15,7 @@ package weatherv1
 import (
 	context "context"
 	fmt "fmt"
+	call "github.com/garm-ai/garm-ai/call"
 	serve "github.com/garm-ai/garm-ai/serve"
 	proto "google.golang.org/protobuf/proto"
 	time "time"
@@ -60,4 +61,44 @@ func ServeWeatherService(r serve.Registrar, h WeatherServiceHandler) error {
 		return err
 	}
 	return nil
+}
+
+// WeatherServiceClient calls the tools WeatherService declares, by NAME.
+//
+// It knows no subject and no broker: it holds a call.Invoker, and which
+// transport that is remains the process's business.
+type WeatherServiceClient struct{ Invoker call.Invoker }
+
+// NewWeatherServiceClient builds a client over any transport.
+func NewWeatherServiceClient(i call.Invoker) WeatherServiceClient {
+	return WeatherServiceClient{Invoker: i}
+}
+
+// GetForecast calls the tool "weather.v1.get_forecast".
+//
+// The deadline is 5s -- the budget this tool DECLARED --
+// plus the hops. No caller invents a number. A shorter deadline already on
+// ctx still wins, because a caller's own patience is its own business.
+//
+// Only the first Options is used.
+func (c WeatherServiceClient) GetForecast(ctx context.Context, in *GetForecastRequest, opts ...call.Options) (*GetForecastResponse, error) {
+	body, err := proto.Marshal(in)
+	if err != nil {
+		return nil, fmt.Errorf("weather.v1.get_forecast: marshalling the request: %w", err)
+	}
+	var o call.Options
+	if len(opts) > 0 {
+		o = opts[0]
+	}
+	ctx, cancel := context.WithTimeout(ctx, call.Deadline(5*time.Second))
+	defer cancel()
+	raw, err := c.Invoker.Invoke(ctx, "weather.v1.get_forecast", body, o)
+	if err != nil {
+		return nil, err
+	}
+	var resp GetForecastResponse
+	if err := proto.Unmarshal(raw, &resp); err != nil {
+		return nil, fmt.Errorf("weather.v1.get_forecast: the answer is not a %T: %w", &resp, err)
+	}
+	return &resp, nil
 }

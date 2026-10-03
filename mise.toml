@@ -81,6 +81,20 @@ buf build --path examples/proto/trips   -o build/trips.binpb
 go run ./cmd/garmctl compose examples/images.yaml
 """
 
+[tasks."guide-files"]
+description = "Fail if docs/guide.md names a file the repository does not have"
+# The guide's first line promises every file it names is in the repository. That
+# promise is worth exactly as much as something checking it -- and the first draft
+# of step 9c's section named examples/cmd/trip, which did not exist.
+run = """
+set -e
+missing=0
+for f in $(grep -oE '`(examples|docs|proto|cmd)/[a-zA-Z0-9_./-]+`' docs/guide.md | tr -d '`' | sort -u); do
+  if [ ! -e "$f" ]; then echo "docs/guide.md names $f, which does not exist" >&2; missing=1; fi
+done
+exit $missing
+"""
+
 [tasks.lint]
 description = "buf lint and go vet"
 run = """
@@ -100,7 +114,7 @@ description = "Refuse a tool author's build that can reach a message broker"
 # which existed for the same reason and is the one boundary check there that worked.
 run = """
 set -e
-for pkg in ./serve ./declared ./images ./fetch ./examples/gen/...; do
+for pkg in ./serve ./call ./declared ./images ./fetch ./examples/gen/...; do
   if go list -deps "$pkg" 2>/dev/null | grep -q 'nats-io'; then
     echo "$pkg reaches a NATS package:" >&2
     go list -deps "$pkg" | grep 'nats-io' >&2
@@ -116,4 +130,4 @@ run = "go test ./... -race"
 
 [tasks.ci]
 description = "Everything CI runs, in order"
-depends = ["lint", "gen-check", "no-broker", "check", "examples", "test"]
+depends = ["lint", "gen-check", "no-broker", "guide-files", "check", "examples", "test"]

@@ -33,6 +33,7 @@ unenforced, in the same table, deliberately.
 | A wrong digest says what the bytes **actually** hash to | `fetch.TestAWrongDigestIsRefusedAndSaysBothSides`. "Mismatch" alone leaves an operator unable to tell whether the artefact moved or the pin is stale |
 | The S3 path-style choice is derived, not hardcoded | `fetch.TestPathStyleIsDerivedFromAnEndpointOverrideAndNotHardcoded`, proved failing in **both** directions because either hardcoded value is wrong for somebody |
 | The committed generated Go matches the protos | `mise run gen-check`, which compares `git status --porcelain`. It used `git diff --exit-code`, which cannot see an **untracked** file — so it passed vacuously for generated code that was new, which is exactly the case it exists to catch |
+| Every file `docs/guide.md` names exists | `mise run guide-files`. The guide opens by promising it, and the first draft of step 9c named examples/cmd/trip, which did not exist |
 | The examples in `docs/guide.md` still compose | `mise run examples` — the guide walks through those exact files |
 
 ### The transport
@@ -72,6 +73,17 @@ unenforced, in the same table, deliberately.
 | `Code` and `KindOf` round-trip over **every** kind | `serve.TestCodeAndKindRoundTripOverEveryKind`, which walks the enum's own descriptor so a new kind is covered without anybody remembering. Two inverse functions in two packages is how a mapping drifts: a tool reporting UNAVAILABLE would reach a caller as UNSPECIFIED, which `Wire` turns into INTERNAL — a transient outage reported as a broken tool |
 | The catalogue is re-verified at boot, and that is the reload path | `catalogue.TestLoadReRunsTodaysRules` |
 | A call takes **one** catalogue snapshot | `catalogue.TestTheHolderPublishesWholeValues`, `TestConcurrentReadersAndASwapRace` |
+
+### The client
+
+| invariant | kept true by |
+|---|---|
+| The loop closes: generated client → rund → tool → back | `natscall.TestTheLoopCloses`, against a real server with every piece that exists |
+| A generated client sets the **declared** budget as its deadline | `generate.TestTheGeneratedClientSetsTheDeclaredBudgetAsItsDeadline` and `TestTheGeneratedClientTypeChecksEndToEnd`. `call.Deadline` adds the hops, so a client does not expire at the same instant rund does and see a bare transport timeout instead of the error rund was sending |
+| An **async** tool gets no client method | `generate.TestAnAsyncToolGetsNoClientMethod`. Its caller receives a reference rather than an answer — a different signature, and no store gives it meaning yet. It still gets a *handler*: a service answers it; rund just cannot hold its run |
+| A tool's kind survives all four hops | `natscall.TestAToolsRefusalReachesTheCallerWithItsKind`, which also asserts a bare error's words did **not** survive them |
+| No rund at all is `UNAVAILABLE`, not a silent hang | `natscall.TestNoRundAtAllIsUnavailableNotASilentHang`, naming the subject that did not answer |
+| Generated **client** code imports no broker | `mise run no-broker`, extended to `./call` |
 
 ### Errors
 
