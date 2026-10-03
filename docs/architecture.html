@@ -205,47 +205,54 @@
     <text class="t2" x="505" y="141" text-anchor="middle">no Unimplemented embed</text></g>
 
   <!-- ============ band 2 ============ -->
-  <text class="bandlbl" x="20" y="186">2 · call — rund is in every path</text>
+  <text class="bandlbl" x="20" y="186">2 · call — a solid box is ONE process; nesting is "runs inside"</text>
 
-  <g class="ae weak"><path d="M860 76 L860 196 L350 196" marker-end="url(#a-weak)"/>
-    <text x="700" y="191">loaded at boot</text></g>
+  <g class="ae weak"><path d="M860 76 L860 178 L330 178 L330 196" marker-end="url(#a-weak)"/>
+    <text x="620" y="173">loaded at boot</text></g>
+  <g class="ae weak"><path d="M590 127 L812 127 L812 206" marker-end="url(#a-weak)"/>
+    <text x="598" y="122">you implement it</text></g>
 
-  <g class="ae call"><path d="M170 235 L250 235" marker-end="url(#a-call)"/>
-    <text class="strong" x="176" y="228">garm.run.v1.invoke</text></g>
-  <g class="ae call"><path d="M450 240 L610 240" marker-end="url(#a-call)"/>
-    <text class="strong" x="460" y="233">garm.tool.&lt;name&gt;</text>
-    <text x="460" y="256">the only caller of this</text></g>
-  <g class="ae call"><path d="M430 282 L430 350 L500 350" marker-end="url(#a-call)"/>
-    <text x="438" y="328">(state, event)</text></g>
-  <g class="ae call"><path d="M500 440 L400 440 L400 282" marker-end="url(#a-call)"/>
-    <text x="408" y="432">actions</text></g>
+  <g class="ae call"><path d="M170 235 L210 235" marker-end="url(#a-call)"/>
+    <text class="strong" x="24" y="282">garm.run.v1.invoke</text></g>
+  <g class="ae call"><path d="M450 262 L490 262" marker-end="url(#a-call)"/>
+    <text x="398" y="256">(state, event)</text></g>
+  <g class="ae call"><path d="M490 322 L450 322" marker-end="url(#a-call)"/>
+    <text x="398" y="340">actions</text></g>
+  <g class="ae call"><path d="M330 372 L330 402 L844 402 L844 296" marker-end="url(#a-call)"/>
+    <text class="strong" x="560" y="396">garm.tool.&lt;name&gt;  ·  the only caller of this</text></g>
 
   <g class="an next"><rect x="20" y="206" width="150" height="58" rx="9"/>
     <text class="t1" x="95" y="232" text-anchor="middle">A caller</text>
     <text class="t2" x="95" y="249" text-anchor="middle">generated client</text></g>
 
-  <g class="an next"><rect x="250" y="196" width="200" height="86" rx="10"/>
-    <text class="t1" x="350" y="226" text-anchor="middle">rund</text>
-    <text class="t2" x="350" y="244" text-anchor="middle">THE ENGINE</text>
-    <text class="t2" x="350" y="258" text-anchor="middle">runs · retries · guardrails</text>
-    <text class="t2" x="350" y="272" text-anchor="middle">budgets · the tree</text></g>
+  <!-- rund is a CONTAINER: what sits inside it runs in its process -->
+  <g class="an next"><rect x="210" y="196" width="240" height="176" rx="10"/>
+    <text class="t1" x="330" y="222" text-anchor="middle">rund</text>
+    <text class="t2" x="330" y="238" text-anchor="middle">THE ENGINE · ONE DEPLOYABLE</text>
+    <text class="t2" x="330" y="252" text-anchor="middle">runs · retries · guardrails</text>
+    <text class="t2" x="330" y="266" text-anchor="middle">budgets · the tree · DBOS</text></g>
+  <g class="an next"><rect x="226" y="286" width="208" height="46" rx="8"/>
+    <text class="t1" x="330" y="306" text-anchor="middle">single-step decider</text>
+    <text class="t2" x="330" y="321" text-anchor="middle">IN THIS PROCESS · no hop</text></g>
+  <text class="bandlbl" x="226" y="352">in rund's own binary</text>
 
-  <g class="an ok"><rect x="610" y="206" width="200" height="68" rx="9"/>
-    <text class="t1" x="710" y="234" text-anchor="middle">Your tool service</text>
-    <text class="t2" x="710" y="251" text-anchor="middle">natsserve + your handler</text>
-    <text class="t2" x="710" y="265" text-anchor="middle">plain · synchronous · no store</text></g>
+  <!-- deployed deciders: separate processes, reached over the bus -->
+  <g class="an band"><rect x="490" y="196" width="230" height="176" rx="10"/>
+    <text class="t1" x="504" y="216">deployed separately</text>
+    <text class="t1" x="504" y="230">one per kind</text></g>
+  <g class="an later"><rect x="504" y="240" width="202" height="46" rx="8"/>
+    <text class="t1" x="605" y="260" text-anchor="middle">ReAct</text>
+    <text class="t2" x="605" y="275" text-anchor="middle">garm.decider.react</text></g>
+  <g class="an later"><rect x="504" y="296" width="202" height="46" rx="8"/>
+    <text class="t1" x="605" y="316" text-anchor="middle">Workflow</text>
+    <text class="t2" x="605" y="331" text-anchor="middle">garm.decider.workflow.&lt;impl&gt;</text></g>
+  <text class="bandlbl" x="504" y="362">its own process and store</text>
 
-  <g class="an band"><rect x="500" y="306" width="230" height="184" rx="10"/>
-    <text class="t1" x="514" y="324">deciders · one interface</text></g>
-  <g class="an next"><rect x="514" y="332" width="202" height="42" rx="8"/>
-    <text class="t1" x="615" y="351" text-anchor="middle">single-step</text>
-    <text class="t2" x="615" y="365" text-anchor="middle">BUILT IN · in-process</text></g>
-  <g class="an later"><rect x="514" y="382" width="202" height="42" rx="8"/>
-    <text class="t1" x="615" y="401" text-anchor="middle">ReAct</text>
-    <text class="t2" x="615" y="415" text-anchor="middle">garm.decider.react</text></g>
-  <g class="an later"><rect x="514" y="432" width="202" height="42" rx="8"/>
-    <text class="t1" x="615" y="451" text-anchor="middle">Workflow</text>
-    <text class="t2" x="615" y="465" text-anchor="middle">garm.decider.workflow</text></g>
+  <g class="an ok"><rect x="750" y="206" width="190" height="90" rx="9"/>
+    <text class="t1" x="845" y="232" text-anchor="middle">Your tool service</text>
+    <text class="t2" x="845" y="249" text-anchor="middle">natsserve + your handler</text>
+    <text class="t2" x="845" y="263" text-anchor="middle">YOUR OWN DEPLOYABLE</text>
+    <text class="t2" x="845" y="277" text-anchor="middle">plain · sync · no store</text></g>
 
   <!-- ============ band 3 ============ -->
   <text class="bandlbl" x="20" y="528">3 · state and records — asynchronous calls only</text>
@@ -320,6 +327,22 @@
         </tbody>
       </table>
     </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>what you deploy</th><th>how many</th><th>holds state?</th></tr></thead>
+        <tbody>
+          <tr><td>rund</td><td>N replicas</td><td><b>yes</b> — DBOS, async path only</td></tr>
+          <tr><td>…including the single-step decider</td><td><b>none</b> — it is inside rund</td><td>no</td></tr>
+          <tr><td>a ReAct decider</td><td>one per estate, serving every ReAct agent</td><td>its own, or none if a reducer</td></tr>
+          <tr><td>a Workflow decider</td><td>one per estate, per implementation</td><td>its own (DBOS, Temporal)</td></tr>
+          <tr><td>your tool services</td><td>as many as you have tools</td><td><b>no</b>, ever</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note"><b>Adding an agent deploys nothing.</b> A decider is parameterised by the
+      agent's declaration — prompt, allowlist, step limit — so one ReAct service answers
+      every ReAct agent in the estate. That is the payoff for addressing deciders by
+      <em>kind</em> rather than at each agent's own subject.</p>
     <p class="note">The last row is a contradiction, not merely unwise: both decider
       kinds are durable by definition, so an agent can never complete inside a call.
       Refused by <code>garmctl compose</code>.</p>

@@ -259,6 +259,11 @@
         </div>
       </div>
     </figure>
+    <p class="note"><b>There is no box for the single-step decider, and that is the
+      point.</b> It runs <em>inside</em> rund, so it is not something you deploy —
+      every plain tool call, sync or async, is answered without a decider process
+      existing anywhere. Only ReAct and Workflow are deployables, and each serves every
+      agent of its kind, so declaring a new agent deploys nothing.</p>
     <p class="note"><b>rund's store is DBOS's.</b> A NATS-only event-sourced engine was
       built and probed first, to keep the component every call passes through free of a
       database. Its primitives all worked; the engine around them did not — a probe
