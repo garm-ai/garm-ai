@@ -147,7 +147,10 @@ becomes two fields on a run and one RPC.
 
 **And the part that should worry us.** That estate's constraint was emphatic —
 garmd was to have no Postgres access and no knowledge of migrations or databases.
-rund takes garmd's job *and* agentd's store, which overturns it. The reasons still
+rund takes garmd's job *and* agentd's store, which overturns it. A NATS-only,
+event-sourced store was tried first precisely to avoid this, and
+[rejected on evidence](../decisions/2026-10-03-durability-is-a-framework-not-ours.md)
+— the primitives worked; writing a correct engine around them did not. The reasons still
 hold: a component in the hot path of every call now has a database dependency, so
 a slow or unavailable store can take down calls that never needed it, and the
 blast radius of the thing every caller talks to has grown.
@@ -171,8 +174,9 @@ decision rather than a redesign — one binary with two roles, or two binaries, 
 question operational reality answers.
 
 Which makes it a **testable invariant rather than an intention**: *a sync call
-touches no store.* Trivially true in step 9, which has no store; the step that adds
-one has to keep it true.
+touches no store.* It starts no workflow at all. Trivially true in step 9, which has
+no store; the step that adds one has to keep it true, and it is the whole of what
+remains of the original constraint.
 
 ### 1.1 Two layers
 
@@ -347,13 +351,13 @@ agrees.
 
 **A run nobody reports on must still terminate.** If a runner dies, no report ever
 arrives and the run sits in `RUNNING` forever — the one failure mode this whole
-section exists to prevent, reappearing by omission. Two mechanisms, and the choice
-belongs to the step that builds the store:
+section exists to prevent, reappearing by omission.
 
-- a **run deadline** held by rund, from `Async.run_limit` — simple, and a long
-  human wait has to be excluded from it or every approval times out
-- a **lease the runner renews** — tolerates long waits naturally, and costs a
-  heartbeat and a sweeper
+**This is answered**, and not by us: rund's durability is a framework's
+([the decision](../decisions/2026-10-03-durability-is-a-framework-not-ours.md)), so
+crash recovery and timers are DBOS's. A run whose decider never reports hits a
+workflow timer. That was an open question through four revisions of this spec and
+is the clearest single thing the framework buys.
 
 Either way `TIMED_OUT` has two authors: the runner giving up on itself, and rund
 giving up on a runner. Both are the same terminal state and a `Finished` record
@@ -656,6 +660,22 @@ and the state needed to resume it now sits in a store rund cannot read. With
 Temporal that is Temporal's problem to solve, which is a reason to use it. With a
 hand-rolled decider it is ours, and §3.3 still names two mechanisms and picks
 neither.
+
+### 7.3.1 rund's own durability
+
+A framework, not ours: **DBOS**, behind a narrow port — start a run, record a step,
+await an external signal, set a timer, read state. See
+[the decision](../decisions/2026-10-03-durability-is-a-framework-not-ours.md) for
+what the alternative was measured to be worth.
+
+**The port is a hypothesis until a second implementation exists.** Nothing here
+claims rund is swappable; it claims the surface was kept small and that rund's own
+logic does not reach for DBOS primitives directly.
+
+Note the asymmetry with §7.3, which is deliberate: a **decider** may own its state
+or be a pure reducer, because its tool calls go through rund either way. **rund**
+has no such choice — there is no one else to hold a run for a single-step async
+call.
 
 ### 7.4 Two implementations of one kind, and the hazard
 

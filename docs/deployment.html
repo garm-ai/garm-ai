@@ -203,7 +203,7 @@
   </g>
   <g class="an later tB"><rect x="700" y="26" width="240" height="52" rx="9"/>
     <text class="t1" x="820" y="50" text-anchor="middle">Postgres · runs</text>
-    <text class="t2" x="820" y="66" text-anchor="middle">ASYNC ONLY · rund's own</text>
+    <text class="t2" x="820" y="66" text-anchor="middle">ASYNC ONLY · DBOS</text>
   </g>
   <g class="an ok tA tB"><rect x="700" y="88" width="240" height="44" rx="9"/>
     <text class="t1" x="820" y="112" text-anchor="middle">catalogue.binpb</text>
@@ -259,6 +259,12 @@
         </div>
       </div>
     </figure>
+    <p class="note"><b>rund's store is DBOS's.</b> A NATS-only event-sourced engine was
+      built and probed first, to keep the component every call passes through free of a
+      database. Its primitives all worked; the engine around them did not — a probe
+      written to catch a replica dying mid-run passed with the classic early-ack bug
+      deliberately introduced, and a clustered probe was flaky in a way I could not
+      attribute. A framework's failures have been diagnosed by other people already.</p>
     <p class="note"><b>Three stores, and they hold different things.</b>
       <code>rund</code>'s Postgres holds a run's <em>public</em> state — waiting,
       finished, the result, the tree. Each durable decider's store holds its own

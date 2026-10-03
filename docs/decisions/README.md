@@ -40,6 +40,7 @@ alternative was considered.
 | [The generator carries no policy opinion](2026-10-03-the-generator-carries-no-policy-opinion.md) | active | 230 lines became 102, and an exact import set |
 | [A subject is derived from the identity, not the address](2026-10-03-a-subject-is-derived-from-the-identity.md) | active | and the three-step drain whose first test was vacuous |
 | [Errors carry a kind, and leave the cause at home](2026-10-03-errors-carry-a-kind-and-leave-the-cause-home.md) | active | five kinds, not HTTP codes; safe by default |
+| [rund's durability is a framework's job, not ours](2026-10-03-durability-is-a-framework-not-ours.md) | active | DBOS behind a port; NATS-only was built, probed and rejected on evidence |
 | [A tool name must be routable, and that is a security rule](2026-10-03-a-tool-name-must-be-routable.md) | active | `a.*.b` would be a broker wildcard receiving other tools' calls |
 | [Service naming, deliberately deferred](2026-10-03-service-naming-deferred.md) | **parked** | buf's STANDARD lint against the domain, twice |
 
