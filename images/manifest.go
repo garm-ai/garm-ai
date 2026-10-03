@@ -20,8 +20,6 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 // Manifest is images.yaml: which built images compose into one namespace.
@@ -44,15 +42,24 @@ type Image struct {
 	// on a forge.
 	URI string `yaml:"uri"`
 
-	// SHA256 is not read yet and is therefore not declared. When a remote
-	// fetcher lands it becomes REQUIRED for remote schemes and optional for
-	// local ones, because an s3 object or a release asset can be replaced in
-	// place -- so without it, "resolve from tag v1.2.0" means "whatever is there
-	// today" -- while a local file is already in your tree and under review.
+	// SHA256 is the hex digest the fetched bytes must have.
 	//
-	// Deliberately absent until then: this repository's rule is that a field
-	// arrives with the thing that enforces it, and a digest nothing verifies is
-	// a promise that reads like a guarantee.
+	// REQUIRED for remote schemes, optional for `file://`, and the asymmetry
+	// matches where the trust boundary is. An s3 object and a release asset can
+	// both be replaced in place, so without a digest "resolve from tag v1.2.0"
+	// means "whatever is at that URL today" -- which is not a pin, it is a hope.
+	// A local file is already in your tree and under the same review as the code.
+	//
+	// One rule everywhere would be tidier and worse: a digest to update on every
+	// local rebuild is friction people route around, and a rule people route
+	// around is weaker than one scoped to where it matters.
+	SHA256 string `yaml:"sha256"`
+}
+
+// remote reports whether this image comes from somewhere the repository does not
+// control, and therefore needs a digest.
+func (i Image) remote() bool {
+	return strings.HasPrefix(i.URI, "s3://") || strings.HasPrefix(i.URI, "https://")
 }
 
 // Load reads a manifest. Paths inside it resolve against the manifest's own
@@ -72,49 +79,31 @@ func Load(path string) (*Manifest, string, error) {
 	if len(m.Images) == 0 {
 		return nil, "", fmt.Errorf("%s: declares no images, so there is nothing to compose", path)
 	}
+	for _, img := range m.Images {
+		if img.remote() && img.SHA256 == "" {
+			return nil, "", fmt.Errorf("%s: %s needs a sha256 -- a remote object can be "+
+				"replaced in place, so without one this pins a location and not bytes",
+				path, img.URI)
+		}
+		if img.SHA256 != "" && !isHex64(img.SHA256) {
+			return nil, "", fmt.Errorf("%s: %s has sha256 %q, which is not 64 hex characters",
+				path, img.URI, img.SHA256)
+		}
+	}
 	return &m, filepath.Dir(path), nil
 }
 
-// Fetched is one image's bytes and where they came from, so a later diagnostic
-// can name a SOURCE rather than a file path. When tool definitions come from
-// different repositories, "two tools declare this name" is only actionable if it
-// says which two images -- and therefore which two teams.
-type Fetched struct {
-	URI string
-	Set *descriptorpb.FileDescriptorSet
-}
-
-// Fetch resolves every image in the manifest, relative to dir.
-func Fetch(m *Manifest, dir string) ([]Fetched, error) {
-	out := make([]Fetched, 0, len(m.Images))
-	for _, img := range m.Images {
-		set, err := fetchOne(img.URI, dir)
-		if err != nil {
-			return nil, err
+// isHex64 reports whether s is exactly 64 lowercase hex characters -- the shape
+// of a sha256. Checked at load rather than at fetch, so a typo is caught before
+// anything is downloaded.
+func isHex64(s string) bool {
+	if len(s) != 64 {
+		return false
+	}
+	for _, c := range s {
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
 		}
-		out = append(out, Fetched{URI: img.URI, Set: set})
 	}
-	return out, nil
-}
-
-func fetchOne(uri, dir string) (*descriptorpb.FileDescriptorSet, error) {
-	rest, ok := strings.CutPrefix(uri, "file://")
-	if !ok {
-		// Named schemes rather than a generic "unsupported": a reader who wrote
-		// `s3://` deserves to know it is coming rather than that it is wrong.
-		return nil, fmt.Errorf("%s: only file:// resolves today; s3:// and https:// are next", uri)
-	}
-	path := rest
-	if !filepath.IsAbs(path) {
-		path = filepath.Join(dir, rest)
-	}
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", uri, err)
-	}
-	var set descriptorpb.FileDescriptorSet
-	if err := proto.Unmarshal(raw, &set); err != nil {
-		return nil, fmt.Errorf("%s is not a FileDescriptorSet: %w", uri, err)
-	}
-	return &set, nil
+	return true
 }

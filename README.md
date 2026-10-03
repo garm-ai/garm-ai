@@ -155,6 +155,46 @@ miss — and it is the one that matters. An *image* is one team's output; a
 why the package is `declared` and the artefact is `catalogue`: one is the view
 over descriptors, the other is the thing that was verified.
 
+**Step 6 — images resolve from a file, an S3 bucket, or a git tag.**
+
+```yaml
+schema: v1
+images:
+  - uri: file://build/image.binpb
+  - uri: s3://garm/images/accounts-v1.2.0.binpb
+    sha256: 9f2c…
+  - uri: https://github.com/acme/screening/releases/download/v1.4.0/screening.binpb
+    sha256: 4a81…
+```
+
+**A git tag resolves as an `https://` release asset** — the URL already encodes
+the tag, so there is no git client, no clone, and no credentials beyond whatever
+the forge wants. A `git+` fetcher that clones and reads a path from a tree earns
+its place only if somebody's image is not published as an asset.
+
+**`sha256` is required for remote schemes and optional for `file://`.** The
+asymmetry matches where the trust boundary is: an S3 object and a release asset
+can both be replaced in place, so a remote URI without a digest pins a *location*
+and not bytes. A local file is already in the tree under the same review as the
+code, and a digest to update on every rebuild is friction people route around.
+It is checked at **load**, before anything is downloaded, and verified **before
+unmarshalling** — a digest that only runs on bytes which happened to parse is a
+digest protecting the easy case.
+
+### Why there is no `garm.yaml`
+
+Credentials, region and endpoint are already an environment-level concern with a
+standard resolution order: `AWS_*` variables, `~/.aws/config`, instance roles. A
+file of our own duplicating them would be a second place to look when it does not
+work — and the previous estate's expensive failures were config claiming one thing
+while reality did another.
+
+One decision this forced into the open: path-style S3 addressing is **derived**
+from whether a custom endpoint is configured, not hardcoded. An earlier revision
+of this step set it to `true` unconditionally, because the estate's local plane
+runs an S3-compatible store — a deployment-specific choice made invisibly, and
+wrong against real AWS where path-style is deprecated.
+
 ### What is deliberately absent, and why `mode` never arrives
 
 There is no `mode`, `type` or `kind` saying which runner answers an agent. That

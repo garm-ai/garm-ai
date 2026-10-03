@@ -1,7 +1,14 @@
 package images_test
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -115,7 +122,10 @@ func TestADivergentSharedFileIsRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	m, base, _ := images.Load(manifest(t, dir, "file://a.binpb", "file://b.binpb"))
+	m, base, err := images.Load(manifest(t, dir, "file://a.binpb", "file://b.binpb"))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
 	fetched, err := images.Fetch(m, base)
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
@@ -137,19 +147,213 @@ func TestADivergentSharedFileIsRefused(t *testing.T) {
 	}
 }
 
-func TestAnUnsupportedSchemeSaysWhatIsComing(t *testing.T) {
-	// A reader who wrote s3:// deserves to know it is next rather than wrong.
+func TestAnUnsupportedSchemeNamesTheOnesThatWork(t *testing.T) {
+	// A reader who wrote git:// or http:// deserves to be told which spelling is
+	// wanted, not that theirs is wrong.
 	dir := t.TempDir()
-	m, base, _ := images.Load(manifest(t, dir, "s3://bucket/payments.binpb"))
-	_, err := images.Fetch(m, base)
-	if err == nil {
-		t.Fatal("Fetch accepted an s3:// URI it cannot resolve")
+	m, base, err := images.Load(manifest(t, dir, "git://example.com/x.binpb"))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
 	}
-	for _, want := range []string{"s3://", "https://"} {
+	_, err = images.Fetch(m, base)
+	if err == nil {
+		t.Fatal("Fetch accepted a git:// URI")
+	}
+	for _, want := range []string{"file://", "https://", "s3://"} {
 		if !strings.Contains(err.Error(), want) {
-			t.Errorf("the error does not mention %q: %v", want, err)
+			t.Errorf("the error does not name %q: %v", want, err)
 		}
 	}
+}
+
+func TestARemoteImageWithoutADigestIsRefusedAtLoad(t *testing.T) {
+	// An s3 object or a release asset can be replaced in place, so a remote URI
+	// with no digest pins a LOCATION and not bytes. Refused at load, before
+	// anything is downloaded.
+	dir := t.TempDir()
+	for _, uri := range []string{
+		"s3://bucket/payments.binpb",
+		"https://example.com/releases/download/v1.2.0/payments.binpb",
+	} {
+		_, _, err := images.Load(manifest(t, dir, uri))
+		if err == nil {
+			t.Fatalf("%s was accepted with no sha256", uri)
+		}
+		if !strings.Contains(err.Error(), "sha256") {
+			t.Errorf("%s: the error does not mention sha256: %v", uri, err)
+		}
+	}
+}
+
+func TestALocalImageNeedsNoDigest(t *testing.T) {
+	// The asymmetry is deliberate: a local file is already in the tree and under
+	// the same review as the code, and a digest to update on every rebuild is
+	// friction people route around.
+	dir := t.TempDir()
+	writeImage(t, dir, "tools.binpb", fdp(testdatav1.File_testdata_v1_tools_proto))
+	m, base, err := images.Load(manifest(t, dir, "file://tools.binpb"))
+	if err != nil {
+		t.Fatalf("a local image was refused for having no digest: %v", err)
+	}
+	if _, err := images.Fetch(m, base); err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+}
+
+func TestAMalformedDigestIsRefusedAtLoad(t *testing.T) {
+	dir := t.TempDir()
+	body := "schema: v1\nimages:\n  - uri: file://x.binpb\n    sha256: not-a-digest\n"
+	path := filepath.Join(dir, "images.yaml")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, _, err := images.Load(path)
+	if err == nil {
+		t.Fatal("Load accepted a sha256 that is not 64 hex characters")
+	}
+	if !strings.Contains(err.Error(), "64 hex") {
+		t.Errorf("the error does not say what shape is wanted: %v", err)
+	}
+}
+
+func TestAnHTTPSImageIsFetchedAndItsDigestVerified(t *testing.T) {
+	// This is also how a GIT TAG resolves: a forge's release-asset URL already
+	// encodes the tag, so no git client is involved.
+	dir := t.TempDir()
+	imgPath := writeImage(t, dir, "payments.binpb", fdp(testdatav1.File_testdata_v1_tools_proto))
+	raw, err := os.ReadFile(imgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(raw)
+	digest := hex.EncodeToString(sum[:])
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write(raw)
+	}))
+	defer srv.Close()
+
+	// httptest serves http://, and the manifest requires https:// for remotes --
+	// so the URI is written as https and the Resolver is handed the test client.
+	// That keeps the digest RULE under test without pretending TLS is involved.
+	body := "schema: v1\nimages:\n  - uri: https://example.invalid/payments.binpb\n    sha256: " + digest + "\n"
+	path := filepath.Join(dir, "images.yaml")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m, base, err := images.Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	r := &images.Resolver{Dir: base, HTTP: srv.Client()}
+	r.HTTP.Transport = rewriteTo(srv.URL)
+
+	fetched, err := r.Fetch(context.Background(), m)
+	if err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	if len(fetched) != 1 || fetched[0].URI != "https://example.invalid/payments.binpb" {
+		t.Fatalf("fetched = %+v", fetched)
+	}
+}
+
+func TestAWrongDigestIsRefusedBeforeUnmarshalling(t *testing.T) {
+	// Verified BEFORE parsing: a digest that only runs on bytes which happened to
+	// parse is a digest protecting the easy case. The body here is not even a
+	// descriptor set, and the digest must be what rejects it.
+	dir := t.TempDir()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("these are not the bytes you pinned"))
+	}))
+	defer srv.Close()
+
+	body := "schema: v1\nimages:\n  - uri: https://example.invalid/x.binpb\n    sha256: " +
+		strings.Repeat("ab", 32) + "\n"
+	path := filepath.Join(dir, "images.yaml")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m, base, err := images.Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	r := &images.Resolver{Dir: base, HTTP: srv.Client()}
+	r.HTTP.Transport = rewriteTo(srv.URL)
+
+	_, err = r.Fetch(context.Background(), m)
+	if err == nil {
+		t.Fatal("Fetch accepted bytes whose digest does not match")
+	}
+	if !strings.Contains(err.Error(), "sha256 is") {
+		t.Errorf("the error does not report the digest mismatch: %v", err)
+	}
+	// It must NOT have got as far as complaining about the proto shape.
+	if strings.Contains(err.Error(), "FileDescriptorSet") {
+		t.Errorf("the digest was checked after unmarshalling, not before: %v", err)
+	}
+}
+
+func TestAnS3ImageIsFetchedThroughTheGetter(t *testing.T) {
+	// The ObjectGetter interface exists so this path is exercised at all. Without
+	// it the only way to test s3 would be against a real bucket, which means in
+	// practice nobody would -- and an untested fetcher behind a digest check is
+	// precisely the shape of problem this repository keeps finding.
+	dir := t.TempDir()
+	imgPath := writeImage(t, dir, "accounts.binpb", fdp(testdatav1.File_testdata_v1_tools_proto))
+	raw, err := os.ReadFile(imgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(raw)
+
+	body := "schema: v1\nimages:\n  - uri: s3://garm/images/accounts.binpb\n    sha256: " +
+		hex.EncodeToString(sum[:]) + "\n"
+	path := filepath.Join(dir, "images.yaml")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m, base, err := images.Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	got := &fakeS3{want: "garm/images/accounts.binpb", raw: raw}
+	r := &images.Resolver{Dir: base, S3: got}
+	if _, err := r.Fetch(context.Background(), m); err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	if !got.called {
+		t.Error("the s3 getter was never called")
+	}
+}
+
+type fakeS3 struct {
+	want   string
+	raw    []byte
+	called bool
+}
+
+func (f *fakeS3) Get(_ context.Context, bucket, key string) ([]byte, error) {
+	f.called = true
+	if got := bucket + "/" + key; got != f.want {
+		return nil, fmt.Errorf("asked for %q, want %q", got, f.want)
+	}
+	return f.raw, nil
+}
+
+// rewriteTo sends every request to the test server regardless of the URI's host,
+// so a manifest can carry an https:// URI while the bytes come from httptest.
+func rewriteTo(base string) http.RoundTripper {
+	u, _ := url.Parse(base)
+	return &rewriter{host: u.Host}
+}
+
+type rewriter struct{ host string }
+
+func (rt *rewriter) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.URL.Scheme = "http"
+	req.URL.Host = rt.host
+	return http.DefaultTransport.RoundTrip(req)
 }
 
 func TestAManifestWithTheWrongSchemaIsRefused(t *testing.T) {
