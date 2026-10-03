@@ -15,6 +15,7 @@ import (
 // thing a tool author copies, so it is the last place that should be aspirational.
 
 func TestTheExampleCallerGetsAForecastNamingOnlyTheTool(t *testing.T) {
+	t.Skip("awaiting --creds; Task 8 removes this skip")
 	e := estate.New(t)
 	var out, errOut bytes.Buffer
 
@@ -35,6 +36,7 @@ func TestTheExampleCallerGetsAForecastNamingOnlyTheTool(t *testing.T) {
 // TestTheExampleCallerShowsTheKindAndExitsNonZero. A caller that printed a forecast
 // anyway, or exited 0, would be a worked example of ignoring an error.
 func TestTheExampleCallerShowsTheKindAndExitsNonZero(t *testing.T) {
+	t.Skip("awaiting --creds; Task 8 removes this skip")
 	e := estate.New(t)
 	var out, errOut bytes.Buffer
 

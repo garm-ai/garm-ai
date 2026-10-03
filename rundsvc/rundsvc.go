@@ -22,13 +22,25 @@ import (
 	"github.com/garm-ai/garm-ai/serve"
 )
 
-// Subjects the run interface answers on.
+// Subjects a CALLER publishes on.
 //
 // NOT under garm.tool. -- rund is not a tool, and the subject says so. If `invoke`
 // were a tool, invoking it would create a run that invoked it.
+//
+// These are not what rund subscribes to. A caller's account imports the run
+// service with its own account key at token 4, and the server rewrites
+// garm.run.v1.invoke to garm.run.v1.<ACCOUNT>.invoke on the way in -- so the
+// caller publishes the plain subject, unchanged, and rund receives the rewritten
+// one (spec §3). Keeping both names is what lets natscall stay untouched.
 const (
 	SubjectInvoke = "garm.run.v1.invoke"
 	SubjectFetch  = "garm.run.v1.fetch"
+)
+
+// Patterns rund ANSWERS on. Token 4 is the caller's account, placed by the server.
+const (
+	PatternInvoke = "garm.run.v1.*.invoke"
+	PatternFetch  = "garm.run.v1.*.fetch"
 )
 
 // Headers carrying the envelope.
@@ -46,12 +58,12 @@ const (
 
 // Serve mounts the run interface on svc.
 func Serve(svc *natsmicro.Service, e *run.Engine) error {
-	if err := svc.Mount("invoke", SubjectInvoke, micro.HandlerFunc(func(r micro.Request) {
+	if err := svc.Mount("invoke", PatternInvoke, micro.HandlerFunc(func(r micro.Request) {
 		svc.Track(func() { invoke(e, r) })
 	})); err != nil {
 		return err
 	}
-	return svc.Mount("fetch", SubjectFetch, micro.HandlerFunc(func(r micro.Request) {
+	return svc.Mount("fetch", PatternFetch, micro.HandlerFunc(func(r micro.Request) {
 		svc.Track(func() { fetch(e, r) })
 	}))
 }

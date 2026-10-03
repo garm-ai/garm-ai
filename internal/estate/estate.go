@@ -1,5 +1,6 @@
 // Package estate stands up a whole garm estate in one process, for tests: a tool
-// service, and rund in front of it, on a NATS server of their own.
+// service, and rund in front of it, on a NATS server of their own -- in OPERATOR
+// MODE, over TLS, with the same topology a deployment gets.
 //
 // It exists because the chain acquired a SECOND consumer. natscall's tests built
 // it first; cmd/garmctl and examples/cmd/forecast need the same thing, and the
@@ -13,6 +14,7 @@ package estate
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/hex"
 	"io"
 	"log/slog"
@@ -21,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nats-io/jwt/v2"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
@@ -36,10 +39,22 @@ import (
 	"github.com/garm-ai/garm-ai/natsserve"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundsvc"
+	"github.com/garm-ai/garm-ai/topology"
 )
 
 // Quiet discards a service's mount lines, which are not the test's output.
 func Quiet() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
+
+// Role is who a connection is. The estate issues one credential per role from the
+// same generator a deployment uses, so a test connects as what production would.
+type Role string
+
+const (
+	RoleOps    Role = "ops"
+	RoleRund   Role = "rund"
+	RoleTool   Role = "weather.v1.WeatherService"
+	RoleCaller Role = "studio"
+)
 
 // Estate is a running chain, plus the things a COMMAND needs to reach it that a
 // library caller does not: a URL to dial and a catalogue to resolve a name in.
@@ -55,24 +70,80 @@ type Estate struct {
 	// Catalogue is the same namespace already loaded, for a caller holding rund
 	// rather than running it.
 	Catalogue *catalogue.Holder
+
+	srv   *natsserver.Server
+	tls   *tls.Config
+	topo  *topology.Output
+	creds map[Role]topology.Credential
 }
 
-// New starts a server, a tool service and rund, and tears all three down with the
-// test. The tool service is the EXAMPLE one, deployed exactly as its author does.
+// New starts a server in operator mode, a tool service and rund, and tears all
+// three down with the test. The tool service is the EXAMPLE one, deployed exactly
+// as its author does -- with a credential that permits exactly its declared tools.
 func New(t *testing.T) *Estate {
 	t.Helper()
-	srv, err := natsserver.NewServer(&natsserver.Options{
-		Host: "127.0.0.1", Port: -1, NoLog: true, NoSigs: true})
+	e := &Estate{}
+	e.loadCatalogue(t)
+
+	// The topology, from the SAME generator a deployment runs. Keys are fresh
+	// because this is a test; a deployment's are an input.
+	keys := topology.FreshKeys([]string{string(RoleCaller)})
+	topo, err := topology.Generate(topology.Input{
+		Catalogue: e.Catalogue.Current(), Callers: []string{string(RoleCaller)},
+		Previous: topology.Empty(), Keys: keys, Now: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("generating the topology: %v", err)
+	}
+	e.topo = topo
+	e.creds = map[Role]topology.Credential{}
+	for _, c := range topo.Credentials {
+		e.creds[Role(c.Name)] = c
+	}
+
+	op, err := jwt.DecodeOperatorClaims(topo.OperatorJWT)
 	if err != nil {
 		t.Fatal(err)
 	}
+	// The FULL resolver, on disk, so an account update pushed over $SYS is the path
+	// the tests exercise (spec §6). Not a memory stub that cannot take one.
+	res, err := natsserver.NewDirAccResolver(t.TempDir(), 0, 2*time.Second, natsserver.NoDelete)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sysPub, err := keys.Accounts[topology.AccountSYS].PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, encoded := range topo.Accounts {
+		pub, err := keys.Accounts[name].PublicKey()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := res.Store(pub, encoded); err != nil {
+			t.Fatalf("preloading %s: %v", name, err)
+		}
+	}
+
+	serverTLS, clientTLS := tlsPair(t)
+	e.tls = clientTLS
+	srv, err := natsserver.NewServer(&natsserver.Options{
+		Host: "127.0.0.1", Port: -1, NoLog: true, NoSigs: true,
+		TrustedOperators: []*jwt.OperatorClaims{op},
+		AccountResolver:  res,
+		SystemAccount:    sysPub,
+		TLSConfig:        serverTLS, // and nothing without it: property 11
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.srv = srv
 	go srv.Start()
 	t.Cleanup(srv.Shutdown)
 	if !srv.ReadyForConnections(10 * time.Second) {
 		t.Fatal("nats-server not ready")
 	}
-	e := &Estate{URL: srv.ClientURL()}
-	e.loadCatalogue(t)
+	e.URL = srv.ClientURL()
 
 	tools, err := natsserve.New(natsserve.Config{Name: "weatherd", Version: "0.1.0", Logger: Quiet()})
 	if err != nil {
@@ -81,7 +152,7 @@ func New(t *testing.T) *Estate {
 	if err := weatherv1.ServeWeatherService(tools, weatherd.Service{}); err != nil {
 		t.Fatal(err)
 	}
-	if err := tools.Start(e.Connect(t)); err != nil {
+	if err := tools.Start(e.Connect(t, RoleTool)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -89,7 +160,7 @@ func New(t *testing.T) *Estate {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rundNC := e.Connect(t)
+	rundNC := e.Connect(t, RoleRund)
 	if err := rundsvc.Serve(svc, &run.Engine{
 		Catalogue: e.Catalogue,
 		Tools:     rundsvc.ToolCaller{NC: rundNC},
@@ -110,16 +181,34 @@ func New(t *testing.T) *Estate {
 	return e
 }
 
-// Connect dials the estate's server and closes with the test.
-func (e *Estate) Connect(t *testing.T) *nats.Conn {
+// Connect dials as a role, with that role's credential and TLS, and closes with
+// the test.
+func (e *Estate) Connect(t *testing.T, as Role) *nats.Conn {
 	t.Helper()
-	nc, err := nats.Connect(e.URL)
+	c, ok := e.creds[as]
+	if !ok {
+		t.Fatalf("no credential for role %q", as)
+	}
+	nc, err := nats.Connect(e.URL,
+		nats.UserJWTAndSeed(c.JWT, c.Seed), nats.Secure(e.tls), nats.Name(string(as)))
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("%s could not connect: %v", as, err)
 	}
 	t.Cleanup(nc.Close)
 	return nc
 }
+
+// Credential exposes a role's JWT and seed, for a command under test.
+func (e *Estate) Credential(as Role) (jwtToken, seed string) {
+	c := e.creds[as]
+	return c.JWT, c.Seed
+}
+
+// TLS is the client configuration that trusts this estate's server.
+func (e *Estate) TLS() *tls.Config { return e.tls }
+
+// Topology is what the generator produced, for a test that asserts on it.
+func (e *Estate) Topology() *topology.Output { return e.topo }
 
 // loadCatalogue writes a real catalogue.binpb and loads it through the real
 // resolver, digest and all. Not a hand-built Holder: a command is given a URI and

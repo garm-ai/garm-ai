@@ -35,6 +35,14 @@ import (
 	"github.com/garm-ai/garm-ai/serve"
 )
 
+// asRewritten is what the server delivers to rund after a caller's account import
+// inserts its key at token 4. These tests run on a bare server with no accounts,
+// so the test does the rewrite the import would -- the estate tests cover the
+// real mapping.
+func asRewritten(subject string) string {
+	return strings.Replace(subject, "garm.run.v1.", "garm.run.v1.ATESTACCOUNT.", 1)
+}
+
 func quiet() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
 
 func server(t *testing.T) string {
@@ -189,7 +197,7 @@ func invoke(t *testing.T, nc *nats.Conn, tool string, in proto.Message, hdr map[
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := nats.NewMsg(rundsvc.SubjectInvoke)
+	m := nats.NewMsg(asRewritten(rundsvc.SubjectInvoke))
 	m.Data = req
 	for k, v := range hdr {
 		m.Header.Set(k, v)
@@ -325,7 +333,7 @@ func TestAnAsyncToolIsRefusedBecauseThereIsNoStore(t *testing.T) {
 func TestFetchSaysNotRetained(t *testing.T) {
 	nc, _ := estate(t)
 	body, _ := proto.Marshal(&runv1.FetchRequest{RunId: "r1"})
-	m := nats.NewMsg(rundsvc.SubjectFetch)
+	m := nats.NewMsg(asRewritten(rundsvc.SubjectFetch))
 	m.Data = body
 	reply, err := nc.RequestMsg(m, 5*time.Second)
 	if err != nil {

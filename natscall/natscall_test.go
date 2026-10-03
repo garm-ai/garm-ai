@@ -27,7 +27,7 @@ import (
 // knowledge of either.
 func estateConn(t *testing.T) *nats.Conn {
 	t.Helper()
-	return estate.New(t).Connect(t)
+	return estate.New(t).Connect(t, estate.RoleCaller)
 }
 
 // ---------------------------------------------------------------------------
