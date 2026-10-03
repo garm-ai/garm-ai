@@ -79,6 +79,17 @@ func compose(cmd *cobra.Command, manifestPath, out string) error {
 		return err
 	}
 
+	// Delivery first: an allowlist entry pointing at a tool that cannot be
+	// delivered is a second-order complaint about a first-order problem.
+	if bad := set.DeliveryProblems(); len(bad) > 0 {
+		for _, d := range bad {
+			fmt.Fprintf(cmd.ErrOrStderr(), "  %s\n    in %s\n",
+				d, merged.Source[d.Method.ParentFile().Path()])
+		}
+		return fmt.Errorf("%d %s a delivery this namespace can act on",
+			len(bad), plural(len(bad), "tool does not declare", "tools do not declare"))
+	}
+
 	if bad := set.Unresolved(); len(bad) > 0 {
 		for _, u := range bad {
 			fmt.Fprintf(cmd.ErrOrStderr(), "  %s\n    in %s\n",

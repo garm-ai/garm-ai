@@ -194,6 +194,19 @@ func dep(t *testing.T, fd protoreflect.FileDescriptor) *descriptorpb.FileDescrip
 	return protodesc.ToFileDescriptorProto(fd)
 }
 
+// protoFiles is every file the request needs: tool.proto, EVERY import tool.proto
+// has, and the probe file itself. Derived rather than listed, because listing them
+// means this breaks at a distance the next time the contract imports something.
+func protoFiles(t *testing.T, own *descriptorpb.FileDescriptorProto) []*descriptorpb.FileDescriptorProto {
+	t.Helper()
+	tool := toolv1.File_garm_tool_v1_tool_proto
+	var out []*descriptorpb.FileDescriptorProto
+	for i := 0; i < tool.Imports().Len(); i++ {
+		out = append(out, dep(t, tool.Imports().Get(i).FileDescriptor))
+	}
+	return append(out, dep(t, tool), own)
+}
+
 // toolMethod builds a method declaring name, so that the option under test is
 // the real extension on real MethodOptions rather than a struct a helper filled.
 func toolMethod(t *testing.T, method string, tool *toolv1.Tool, streaming bool) *descriptorpb.MethodDescriptorProto {
@@ -235,11 +248,7 @@ func probe(t *testing.T, methods ...*descriptorpb.MethodDescriptorProto) (*plugi
 	req := &pluginpb.CodeGeneratorRequest{
 		FileToGenerate: []string{"probe/v1/probe.proto"},
 		Parameter:      proto.String("paths=source_relative"),
-		ProtoFile: []*descriptorpb.FileDescriptorProto{
-			dep(t, (*descriptorpb.FileDescriptorProto)(nil).ProtoReflect().Descriptor().ParentFile()),
-			dep(t, toolv1.File_garm_tool_v1_tool_proto),
-			file,
-		},
+		ProtoFile:      protoFiles(t, file),
 	}
 	gen, err := protogen.Options{}.New(req)
 	if err != nil {

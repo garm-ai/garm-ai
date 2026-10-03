@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/garm-ai/garm-ai/declared"
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
@@ -25,8 +27,27 @@ func fdp(fd protoreflect.FileDescriptor) *descriptorpb.FileDescriptorProto {
 	return protodesc.ToFileDescriptorProto(fd)
 }
 
+// registry builds a Files from the given descriptors, adding any WELL-KNOWN TYPE
+// the set imports but does not carry.
+//
+// Automatic because a caller should not have to track what garm/tool/v1 happens to
+// import this month: adding `google.protobuf.Duration` to the contract broke every
+// test here at once, and none of them is about duration.
 func registry(t *testing.T, files ...*descriptorpb.FileDescriptorProto) *protoregistry.Files {
 	t.Helper()
+	have := map[string]bool{}
+	for _, f := range files {
+		have[f.GetName()] = true
+	}
+	var wkt []*descriptorpb.FileDescriptorProto
+	for _, fd := range []protoreflect.FileDescriptor{
+		durationpb.File_google_protobuf_duration_proto,
+	} {
+		if !have[fd.Path()] {
+			wkt = append(wkt, protodesc.ToFileDescriptorProto(fd))
+		}
+	}
+	files = append(wkt, files...)
 	reg, err := protodesc.NewFiles(&descriptorpb.FileDescriptorSet{File: files})
 	if err != nil {
 		t.Fatalf("building the registry: %v", err)
@@ -292,5 +313,167 @@ func TestTheWildcardReasonSaysWhatWouldHappen(t *testing.T) {
 	}
 	if !strings.Contains(bad.Reason, "intercept other tools") {
 		t.Errorf("the reason does not say what would happen: %q", bad.Reason)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Delivery. A caller of a sync tool waits for an answer; a caller of an async one
+// holds a receipt. Those are different programs, so the declaration must say which
+// and compose must refuse one that does not.
+// ---------------------------------------------------------------------------
+
+// withTool builds a one-tool file carrying tool verbatim, so every case below goes
+// through real MethodOptions rather than a struct a helper filled in.
+func withTool(t *testing.T, tool *toolv1.Tool) (*declared.Set, error) {
+	t.Helper()
+	opts := &descriptorpb.MethodOptions{}
+	proto.SetExtension(opts, toolv1.E_Tool, tool)
+	file := &descriptorpb.FileDescriptorProto{
+		Name:       proto.String("probe/v1/probe.proto"),
+		Package:    proto.String("probe.v1"),
+		Syntax:     proto.String("proto3"),
+		Dependency: []string{"garm/tool/v1/tool.proto"},
+		MessageType: []*descriptorpb.DescriptorProto{
+			{Name: proto.String("Req")}, {Name: proto.String("Res")},
+		},
+		Service: []*descriptorpb.ServiceDescriptorProto{{
+			Name: proto.String("ProbeService"),
+			Method: []*descriptorpb.MethodDescriptorProto{{
+				Name:       proto.String("Do"),
+				InputType:  proto.String(".probe.v1.Req"),
+				OutputType: proto.String(".probe.v1.Res"),
+				Options:    opts,
+			}},
+		}},
+	}
+	return declared.From(registry(t,
+		fdp((*descriptorpb.FileDescriptorProto)(nil).ProtoReflect().Descriptor().ParentFile()),
+		fdp(toolv1.File_garm_tool_v1_tool_proto),
+		file,
+	))
+}
+
+// A oneof generates wrapper types, so delivery is set through them rather than on
+// the message. Helpers, because the noise would otherwise bury what each case is
+// actually about.
+func syncD(d time.Duration) *toolv1.Tool_Sync {
+	return &toolv1.Tool_Sync{Sync: &toolv1.Sync{Budget: durationpb.New(d)}}
+}
+func syncRaw(s *toolv1.Sync) *toolv1.Tool_Sync { return &toolv1.Tool_Sync{Sync: s} }
+func asyncD() *toolv1.Tool_Async               { return &toolv1.Tool_Async{Async: &toolv1.Async{}} }
+
+func problems(t *testing.T, tool *toolv1.Tool) []declared.DeliveryProblem {
+	t.Helper()
+	set, err := withTool(t, tool)
+	if err != nil {
+		t.Fatalf("building the set: %v", err)
+	}
+	return set.DeliveryProblems()
+}
+
+func TestADeclaredDeliveryIsAccepted(t *testing.T) {
+	for name, tool := range map[string]*toolv1.Tool{
+		"a sync tool":   {Name: "probe.v1.read", Delivery: syncD(2 * time.Second)},
+		"an async tool": {Name: "probe.v1.freeze", Delivery: asyncD()},
+		"an async agent": {Name: "probe.v1.assistant", Delivery: asyncD(),
+			Agent: &toolv1.Agent{Tools: []*toolv1.ToolRef{{Name: "probe.v1.read"}}}},
+	} {
+		if p := problems(t, tool); len(p) != 0 {
+			t.Errorf("%s was refused: %v", name, p)
+		}
+	}
+}
+
+// TestSilenceIsNotADefault. A tool whose author said nothing must not be guessed
+// at: guessing sync makes a caller wait forever for an answer that is a receipt,
+// and guessing async makes it hold a receipt it will never redeem.
+func TestSilenceIsNotADefault(t *testing.T) {
+	p := problems(t, &toolv1.Tool{Name: "probe.v1.quiet"})
+	if len(p) != 1 {
+		t.Fatalf("a tool declaring no delivery produced %d problems, want 1: %v", len(p), p)
+	}
+	if !strings.Contains(p[0].Reason, "no delivery") {
+		t.Errorf("the reason is %q", p[0].Reason)
+	}
+	if !strings.Contains(p[0].String(), "probe.v1.ProbeService.Do") {
+		t.Errorf("the finding does not name where to look: %v", p[0])
+	}
+}
+
+// TestAnAgentDeclaringSyncIsRefused. Both decider kinds are durable by definition,
+// so an agent cannot complete inside a call. This was only a comment in an example
+// until the declaration could carry it.
+func TestAnAgentDeclaringSyncIsRefused(t *testing.T) {
+	p := problems(t, &toolv1.Tool{
+		Name:     "probe.v1.assistant",
+		Delivery: syncD(5 * time.Second),
+		Agent:    &toolv1.Agent{Tools: []*toolv1.ToolRef{{Name: "probe.v1.read"}}},
+	})
+	if len(p) != 1 {
+		t.Fatalf("a sync agent produced %d problems, want 1: %v", len(p), p)
+	}
+	if !strings.Contains(p[0].Reason, "cannot complete inside a call") {
+		t.Errorf("the reason does not say WHY an agent cannot be sync: %q", p[0].Reason)
+	}
+}
+
+// TestSyncWithoutABudgetIsRefused: the number exists so that no caller invents one.
+// Declaring sync and omitting it leaves exactly the guessing it was added to end.
+func TestSyncWithoutABudgetIsRefused(t *testing.T) {
+	for name, s := range map[string]*toolv1.Sync{
+		"no budget at all":  {},
+		"a zero budget":     {Budget: durationpb.New(0)},
+		"a negative budget": {Budget: durationpb.New(-time.Second)},
+	} {
+		p := problems(t, &toolv1.Tool{Name: "probe.v1.read", Delivery: syncRaw(s)})
+		if len(p) != 1 {
+			t.Errorf("%s produced %d problems, want 1: %v", name, len(p), p)
+			continue
+		}
+		if !strings.Contains(p[0].Reason, "invent a deadline") {
+			t.Errorf("%s: the reason does not say what goes wrong: %q", name, p[0].Reason)
+		}
+	}
+}
+
+// TestBudgetIsZeroForAnythingNotSync is why a caller must ask IsSync rather than
+// compare Budget to zero -- the two would otherwise be indistinguishable from a
+// sync tool whose budget nobody set, which is a thing compose refuses anyway.
+func TestBudgetIsZeroForAnythingNotSync(t *testing.T) {
+	set, err := withTool(t, &toolv1.Tool{Name: "probe.v1.freeze", Delivery: asyncD()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tool, _ := set.Tool("probe.v1.freeze")
+	if tool.IsSync() {
+		t.Error("an async tool reports IsSync")
+	}
+	if tool.Budget() != 0 {
+		t.Errorf("Budget is %v for an async tool, want 0", tool.Budget())
+	}
+}
+
+// TestTheCommittedTreeDeclaresDeliveryEverywhere. The fixtures are not exempt from
+// a rule the namespace enforces; if they were, the rule would be untested against
+// anything a human actually wrote.
+func TestTheCommittedTreeDeclaresDeliveryEverywhere(t *testing.T) {
+	set, err := declared.From(registry(t,
+		fdp((*descriptorpb.FileDescriptorProto)(nil).ProtoReflect().Descriptor().ParentFile()),
+		fdp(toolv1.File_garm_tool_v1_tool_proto),
+		fdp(testdatav1.File_testdata_v1_tools_proto),
+		fdp(testdatav1.File_testdata_v1_agent_proto),
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p := set.DeliveryProblems(); len(p) != 0 {
+		t.Fatalf("the committed fixtures have delivery problems: %v", p)
+	}
+	// and the shapes are the ones the fixture means to show
+	if a, _ := set.Tool("accounts.v1.get_customer"); !a.IsSync() || a.Budget() != 2*time.Second {
+		t.Errorf("accounts.v1.get_customer: sync=%v budget=%v, want sync 2s", a.IsSync(), a.Budget())
+	}
+	if ag, _ := set.Tool("support-assistant"); ag.IsSync() || !ag.IsAgent() {
+		t.Errorf("support-assistant should be an async agent, got sync=%v agent=%v", ag.IsSync(), ag.IsAgent())
 	}
 }

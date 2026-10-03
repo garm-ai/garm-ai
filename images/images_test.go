@@ -33,11 +33,17 @@ func fdp(fd protoreflect.FileDescriptor) *descriptorpb.FileDescriptorProto {
 // which is exactly the duplication Merge exists to handle.
 func writeImage(t *testing.T, dir, name string, files ...*descriptorpb.FileDescriptorProto) string {
 	t.Helper()
+	// EVERY import of tool.proto, derived rather than listed. An earlier version
+	// took Imports().Get(0) and named it descriptor.proto in a comment; adding
+	// google.protobuf.Duration to the contract then broke this at a distance, with
+	// an error about a file no test here mentions.
 	tool := toolv1.File_garm_tool_v1_tool_proto
-	all := append([]*descriptorpb.FileDescriptorProto{
-		fdp(tool.Imports().Get(0).FileDescriptor), // descriptor.proto
-		fdp(tool),
-	}, files...)
+	var all []*descriptorpb.FileDescriptorProto
+	for i := 0; i < tool.Imports().Len(); i++ {
+		all = append(all, fdp(tool.Imports().Get(i).FileDescriptor))
+	}
+	all = append(all, fdp(tool))
+	all = append(all, files...)
 	raw, err := proto.Marshal(&descriptorpb.FileDescriptorSet{File: all})
 	if err != nil {
 		t.Fatalf("marshalling %s: %v", name, err)
@@ -84,11 +90,18 @@ func TestTwoImagesMergeIntoOneNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Merge: %v", err)
 	}
-	// descriptor.proto and the contract appear in BOTH images and must be
-	// deduplicated, not concatenated -- protodesc.NewFiles refuses a repeated
-	// path outright, so a naive merge of any two real images always fails.
-	if len(merged.Shared) != 2 {
-		t.Errorf("Shared = %v, want descriptor.proto and the contract", merged.Shared)
+	// The contract and everything it imports appear in BOTH images and must be
+	// deduplicated, not concatenated -- protodesc.NewFiles refuses a repeated path
+	// outright, so a naive merge of any two real images always fails.
+	//
+	// The count is DERIVED, not written down: hardcoding 2 meant adding one import
+	// to the contract failed this test with a message about a file it does not
+	// mention. What is being tested is that shared files are deduplicated, not how
+	// many of them there happen to be.
+	wantShared := 1 + toolv1.File_garm_tool_v1_tool_proto.Imports().Len()
+	if len(merged.Shared) != wantShared {
+		t.Errorf("Shared = %v (%d), want the contract and its %d imports",
+			merged.Shared, len(merged.Shared), toolv1.File_garm_tool_v1_tool_proto.Imports().Len())
 	}
 	if _, err := protodesc.NewFiles(merged.Set); err != nil {
 		t.Fatalf("the merged set does not resolve: %v", err)

@@ -53,6 +53,9 @@ service SupportAssistantService {
     // on it rather than needing an exception.
     option (garm.tool.v1.tool) = {
       name: "support-assistant"
+      // Async, necessarily: both decider kinds are durable, so an agent can
+      // never complete inside a call. compose refuses an agent declaring sync.
+      async: {}
       agent: {
         tools: [
           { name: "accounts.v1.get_customer" },

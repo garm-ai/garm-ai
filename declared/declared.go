@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -58,15 +59,33 @@ type Tool struct {
 	// identity.
 	Method protoreflect.MethodDescriptor
 
-	// Agent is nil when a service answers this tool itself, and non-nil when a
-	// rund runs it, asking a decider what to do next. That is the whole of what
-	// "an agent" is.
+	// Agent is nil when a service answers this tool itself, and non-nil when rund
+	// runs it, asking a decider what to do next. That is the whole of what "an
+	// agent" is.
 	Agent *toolv1.Agent
+
+	// Sync and Async are the two arms of the delivery oneof, and exactly one
+	// should be set. BOTH NIL IS A DECLARATION THAT FORGOT TO SAY, which
+	// DeliveryProblems refuses -- silence must not quietly become either.
+	Sync  *toolv1.Sync
+	Async *toolv1.Async
 }
 
 // IsAgent reports whether rund runs this tool with a decider, rather than a service
 // answering it.
 func (t Tool) IsAgent() bool { return t.Agent != nil }
+
+// IsSync reports whether the answer comes back within the call.
+func (t Tool) IsSync() bool { return t.Sync != nil }
+
+// Budget is how long a caller must be prepared to wait. Zero for anything that is
+// not sync, which is why a caller checks IsSync rather than comparing to zero.
+func (t Tool) Budget() time.Duration {
+	if t.Sync == nil {
+		return 0
+	}
+	return t.Sync.GetBudget().AsDuration()
+}
 
 // Set is every tool a descriptor set declares, indexed by name.
 type Set struct {
@@ -160,7 +179,13 @@ func ToolOf(md protoreflect.MethodDescriptor) (Tool, bool) {
 	if !ok || tool == nil || tool.GetName() == "" {
 		return Tool{}, false
 	}
-	return Tool{Name: tool.GetName(), Method: md, Agent: tool.GetAgent()}, true
+	return Tool{
+		Name:   tool.GetName(),
+		Method: md,
+		Agent:  tool.GetAgent(),
+		Sync:   tool.GetSync(),
+		Async:  tool.GetAsync(),
+	}, true
 }
 
 // Tool returns the declaration for name.
@@ -294,4 +319,55 @@ func nameReason(name string) string {
 		}
 	}
 	return ""
+}
+
+// DeliveryProblem is a tool whose delivery declaration cannot be acted on.
+//
+// A finding rather than a hard error, the same shape as Unresolved: these are
+// judgements about a composed namespace, and the caller holding the images is the
+// one that can say which repository to open.
+type DeliveryProblem struct {
+	Tool   string
+	Reason string
+	Method protoreflect.MethodDescriptor
+}
+
+func (p DeliveryProblem) String() string {
+	return fmt.Sprintf("%s: %s (declared at %s)", p.Tool, p.Reason, p.Method.FullName())
+}
+
+// DeliveryProblems returns every tool whose delivery cannot be acted on.
+//
+// # Three refusals, and each one can actually fire
+//
+// A fourth was specified and dropped before it was written: "an agent whose budget
+// is below the largest in its allowlist". An agent may never be Sync, so it has no
+// budget, so that check could never fire -- and a check that cannot fail is worse
+// than no check, because it reads as a guarantee. It becomes real when Async grows
+// a run limit, and the spec says so there instead.
+func (s *Set) DeliveryProblems() []DeliveryProblem {
+	var out []DeliveryProblem
+	for _, t := range s.Tools() {
+		switch {
+		// Silence must not become a default. A caller of a sync tool waits for an
+		// answer; a caller of an async one holds a receipt. Guessing which, on
+		// behalf of an author who said nothing, is how a caller ends up waiting
+		// forever for an answer that was never coming.
+		case t.Sync == nil && t.Async == nil:
+			out = append(out, DeliveryProblem{t.Name, "declares no delivery: say sync or async", t.Method})
+
+		// Both decider kinds are durable by definition, so an agent cannot
+		// complete inside a call. This was a comment in an example until now.
+		case t.IsAgent() && t.IsSync():
+			out = append(out, DeliveryProblem{t.Name,
+				"is an agent and declares sync: an agent is durable and cannot complete inside a call", t.Method})
+
+		// A sync tool with no budget leaves a caller no deadline but one it
+		// invented, which is the guessing this field exists to end.
+		case t.IsSync() && t.Budget() <= 0:
+			out = append(out, DeliveryProblem{t.Name,
+				"declares sync with no positive budget: a caller would have to invent a deadline", t.Method})
+		}
+	}
+	return out
 }

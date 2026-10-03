@@ -23,6 +23,12 @@ service WeatherService {
     // a policy, a log line. The method's proto full name
     // (`weather.v1.WeatherService.GetForecast`) is where the declaration LIVES
     // and is never used as identity.
-    option (garm.tool.v1.tool) = { name: "weather.v1.get_forecast" };
+    option (garm.tool.v1.tool) = {
+      name: "weather.v1.get_forecast"
+      // SYNC IS A SAFETY CLAIM, not a speed one: it says the answer comes back
+      // inside 5s AND that no policy may interpose a human. A tool that might
+      // ever need approval declares async instead.
+      sync: { budget: { seconds: 5 } }
+    };
   }
 }

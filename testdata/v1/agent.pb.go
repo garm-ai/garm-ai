@@ -148,14 +148,14 @@ const file_testdata_v1_agent_proto_rawDesc = "" +
 	"\rInvokeRequest\x12\x18\n" +
 	"\arequest\x18\x01 \x01(\tR\arequest\"'\n" +
 	"\x0eInvokeResponse\x12\x15\n" +
-	"\x06run_id\x18\x01 \x01(\tR\x05runId2\xb6\x01\n" +
-	"\x17SupportAssistantService\x12\x9a\x01\n" +
-	"\x06Invoke\x12\x1a.testdata.v1.InvokeRequest\x1a\x1b.testdata.v1.InvokeResponse\"W\x92\xb5\x18S\n" +
+	"\x06run_id\x18\x01 \x01(\tR\x05runId2\xb8\x01\n" +
+	"\x17SupportAssistantService\x12\x9c\x01\n" +
+	"\x06Invoke\x12\x1a.testdata.v1.InvokeRequest\x1a\x1b.testdata.v1.InvokeResponse\"Y\x92\xb5\x18U\n" +
 	"\x11support-assistant\x12>\n" +
 	"\x1a\n" +
 	"\x18accounts.v1.get_customer\n" +
 	" \n" +
-	"\x1epayments.v1.get_payment_statusB3Z1github.com/garm-ai/garm-ai/testdata/v1;testdatav1b\x06proto3"
+	"\x1epayments.v1.get_payment_status\"\x00B3Z1github.com/garm-ai/garm-ai/testdata/v1;testdatav1b\x06proto3"
 
 var (
 	file_testdata_v1_agent_proto_rawDescOnce sync.Once

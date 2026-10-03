@@ -472,12 +472,19 @@ whether **state outlives the call**.
 |---|---|
 | the generated client | uses it as the deadline, so no caller invents a number |
 | the tool's transport | cancels past it — the caller has given up, so the work is unread |
-| `garmctl compose` | refuses an agent whose budget is below the **largest** in its allowlist |
+| `garmctl compose` | refuses a tool declaring **neither**, an **agent declaring sync**, and a **sync with no positive budget** |
 
-The floor is the max and not the sum, deliberately: summing needs to know whether
-calls are sequential, which nothing knows until something **orders** calls. That
-is the graph, and it is a later step. An honest weak check beats a strong one
-resting on a guess.
+**A fourth check was specified here and dropped when it was implemented.** It read
+"compose refuses an agent whose budget is below the largest in its allowlist" — and
+an agent may never be `Sync`, so it has no budget, so **that check could never
+fire**. A check that cannot fail is worse than no check, because it reads as a
+guarantee. It becomes real when `Async` grows a run limit: *a run limit must be at
+least the largest budget in the allowlist.*
+
+And when it does, the floor is the **max** and not the sum, deliberately: summing
+needs to know whether calls are sequential, which nothing knows until something
+**orders** calls. That is the graph, and it is a later step. An honest weak check
+beats a strong one resting on a guess.
 
 **And declaring `Sync` declares that no human may be interposed.** Without that,
 approval policy could turn a truthful `budget: 2s` into four hours with the author

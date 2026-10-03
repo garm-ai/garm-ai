@@ -15,12 +15,18 @@ message GetPaymentStatusResponse { string status = 1; }
 
 service AccountsService {
   rpc GetCustomer(GetCustomerRequest) returns (GetCustomerResponse) {
-    option (garm.tool.v1.tool) = { name: "accounts.v1.get_customer" };
+    option (garm.tool.v1.tool) = {
+      name: "accounts.v1.get_customer"
+      sync: { budget: { seconds: 2 } }
+    };
   }
 }
 
 service PaymentsService {
   rpc GetPaymentStatus(GetPaymentStatusRequest) returns (GetPaymentStatusResponse) {
-    option (garm.tool.v1.tool) = { name: "payments.v1.get_payment_status" };
+    option (garm.tool.v1.tool) = {
+      name: "payments.v1.get_payment_status"
+      sync: { budget: { seconds: 5 } }
+    };
   }
 }

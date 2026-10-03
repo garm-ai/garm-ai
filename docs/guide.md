@@ -16,10 +16,33 @@ A tool is an RPC method carrying one option.
 ```proto
 service WeatherService {
   rpc GetForecast(GetForecastRequest) returns (GetForecastResponse) {
-    option (garm.tool.v1.tool) = { name: "weather.v1.get_forecast" };
+    option (garm.tool.v1.tool) = {
+      name: "weather.v1.get_forecast"
+      sync: { budget: { seconds: 5 } }
+    };
   }
 }
 ```
+
+### Every tool says how its answer arrives
+
+`sync` or `async`, and a tool declaring **neither is refused** — silence must not
+become a default, because a caller waiting for an answer and a caller holding a
+receipt write different code.
+
+**`async` is not about being slow.** A tool that pages a ledger for ten seconds is
+synchronous; one that takes a millisecond but may pause for a person is not. The
+axis is whether **state outlives the call**.
+
+So **`sync` is a safety claim**: it says the answer comes back inside the budget
+*and* that no policy may interpose a human. That second half is what makes the
+number honest — otherwise an approval rule could turn a truthful `5s` into four
+hours with the author doing nothing wrong. A tool that might ever need a person
+declares `async`.
+
+The budget is **required and positive**, because it exists so that no caller has to
+invent a deadline. An agent may never declare `sync` at all: both decider kinds are
+durable, so an agent cannot complete inside a call.
 
 The `name` is how everything else refers to it: an agent's allowlist, a log line,
 a policy. Choose it deliberately — it is the identity, and the proto path is not.
@@ -45,6 +68,7 @@ service TripPlannerService {
   rpc PlanTrip(PlanTripRequest) returns (PlanTripResponse) {
     option (garm.tool.v1.tool) = {
       name: "trip-planner"
+      async: {}
       agent: {
         tools: [ { name: "weather.v1.get_forecast" } ]
       }
@@ -210,6 +234,8 @@ and checked. What it refuses:
 
 | | |
 |---|---|
+| a tool declaring no delivery | *"declares no delivery: say sync or async"* |
+| an agent declaring `sync` | *"is an agent and declares sync: an agent is durable and cannot complete inside a call"* |
 | two tools claiming one name | *"two tools declare the name …"*, naming **both images** |
 | an allowlist entry naming nothing | *"… names a tool nothing in this namespace declares"* |
 | a shared contract file differing between images | *"… differs between … and …"* |

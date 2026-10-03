@@ -31,7 +31,12 @@ service TripPlannerService {
     option (garm.tool.v1.tool) = {
       name: "trip-planner"
 
-      // The presence of this block is the whole of what makes this an agent: a
+      // Async, and NOT because it is slow. A run may pause for a person, so its
+      // state outlives the call -- which is the whole axis. compose refuses an
+      // agent that declares sync, because both decider kinds are durable.
+      async: {}
+
+      // The presence of this block is the whole of what makes this an agent:
       // rund runs the call with a decider instead of a service answering it. Its absence, as in
       // weather.proto, means the service answers for itself.
       agent: {

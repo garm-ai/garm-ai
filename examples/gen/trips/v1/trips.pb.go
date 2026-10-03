@@ -122,12 +122,12 @@ const file_trips_v1_trips_proto_rawDesc = "" +
 	"\x0fPlanTripRequest\x12\x18\n" +
 	"\arequest\x18\x01 \x01(\tR\arequest\")\n" +
 	"\x10PlanTripResponse\x12\x15\n" +
-	"\x06run_id\x18\x01 \x01(\tR\x05runId2\x88\x01\n" +
-	"\x12TripPlannerService\x12r\n" +
-	"\bPlanTrip\x12\x19.trips.v1.PlanTripRequest\x1a\x1a.trips.v1.PlanTripResponse\"/\x92\xb5\x18+\n" +
+	"\x06run_id\x18\x01 \x01(\tR\x05runId2\x8a\x01\n" +
+	"\x12TripPlannerService\x12t\n" +
+	"\bPlanTrip\x12\x19.trips.v1.PlanTripRequest\x1a\x1a.trips.v1.PlanTripResponse\"1\x92\xb5\x18-\n" +
 	"\ftrip-planner\x12\x1b\n" +
 	"\x19\n" +
-	"\x17weather.v1.get_forecastB:Z8github.com/garm-ai/garm-ai/examples/gen/trips/v1;tripsv1b\x06proto3"
+	"\x17weather.v1.get_forecast\"\x00B:Z8github.com/garm-ai/garm-ai/examples/gen/trips/v1;tripsv1b\x06proto3"
 
 var (
 	file_trips_v1_trips_proto_rawDescOnce sync.Once

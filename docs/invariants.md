@@ -13,6 +13,11 @@ unenforced, in the same table, deliberately.
 |---|---|
 | A tool's identity is its `name`; the proto path is an address | `declared.TestIdentityAndAddressAreSeparateFields` — and the fixture's identity and address differ on purpose, so the test refuses to run if they are ever made equal |
 | No two tools share a name | `declared.TestFromRefusesTwoToolsWithOneName`. Not a lint rule but a precondition: `From` cannot build an index at all |
+| A tool declares a **delivery**, and silence is not a default | `declared.TestSilenceIsNotADefault`. Guessing on an author's behalf makes a caller either wait forever for an answer that was a receipt, or hold a receipt it will never redeem |
+| An **agent** may never declare `sync` | `declared.TestAnAgentDeclaringSyncIsRefused`. Both decider kinds are durable by definition, so an agent cannot complete inside a call. This was a comment in an example until the declaration could carry it |
+| A `sync` tool declares a **positive budget** | `declared.TestSyncWithoutABudgetIsRefused`, over no budget, zero and negative. The number exists so no caller invents one; omitting it leaves exactly the guessing it ends |
+| …and `Budget()` is zero for anything not sync | `declared.TestBudgetIsZeroForAnythingNotSync`, which is why a caller asks `IsSync` rather than comparing to zero |
+| The committed fixtures obey the delivery rules too | `declared.TestTheCommittedTreeDeclaresDeliveryEverywhere`, and `mise run check` / `mise run examples` in CI. A rule the fixtures are exempt from is untested against anything a human wrote |
 | A tool name is **routable**: dot-separated `[A-Za-z0-9_-]+` segments | `declared.TestAUsableNameIsAccepted` and `TestAnUnusableNameIsRefusedWithAReason`. A security rule, not a style one: `a.*.b` would be a **broker wildcard subscription receiving other tools' requests**, and NATS micro's own subject check accepts `*`. See [the decision](decisions/2026-10-03-a-tool-name-must-be-routable.md) |
 | …and the refusal says what *would have happened* | `declared.TestTheWildcardReasonSaysWhatWouldHappen`. The charset check alone already rejects `*`; the wildcard branch exists only so the message names the consequence, because a refusal that reads as fussy gets argued with |
 | An allowlist entry names a declared tool | `declared.TestAPartialTreeLeavesTheAllowlistUnresolved`, `TestTheCommittedTreeResolves`, and `mise run examples` in CI |
@@ -79,6 +84,7 @@ unenforced, in the same table, deliberately.
 
 | claim | why nothing checks it |
 |---|---|
+| A **run limit** must be at least the largest budget in an allowlist | Specified, then dropped on implementation: an agent is always async and so has no budget, making the check unfireable. It becomes real when `Async` grows a run limit. Recorded rather than silently removed, because a check that cannot fire reads as a guarantee |
 | A tool name should have the *shape* `<package>.<tool>` | Only the **charset** is enforced (see the row above). The shape is a convention in the examples; enforcing it needs a decision about what a package is that nobody has made, and the charset closes the security hole without it |
 | An agent's method name is never read | Closer than it was: the generator emits nothing for an agent, proved by `generate.TestAnAgentProducesNoGoAtAll`. Still unenforced in the direction that matters — no test asserts that *nothing anywhere* resolves an agent by method name, because the decider that would is the next step |
 | The tool option is read in exactly one place | `declared.ToolOf` is that place, and the generator calls it rather than reaching for `proto.GetExtension` itself. Nothing *checks* that a second reader does not appear. A grep test would, and is worth writing once there are three readers rather than two — the old estate's single most expensive structural bug was one idea implemented twice |

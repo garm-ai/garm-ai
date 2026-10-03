@@ -214,13 +214,15 @@ const file_testdata_v1_tools_proto_rawDesc = "" +
 	"\n" +
 	"payment_id\x18\x01 \x01(\tR\tpaymentId\"2\n" +
 	"\x18GetPaymentStatusResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status2\x83\x01\n" +
-	"\x0fAccountsService\x12p\n" +
-	"\vGetCustomer\x12\x1f.testdata.v1.GetCustomerRequest\x1a .testdata.v1.GetCustomerResponse\"\x1e\x92\xb5\x18\x1a\n" +
-	"\x18accounts.v1.get_customer2\x99\x01\n" +
-	"\x0fPaymentsService\x12\x85\x01\n" +
-	"\x10GetPaymentStatus\x12$.testdata.v1.GetPaymentStatusRequest\x1a%.testdata.v1.GetPaymentStatusResponse\"$\x92\xb5\x18 \n" +
-	"\x1epayments.v1.get_payment_statusB3Z1github.com/garm-ai/garm-ai/testdata/v1;testdatav1b\x06proto3"
+	"\x06status\x18\x01 \x01(\tR\x06status2\x89\x01\n" +
+	"\x0fAccountsService\x12v\n" +
+	"\vGetCustomer\x12\x1f.testdata.v1.GetCustomerRequest\x1a .testdata.v1.GetCustomerResponse\"$\x92\xb5\x18 \n" +
+	"\x18accounts.v1.get_customer\x1a\x04\n" +
+	"\x02\b\x022\x9f\x01\n" +
+	"\x0fPaymentsService\x12\x8b\x01\n" +
+	"\x10GetPaymentStatus\x12$.testdata.v1.GetPaymentStatusRequest\x1a%.testdata.v1.GetPaymentStatusResponse\"*\x92\xb5\x18&\n" +
+	"\x1epayments.v1.get_payment_status\x1a\x04\n" +
+	"\x02\b\x05B3Z1github.com/garm-ai/garm-ai/testdata/v1;testdatav1b\x06proto3"
 
 var (
 	file_testdata_v1_tools_proto_rawDescOnce sync.Once

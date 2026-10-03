@@ -13,6 +13,7 @@ syntax = "proto3";
 package garm.tool.v1;
 
 import "google/protobuf/descriptor.proto";
+import "google/protobuf/duration.proto";
 
 option go_package = "github.com/garm-ai/garm-ai/garm/tool/v1;toolv1";
 
@@ -65,7 +66,45 @@ message Tool {
   // answers this call** -- a service, or the platform. That is one optional
   // field, not two option types at two attachment levels.
   Agent agent = 2;
+
+  // How the answer arrives.
+  //
+  // A ONEOF, so a tool cannot forget to say -- and "forgot" must not quietly
+  // become one of them. The two are not interchangeable: a caller waiting for an
+  // answer and a caller holding a receipt write different code.
+  oneof delivery {
+    Sync sync = 3;
+    Async async = 4;
+  }
 }
+
+// Sync: the answer comes back on the reply, within a budget.
+//
+// NOT A CLAIM ABOUT BEING FAST. A tool that pages a ledger for ten seconds is
+// synchronous; one that takes a millisecond but may pause for a person is not.
+// The axis is whether STATE OUTLIVES THE CALL.
+//
+// And declaring it is a claim about SAFETY: see budget.
+message Sync {
+  // How long a caller must be prepared to wait, declared by the only party who
+  // knows -- the tool's author.
+  //
+  // DECLARING Sync DECLARES THAT NO HUMAN MAY BE INTERPOSED, and that is what
+  // makes this number honest. Approval can otherwise be attached to any call by
+  // policy, which would turn a truthful `2s` into four hours without the author
+  // doing anything wrong. A tool that might ever need a person declares Async.
+  //
+  // Required and positive: a sync tool with no budget leaves a caller no deadline
+  // to use but one it invented, which is the guessing this field exists to end.
+  google.protobuf.Duration budget = 1;
+}
+
+// Async: the call returns a reference and the state outlives it.
+//
+// Empty today. It is shaped to grow a run limit -- how long the RUN may take,
+// which is a different concept from a call's budget and arrives with the store
+// that lets a run outlive its call.
+message Async {}
 
 // What rund runs when a tool declares one.
 //
@@ -78,6 +117,8 @@ message Tool {
 // because by then it has readers: compose can refuse a Workflow declaring no
 // steps, and a declared kind can be reconciled against what is actually serving.
 // It is absent today for the reason at the top of this file, and for no other.
+// An agent may never declare Sync, and compose refuses one that does: both decider
+// kinds are durable by definition, so an agent cannot complete inside a call.
 message Agent {
   // What a run may call, and the only thing currently enforced.
   //

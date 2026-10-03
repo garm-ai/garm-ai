@@ -139,10 +139,11 @@ const file_weather_v1_weather_proto_rawDesc = "" +
 	"\x04days\x18\x02 \x01(\x05R\x04days\"R\n" +
 	"\x13GetForecastResponse\x12\x18\n" +
 	"\asummary\x18\x01 \x01(\tR\asummary\x12!\n" +
-	"\fhigh_celsius\x18\x02 \x01(\x05R\vhighCelsius2\x7f\n" +
-	"\x0eWeatherService\x12m\n" +
-	"\vGetForecast\x12\x1e.weather.v1.GetForecastRequest\x1a\x1f.weather.v1.GetForecastResponse\"\x1d\x92\xb5\x18\x19\n" +
-	"\x17weather.v1.get_forecastB>Z<github.com/garm-ai/garm-ai/examples/gen/weather/v1;weatherv1b\x06proto3"
+	"\fhigh_celsius\x18\x02 \x01(\x05R\vhighCelsius2\x85\x01\n" +
+	"\x0eWeatherService\x12s\n" +
+	"\vGetForecast\x12\x1e.weather.v1.GetForecastRequest\x1a\x1f.weather.v1.GetForecastResponse\"#\x92\xb5\x18\x1f\n" +
+	"\x17weather.v1.get_forecast\x1a\x04\n" +
+	"\x02\b\x05B>Z<github.com/garm-ai/garm-ai/examples/gen/weather/v1;weatherv1b\x06proto3"
 
 var (
 	file_weather_v1_weather_proto_rawDescOnce sync.Once
