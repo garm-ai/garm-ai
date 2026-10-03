@@ -36,7 +36,7 @@ run = """
 set -e
 mkdir -p build
 buf build -o build/image.binpb
-go run ./cmd/garm-compose images.yaml -o build/catalogue.binpb
+go run ./cmd/garmctl compose images.yaml -o build/catalogue.binpb
 """
 
 [tasks.lint]

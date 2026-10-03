@@ -126,6 +126,35 @@ Remote fetchers (`s3://`, and git tags as `https://` release assets) are step 5,
 and the digest that makes them reproducible arrives with them — because a digest
 nothing verifies is a promise that reads like a guarantee.
 
+**Step 5 — one command, `garmctl`.**
+
+```
+garmctl compose images.yaml -o build/catalogue.binpb
+```
+
+Named `garmctl` rather than `garm` because the estate this replaces publishes a
+`garm` binary; during any migration both would be on `PATH`. The module paths
+differ so Go is untroubled — a shell is not.
+
+Cobra, and the reason was not "more commands are coming". The hand-rolled parsing
+it replaced swallowed unknown flags as positional arguments, did not support
+`-o=value`, and answered `--help` with `open --help: no such file or directory` —
+it tried to read `--help` as a manifest. That is not a thin tool, it is an
+unfinished one.
+
+### Two artefacts, and the difference matters
+
+| | built by | what it is |
+|---|---|---|
+| `build/image.binpb` | `buf build` | **one repository's** protos, compiled. What a team publishes |
+| `build/catalogue.binpb` | `garmctl compose` | **the merged, verified namespace**. What a platform runs |
+
+With one image the bytes are nearly identical, which makes the distinction easy to
+miss — and it is the one that matters. An *image* is one team's output; a
+*catalogue* is many images merged with every collision check passed. It is also
+why the package is `declared` and the artefact is `catalogue`: one is the view
+over descriptors, the other is the thing that was verified.
+
 ### What is deliberately absent, and why `mode` never arrives
 
 There is no `mode`, `type` or `kind` saying which runner answers an agent. That
