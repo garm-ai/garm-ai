@@ -375,3 +375,30 @@ func TestAManifestWithNoImagesIsRefused(t *testing.T) {
 		t.Fatal("Load accepted a manifest declaring no images")
 	}
 }
+
+func TestPathStyleIsDerivedFromAnEndpointOverrideAndNotHardcoded(t *testing.T) {
+	// The guard for a fix that shipped without one. Path-style addressing is
+	// required against an S3-compatible store and deprecated against real AWS, so
+	// hardcoding either value is wrong for somebody. An earlier revision of this
+	// package hardcoded `true` because the local plane runs seaweedfs.
+	for _, tc := range []struct {
+		name string
+		env  map[string]string
+		want bool
+	}{
+		{"plain AWS: nothing set", map[string]string{}, false},
+		{"an S3-compatible store via AWS_ENDPOINT_URL",
+			map[string]string{"AWS_ENDPOINT_URL": "http://localhost:8333"}, true},
+		{"the S3-specific override",
+			map[string]string{"AWS_ENDPOINT_URL_S3": "http://localhost:8333"}, true},
+		{"an empty value is not an override",
+			map[string]string{"AWS_ENDPOINT_URL": ""}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := images.UsePathStyleForTest(func(k string) string { return tc.env[k] })
+			if got != tc.want {
+				t.Errorf("usePathStyle = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

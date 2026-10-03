@@ -177,25 +177,36 @@ func newAWS(ctx context.Context) (ObjectGetter, error) {
 	if err != nil {
 		return nil, fmt.Errorf("loading AWS config: %w", err)
 	}
-	// Path-style addressing ONLY when a custom endpoint is configured.
-	//
-	// An earlier revision hardcoded it to true, because the estate's local plane
-	// runs an S3-compatible store and virtual-host addressing does not work
-	// against one. That was a deployment-specific choice made invisibly: against
-	// real AWS, path-style is deprecated. So it is derived from the one signal
-	// that distinguishes the two cases -- AWS_ENDPOINT_URL, which the SDK reads
-	// itself and which nobody sets when talking to AWS proper.
-	//
-	// Note what this is NOT: a garm.yaml. Credentials, region and endpoint are
-	// already an environment-level concern with a standard resolution order --
-	// AWS_* variables, ~/.aws/config, instance roles. A file of our own
-	// duplicating them would be a second place to look when it does not work,
-	// and the previous estate's expensive failures were config claiming one
-	// thing while reality did another.
-	custom := os.Getenv("AWS_ENDPOINT_URL") != "" || os.Getenv("AWS_ENDPOINT_URL_S3") != ""
 	return &awsGetter{cl: s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.UsePathStyle = custom
+		o.UsePathStyle = usePathStyle(os.Getenv)
 	})}, nil
+}
+
+// usePathStyle reports whether S3 path-style addressing is wanted.
+//
+// Path-style ONLY when a custom endpoint is configured. An earlier revision
+// hardcoded it to true, because the estate's local plane runs an S3-compatible
+// store and virtual-host addressing does not work against one -- a
+// deployment-specific choice made invisibly, and wrong against real AWS where
+// path-style is deprecated. So it is derived from the one signal that separates
+// the two cases: an endpoint override, which the SDK reads itself and which
+// nobody sets when talking to AWS proper.
+//
+// A FUNCTION TAKING getenv, rather than reading the environment inline, so the
+// decision is reachable from a test. The first fix for the hardcoded value was
+// correct and untested, because `newAWS` builds a real client from the ambient
+// credential chain and there was nowhere to get at the choice. An unguarded fix
+// is one regression away from being the bug again.
+//
+// Note what this is NOT: a garm.yaml. Credentials, region and endpoint already
+// have a standard resolution order -- AWS_* variables, ~/.aws/config, instance
+// roles. A file of our own duplicating them would be a second place to look when
+// it does not work, and the previous estate's expensive failures were config
+// claiming one thing while reality did another.
+func usePathStyle(getenv func(string) string) bool {
+	// AWS_ENDPOINT_URL_S3 takes precedence in the SDK's own resolution, but
+	// either being set means somebody is pointing at something that is not AWS.
+	return getenv("AWS_ENDPOINT_URL_S3") != "" || getenv("AWS_ENDPOINT_URL") != ""
 }
 
 func (a *awsGetter) Get(ctx context.Context, bucket, key string) ([]byte, error) {

@@ -27,8 +27,8 @@ type Merged struct {
 
 // Divergent is one file path carrying different bytes in two images.
 type Divergent struct {
-	Path     string
-	URIs     [2]string
+	Path string
+	URIs [2]string
 }
 
 func (d Divergent) Error() string {
