@@ -5,6 +5,7 @@ If a field is renamed, this guide breaks in CI rather than misleading you.
 
 - `examples/proto/weather/v1/weather.proto` — a tool
 - `examples/proto/trips/v1/trips.proto` — an agent that calls it
+- `examples/weatherd/weatherd.go` — everything a tool author writes
 - `examples/images.yaml` — how they compose
 
 ## 1. A tool
@@ -58,7 +59,68 @@ cannot import it, and buf will reject the import as unused if you try: an
 allowlist cites *names*, so there is no proto-level dependency. That is precisely
 why the next step is not optional.
 
-## 3. Compose, and let it check
+## 3. Implement it, and write nothing else
+
+`buf generate` runs `protoc-gen-garm-go` over the same protos. You implement an
+interface. You write no subject, no marshalling, no registration and no error
+mapping.
+
+Generated, in `examples/gen/weather/v1/weather_garm.pb.go`:
+
+```go
+type WeatherServiceHandler interface {
+	// GetForecast answers the tool "weather.v1.get_forecast".
+	GetForecast(context.Context, *GetForecastRequest) (*GetForecastResponse, error)
+}
+
+func ServeWeatherService(r serve.Registrar, h WeatherServiceHandler) error
+```
+
+Yours, in `examples/weatherd/weatherd.go` — the whole file, minus imports:
+
+```go
+type Service struct{}
+
+func (Service) GetForecast(_ context.Context, in *weatherv1.GetForecastRequest) (*weatherv1.GetForecastResponse, error) {
+	if in.GetPlace() == "" {
+		return nil, fmt.Errorf("place is required")
+	}
+	days := in.GetDays()
+	if days == 0 {
+		days = 1
+	}
+	return &weatherv1.GetForecastResponse{
+		Summary:     fmt.Sprintf("%d day(s) over %s: clear", days, in.GetPlace()),
+		HighCelsius: 21,
+	}, nil
+}
+
+var _ weatherv1.WeatherServiceHandler = Service{}
+```
+
+Four things that follow.
+
+**There is no `Unimplemented` embed.** Add a tool to the `.proto`, forget to
+implement it, and the build fails. The grpc-go generator embeds one: that buys
+source compatibility and pays for it with half-implemented services which start
+cleanly and answer `Unimplemented` to a real caller.
+
+**The tool's name is nowhere in your code.** It is in the `.proto`, the generator
+read it there, and `ServeWeatherService` mounts it. One place, one spelling — a
+handler that named itself would be the second.
+
+**You return a plain `error`.** No status codes: the transport maps them, and a
+tool author choosing one would be choosing one per transport.
+
+**An agent gets no interface.** `trips.proto` declares only an agent, so
+`buf generate` produces `trips.pb.go` and no `trips_garm.pb.go`. A runner answers
+it, so a handler method would be one you must never implement — and implementing
+it would put a second answerer on the subject.
+
+The last line is what makes this an example rather than a claim: it is compiled by
+`mise run ci`, so renaming the method in the `.proto` breaks this package.
+
+## 4. Compose, and let it check
 
 ```yaml
 # examples/images.yaml
@@ -90,7 +152,7 @@ and checked. What it refuses:
 Try it: rename `weather.v1.get_forecast` and run `mise run examples`. The agent's
 allowlist stops resolving, and the error names the image to look in.
 
-## 4. Images from elsewhere
+## 5. Images from elsewhere
 
 `file://` is one of three schemes.
 
@@ -117,7 +179,12 @@ of our own duplicating that.
 
 ## What does not exist yet
 
-Nothing runs these tools. There is no gateway, no runner, no clearance,
-compartments, verbs, tool sets or approvals. Those are real and most are coming —
+**Nothing implements `serve.Registrar`**, so nothing mounts the handler you just
+wrote — that is the next step, and it is why the interface takes a Registrar
+rather than a connection: the generated code names no broker and will not be
+regenerated when one arrives.
+
+There is also no gateway, no runner, no clearance, compartments, verbs, tool sets
+or approvals. Those are real and most are coming —
 they are absent because nothing enforces them yet, and a declaration nothing acts
 on is a promise the platform breaks silently.

@@ -22,16 +22,42 @@ unenforced, in the same table, deliberately.
 | A digest is verified *before* unmarshalling | `images.TestAWrongDigestIsRefusedBeforeUnmarshalling`, which asserts the error does **not** mention `FileDescriptorSet` |
 | An unsupported scheme names the ones that work | `images.TestAnUnsupportedSchemeNamesTheOnesThatWork` |
 | The S3 path-style choice is derived, not hardcoded | `images.TestPathStyleIsDerivedFromAnEndpointOverrideAndNotHardcoded`, proved failing in **both** directions because either hardcoded value is wrong for somebody |
-| The committed generated Go matches the protos | `mise run gen-check` |
+| The committed generated Go matches the protos | `mise run gen-check`, which compares `git status --porcelain`. It used `git diff --exit-code`, which cannot see an **untracked** file — so it passed vacuously for generated code that was new, which is exactly the case it exists to catch |
 | The examples in `docs/guide.md` still compose | `mise run examples` — the guide walks through those exact files |
+
+### The generator
+
+| invariant | kept true by |
+|---|---|
+| A tool author implements an interface, and an unimplemented tool fails to **compile** | The `var _ <Service>Handler = …` assignments in `internal/generate/generate_test.go` and `examples/weatherd/weatherd.go`. The assignment *is* the check: stop emitting a method and those files stop building, which is what a tool author's build does |
+| …and the interface holds no method no tool declares | `generate.TestTheHandlerHasExactlyTheDeclaredTools`. The assignments above prove nothing is missing; only this notices a method the generator invented, which an author would then implement for no reason |
+| `Serve` mounts the declared **name**; the proto full name is passed only as an address | `generate.TestServeMountsTheDeclaredNameNotTheMethodName`, whose fixture's name and method deliberately disagree |
+| An agent produces no generated Go at all | `generate.TestAnAgentProducesNoGoAtAll` — and visibly in the tree: `examples/gen/trips/v1/` holds `trips.pb.go` and no `_garm.pb.go` |
+| Generated code imports an **exact** set of four packages | `generate.TestGeneratedCodeImportsOnlyWhatItNeeds`. An exact set, not a denylist: the old estate's generator grew a card renderer, a contracts package and a `sync.Map` one defensible commit at a time, and every consumer inherited all of it |
+| Two tools in one plugin run claiming one name are refused | `generate.TestTwoToolsInOneRunClaimingOneNameAreRefused`, through the same `declared.FromFiles` that `garmctl compose` uses — one implementation, two set sizes |
+| A streaming tool is refused with a reason | `generate.TestAStreamingToolIsRefusedWithASentence` |
+| An RPC carrying no tool option gets no glue | `generate.TestAMethodWithNoToolOptionProducesNothing` |
+| A nil response with a nil error never reaches a caller as success | `generate.TestTheMountedHandlerRefusesANilResponseWithNoError`. Marshalling a nil message yields an **empty** one, which is indistinguishable from an answer |
+| A mounted handler refuses a request of the wrong type, naming the tool | `generate.TestTheMountedHandlerRefusesTheWrongRequestType` |
+| `Serve` returns on the registrar's first failure | `generate.TestServeStopsOnTheFirstRegistrarFailure` |
 
 ## Not enforced, and said so
 
 | claim | why nothing checks it |
 |---|---|
 | A tool name should be `<package>.<tool>` | A convention in the examples only. Nothing validates the shape — only that names are unique. Enforcing it would need a decision about what a legal name is, which nobody has made |
-| An agent's method name is never read | True by construction today: `declared` reads the option off any method. No test asserts that *nothing else* reads it, because there is nothing else yet. When a runner arrives, this needs a real test |
+| An agent's method name is never read | Closer than it was: the generator emits nothing for an agent, proved by `generate.TestAnAgentProducesNoGoAtAll`. Still unenforced in the direction that matters — no test asserts that *nothing anywhere* resolves an agent by method name, because the runner that would is the next step |
+| The tool option is read in exactly one place | `declared.ToolOf` is that place, and the generator calls it rather than reaching for `proto.GetExtension` itself. Nothing *checks* that a second reader does not appear. A grep test would, and is worth writing once there are three readers rather than two — the old estate's single most expensive structural bug was one idea implemented twice |
+| Generated code never grows a transport dependency | The import-set test above is the enforcement for what is emitted. What it cannot say is that `serve` itself stays transport-free: today it imports only `context` and two protobuf packages, and nothing fails if a broker is added to it |
 | A service name should end in `Service` | buf's `SERVICE_SUFFIX`, which `mise run lint` does enforce — but whether an **agent** should be named that way is undecided. An agent is a named actor rather than an RPC service. The fixture and examples comply rather than waive the rule, and the decision is still open |
+
+## A note on the two fixture trees
+
+Rows naming `declared.*` and `generate.*` tests run against `testdata/`, which is
+deliberately **ugly** — its agent's identity and address disagree, and its RPC is
+called `Invoke`. Rows naming `mise run examples` run against `examples/`, which is
+deliberately **exemplary** and is two buf modules rather than one. Neither can
+replace the other; the README says why.
 
 ## How to add a row
 

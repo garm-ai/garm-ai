@@ -48,6 +48,31 @@ Point 3 is not style. Four tests in the old estate passed while the behaviour
 they covered was broken, and all four had fixtures that could not express the
 failure.
 
+## Two fixture trees, and why both
+
+Asked, reasonably, on the step that generated code from both. They are not two
+copies of one idea.
+
+| | `proto/testdata/` → `testdata/v1/` | `examples/` |
+|---|---|---|
+| exists to express | **failures** | **the guide** |
+| so its names are | deliberately **ugly** | deliberately **exemplary** |
+| buf modules | one, inside this repo's own image | **two**, modelling two repositories |
+| read by | `declared` and `internal/generate` tests | a human following `docs/guide.md` |
+| in `go build ./...` | no — Go excludes `testdata/` | yes |
+
+The fixture's value is precisely that it does what the guide forbids: its agent's
+identity is `support-assistant` while its address is
+`testdata.v1.SupportAssistantService.Invoke` — mismatched on purpose, so code that
+confuses one for the other fails a test rather than failing in production three
+services away — and its RPC is called `Invoke` with an `InvokeRequest`, which is
+the naming the examples argue against. A tree cannot be both the bad example and
+the good one, and the examples cannot be one module, because being two is the
+thing they demonstrate.
+
+Honest caveat: they now have the same *shape* — a tool service plus an agent. If a
+third fixture shape appears, that is the moment to check whether one can go.
+
 ## Steps so far
 
 **Step 1 — an agent declares a name and the tools it may call.** Superseded in
@@ -226,6 +251,44 @@ runners or agent types exist. A `mode` field would hand it that knowledge for
 nothing — and under the rule above it has no enforcer, because nothing reads it
 if routing is registration.
 
+**Step 7 — a generator, so a tool author implements an interface and nothing else.**
+
+`protoc-gen-garm-go`, invoked by `buf generate`. Per service with at least one
+tool it emits a handler interface, a `Serve<Service>` and the list of names that
+service answers. 102 lines for two tools; the estate it replaces emitted 230 for
+one, because cards were welded into the generator later and every consumer
+repository inherited the lot, regenerated, forever.
+
+So the rule, enforced by a test rather than stated: **the generator carries no
+policy opinion, and its output imports an exact set of four packages.** Widening
+that set is the decision to add a dependency to every consumer repository, and it
+takes a failing test to make.
+
+Three things it refuses or omits, none of which a committed artefact can show
+because a correct generator produces none of them:
+
+- **An agent gets no generated Go at all.** `examples/proto/trips` produces
+  `trips.pb.go` and no `trips_garm.pb.go` — a runner answers it, so a handler
+  method would be one nobody may implement. The rule is visible in the tree.
+- **Two tools in one plugin run claiming one name are refused**, through the same
+  `declared` code `garmctl compose` uses, over the smaller set a plugin can see.
+  The generator is **not** the uniqueness gate and cannot be: buf invokes it per
+  module, and naming the two **images** a collision came from needs the provenance
+  only compose holds.
+- **A streaming tool is refused with a sentence.** Emitted, it would fail to
+  compile and the author would read a type error about `proto.Message` instead of
+  the reason.
+
+Deferred deliberately: no `DescriptorHash` and no `ContractVersion` constant. The
+old generator stamped both; the hash is worth having and needs its own definition
+of wire shape plus a golden test that proves it moves on a field change and holds
+on a comment change. That is a step, not a side effect of this one.
+
+A thing this step found: `gen-check` was **green and blind**. It used
+`git diff --exit-code`, which cannot see an untracked file — so it would have
+passed for generated code that was *new*, which is exactly the case it exists to
+catch. It compares `git status --porcelain` now.
+
 ## What is deliberately absent
 
 No clearance, compartments, verbs, tool sets, principal ceiling, bounds, model,
@@ -250,5 +313,6 @@ proto, with a reason, in the config. Until then **the fixture bends, not the
 ruleset** — because a lint nobody honours is worse than no lint, since it reads
 as a guarantee.
 
-`mise run ci` — lint, a check that the committed generated Go matches the protos,
-and the tests.
+`mise run ci` — lint and `go vet`, a check that the committed generated Go matches
+the protos, the declaration check, the examples composed as two repositories, and
+the tests.

@@ -80,14 +80,40 @@ type Set struct {
 // "needs a lint rule"; it is not a rule, it is a precondition for indexing, and
 // putting it here means no separate check can be forgotten or skipped.
 func From(files *protoregistry.Files) (*Set, error) {
-	s := &Set{byName: map[string]Tool{}}
-	var dup error
+	var fds []protoreflect.FileDescriptor
 	files.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
+		fds = append(fds, fd)
+		return true
+	})
+	// Sorted because RangeFiles does not promise an order, and a DuplicateName
+	// names a First and a Second. Without this, which of two colliding
+	// declarations is called "first" varies between runs of the same check --
+	// and a diagnostic that moves is one nobody trusts.
+	sort.Slice(fds, func(i, j int) bool { return fds[i].Path() < fds[j].Path() })
+	return FromFiles(fds)
+}
+
+// FromFiles indexes every tool declaration in fds, in the order given.
+//
+// This is the entry point for a caller that already holds descriptors and no
+// registry -- a protoc plugin, which is handed exactly the files of one compile
+// unit. It is the SAME indexing From performs, rather than a second
+// implementation of it, because the duplicate-name rule has to mean the same
+// thing to the generator and to compose. The estate this replaces had one idea
+// implemented twice and a tree that linted clean then failed at load.
+//
+// What it CANNOT do is see beyond fds. A plugin run over one directory does not
+// know what the rest of a composed set declares, so a Set built here answers
+// "do these files hold a collision?" and never "is this name unique?". That
+// second question belongs to whatever holds every image, and only there.
+func FromFiles(fds []protoreflect.FileDescriptor) (*Set, error) {
+	s := &Set{byName: map[string]Tool{}}
+	for _, fd := range fds {
 		for i := 0; i < fd.Services().Len(); i++ {
 			sd := fd.Services().Get(i)
 			for j := 0; j < sd.Methods().Len(); j++ {
 				md := sd.Methods().Get(j)
-				t, ok := toolOf(md)
+				t, ok := ToolOf(md)
 				if !ok {
 					continue
 				}
@@ -98,26 +124,27 @@ func From(files *protoregistry.Files) (*Set, error) {
 					// therefore two teams -- which only a caller holding the
 					// merge's provenance can say. Structured here, presented at
 					// the edge.
-					dup = &DuplicateName{Name: t.Name, First: prev.Method, Second: t.Method}
-					return false
+					return nil, &DuplicateName{Name: t.Name, First: prev.Method, Second: t.Method}
 				}
 				s.byName[t.Name] = t
 			}
 		}
-		return true
-	})
-	if dup != nil {
-		return nil, dup
 	}
 	return s, nil
 }
 
-// toolOf reads the option off a method descriptor -- the way every real
-// consumer must, rather than from a struct a caller filled in. A tool with an
-// empty name is treated as no declaration at all: a name is the one thing a
-// tool cannot be useful without, and silently indexing "" would make every
-// such tool collide with every other.
-func toolOf(md protoreflect.MethodDescriptor) (Tool, bool) {
+// ToolOf reads the option off a method descriptor -- the way every real consumer
+// must, rather than from a struct a caller filled in.
+//
+// Exported because it is the ONLY place the option is read. A generator, a
+// linter and a gateway each need the answer, and the moment a second one reaches
+// for proto.GetExtension itself they can disagree about what counts as a
+// declaration. They disagree here or not at all.
+//
+// A tool with an empty name is treated as no declaration at all: a name is the
+// one thing a tool cannot be useful without, and silently indexing "" would make
+// every such tool collide with every other.
+func ToolOf(md protoreflect.MethodDescriptor) (Tool, bool) {
 	ext := proto.GetExtension(md.Options(), toolv1.E_Tool)
 	tool, ok := ext.(*toolv1.Tool)
 	if !ok || tool == nil || tool.GetName() == "" {

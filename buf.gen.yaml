@@ -5,3 +5,9 @@ plugins:
   - remote: buf.build/protocolbuffers/go
     out: .
     opt: paths=source_relative
+  # Invoked as `go run` rather than an installed binary so that a checkout needs
+  # no install step and cannot generate with a stale one. A consumer in another
+  # repository names the released binary here instead.
+  - local: ["go", "run", "./cmd/protoc-gen-garm-go"]
+    out: .
+    opt: paths=source_relative

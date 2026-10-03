@@ -12,19 +12,34 @@ GOWORK = "off"
 
 [tasks.gen]
 description = "Regenerate the Go from the protos"
-run = "buf generate"
+# Two templates, because examples/proto is its own buf module and the examples
+# exist to model two repositories each generating their own.
+run = """
+set -e
+buf generate
+buf generate --template buf.gen.examples.yaml
+"""
 
 [tasks."gen-check"]
 description = "Fail if the committed generated Go is not what the protos produce"
 # The generated code is committed, so a reader sees what the options compile to
 # without running buf. That is only true if something checks the two agree.
+# `git status --porcelain`, NOT `git diff --exit-code`. git diff cannot see an
+# untracked file, so the previous form passed vacuously for generated code that
+# was NEW -- which is precisely the case a check like this exists to catch, and
+# precisely what the first run of protoc-gen-garm-go produced. It was green and
+# blind at the same time.
 run = """
 set -e
 buf generate
-git diff --exit-code -- garm/ || {
-  echo "generated Go is stale: run 'mise run gen' and commit the result" >&2
+buf generate --template buf.gen.examples.yaml
+dirty="$(git status --porcelain -- garm/ testdata/ examples/gen/)"
+if [ -n "$dirty" ]; then
+  echo "$dirty" >&2
+  echo "the committed tree is not what the protos produce." >&2
+  echo "If you just ran 'mise run gen', the files above are its output -- commit them." >&2
   exit 1
-}
+fi
 """
 
 [tasks.check]
@@ -57,8 +72,12 @@ go run ./cmd/garmctl compose examples/images.yaml
 """
 
 [tasks.lint]
-description = "buf lint"
-run = "buf lint"
+description = "buf lint and go vet"
+run = """
+set -e
+buf lint
+go vet ./...
+"""
 
 [tasks.test]
 description = "go test"

@@ -1,0 +1,17 @@
+# The examples, generated separately because examples/proto is its own buf module.
+#
+# Separate on purpose: the examples exist to model TWO REPOSITORIES each
+# publishing one image, and a single template with both inputs would merge them
+# into one output tree, which is the arrangement they exist to show is not
+# required. The template is the second half of that -- the tool's repository and
+# the agent's repository each run their own `buf generate`.
+version: v2
+inputs:
+  - directory: examples/proto
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: examples/gen
+    opt: paths=source_relative
+  - local: ["go", "run", "./cmd/protoc-gen-garm-go"]
+    out: examples/gen
+    opt: paths=source_relative
