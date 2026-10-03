@@ -1,0 +1,53 @@
+# CI exists to run `mise run ci` somewhere that is not a laptop.
+#
+# That is the whole job, and the failures it is for are specific: the toolchain
+# resolving at all (mise.toml pins go 1.26 and buf 1), `buf generate` reaching the
+# remote Go plugin, `go run ./cmd/protoc-gen-garm-go` working from a cold module
+# cache, and GOWORK=off taking effect where no go.work exists to mask it. Every one
+# of those passes on a machine that has already done it once.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # The toolchain comes from mise.toml and nowhere else. No setup-go here: a
+      # second place naming a Go version is a second place for it to disagree,
+      # which is the shape of the failure that took the previous estate's plane
+      # offline -- a tree compiled against one version while declaring another.
+      - uses: jdx/mise-action@v2
+
+      - name: Cache the Go module and build caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-${{ runner.os }}-${{ hashFiles('go.sum') }}
+          restore-keys: go-${{ runner.os }}-
+
+      # lint and vet, that the committed generated Go is what the protos produce,
+      # the declaration check, the examples composed as two repositories, and the
+      # tests with -race.
+      - run: mise run ci
+
+      # `mise run ci` regenerates in order to compare, so a failure of its
+      # gen-check leaves the difference in the working tree. Printing it turns "the
+      # generated Go is stale" into the actual diff, without a second local run.
+      - name: What differed, if anything did
+        if: failure()
+        run: git --no-pager diff --stat && git --no-pager diff
