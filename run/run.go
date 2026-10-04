@@ -33,9 +33,11 @@ type Headers struct {
 	Causation string
 	// Message identifies this call. Always minted by the sender.
 	Message string
-	// Traceparent is W3C trace context, carried verbatim. A latency trace and a
-	// correlation id are different things: a trace is sampled, and an audit trail
-	// with a sampling rate is not one.
+	// Traceparent is the W3C trace context as it ARRIVED, recorded for the audit
+	// trail. It is not what the transport forwards: rundsvc propagates its own
+	// span from ctx, so the tool is this hop's child. A latency trace and a
+	// correlation id are different things: a trace may be sampled, and an audit
+	// trail with a sampling rate is not one.
 	Traceparent string
 	// Idempotency, when supplied, becomes the run id so that a retry is the same
 	// run rather than a second one.

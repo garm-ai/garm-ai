@@ -14,12 +14,18 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/micro"
 	"github.com/nats-io/nkeys"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
+	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/serve"
 )
@@ -65,17 +71,43 @@ func CallerFromSubject(subject string) (account string, ok bool) {
 	return parts[3], true
 }
 
-// withCaller is what every handler does first: learn who called, say so, and put
-// it where the engine can reach it. Nothing uses it yet beyond the log line; this
-// slice establishes identity and makes no decision with it (spec §0).
-func withCaller(e *run.Engine, r micro.Request, op string) context.Context {
+// withCaller is what every handler does first: continue the caller's trace, learn
+// who called, say so, and put it where the engine can reach it. Nothing decides
+// anything with the identity yet; this slice establishes it (identity spec §0).
+//
+// The trace is CONTINUED -- the span opened here is a child of whatever the
+// envelope carried -- and that is correlation, never attribution: the caller
+// chose that id. Attribution is the account key, and it comes from the subject
+// the server rewrote (observability spec §1.2). A malformed traceparent is
+// rejected by the propagator and a fresh trace begins, with the caller set as
+// always.
+func withCaller(e *run.Engine, r micro.Request, op string) (context.Context, trace.Span) {
+	ctx := otel.GetTextMapPropagator().Extract(context.Background(), observe.HeaderCarrier(r.Headers()))
+	ctx, span := observe.Tracer().Start(ctx, "garm.run."+op, trace.WithSpanKind(trace.SpanKindServer))
 	acc, ok := CallerFromSubject(r.Subject())
 	if !ok {
-		e.Log.Warn("a call arrived without a caller account in its subject", "op", op, "subject", r.Subject())
-		return context.Background()
+		e.Log.WarnContext(ctx, "a call arrived without a caller account in its subject", "op", op, "subject", r.Subject())
+		return ctx, span
 	}
-	e.Log.Info(op, "caller", acc)
-	return context.WithValue(context.Background(), CallerKey{}, acc)
+	span.SetAttributes(observe.KeyCaller.String(acc))
+	e.Log.InfoContext(ctx, op, "caller", acc)
+	return context.WithValue(ctx, CallerKey{}, acc), span
+}
+
+// record closes out an invocation on the span and the counter. The caller
+// attribute is read back off the context so the counter and the span agree, and
+// it is ABSENT -- not empty -- when there is none.
+func record(ctx context.Context, span trace.Span, tool string, err error) {
+	kind := observe.Kind(err)
+	attrs := []attribute.KeyValue{observe.KeyTool.String(tool), observe.KeyKind.String(kind)}
+	if acc, ok := ctx.Value(CallerKey{}).(string); ok && acc != "" {
+		attrs = append(attrs, observe.KeyCaller.String(acc))
+	}
+	span.SetAttributes(observe.KeyKind.String(kind))
+	if err != nil {
+		span.SetStatus(codes.Error, kind)
+	}
+	observe.Instruments().RunInvocations.Add(ctx, 1, metric.WithAttributes(attrs...))
 }
 
 // Headers carrying the envelope.
@@ -104,26 +136,40 @@ func Serve(svc *natsmicro.Service, e *run.Engine) error {
 }
 
 func invoke(e *run.Engine, r micro.Request) {
+	ctx, span := withCaller(e, r, "invoke")
+	defer span.End()
 	var req runv1.InvokeRequest
 	if err := proto.Unmarshal(r.Data(), &req); err != nil {
-		reply(r, serve.Wire(serve.Invalid("the request could not be read as garm.run.v1.InvokeRequest"), ""))
+		unreadable := serve.Invalid("the request could not be read as garm.run.v1.InvokeRequest")
+		reply(r, serve.Wire(unreadable, ""))
+		record(ctx, span, "", unreadable)
 		return
 	}
-	resp, failure := e.Invoke(withCaller(e, r, "invoke"), &req, headersOf(r))
+	h := headersOf(r)
+	span.SetAttributes(observe.KeyTool.String(req.GetTool()), observe.KeyIdempotencyKey.String(h.Idempotency))
+	resp, failure := e.Invoke(ctx, &req, h)
 	if failure != nil {
 		reply(r, failure)
+		// The run id is the error's id (run.Engine.fail), so it is known here.
+		span.SetAttributes(observe.KeyRunID.String(failure.GetId()))
+		record(ctx, span, req.GetTool(), &serve.Error{Kind: failure.GetKind()})
 		return
 	}
+	span.SetAttributes(observe.KeyRunID.String(resp.GetRunId()))
+	record(ctx, span, req.GetTool(), nil)
 	respond(r, resp)
 }
 
 func fetch(e *run.Engine, r micro.Request) {
+	ctx, span := withCaller(e, r, "fetch")
+	defer span.End()
 	var req runv1.FetchRequest
 	if err := proto.Unmarshal(r.Data(), &req); err != nil {
 		reply(r, serve.Wire(serve.Invalid("the request could not be read as garm.run.v1.FetchRequest"), ""))
 		return
 	}
-	resp, failure := e.Fetch(withCaller(e, r, "fetch"), &req)
+	span.SetAttributes(observe.KeyRunID.String(req.GetRunId()))
+	resp, failure := e.Fetch(ctx, &req)
 	if failure != nil {
 		reply(r, failure)
 		return
@@ -183,7 +229,10 @@ func (t ToolCaller) Call(ctx context.Context, tool string, input []byte, budget 
 	set(m, HeaderCausation, h.Causation)
 	set(m, HeaderMessage, h.Message)
 	set(m, HeaderIdempotency, h.Idempotency)
-	set(m, HeaderTraceparent, h.Traceparent)
+	// RUND's span context, not the caller's forwarded header: the tool is a child
+	// of this hop. With no span on ctx the propagator injects nothing, and a
+	// header the propagator rejected is not passed on either.
+	otel.GetTextMapPropagator().Inject(ctx, observe.HeaderCarrier(m.Header))
 
 	timeout := budget
 	if timeout <= 0 {
