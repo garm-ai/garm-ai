@@ -42,6 +42,7 @@ alternative was considered.
 | [Errors carry a kind, and leave the cause at home](2026-10-03-errors-carry-a-kind-and-leave-the-cause-home.md) | active | five kinds, not HTTP codes; safe by default |
 | [rund's durability is a framework's job, not ours](2026-10-03-durability-is-a-framework-not-ours.md) | active | DBOS behind a port; NATS-only was built, probed and rejected on evidence |
 | [A tool name must be routable, and that is a security rule](2026-10-03-a-tool-name-must-be-routable.md) | active | `a.*.b` would be a broker wildcard receiving other tools' calls |
+| [The bus is the authorization boundary](2026-10-04-the-bus-is-the-authorization-boundary.md) | active | operator mode; permissions derived from the catalogue; the caller's account placed in the subject by the server; four things the build corrected in the spec |
 | [Service naming, deliberately deferred](2026-10-03-service-naming-deferred.md) | **parked** | buf's STANDARD lint against the domain, twice |
 
 ## Why not "ADR"
