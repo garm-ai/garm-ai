@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nats-io/nats.go"
+	"go.opentelemetry.io/otel/attribute"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/protobuf/proto"
 
@@ -113,6 +114,18 @@ func TestRundsLogLineCarriesTheTraceID(t *testing.T) {
 	if !strings.Contains(e.RundLog(), want) {
 		t.Fatalf("rund's log lacks %s:\n%s", want, e.RundLog())
 	}
+	// Not only rundsvc's thin "invoke caller=" line: the ENGINE's line -- the one
+	// with the run id, the correlation id and the catalogue -- is the one an
+	// operator reads, and it must be joined too.
+	var engineLine string
+	for _, line := range strings.Split(e.RundLog(), "\n") {
+		if strings.Contains(line, "msg=invoked") {
+			engineLine = line
+		}
+	}
+	if engineLine == "" || !strings.Contains(engineLine, want) {
+		t.Fatalf("the engine's 'invoked' line is not joined to the trace: %q", engineLine)
+	}
 }
 
 // Property 4: one successful call increments both counters by one, with the kind.
@@ -149,6 +162,20 @@ func TestNoSpanAttributeCarriesThePayload(t *testing.T) {
 				t.Errorf("span %s attribute %s carries the payload", s.Name(), a.Key)
 			}
 		}
+	}
+	// The shipped log records too -- body and attributes. The guarantee is about
+	// what the ENVELOPE puts there; a tool author's own error text is theirs, and
+	// the guide says so.
+	for _, r := range e.Recorder().Logs() {
+		if strings.Contains(r.Body().Emit(), sentinel) {
+			t.Errorf("a shipped log body carries the payload: %s", r.Body())
+		}
+		r.WalkAttributes(func(kv attribute.KeyValue) bool {
+			if strings.Contains(kv.Value.Emit(), sentinel) {
+				t.Errorf("shipped log attribute %s carries the payload", kv.Key)
+			}
+			return true
+		})
 	}
 }
 

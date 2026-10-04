@@ -9,6 +9,9 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
+
+	"go.opentelemetry.io/otel"
 
 	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/observe/otlp"
@@ -95,13 +98,86 @@ func TestTheStandardVariablesReachTheBackendAndTheValueIsNotLogged(t *testing.T)
 	}
 }
 
-// Review focus 2: OTEL_SDK_DISABLED wins over an endpoint.
-func TestDisabledMeansNoExporterAndSaysSo(t *testing.T) {
+// Review focus 2: OTEL_SDK_DISABLED is the standard OFF switch, and off means
+// off -- no exporter, no SDK, no span ids, and nothing added to the wire. A
+// process that merely has no endpoint still traces (ids join three processes'
+// stdout); a process that was told to be quiet installs nothing.
+func TestDisabledMeansNoSDKAtAll(t *testing.T) {
 	log, _ := start(t, map[string]string{
 		"OTEL_EXPORTER_OTLP_ENDPOINT": "http://127.0.0.1:1/api/garm",
 		"OTEL_SDK_DISABLED":           "true",
 	})
 	if !strings.Contains(log, "exporter=none") || !strings.Contains(log, "disabled=true") {
 		t.Fatalf("startup line: %s", log)
+	}
+	ctx, span := observe.Tracer().Start(context.Background(), "probe")
+	defer span.End()
+	if span.SpanContext().IsValid() {
+		t.Fatal("disabled, yet a span got an id: the SDK was installed")
+	}
+	h := observe.HeaderCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, h)
+	if len(h) != 0 {
+		t.Fatalf("disabled, yet the propagator wrote %v to the wire", h.Keys())
+	}
+}
+
+// A deployment that sets only the signal-specific variable -- the form most
+// collector documentation shows -- must not be told exporter=none and shipped
+// nothing. The signal-specific endpoint is used as given, no suffix appended.
+func TestASignalSpecificEndpointIsHonoured(t *testing.T) {
+	var mu sync.Mutex
+	var paths []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		paths = append(paths, r.URL.Path)
+		mu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
+
+	log, stop := start(t, map[string]string{"OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": srv.URL + "/custom/traces"})
+	if !strings.Contains(log, "exporter=otlp") || !strings.Contains(log, "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") {
+		t.Fatalf("startup line: %s", log)
+	}
+	_, span := observe.Tracer().Start(context.Background(), "probe")
+	span.End()
+	if err := stop(context.Background()); err != nil {
+		t.Fatalf("stop: %v", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	for _, p := range paths {
+		if p == "/custom/traces" {
+			return
+		}
+	}
+	t.Fatalf("no request reached /custom/traces; paths were %v", paths)
+}
+
+// A dead backend must not turn a clean shutdown into a hang: the exporters retry
+// for up to a minute by default, and a SIGTERM'd process that sits in its flush
+// past the orchestrator's grace period is killed and looks hung. stop is bounded.
+func TestStopIsBoundedAgainstADeadBackend(t *testing.T) {
+	// A handler that never answers while the test runs, and lets go at teardown
+	// -- otherwise httptest's Close waits on it forever and the hang moves from
+	// the code under test into the test.
+	released := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+		case <-released:
+		}
+	}))
+	t.Cleanup(srv.Close)
+	t.Cleanup(func() { close(released); srv.CloseClientConnections() })
+
+	_, stop := start(t, map[string]string{"OTEL_EXPORTER_OTLP_ENDPOINT": srv.URL + "/api/garm"})
+	_, span := observe.Tracer().Start(context.Background(), "probe")
+	span.End()
+	began := time.Now()
+	_ = stop(context.Background()) // an error is fine; a hang is not
+	if took := time.Since(began); took > otlp.FlushTimeout+3*time.Second {
+		t.Fatalf("stop took %v against a dead backend; the bound is %v", took, otlp.FlushTimeout)
 	}
 }

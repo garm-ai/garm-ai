@@ -41,15 +41,20 @@ func main() {
 		log.Error("observability", "error", err)
 		os.Exit(1)
 	}
-	defer stop(context.Background())
-	// Every value, defaults included, so nobody has to guess which one is in force.
-	log.Info("starting", "nats", *url, "creds", *creds, "tls_ca", *ca, "name", *name, "version", *version, "health", *health)
-
-	if err := run(*url, natsconn.Options{Creds: *creds, CA: *ca}, *name, *version, *health, log); err != nil {
-		log.Error("stopped", "error", err)
-		os.Exit(1)
-	}
-	log.Info("stopped cleanly")
+	// Flushed before EVERY exit, the failing one included -- a deferred stop does
+	// not run through os.Exit, and "stopped: <error>" is the line worth shipping.
+	code := func() int {
+		// Every value, defaults included, so nobody has to guess which one is in force.
+		log.Info("starting", "nats", *url, "creds", *creds, "tls_ca", *ca, "name", *name, "version", *version, "health", *health)
+		if err := run(*url, natsconn.Options{Creds: *creds, CA: *ca}, *name, *version, *health, log); err != nil {
+			log.Error("stopped", "error", err)
+			return 1
+		}
+		log.Info("stopped cleanly")
+		return 0
+	}()
+	_ = stop(context.Background())
+	os.Exit(code)
 }
 
 func run(url string, conn natsconn.Options, name, version, health string, log *slog.Logger) error {

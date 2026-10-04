@@ -49,20 +49,26 @@ func main() {
 		log.Error("observability", "error", err)
 		os.Exit(1)
 	}
-	defer stop(context.Background())
-	// Every value, defaults included, so nobody has to guess which one is in force.
-	log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
-		"name", *name, "version", *version, "callers", *callers, "health", *health, "run_store", "none")
-
-	if *catURI == "" {
-		log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
-		os.Exit(2)
-	}
-	if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, log); err != nil {
-		log.Error("stopped", "error", err)
-		os.Exit(1)
-	}
-	log.Info("stopped cleanly")
+	// Flushed before EVERY exit, the failing ones included: "no catalogue" and
+	// "stopped: <error>" are exactly the lines an operator wants shipped, and a
+	// deferred stop does not run through os.Exit.
+	code := func() int {
+		// Every value, defaults included, so nobody has to guess which one is in force.
+		log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
+			"name", *name, "version", *version, "callers", *callers, "health", *health, "run_store", "none")
+		if *catURI == "" {
+			log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
+			return 2
+		}
+		if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, log); err != nil {
+			log.Error("stopped", "error", err)
+			return 1
+		}
+		log.Info("stopped cleanly")
+		return 0
+	}()
+	_ = stop(context.Background())
+	os.Exit(code)
 }
 
 func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version, callersPath, health string, log *slog.Logger) error {

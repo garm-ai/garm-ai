@@ -273,6 +273,11 @@ if err := upstream(ctx); err != nil {
 `NOT_FOUND`, `DENIED`, `UNAVAILABLE`, `INTERNAL` — and `UNAVAILABLE` is the only
 one that tells a caller retrying is worth it.
 
+One thing *does* leave the process: the cause chain is logged with the id, and
+logs are shipped to the backend (next section). An error that interpolates an
+input — `fmt.Errorf("no rate for %s", in.GetIban())` — ships that input. Say what
+failed, not what it was called with.
+
 ## 5. Compose, and let it check
 
 ```yaml

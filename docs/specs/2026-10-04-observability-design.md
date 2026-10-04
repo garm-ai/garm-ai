@@ -70,8 +70,9 @@ tool service           natsserve.answer          span  garm.tool        tool, de
 key), `garm.caller_name` (§1.1), `garm.run_id`, `garm.idempotency_key`,
 `garm.deadline_ms` (the tool's declared time budget, under the name `natsserve`
 enforces it by — *budget* is reserved for `rund`'s run budgets, tokens and depth
-and cycles, which this spec does not define), `garm.error_kind`,
-`garm.request_bytes`, `garm.response_bytes`. **Never a payload, never a field of
+and cycles, which this spec does not define), `garm.kind` (`OK` or the error
+kind; one key, so a dashboard filters on one attribute), `garm.request_bytes`,
+`garm.response_bytes`. **Never a payload, never a field of
 one.** Spans and logs cross a boundary the request bytes were never meant to
 cross; a property below asserts that no attribute on any span carries input or
 output bytes.
@@ -243,11 +244,15 @@ catch. Discovery is not exported across accounts, and §11 says so.
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | the base URL. The exporters append `/v1/traces`, `/v1/metrics`, `/v1/logs` themselves |
 | `OTEL_EXPORTER_OTLP_HEADERS` | `key=value,...` sent on every export — this is where a backend's authentication goes |
 | `OTEL_SERVICE_NAME` | overrides the process's name; defaults to `rund`, the service's configured name, or the caller's |
-| `OTEL_SDK_DISABLED` | `true` turns everything into a no-op |
+| `OTEL_SDK_DISABLED` | `true` installs **nothing** — no ids, no bridge, no propagator, nothing added to the wire. Off means off; it is not the same as having no endpoint |
+| `OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_ENDPOINT` | a signal's own endpoint, used as given; any one of them, or the generic one, turns the exporter on, and the startup line names the variables in force |
 
-**No endpoint means no exporter**, and the startup line says so: `observability
-exporter=none` — the standing rule that effective configuration is logged,
-defaults included, so nobody guesses which value is in force. With an endpoint the
+**No endpoint means no exporter** — but the SDK is still installed, so spans get
+ids and three processes' stdout join on one — and the startup line says so:
+`observability exporter=none` — the standing rule that effective configuration
+is logged, defaults included, so nobody guesses which value is in force. The
+final flush is bounded (`otlp.FlushTimeout`, 5 s): a dead backend must not turn
+a clean shutdown into a hang past an orchestrator's grace period. With an endpoint the
 line is `observability exporter=otlp endpoint=<url> headers=[Authorization]`:
 **header names, never values**, and a test asserts the value is absent from the
 log (property 14). No flags duplicate these variables, and there is no
@@ -417,8 +422,13 @@ environment variables.
 - **It does not re-export `$SYS`.** The bus's per-account view needs the system
   account, which nothing in the data path holds; a sidecar is a deployment
   component.
-- **It does not put a payload anywhere.** Property 9 is the enforcement, and it
-  is the one property here that is a security property.
+- **It does not put a payload in any span, metric or log *attribute*, nor in any
+  log body the envelope writes.** Property 9 is the enforcement — spans and
+  shipped log records both — and it is the one property here that is a security
+  property. What it cannot cover is a tool author's own error text: the cause
+  chain a handler returns is logged with its id and, from this slice on, shipped
+  over OTLP. An error that interpolates an input ships that input. The guide
+  says so where authors read it.
 - **It does not alert or dashboard.** Those are OpenObserve's, built on the
   instruments above; the names in §4 are the contract they build on, and
   renaming one is a breaking change to a dashboard nobody here can see.

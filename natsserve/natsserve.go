@@ -247,7 +247,7 @@ func (s *Service) fail(ctx context.Context, e endpoint, r micro.Request, err err
 	}
 	if replyErr := r.Error(serve.Code(w.GetKind()), description, body); replyErr != nil {
 		// Reaching here means the caller gets nothing, so it must be visible.
-		s.log.Error("could not reply with the error", "id", id, "tool", e.tool, "error", replyErr)
+		s.log.ErrorContext(ctx, "could not reply with the error", "id", id, "tool", e.tool, "error", replyErr)
 	}
 }
 
