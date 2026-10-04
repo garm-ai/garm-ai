@@ -19,6 +19,7 @@ lines 3 and 4 — the same shape as [../decisions/](../decisions/), deliberately
 | `docs/specs/` | how a component works, with numbered call stacks | you are about to build or change it |
 | [`docs/decisions/`](../decisions/) | why a choice was made, and what was rejected | somebody questions the choice |
 | [`docs/invariants.md`](../invariants.md) | what holds, and the test that keeps it | you want to know what is actually enforced |
+| [`docs/reviews/`](../reviews/) | a dated grading of the whole repository against a stated bar, with an action list | you want to know where it falls short today |
 
 A spec may design further ahead than the code is built — `rund`'s does, by six
 operations. That is only safe with a table saying what each unbuilt piece waits
