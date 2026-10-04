@@ -14,9 +14,7 @@ package estate
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"crypto/tls"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -29,15 +27,11 @@ import (
 	"github.com/nats-io/jwt/v2"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protodesc"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	"github.com/garm-ai/garm-ai/examples/weatherd"
-	"github.com/garm-ai/garm-ai/fetch"
+	"github.com/garm-ai/garm-ai/internal/fixtures"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
 	"github.com/garm-ai/garm-ai/run"
@@ -53,11 +47,16 @@ func Quiet() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)
 type Role string
 
 const (
-	RoleOps    Role = "ops"
-	RoleRund   Role = "rund"
-	RoleTool   Role = "weather.v1.WeatherService"
-	RoleCaller Role = "studio"
+	RoleOps     Role = "ops"
+	RoleRund    Role = "rund"
+	RoleTool    Role = "weather.v1.WeatherService"
+	RoleTool2   Role = fixtures.SecondService // holds a credential; nothing answers for it
+	RoleCaller  Role = "studio"
+	RoleCaller2 Role = "batch"
 )
+
+// callers is every caller account the estate issues.
+var callers = []string{string(RoleCaller), string(RoleCaller2)}
 
 // Estate is a running chain, plus the things a COMMAND needs to reach it that a
 // library caller does not: a URL to dial and a catalogue to resolve a name in.
@@ -90,7 +89,7 @@ type Estate struct {
 func (e *Estate) Reissue(t *testing.T, cat *catalogue.Catalogue) *topology.Output {
 	t.Helper()
 	out, err := topology.Generate(topology.Input{
-		Catalogue: cat, Callers: []string{string(RoleCaller)},
+		Catalogue: cat, Callers: callers,
 		Previous: &e.topo.Manifest, Keys: e.keys, Now: time.Now(),
 	})
 	if err != nil {
@@ -128,41 +127,14 @@ func (e *Estate) PushAccount(t *testing.T, encoded string) {
 	}
 }
 
-// EmptyCatalogue has files but declares no tool -- the catalogue a deployment has
-// after retiring everything, which is the sharpest case for a reissue.
-func EmptyCatalogue(t *testing.T) *catalogue.Catalogue {
-	t.Helper()
-	dep := weatherv1.File_weather_v1_weather_proto.Imports().Get(0).FileDescriptor
-	var all []*descriptorpb.FileDescriptorProto
-	seen := map[string]bool{}
-	var add func(protoreflect.FileDescriptor)
-	add = func(fd protoreflect.FileDescriptor) {
-		if seen[fd.Path()] {
-			return
-		}
-		seen[fd.Path()] = true
-		for i := 0; i < fd.Imports().Len(); i++ {
-			add(fd.Imports().Get(i).FileDescriptor)
-		}
-		all = append(all, protodesc.ToFileDescriptorProto(fd))
-	}
-	add(dep)
-	raw, err := proto.Marshal(&descriptorpb.FileDescriptorSet{File: all})
-	if err != nil {
-		t.Fatal(err)
-	}
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "e.binpb"), raw, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	sum := sha256.Sum256(raw)
-	c, err := catalogue.Load(context.Background(), &fetch.Resolver{Dir: dir},
-		fetch.Artefact{URI: "file://e.binpb", SHA256: hex.EncodeToString(sum[:])})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return c
-}
+// EmptyCatalogue has files but declares no tool: the catalogue after retiring
+// everything, the sharpest case for a reissue.
+func EmptyCatalogue(t *testing.T) *catalogue.Catalogue { return fixtures.Empty(t).Catalogue }
+
+// WeatherCatalogue is the estate's catalogue MINUS its second service: the
+// catalogue after retiring exactly one tool service, which is what "a revocation
+// touches nobody else in the account" needs.
+func WeatherCatalogue(t *testing.T) *catalogue.Catalogue { return fixtures.Weather(t).Catalogue }
 
 // CredsFile writes a role's credential in NATS creds format -- what a command's
 // --creds flag takes -- and returns the path. The file lives in the test's temp
@@ -227,9 +199,9 @@ func New(t *testing.T) *Estate {
 
 	// The topology, from the SAME generator a deployment runs. Keys are fresh
 	// because this is a test; a deployment's are an input.
-	keys := topology.FreshKeys([]string{string(RoleCaller)})
+	keys := topology.FreshKeys(callers)
 	topo, err := topology.Generate(topology.Input{
-		Catalogue: e.Catalogue.Current(), Callers: []string{string(RoleCaller)},
+		Catalogue: e.Catalogue.Current(), Callers: callers,
 		Previous: topology.Empty(), Keys: keys, Now: time.Now(),
 	})
 	if err != nil {
@@ -360,42 +332,13 @@ func (e *Estate) TLS() *tls.Config { return e.tls }
 // Topology is what the generator produced, for a test that asserts on it.
 func (e *Estate) Topology() *topology.Output { return e.topo }
 
-// loadCatalogue writes a real catalogue.binpb and loads it through the real
-// resolver, digest and all. Not a hand-built Holder: a command is given a URI and
-// a digest, so the test has to give it the same thing a deployment does.
+// loadCatalogue is the TWO-service namespace: the example weather service, which
+// weatherd answers, and a second service cloned from it, which nothing answers but
+// which holds a credential -- so that two users share the TOOLS account.
 func (e *Estate) loadCatalogue(t *testing.T) {
 	t.Helper()
-	var all []*descriptorpb.FileDescriptorProto
-	seen := map[string]bool{}
-	var add func(protoreflect.FileDescriptor)
-	add = func(fd protoreflect.FileDescriptor) {
-		if seen[fd.Path()] {
-			return
-		}
-		seen[fd.Path()] = true
-		for i := 0; i < fd.Imports().Len(); i++ {
-			add(fd.Imports().Get(i).FileDescriptor)
-		}
-		all = append(all, protodesc.ToFileDescriptorProto(fd))
-	}
-	add(weatherv1.File_weather_v1_weather_proto)
-
-	raw, err := proto.Marshal(&descriptorpb.FileDescriptorSet{File: all})
-	if err != nil {
-		t.Fatal(err)
-	}
-	e.Dir = t.TempDir()
-	if err := os.WriteFile(filepath.Join(e.Dir, "c.binpb"), raw, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	sum := sha256.Sum256(raw)
-	e.CatalogueURI, e.CatalogueSHA = "file://c.binpb", hex.EncodeToString(sum[:])
-
-	c, err := catalogue.Load(context.Background(), &fetch.Resolver{Dir: e.Dir},
-		fetch.Artefact{URI: e.CatalogueURI, SHA256: e.CatalogueSHA})
-	if err != nil {
-		t.Fatalf("loading the catalogue: %v", err)
-	}
+	fx := fixtures.TwoServices(t)
+	e.Dir, e.CatalogueURI, e.CatalogueSHA = fx.Dir, fx.URI, fx.SHA
 	e.Catalogue = new(catalogue.Holder)
-	e.Catalogue.Set(c)
+	e.Catalogue.Set(fx.Catalogue)
 }

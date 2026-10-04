@@ -108,7 +108,7 @@ func TestAnUnknownToolNamesTheCatalogue(t *testing.T) {
 	if err == nil {
 		t.Fatal("an unknown tool was called")
 	}
-	if !strings.Contains(err.Error(), "c.binpb") {
+	if !strings.Contains(err.Error(), e.CatalogueURI) {
 		t.Errorf("the refusal does not say which catalogue was searched: %v", err)
 	}
 }

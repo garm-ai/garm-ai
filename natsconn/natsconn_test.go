@@ -1,6 +1,7 @@
 package natsconn_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/garm-ai/garm-ai/internal/estate"
@@ -31,20 +32,7 @@ func TestWithoutACredentialTheErrorNamesTheFlag(t *testing.T) {
 	if err == nil {
 		t.Fatal("connected with no credential")
 	}
-	if got := err.Error(); !contains(got, "--creds") {
+	if !strings.Contains(err.Error(), "--creds") {
 		t.Errorf("the error does not name --creds: %v", err)
 	}
-}
-
-func contains(s, sub string) bool {
-	return len(s) >= len(sub) && (s == sub || len(sub) == 0 || indexOf(s, sub) >= 0)
-}
-
-func indexOf(s, sub string) int {
-	for i := 0; i+len(sub) <= len(s); i++ {
-		if s[i:i+len(sub)] == sub {
-			return i
-		}
-	}
-	return -1
 }

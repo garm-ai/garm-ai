@@ -1,88 +1,19 @@
 package topology_test
 
 import (
-	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"os"
-	"path/filepath"
 	"sort"
 	"testing"
 	"time"
 
 	"github.com/nats-io/jwt/v2"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protodesc"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/garm-ai/garm-ai/catalogue"
-	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
-	"github.com/garm-ai/garm-ai/fetch"
+	"github.com/garm-ai/garm-ai/internal/fixtures"
 	"github.com/garm-ai/garm-ai/topology"
 )
 
-// weatherCatalogue is the examples namespace: two tools and one agent. The same
-// construction internal/estate uses; duplicated here because topology must not
-// import the estate (the estate imports topology).
-func weatherCatalogue(t *testing.T) *catalogue.Catalogue {
-	t.Helper()
-	var all []*descriptorpb.FileDescriptorProto
-	seen := map[string]bool{}
-	var add func(protoreflect.FileDescriptor)
-	add = func(fd protoreflect.FileDescriptor) {
-		if seen[fd.Path()] {
-			return
-		}
-		seen[fd.Path()] = true
-		for i := 0; i < fd.Imports().Len(); i++ {
-			add(fd.Imports().Get(i).FileDescriptor)
-		}
-		all = append(all, protodesc.ToFileDescriptorProto(fd))
-	}
-	add(weatherv1.File_weather_v1_weather_proto)
-	return load(t, "c.binpb", all)
-}
-
-// emptyCatalogue has files but declares nothing -- every service is retired.
-func emptyCatalogue(t *testing.T) *catalogue.Catalogue {
-	t.Helper()
-	dep := weatherv1.File_weather_v1_weather_proto.Imports().Get(0).FileDescriptor
-	var all []*descriptorpb.FileDescriptorProto
-	seen := map[string]bool{}
-	var add func(protoreflect.FileDescriptor)
-	add = func(fd protoreflect.FileDescriptor) {
-		if seen[fd.Path()] {
-			return
-		}
-		seen[fd.Path()] = true
-		for i := 0; i < fd.Imports().Len(); i++ {
-			add(fd.Imports().Get(i).FileDescriptor)
-		}
-		all = append(all, protodesc.ToFileDescriptorProto(fd))
-	}
-	add(dep)
-	return load(t, "e.binpb", all)
-}
-
-func load(t *testing.T, name string, files []*descriptorpb.FileDescriptorProto) *catalogue.Catalogue {
-	t.Helper()
-	raw, err := proto.Marshal(&descriptorpb.FileDescriptorSet{File: files})
-	if err != nil {
-		t.Fatal(err)
-	}
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, name), raw, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	sum := sha256.Sum256(raw)
-	c, err := catalogue.Load(context.Background(), &fetch.Resolver{Dir: dir},
-		fetch.Artefact{URI: "file://" + name, SHA256: hex.EncodeToString(sum[:])})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return c
-}
+func weatherCatalogue(t *testing.T) *catalogue.Catalogue { return fixtures.Weather(t).Catalogue }
+func emptyCatalogue(t *testing.T) *catalogue.Catalogue   { return fixtures.Empty(t).Catalogue }
 
 func generate(t *testing.T, callers ...string) *topology.Output {
 	t.Helper()

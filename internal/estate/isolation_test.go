@@ -70,7 +70,13 @@ func TestAToolServiceCannotAnswerAnUndeclaredTool(t *testing.T) {
 	errc := make(chan error, 1)
 	tool.SetErrorHandler(func(_ *nats.Conn, _ *nats.Subscription, err error) { errc <- err })
 	if _, err := tool.SubscribeSync("garm.tool.payments.v1.transfer"); err != nil {
-		return // refused synchronously: also a refusal
+		// A synchronous refusal counts only if it IS a permissions refusal -- any
+		// other error here (a closed connection, say) would otherwise pass this
+		// test for the wrong reason.
+		if !strings.Contains(err.Error(), "Permissions Violation") {
+			t.Fatalf("subscribe failed synchronously with %v, which is not a permissions refusal", err)
+		}
+		return
 	}
 	_ = tool.Flush()
 	select {

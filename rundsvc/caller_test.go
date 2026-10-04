@@ -47,22 +47,34 @@ func TestACallerPublishingTodaysSubjectReachesRund(t *testing.T) {
 	}
 }
 
-// Property 4: rund is told WHICH account called, and it is the caller's own. The
-// estate has one caller; this asserts rund logged that caller's account key -- the
-// key the server placed in the subject, which the caller never wrote.
-func TestRundLogsTheCallingAccount(t *testing.T) {
+// Property 4: two callers are DISTINGUISHABLE at rund -- each call is logged with
+// its own caller's account key, the key the server placed in the subject, which
+// neither caller wrote. Two, because one caller proves only that a key was logged.
+func TestTwoCallersAreDistinguishableAtRund(t *testing.T) {
 	e := estate.New(t)
-	nc := e.Connect(t, estate.RoleCaller)
 	body, _ := proto.Marshal(&weatherv1.GetForecastRequest{Place: "Ghent"})
-	if _, err := (natscall.Client{NC: nc}).Invoke(context.Background(), "weather.v1.get_forecast", body, call.Options{}); err != nil {
-		t.Fatal(err)
+	accountOf := func(r estate.Role) string {
+		ac, err := jwt.DecodeAccountClaims(e.Topology().Accounts[topology.CallerPrefix+string(r)])
+		if err != nil {
+			t.Fatal(err)
+		}
+		return ac.Subject
 	}
-	ac, err := jwt.DecodeAccountClaims(e.Topology().Accounts[topology.CallerPrefix+string(estate.RoleCaller)])
-	if err != nil {
-		t.Fatal(err)
+	studio, batch := accountOf(estate.RoleCaller), accountOf(estate.RoleCaller2)
+	if studio == batch {
+		t.Fatal("the two callers share an account; nothing could tell them apart")
+	}
+
+	for _, r := range []estate.Role{estate.RoleCaller, estate.RoleCaller2} {
+		nc := e.Connect(t, r)
+		if _, err := (natscall.Client{NC: nc}).Invoke(context.Background(), "weather.v1.get_forecast", body, call.Options{}); err != nil {
+			t.Fatalf("%s: %v", r, err)
+		}
 	}
 	log := e.RundLog()
-	if !strings.Contains(log, "caller="+ac.Subject) {
-		t.Fatalf("rund did not log the calling account %s; log:\n%s", ac.Subject, log)
+	for _, acc := range []string{studio, batch} {
+		if !strings.Contains(log, "caller="+acc) {
+			t.Fatalf("rund did not log the calling account %s; log:\n%s", acc, log)
+		}
 	}
 }
