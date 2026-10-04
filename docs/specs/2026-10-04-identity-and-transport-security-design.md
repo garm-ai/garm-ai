@@ -1,8 +1,9 @@
 # Identity and transport security
 
 **Date:** 2026-10-04
-**Status:** active — this spec's §2–§10 are **step 9d**; §11 sketches the two slices
-after it and specifies nothing
+**Status:** active — §2–§10 are **built** (step 9d, 2026-10-04) except §10 step 5, which is a
+deployment; §11 sketches the two slices after it and specifies nothing. Four things the
+build corrected are in [the decision record](../decisions/2026-10-04-the-bus-is-the-authorization-boundary.md)
 
 **Spec for:** a NATS operator-mode topology, a generator that emits it from the
 catalogue, and the caller identity that falls out of it.
@@ -529,13 +530,18 @@ Chosen so the repository is never in a state where the tests pass and nothing is
 enforced.
 
 1. **The generator and its tests**, with no server involved. Property 9.
-2. **The test estate switches to operator mode.** No production change. Every
-   existing test then runs against a production-shaped server — the step most likely
-   to expose a wrong assumption, and reversible.
+2. **The test estate switches to operator mode, and `rund`'s subscription moves
+   with it.** No production change. Every existing test then runs against a
+   production-shaped server — the step most likely to expose a wrong assumption,
+   and reversible. *Corrected by the build:* this spec first put the subscription
+   move in step 4, after the estate switch. It cannot go there — a caller's import
+   rewrites `garm.run.v1.invoke` to `garm.run.v1.<ACCOUNT>.invoke`, so an `rund`
+   still mounted on the flat subject receives nothing and every chain test times
+   out. The two are one step.
 3. **The isolation tests land.** Properties 1, 2, 6, 7 — 1 and 2 in the same commit,
    for the reason in §9.
-4. **`rund`'s subscription moves** to the wildcard and begins reading the caller
-   identity, which nothing yet *uses*. Properties 3, 4, 5.
+4. **`rund` begins reading the caller identity** off the subject it already
+   receives on, which nothing yet *uses*. Properties 3, 4, 5.
 5. **Deployment credentials**, when everything above is green — **and not before
    three preconditions hold**, none of which is code: the operator root is offline
    and accounts are signed by a signing key (§5.1); the issuance environment exists
