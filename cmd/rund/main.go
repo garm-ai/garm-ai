@@ -19,6 +19,7 @@ import (
 	"github.com/garm-ai/garm-ai/fetch"
 	"github.com/garm-ai/garm-ai/natsconn"
 	"github.com/garm-ai/garm-ai/natsmicro"
+	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundsvc"
 )
@@ -33,27 +34,34 @@ func main() {
 		catDir  = flag.String("catalogue-dir", ".", "what a relative file:// catalogue resolves against")
 		name    = flag.String("name", "rund", "this service's name, as $SRV.INFO reports it")
 		version = flag.String("version", "0.1.0", "this service's version (semver)")
+		callers = flag.String("callers", "", "callers.json as `garmctl topology` wrote it; names callers on spans and metrics")
 	)
 	flag.Parse()
 
 	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	// Every value, defaults included, so nobody has to guess which one is in force.
 	log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
-		"name", *name, "version", *version, "run_store", "none")
+		"name", *name, "version", *version, "callers", *callers, "run_store", "none")
 
 	if *catURI == "" {
 		log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
 		os.Exit(2)
 	}
-	if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, log); err != nil {
+	if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, log); err != nil {
 		log.Error("stopped", "error", err)
 		os.Exit(1)
 	}
 	log.Info("stopped cleanly")
 }
 
-func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version string, log *slog.Logger) error {
+func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version, callersPath string, log *slog.Logger) error {
 	ctx := context.Background()
+
+	// A broken table refuses to start rather than labelling half the callers.
+	names, err := observe.LoadCallerNames(callersPath)
+	if err != nil {
+		return err
+	}
 
 	// Loaded and RE-VERIFIED before anything is mounted. compose may have run with
 	// an older binary that lacked a rule added since, so a catalogue valid when it
@@ -102,7 +110,7 @@ func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, na
 	defer nc.Close()
 
 	engine := &run.Engine{Catalogue: &holder, Tools: rundsvc.ToolCaller{NC: nc}, Log: log}
-	if err := rundsvc.Serve(svc, engine); err != nil {
+	if err := rundsvc.Serve(svc, engine, names); err != nil {
 		return err
 	}
 	if err := svc.Start(nc); err != nil {

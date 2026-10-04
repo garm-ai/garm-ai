@@ -52,7 +52,7 @@ func TestDevEmitsAThrowawayTopologyAndSaysSo(t *testing.T) {
 		t.Errorf("--dev did not warn that its keys are throwaway: %q", stderr)
 	}
 	for _, f := range []string{
-		"operator.jwt", "manifest.json", "revocations.json",
+		"operator.jwt", "manifest.json", "revocations.json", "callers.json",
 		"accounts/SYS.jwt", "accounts/GARM.jwt", "accounts/TOOLS.jwt", "accounts/CALLER-studio.jwt",
 		"creds/ops.creds", "creds/rund.creds", "creds/studio.creds", "creds/weather.v1.WeatherService.creds",
 		"keys/operator.nk", "keys/SYS.nk", "keys/GARM.nk", "keys/TOOLS.nk", "keys/CALLER-studio.nk",
@@ -60,6 +60,19 @@ func TestDevEmitsAThrowawayTopologyAndSaysSo(t *testing.T) {
 		if _, err := os.Stat(filepath.Join(out, f)); err != nil {
 			t.Errorf("--dev did not write %s", f)
 		}
+	}
+	// callers.json is the public name -> account table rund takes as --callers:
+	// exactly the --callers names, each mapped to its account's public key.
+	var names map[string]string
+	if err := json.Unmarshal([]byte(mustRead(t, filepath.Join(out, "callers.json"))), &names); err != nil {
+		t.Fatalf("callers.json: %v", err)
+	}
+	studio, err := jwt.DecodeAccountClaims(mustRead(t, filepath.Join(out, "accounts/CALLER-studio.jwt")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(names) != 1 || names["studio"] != studio.Subject {
+		t.Errorf("callers.json = %v, want {studio: %s}", names, studio.Subject)
 	}
 }
 

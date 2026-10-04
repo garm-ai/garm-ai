@@ -298,11 +298,14 @@ func New(t testing.TB) *Estate {
 	}
 	rundNC := e.Connect(t, RoleRund)
 	e.rundLog = &lockedBuffer{}
+	// The caller table names studio and deliberately NOT batch, so a test can see
+	// both halves of "named when known, by key alone when not" (spec §1.1).
+	names := observe.CallerNames{e.AccountKey(RoleCaller): string(RoleCaller)}
 	if err := rundsvc.Serve(svc, &run.Engine{
 		Catalogue: e.Catalogue,
 		Tools:     rundsvc.ToolCaller{NC: rundNC},
 		Log:       slog.New(observe.Handler(slog.NewTextHandler(e.rundLog, nil))),
-	}); err != nil {
+	}, names); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start(rundNC); err != nil {

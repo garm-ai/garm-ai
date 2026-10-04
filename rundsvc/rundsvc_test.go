@@ -165,7 +165,7 @@ func bareServer(t *testing.T) (caller *nats.Conn, stop func()) {
 		t.Fatal(err)
 	}
 	e := &run.Engine{Catalogue: theCatalogue(t), Tools: rundsvc.ToolCaller{NC: rundNC}, Log: quiet()}
-	if err := rundsvc.Serve(svc, e); err != nil {
+	if err := rundsvc.Serve(svc, e, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start(rundNC); err != nil {
@@ -269,7 +269,7 @@ func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
 	rundNC := connect(t, url)
 	svc, _ := natsmicro.New(natsmicro.Config{Name: "rund", Version: "0.1.0", Logger: quiet()})
 	e := &run.Engine{Catalogue: theCatalogue(t), Tools: rundsvc.ToolCaller{NC: rundNC}, Log: quiet()}
-	if err := rundsvc.Serve(svc, e); err != nil {
+	if err := rundsvc.Serve(svc, e, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start(rundNC); err != nil {

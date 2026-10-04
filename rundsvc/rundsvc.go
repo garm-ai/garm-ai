@@ -81,7 +81,7 @@ func CallerFromSubject(subject string) (account string, ok bool) {
 // the server rewrote (observability spec §1.2). A malformed traceparent is
 // rejected by the propagator and a fresh trace begins, with the caller set as
 // always.
-func withCaller(e *run.Engine, r micro.Request, op string) (context.Context, trace.Span) {
+func withCaller(e *run.Engine, names observe.CallerNames, r micro.Request, op string) (context.Context, trace.Span) {
 	ctx := otel.GetTextMapPropagator().Extract(context.Background(), observe.HeaderCarrier(r.Headers()))
 	ctx, span := observe.Tracer().Start(ctx, "garm.run."+op, trace.WithSpanKind(trace.SpanKindServer))
 	acc, ok := CallerFromSubject(r.Subject())
@@ -90,9 +90,19 @@ func withCaller(e *run.Engine, r micro.Request, op string) (context.Context, tra
 		return ctx, span
 	}
 	span.SetAttributes(observe.KeyCaller.String(acc))
+	ctx = context.WithValue(ctx, CallerKey{}, acc)
+	// The name is a LABEL from --callers; the key above is the identity. An account
+	// the table does not know is reported by key alone, never dropped (spec §1.1).
+	if name, ok := names.Name(acc); ok {
+		span.SetAttributes(observe.KeyCallerName.String(name))
+		ctx = context.WithValue(ctx, callerNameKey{}, name)
+	}
 	e.Log.InfoContext(ctx, op, "caller", acc)
-	return context.WithValue(ctx, CallerKey{}, acc), span
+	return ctx, span
 }
+
+// callerNameKey carries the label beside CallerKey, for record.
+type callerNameKey struct{}
 
 // record closes out an invocation on the span and the counter. The caller
 // attribute is read back off the context so the counter and the span agree, and
@@ -102,6 +112,9 @@ func record(ctx context.Context, span trace.Span, tool string, err error) {
 	attrs := []attribute.KeyValue{observe.KeyTool.String(tool), observe.KeyKind.String(kind)}
 	if acc, ok := ctx.Value(CallerKey{}).(string); ok && acc != "" {
 		attrs = append(attrs, observe.KeyCaller.String(acc))
+	}
+	if name, ok := ctx.Value(callerNameKey{}).(string); ok && name != "" {
+		attrs = append(attrs, observe.KeyCallerName.String(name))
 	}
 	span.SetAttributes(observe.KeyKind.String(kind))
 	if err != nil {
@@ -123,20 +136,21 @@ const (
 	HeaderTraceparent = "traceparent"
 )
 
-// Serve mounts the run interface on svc.
-func Serve(svc *natsmicro.Service, e *run.Engine) error {
+// Serve mounts the run interface on svc. names labels callers on spans and
+// counters (rund --callers); nil labels nobody and drops nothing.
+func Serve(svc *natsmicro.Service, e *run.Engine, names observe.CallerNames) error {
 	if err := svc.Mount("invoke", PatternInvoke, micro.HandlerFunc(func(r micro.Request) {
-		svc.Track(func() { invoke(e, r) })
+		svc.Track(func() { invoke(e, names, r) })
 	})); err != nil {
 		return err
 	}
 	return svc.Mount("fetch", PatternFetch, micro.HandlerFunc(func(r micro.Request) {
-		svc.Track(func() { fetch(e, r) })
+		svc.Track(func() { fetch(e, names, r) })
 	}))
 }
 
-func invoke(e *run.Engine, r micro.Request) {
-	ctx, span := withCaller(e, r, "invoke")
+func invoke(e *run.Engine, names observe.CallerNames, r micro.Request) {
+	ctx, span := withCaller(e, names, r, "invoke")
 	defer span.End()
 	var req runv1.InvokeRequest
 	if err := proto.Unmarshal(r.Data(), &req); err != nil {
@@ -160,8 +174,8 @@ func invoke(e *run.Engine, r micro.Request) {
 	respond(r, resp)
 }
 
-func fetch(e *run.Engine, r micro.Request) {
-	ctx, span := withCaller(e, r, "fetch")
+func fetch(e *run.Engine, names observe.CallerNames, r micro.Request) {
+	ctx, span := withCaller(e, names, r, "fetch")
 	defer span.End()
 	var req runv1.FetchRequest
 	if err := proto.Unmarshal(r.Data(), &req); err != nil {

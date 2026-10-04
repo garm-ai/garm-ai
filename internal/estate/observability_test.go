@@ -125,8 +125,11 @@ func TestCountersCountOneCall(t *testing.T) {
 	if n := e.Recorder().Counter(ctx, "garm.tool.calls", observe.KeyTool.String(forecastTool), observe.KeyKind.String("OK")); n != 1 {
 		t.Errorf("garm.tool.calls = %d", n)
 	}
+	// studio is in the estate's --callers table, so its point carries the name too;
+	// Counter matches the attribute set EXACTLY, which is what pins "absent, not
+	// empty" for the unnamed caller in property 13.
 	if n := e.Recorder().Counter(ctx, "garm.run.invocations", observe.KeyTool.String(forecastTool),
-		observe.KeyCaller.String(e.AccountKey(estate.RoleCaller)), observe.KeyKind.String("OK")); n != 1 {
+		observe.KeyCaller.String(e.AccountKey(estate.RoleCaller)), observe.KeyCallerName.String("studio"), observe.KeyKind.String("OK")); n != 1 {
 		t.Errorf("garm.run.invocations = %d", n)
 	}
 }
@@ -209,5 +212,29 @@ func TestTheIDACallerQuotesOpensTheTrace(t *testing.T) {
 	}
 	if kind, _ := attr(tool, "garm.kind"); kind != "INTERNAL" {
 		t.Errorf("the tool span says %q, want INTERNAL", kind)
+	}
+}
+
+// Property 13: a known caller is named; an unknown one is counted by key alone.
+// The estate's table names studio and deliberately NOT batch.
+func TestAKnownCallerIsNamedAndAnUnknownOneIsStillCounted(t *testing.T) {
+	e := estate.New(t)
+	for _, role := range []estate.Role{estate.RoleCaller, estate.RoleCaller2} {
+		if err := forecast(t, e, role, "Ghent"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	ctx, rec := context.Background(), e.Recorder()
+	if n := rec.Counter(ctx, "garm.run.invocations", observe.KeyTool.String(forecastTool), observe.KeyCaller.String(e.AccountKey(estate.RoleCaller)),
+		observe.KeyCallerName.String("studio"), observe.KeyKind.String("OK")); n != 1 {
+		t.Errorf("studio, named: %d", n)
+	}
+	if n := rec.Counter(ctx, "garm.run.invocations", observe.KeyTool.String(forecastTool), observe.KeyCaller.String(e.AccountKey(estate.RoleCaller2)),
+		observe.KeyKind.String("OK")); n != 1 {
+		t.Errorf("batch, by key alone: %d", n)
+	}
+	_, run, _ := spans(t, e)
+	if name, _ := attr(run, "garm.caller_name"); name != "studio" {
+		t.Errorf("garm.caller_name on the first span = %q, want studio", name)
 	}
 }
