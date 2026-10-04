@@ -32,6 +32,11 @@ type Entry struct {
 	CatalogueSHA256 string `json:"catalogue_sha256"`
 	Generation      int    `json:"generation"`
 	PermissionsHash string `json:"permissions_hash"`
+	// IssuedAt is the credential's iat. A revocation is dated no earlier than
+	// this, because the server honours a revocation only for credentials issued
+	// at or before its timestamp -- and in.Now is the caller's clock, not the
+	// encoder's.
+	IssuedAt int64 `json:"issued_at"`
 }
 
 // Empty is the explicit first manifest. Explicit, because a generator that treated
@@ -136,17 +141,22 @@ func delta(prev *Manifest, cur Manifest, now time.Time) []Revocation {
 	var rev []Revocation
 	for _, p := range prev.Entries {
 		c, still := current[p.Name]
+		// Never before the credential's own iat, or the server ignores it.
+		at := now
+		if issued := time.Unix(p.IssuedAt, 0); issued.After(at) {
+			at = issued
+		}
 		switch {
 		case !still:
-			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: now,
+			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: at,
 				Why: "retired: no longer in the catalogue"})
 		case c.Public == p.Public:
 			// carried forward, untouched
 		case c.Account != p.Account:
-			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: now,
+			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: at,
 				Why: "moved accounts"})
 		default:
-			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: now,
+			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: at,
 				Why: fmt.Sprintf("superseded by generation %d", cur.Generation)})
 		}
 	}

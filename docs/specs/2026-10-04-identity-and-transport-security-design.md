@@ -201,7 +201,8 @@ the catalogue.
 ```
 user weatherd, account TOOLS
   subscribe  garm.tool.weather.v1.get_forecast     one allow per DECLARED tool
-  publish    _R_.>                                 see §4.1 — this is not optional
+  publish    nothing
+  responses  allowed, one per request              see §4.1 — this is not optional
 ```
 
 **Declaring a tool is what creates its permission, and a service cannot answer a
@@ -216,16 +217,21 @@ reload does not help a tool service the way it helps `rund`. A tool service's
 permission lags the catalogue by exactly one credential issuance, and §4.3 is what
 makes that lag loud instead of silent.
 
-### 4.1 `_R_.>`, and the failure it prevents
+### 4.1 Replies, and the failure that proved the point
 
 A cross-account service reply arrives on **`_R_.<x>.<y>`, not `_INBOX.>`**
-(`replyPrefix = "_R_."`, nats-server `server/accounts.go`). A tool whose publish
-permission allows only the inbox prefix **receives the call and is silently refused
-the reply**; the caller waits out its own deadline and reports a hung tool.
+(`replyPrefix = "_R_."`, nats-server `server/accounts.go`). A tool that may not
+publish there **receives the call and is silently refused the reply**; the caller
+waits out its own deadline and reports a hung tool. Found by a probe that failed,
+and written here rather than in a commit message because a generator that gets
+this wrong produces an estate that looks correct and times out.
 
-Found by a probe that failed. It is written here in the specification, not left in
-a commit message, because a generator that omits it produces an estate that looks
-correct and times out.
+The first fix was an explicit publish allow on `_R_.>` and `_INBOX.>`. It worked
+and was over-broad — a tool could publish to *any* reply subject in its account.
+**The permission is now NATS's allow-responses**: a subscriber may publish a reply
+to a request it actually received, one per request, and nothing else — across
+accounts included. A tool service has **no publish permission at all**, and `rund`
+publishes only `garm.tool.>`. Proved by probe: the whole chain runs with it.
 
 ### 4.2 When a tool leaves the catalogue
 
@@ -500,8 +506,9 @@ before it is trusted.
 4. Two caller accounts are distinguishable at `rund`.
 5. A caller publishing today's `garm.run.v1.invoke` still reaches `rund`.
 6. A tool service cannot subscribe to a tool it does not declare.
-7. A tool service **can** reply — the `_R_.>` permission is present. Fails as a
-   timeout rather than a refusal if omitted, which is why it is its own property.
+7. A tool service **can** reply — allow-responses is present and nothing else is.
+   Fails as a timeout rather than a refusal if omitted, which is why it is its own
+   property.
 8. A revoked user cannot connect; no other user of that account is affected.
 8a. Removing a tool from the catalogue produces a **revocation** in the generator's
     output, not merely a smaller next credential.
@@ -611,10 +618,10 @@ gaps found in it.
   designed here.
 - **It does not rate-limit.** A valid caller credential can saturate `rund`. NATS
   has per-account limits that could be the first answer; nothing here sets them.
-- **`_R_.>` is a broad grant, and this is why it is safe.** A tool may publish to any
-  reply subject in its account. It is safe because reply subjects are random and a
-  tool sees only its own; it would stop being safe the day someone "simplifies" it
-  to `>`, and this sentence is here for that person.
+- **A tool service holds no publish permission.** It answers requests through
+  allow-responses and can reach nothing else. An earlier draft granted `_R_.>` and
+  carried a warning here against "simplifying" it to `>`; the warning is now moot,
+  which is the better outcome.
 
 ---
 

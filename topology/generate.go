@@ -94,7 +94,8 @@ func Generate(in Input) (*Output, error) {
 	garm.Name = AccountGARM
 	garm.Exports = jwt.Exports{{
 		Name: "run", Subject: "garm.run.v1.*.>", Type: jwt.Service,
-		AccountTokenPosition: 4, // the caller's account key, placed by the server (§3)
+		AccountTokenPosition: 4,    // the caller's account key, placed by the server (§3)
+		TokenReq:             true, // private, like TOOLS: an importer holds an activation GARM signed (§2.2)
 	}}
 	act := jwt.NewActivationClaims(garmPub)
 	act.ImportSubject = "garm.tool.>"
@@ -118,11 +119,22 @@ func Generate(in Input) (*Output, error) {
 		}
 		ac := jwt.NewAccountClaims(p)
 		ac.Name = name
+		runSubject := jwt.Subject(fmt.Sprintf("garm.run.v1.%s.>", p))
+		// An activation for THIS caller, for THIS subject, signed by GARM: the
+		// import is a signed act rather than an edit nobody reviews.
+		runAct := jwt.NewActivationClaims(p)
+		runAct.ImportSubject = runSubject
+		runAct.ImportType = jwt.Service
+		runToken, err := runAct.Encode(garmKP)
+		if err != nil {
+			return nil, fmt.Errorf("topology: signing %s's run activation: %w", name, err)
+		}
 		ac.Imports = jwt.Imports{{
 			Name:    "run",
-			Subject: jwt.Subject(fmt.Sprintf("garm.run.v1.%s.>", p)),
+			Subject: runSubject,
 			Account: garmPub, Type: jwt.Service,
 			LocalSubject: "garm.run.v1.>", // what the caller publishes today, unchanged
+			Token:        runToken,
 		}}
 		accounts[name] = ac
 		keys[name] = kp
@@ -185,7 +197,7 @@ func Generate(in Input) (*Output, error) {
 		if err != nil {
 			return Credential{}, fmt.Errorf("topology: encoding user %s: %w", name, err)
 		}
-		return Credential{Name: name, Account: account, Public: upub, JWT: tok, Seed: string(seed)}, nil
+		return Credential{Name: name, Account: account, Public: upub, JWT: tok, Seed: string(seed), IssuedAt: uc.IssuedAt}, nil
 	}
 	var creds []Credential
 	var entries []Entry
@@ -203,6 +215,7 @@ func Generate(in Input) (*Output, error) {
 		entries = append(entries, Entry{
 			Name: c.Name, Account: c.Account, Public: c.Public,
 			CatalogueSHA256: in.Catalogue.SHA256, Generation: gen, PermissionsHash: hash,
+			IssuedAt: c.IssuedAt,
 		})
 	}
 	sort.Slice(creds, func(i, j int) bool { return creds[i].Name < creds[j].Name })

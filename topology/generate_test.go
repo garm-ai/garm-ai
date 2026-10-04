@@ -78,23 +78,18 @@ func TestAToolServiceMaySubscribeExactlyItsDeclaredTools(t *testing.T) {
 	}
 }
 
-// Spec §4.1: _R_.> or the tool receives the call and is silently refused the reply.
-func TestAToolServiceMayPublishTheCrossAccountReply(t *testing.T) {
+// Spec §4.1, amended: a tool service may publish NOTHING but a reply to a request
+// it received. Allow-responses is the whole of its publish permission -- across
+// accounts too, where the reply subject is the server's _R_.>, which an explicit
+// allow used to cover over-broadly. Property 2 is what proves the reply gets out.
+func TestAToolServiceMayPublishNothingButReplies(t *testing.T) {
 	out := generate(t, "studio")
 	uc := credential(t, out, "weather.v1.WeatherService")
-	pub := map[string]bool{}
-	for _, s := range uc.Permissions.Pub.Allow {
-		pub[s] = true
+	if len(uc.Permissions.Pub.Allow) != 0 {
+		t.Fatalf("a tool service may publish %v; it should publish nothing but replies", uc.Permissions.Pub.Allow)
 	}
-	if !pub["_R_.>"] {
-		t.Fatalf("publish allow %v lacks _R_.> -- every reply would be refused and every caller would time out",
-			uc.Permissions.Pub.Allow)
-	}
-	if !pub["_INBOX.>"] {
-		t.Errorf("publish allow lacks _INBOX.> -- micro's $SRV replies would be refused")
-	}
-	if pub["garm.tool.>"] || pub[">"] {
-		t.Errorf("a tool service may publish on tool subjects: %v", uc.Permissions.Pub.Allow)
+	if uc.Permissions.Resp == nil {
+		t.Fatal("no allow-responses permission: the tool would receive every call and answer none")
 	}
 }
 
@@ -167,10 +162,11 @@ func TestRundMayPublishEveryToolAndAnswerEveryCaller(t *testing.T) {
 	for _, s := range uc.Permissions.Sub.Allow {
 		sub[s] = true
 	}
-	for _, want := range []string{"garm.tool.>", "_R_.>", "_INBOX.>"} {
-		if !pub[want] {
-			t.Errorf("rund cannot publish %s: %v", want, uc.Permissions.Pub.Allow)
-		}
+	if len(uc.Permissions.Pub.Allow) != 1 || !pub["garm.tool.>"] {
+		t.Errorf("rund publishes %v; want exactly garm.tool.> -- callers are answered as replies", uc.Permissions.Pub.Allow)
+	}
+	if uc.Permissions.Resp == nil {
+		t.Error("rund has no allow-responses permission; it could answer no caller")
 	}
 	for _, want := range []string{"garm.run.v1.*.>", "_INBOX.>", "$SRV.>"} {
 		if !sub[want] {

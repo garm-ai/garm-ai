@@ -72,6 +72,9 @@ type Credential struct {
 	Public  string
 	JWT     string
 	Seed    string
+	// IssuedAt is the JWT's own iat, unix seconds -- the wall clock at encoding,
+	// which is what the server compares a revocation against.
+	IssuedAt int64
 }
 
 // Revocation is an instruction to the deployment: this user, in this account,
