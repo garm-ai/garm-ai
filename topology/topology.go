@@ -64,6 +64,22 @@ type Input struct {
 // a leaked credential nobody noticed does not live forever.
 const DefaultExpiry = 365 * 24 * time.Hour
 
+// Limits every account carries, in its JWT, where the server enforces them
+// regardless of how it is otherwise configured. Constants rather than inputs
+// until a deployment needs different ones; when one does, they become Input
+// fields with these as defaults, and the test that pins them moves with them.
+const (
+	// MaxPayload is the ceiling on one message. Large artefacts do not cross this
+	// bus by rule -- they go to an object store and a reference crosses -- so a
+	// request over this is INVALID before it is sent, not a transport error after.
+	// NATS's own default, stated here so that it is a decision and not a default.
+	MaxPayload = 1 << 20
+	// CallerConnections bounds how many connections one caller account may hold
+	// open. A front door needs a handful; a batch job needs one. A caller holding
+	// hundreds is either misbehaving or a sign the account should be split.
+	CallerConnections = 64
+)
+
 // Credential is one process's identity. Seed is in Output only, never in the
 // Manifest.
 type Credential struct {

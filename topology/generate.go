@@ -248,6 +248,17 @@ func Generate(in Input) (*Output, error) {
 		ac.RevokeAt(r.Public, r.At)
 	}
 
+	// ---- limits, on every account, in the JWT (review finding: there were none)
+	for name, ac := range accounts {
+		ac.Limits.Payload = MaxPayload
+		// A credential here is a seed-signed nkey; a bearer user JWT -- one the
+		// server accepts without a signature -- must not be, on any account.
+		ac.Limits.DisallowBearer = true
+		if strings.HasPrefix(name, CallerPrefix) {
+			ac.Limits.Conn = CallerConnections
+		}
+	}
+
 	// ---- encode
 	out := &Output{Accounts: map[string]string{}, Credentials: creds, Manifest: manifest, Revoke: revoke}
 	for name, ac := range accounts {

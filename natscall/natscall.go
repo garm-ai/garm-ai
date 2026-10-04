@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"time"
 
@@ -26,6 +27,50 @@ import (
 type Client struct{ NC *nats.Conn }
 
 var _ call.Invoker = Client{}
+
+// retryAfter is the pause before the ONE retry a call gets, and only for "no
+// responders" -- the one failure that proves the request reached nobody and so
+// cannot have executed. Long enough for a deploy's new instance to have
+// subscribed; short enough that a caller's budget is not spent waiting.
+const retryAfter = 100 * time.Millisecond
+
+// request sends m and answers for the two things the transport gets wrong on its
+// own (review findings):
+//
+// A request over the server's payload limit used to surface as a transport error
+// with no kind, which a caller reads as UNAVAILABLE and retries forever. It is
+// INVALID -- large artefacts do not cross this bus by rule -- and is refused
+// here, before anything is sent, saying how big it was and what the limit is.
+//
+// "No responders" is retried exactly once. It is the one error that proves the
+// request was delivered to nobody, so a retry cannot double-execute anything; it
+// is also exactly what a caller sees in the seconds a deploy is swapping
+// instances. A timeout is NOT retried: the request may have executed.
+func (c Client) request(ctx context.Context, m *nats.Msg, pattern string) (*nats.Msg, error) {
+	if limit := c.NC.MaxPayload(); limit > 0 && int64(len(m.Data)) > limit {
+		return nil, serve.Invalid("the request is %d bytes and this bus accepts at most %d; large inputs go to the artefact store and a reference travels",
+			len(m.Data), limit)
+	}
+	reply, err := c.NC.RequestMsgWithContext(ctx, m)
+	if errors.Is(err, nats.ErrNoResponders) {
+		select {
+		case <-ctx.Done():
+			return nil, serve.Unavailable("nothing is answering %s -- is rund running?", pattern).Because(err)
+		case <-time.After(retryAfter):
+		}
+		reply, err = c.NC.RequestMsgWithContext(ctx, m)
+	}
+	switch {
+	case err == nil:
+		return reply, nil
+	case errors.Is(err, nats.ErrMaxPayload):
+		// The size check above should have caught it; this is the backstop if a
+		// server's limit is lower than the one it advertised at connect.
+		return nil, serve.Invalid("the request exceeds the bus's payload limit").Because(err)
+	default:
+		return nil, serve.Unavailable("nothing is answering %s -- is rund running?", pattern).Because(err)
+	}
+}
 
 // Invoke sends one InvokeRequest to rund and returns the tool's response bytes.
 func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Options) ([]byte, error) {
@@ -46,9 +91,9 @@ func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Op
 	set(m, rundsvc.HeaderIdempotency, o.Idempotency)
 	set(m, rundsvc.HeaderTraceparent, o.Traceparent)
 
-	reply, err := c.NC.RequestMsgWithContext(ctx, m)
+	reply, err := c.request(ctx, m, rundsvc.PatternInvoke)
 	if err != nil {
-		return nil, serve.Unavailable("nothing is answering %s -- is rund running?", rundsvc.PatternInvoke).Because(err)
+		return nil, err
 	}
 	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
 		return nil, wireError(code, reply)
@@ -70,9 +115,9 @@ func (c Client) Fetch(ctx context.Context, runID string) (*runv1.FetchResponse, 
 	m.Data = body
 	set(m, rundsvc.HeaderMessage, newID())
 
-	reply, err := c.NC.RequestMsgWithContext(ctx, m)
+	reply, err := c.request(ctx, m, rundsvc.PatternFetch)
 	if err != nil {
-		return nil, serve.Unavailable("nothing is answering %s -- is rund running?", rundsvc.PatternFetch).Because(err)
+		return nil, err
 	}
 	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
 		return nil, wireError(code, reply)
