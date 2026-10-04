@@ -4,7 +4,7 @@
 # silently changes which code builds, and the previous estate spent real time on
 # LSP errors that were a workspace artefact rather than a compile failure.
 [tools]
-go = "1.26"
+go = "1.26.6"
 buf = "1"
 
 [env]
@@ -137,6 +137,24 @@ description = "Fail if go.mod is not what 'go mod tidy' would write"
 # listed a directly-imported module as indirect, and it failed until 'go mod tidy'.
 run = "go mod tidy -diff"
 
+[tasks.breaking]
+description = "Fail if a proto change would break a caller built against main"
+# The contract says v1. This is the only thing that makes that true: a renumbered
+# field, a removed message, a changed type compiles fine and breaks every caller
+# built before it, and nothing else here would notice. Compared against main, so a
+# pull request is caught; on main itself it compares main to main and passes.
+# Proved to fail: renumbering a field in error.proto made it exit 100.
+run = "buf breaking --against '.git#branch=main'"
+
+[tasks.vuln]
+description = "Fail on a known vulnerability in any dependency"
+# Nine direct dependencies and a public repository. govulncheck reports only
+# vulnerabilities in code paths this module actually reaches, so a finding is a
+# real one. Pinned, because a check that moves on its own is a check nobody can
+# reproduce. Not proved to fail: there is no vulnerable dependency to prove it
+# with, and adding one on purpose is the wrong kind of proof.
+run = "go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./..."
+
 [tasks.ci]
 description = "Everything CI runs, in order"
-depends = ["lint", "gen-check", "no-broker", "guide-files", "tidy", "check", "examples", "test"]
+depends = ["lint", "breaking", "vuln", "gen-check", "no-broker", "guide-files", "tidy", "check", "examples", "test"]
