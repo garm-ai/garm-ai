@@ -148,15 +148,15 @@ func delta(prev *Manifest, cur Manifest, now time.Time) []Revocation {
 		}
 		switch {
 		case !still:
-			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: at,
+			rev = append(rev, Revocation{Name: p.Name, Account: p.Account, Public: p.Public, At: at,
 				Why: "retired: no longer in the catalogue"})
 		case c.Public == p.Public:
 			// carried forward, untouched
 		case c.Account != p.Account:
-			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: at,
+			rev = append(rev, Revocation{Name: p.Name, Account: p.Account, Public: p.Public, At: at,
 				Why: "moved accounts"})
 		default:
-			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: at,
+			rev = append(rev, Revocation{Name: p.Name, Account: p.Account, Public: p.Public, At: at,
 				Why: fmt.Sprintf("superseded by generation %d", cur.Generation)})
 		}
 	}

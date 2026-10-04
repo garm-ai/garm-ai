@@ -5,6 +5,7 @@ go 1.26.0
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.33.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.113.4
+	github.com/nats-io/jwt/v2 v2.8.2
 	github.com/nats-io/nats-server/v2 v2.15.0
 	github.com/nats-io/nats.go v1.54.0
 	github.com/nats-io/nkeys v0.4.16
@@ -35,7 +36,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.20.0 // indirect
 	github.com/minio/highwayhash v1.0.4 // indirect
-	github.com/nats-io/jwt/v2 v2.8.2 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	golang.org/x/crypto v0.57.0 // indirect

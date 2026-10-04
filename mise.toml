@@ -128,6 +128,15 @@ done
 description = "go test"
 run = "go test ./... -race"
 
+[tasks.tidy]
+description = "Fail if go.mod is not what 'go mod tidy' would write"
+# A dependency promoted from indirect to direct, or dropped, shows up here and
+# nowhere else: the build does not care, and a reviewer reading go.mod is told the
+# wrong thing. `go mod tidy -diff` exits non-zero when it would change anything,
+# which is the whole check. Proved to fail: this task was added while go.mod still
+# listed a directly-imported module as indirect, and it failed until 'go mod tidy'.
+run = "go mod tidy -diff"
+
 [tasks.ci]
 description = "Everything CI runs, in order"
-depends = ["lint", "gen-check", "no-broker", "guide-files", "check", "examples", "test"]
+depends = ["lint", "gen-check", "no-broker", "guide-files", "tidy", "check", "examples", "test"]

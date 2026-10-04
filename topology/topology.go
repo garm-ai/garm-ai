@@ -78,8 +78,10 @@ type Credential struct {
 }
 
 // Revocation is an instruction to the deployment: this user, in this account,
-// is revoked for every credential issued before At.
+// is revoked for every credential issued before At. Name is the credential's,
+// so a deployment can find the file it must stop deploying.
 type Revocation struct {
+	Name    string
 	Account string
 	Public  string
 	At      time.Time

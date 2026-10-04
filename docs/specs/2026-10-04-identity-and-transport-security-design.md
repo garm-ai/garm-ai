@@ -180,9 +180,13 @@ caller from token 4 of `Subject()`, which `micro.Request` exposes.
 - `SubjectInvoke` and `SubjectFetch` become **patterns**, not the subjects a caller
   publishes. The "nothing answered on X" message must name the pattern honestly, or
   it will send an operator looking for a subject nobody publishes.
-- The caller arrives as a 56-character account key. `rund` maps it to a name
-  through the generated topology; an unmapped key is logged and treated as unknown,
-  never as absent.
+- The caller arrives as a 56-character account key, and **`rund` logs the key, not
+  a name.** This spec first said `rund` would map it "through the generated
+  topology"; a reviewer noticed it does not, and the ruling is that it should not:
+  the mapping lives in the issuance manifest, which `rund` must never read — `rund`
+  holds a credential and a catalogue, and nothing else. An operator joins the key
+  to a name through the manifest, the way a correlation id is joined to a log.
+  A name in `rund`'s log would be a lookup in the data path for a label.
 - `micro` endpoint subjects must accept a wildcard. They do.
 - **"No responders" is a security win and a developer-experience trap.** A
   developer who addresses a tool directly gets the same answer as for a tool that is

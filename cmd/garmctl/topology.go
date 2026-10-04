@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -75,6 +76,11 @@ func topologyCmd() *cobra.Command {
 				}
 				_, statErr := os.Stat(manifestPath)
 				switch {
+				case statErr != nil && !errors.Is(statErr, fs.ErrNotExist):
+					// Only "does not exist" means absent. Anything else -- a path under
+					// a file, a permission -- is a manifest that may well exist and
+					// cannot be read, and the one thing NOT to say is "pass --first".
+					return fmt.Errorf("cannot read the manifest at %s: %w", manifestPath, statErr)
 				case statErr == nil && first:
 					return fmt.Errorf("%s exists; --first would forget every credential it records", manifestPath)
 				case statErr == nil:
@@ -217,6 +223,17 @@ func writeOutput(dir string, res *topology.Output, signer nkeys.KeyPair) error {
 		}
 		if err := os.WriteFile(filepath.Join(dir, "creds", c.Name+".creds"), body, 0o600); err != nil {
 			return err
+		}
+	}
+	// A retired credential's file is the one artefact a deployment must stop
+	// deploying, and --out accumulates across generations -- so it is removed
+	// here, by the name the revocation carries. A superseded one is overwritten
+	// above under the same name; a carried-forward one is untouched.
+	for _, r := range res.Revoke {
+		if strings.HasPrefix(r.Why, "retired") {
+			if err := os.Remove(filepath.Join(dir, "creds", r.Name+".creds")); err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("removing the retired credential %s: %w", r.Name, err)
+			}
 		}
 	}
 	rev, err := json.MarshalIndent(res.Revoke, "", "  ")
