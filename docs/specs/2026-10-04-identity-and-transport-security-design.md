@@ -2,7 +2,9 @@
 
 **Date:** 2026-10-04
 **Status:** active — §2–§10 are **built** (step 9d, 2026-10-04) except §10 step 5, which is a
-deployment; §11 sketches the two slices after it and specifies nothing. Four things the
+deployment — and whose **first precondition the generator cannot yet produce**: it signs
+accounts with the operator key itself, so the root is not offline and accounts carry no
+signing keys (§13). §11 sketches the two slices after it and specifies nothing. Four things the
 build corrected are in [the decision record](../decisions/2026-10-04-the-bus-is-the-authorization-boundary.md)
 
 **Spec for:** a NATS operator-mode topology, a generator that emits it from the
@@ -646,6 +648,15 @@ gaps found in it.
   is** — the process the token was minted for, which `exec` already names — and state
   that the binding is transport-enforced. Taking the RFC's name for a non-conformant
   member is the one option to rule out.
+
+- **The generator does not yet produce §5.1's key shape.** It emits a self-signed
+  operator JWT and signs every account with the same key, so `Keys.Operator` *is*
+  the root; users are signed by each account's identity key, so an account carries
+  no signing key to rotate. Found in review. The change is to the generator's
+  inputs — a root-signed operator JWT taken as given and verified, a signing keypair
+  per account alongside its identity public key — and to what a deployment keeps.
+  It is its own task, and until it lands §10 step 5's first checkbox cannot be
+  ticked; the status line says so.
 
 - **Where does the issuance environment live, and what drives it?** §5.1 names what
   it must be; the deployment decides whether that is a CI job with a secret store or

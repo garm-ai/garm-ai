@@ -26,7 +26,17 @@ const (
 	CallerPrefix = "CALLER-"
 )
 
-// Keys is what signs. Operator is a SIGNING key, never the root (spec §5.1).
+// Keys is what signs.
+//
+// NOT YET THE SHAPE SPEC §5.1 DESCRIBES, and said plainly: Operator here signs the
+// operator JWT itself and every account, so it IS the root, and users are signed by
+// each account's identity key rather than by an account signing key. §5.1 wants the
+// root offline, signing only operator signing keys, with accounts carrying signing
+// keys for users. That is an input-shape change to this struct and to the generator
+// -- a root-signed operator JWT taken as input, a signing keypair per account -- and
+// it has to land before §10 step 5's first precondition can be ticked. Found in
+// review; recorded in the spec's status and §13 rather than fixed in the same
+// pass, because it changes what a deployment keeps and is its own task.
 type Keys struct {
 	Operator nkeys.KeyPair
 	// Accounts by account name: SYS, GARM, TOOLS, and CALLER-<n> for each caller.
