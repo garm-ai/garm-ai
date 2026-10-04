@@ -39,3 +39,4 @@ amended to match (§7.3).
 |---|---|
 | [rund — the run manager](2026-10-03-rund-design.md) | active — step 9 builds §9.1 only |
 | [identity and transport security](2026-10-04-identity-and-transport-security-design.md) | active — §2–§10 built as step 9d, bar the deployment step; §11 sketches what follows |
+| [observability, end to end](2026-10-04-observability-design.md) | designed — nothing built; the plan follows review |
