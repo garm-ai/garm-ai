@@ -17,9 +17,13 @@ import (
 	"log/slog"
 	"regexp"
 	"sync"
+	"sync/atomic"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/micro"
+	"go.opentelemetry.io/otel/metric"
+
+	"github.com/garm-ai/garm-ai/observe"
 )
 
 // Copied from nats.go's micro package, which does not export them.
@@ -62,6 +66,13 @@ type Service struct {
 	nc     *nats.Conn
 
 	inFlight sync.WaitGroup
+	// inFlightN mirrors inFlight as a number, for the drain line and the metric;
+	// a WaitGroup cannot be read.
+	inFlightN atomic.Int64
+	// draining is set the moment Serve begins to stop, before Stop() has drained
+	// anything, so readiness goes false BEFORE the last call is answered rather
+	// than after -- a scheduler must stop routing here first.
+	draining atomic.Bool
 }
 
 // New validates what micro would otherwise reject at Start, so a misconfigured
@@ -113,8 +124,19 @@ func (s *Service) Mount(name, subject string, handle micro.HandlerFunc) error {
 // and a caller that forgets is the bug the drain exists to prevent.
 func (s *Service) Track(f func()) {
 	s.inFlight.Add(1)
-	defer s.inFlight.Done()
+	s.inFlightN.Add(1)
+	defer func() { s.inFlightN.Add(-1); s.inFlight.Done() }()
 	f()
+}
+
+// Ready is what /readyz reports: Start has returned, Serve has not begun to
+// drain, and the connection is connected -- which is also exactly when micro's
+// $SRV.PING answers, and a test holds the two to that (spec §5).
+func (s *Service) Ready() bool {
+	s.mu.Lock()
+	svc, nc := s.svc, s.nc
+	s.mu.Unlock()
+	return svc != nil && !s.draining.Load() && nc != nil && nc.Status() == nats.CONNECTED
 }
 
 // Start mounts everything and returns once the subjects are ANSWERING.
@@ -185,6 +207,12 @@ func (s *Service) Serve(ctx context.Context) error {
 	}
 
 	<-ctx.Done()
+
+	s.draining.Store(true)
+	queued := s.inFlightN.Load()
+	observe.Instruments().ServiceDrain.Add(context.Background(), 1,
+		metric.WithAttributes(observe.KeyService.String(s.cfg.Name), observe.KeyQueued.Int64(queued)))
+	s.log.Info("draining", "service", s.cfg.Name, "in_flight", queued)
 
 	if err := svc.Stop(); err != nil {
 		return fmt.Errorf("stopping the micro service %q: %w", s.cfg.Name, err)
