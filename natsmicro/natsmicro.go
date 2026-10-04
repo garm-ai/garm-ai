@@ -135,6 +135,15 @@ func (s *Service) Start(nc *nats.Conn) error {
 	if len(ms) == 0 {
 		return fmt.Errorf("%s: nothing mounted, so there is nothing to answer", s.cfg.Name)
 	}
+	// Before mounting anything: can this credential subscribe to all of it? A
+	// refused subscription is otherwise asynchronous and silent (gate.go).
+	subjects := make([]string, 0, len(ms))
+	for _, m := range ms {
+		subjects = append(subjects, m.subject)
+	}
+	if err := gate(nc, subjects); err != nil {
+		return fmt.Errorf("%s: %w", s.cfg.Name, err)
+	}
 	svc, err := micro.AddService(nc, micro.Config{Name: s.cfg.Name, Version: s.cfg.Version})
 	if err != nil {
 		return fmt.Errorf("adding the micro service %q: %w", s.cfg.Name, err)

@@ -84,10 +84,6 @@ type endpoint struct {
 type Service struct {
 	svc *natsmicro.Service
 	log *slog.Logger
-	// subjects is every mount, so Start can check them against the credential
-	// BEFORE announcing -- a refused subscription is otherwise asynchronous and
-	// silent (gate.go).
-	subjects []string
 }
 
 // New validates what micro would otherwise reject at Start.
@@ -102,13 +98,9 @@ func New(cfg Config) (*Service, error) {
 // Start mounts every tool and returns once they are answering -- or refuses,
 // before mounting anything, if this process's own credential does not cover a
 // mount. That refusal names the tool; the alternative is a service that starts
-// cleanly and never answers (spec §4.3).
-func (s *Service) Start(nc *nats.Conn) error {
-	if err := gate(nc, s.subjects); err != nil {
-		return err
-	}
-	return s.svc.Start(nc)
-}
+// cleanly and never answers (spec §4.3). The gate is natsmicro's, so rund is
+// gated by the same code.
+func (s *Service) Start(nc *nats.Conn) error { return s.svc.Start(nc) }
 
 // Serve answers until ctx is cancelled, then drains.
 func (s *Service) Serve(ctx context.Context) error { return s.svc.Serve(ctx) }
@@ -132,12 +124,8 @@ func (s *Service) Endpoint(
 		tool: name, method: method, budget: budget,
 		newReq: newRequest, handle: handle, subject: Subject(name),
 	}
-	if err := s.svc.Mount(endpointName(name), e.subject,
-		micro.HandlerFunc(func(r micro.Request) { s.svc.Track(func() { s.answer(e, r) }) })); err != nil {
-		return err
-	}
-	s.subjects = append(s.subjects, e.subject)
-	return nil
+	return s.svc.Mount(endpointName(name), e.subject,
+		micro.HandlerFunc(func(r micro.Request) { s.svc.Track(func() { s.answer(e, r) }) }))
 }
 
 // A call's context is NOT derived from the one that stops the service.
