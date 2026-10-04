@@ -128,9 +128,11 @@ sixteen random hex characters that an operator greps logs for. If a span is
 active, **the id becomes the trace id**. Quoting it then opens the whole trace in
 every process the call crossed, and the log lines joined to it (§3).
 
-`natsserve.correlationID()` and `rundsvc`'s equivalent read the trace id from the
-span on `ctx` and fall back to a random id only when there is no span — the open
-server some tests use. The wire format does not change: `invokev1.Error.id` is
+`natsserve.correlationID()` reads the trace id from the span on `ctx` and falls
+back to a random id only when there is no span — the open server some tests use.
+**`rund`'s error id stays the run id**: a run is the durable thing a caller can
+`Fetch`, and `rund`'s span carries both `garm.run_id` and the trace id, so quoting
+either finds the trace. The wire format does not change: `invokev1.Error.id` is
 still a string, and a caller that never heard of tracing still has something to
 quote.
 
@@ -230,8 +232,7 @@ the listener. The two must tell the same truth, and that is a property, not a
 hope: **`$SRV.PING.<name>` answers exactly when `/readyz` is 200**, through
 before-`Start`, after-`Start` and draining (§9, property 12). A readiness flag
 that disagreed with the bus would be the vacuous check this repository exists to
-catch. The test pings from a credential in the service's own account; discovery
-is not exported across accounts, and §11 says so.
+catch. Discovery is not exported across accounts, and §11 says so.
 
 ---
 
@@ -264,19 +265,28 @@ whole of the backend's involvement, and it is a deployment's two lines.
 
 ---
 
-## 7. One package: `observe`
+## 7. Two packages: `observe` and `observe/otlp`
 
 ```go
+// observe: the API side -- Scope, Tracer(), Instruments(), the attribute keys,
+// Handler(next slog.Handler), ServeHealth, CallerNames. Imports the OTel API only.
+
+// observe/otlp: the SDK side, and the only importer of it.
 // Start configures the global tracer, meter and log providers from the OTEL_*
 // environment and returns the function that flushes and stops them.
-func Start(ctx context.Context, service string) (shutdown func(context.Context) error, err error)
+func Start(ctx context.Context, service string, log *slog.Logger) (stop func(context.Context) error, err error)
 ```
+
+Two packages rather than one because the import rule below makes one impossible:
+`natsserve` must reach the instruments and the slog handler without reaching the
+SDK, so what it reaches cannot live beside `Start`.
 
 **Called explicitly, in every `main`** — `rund`, `garmctl`, every example, and a
 tool author's own process:
 
 ```go
-stop, err := observe.Start(ctx, "weatherd")
+log := slog.New(observe.Handler(slog.NewTextHandler(os.Stderr, nil)))
+stop, err := otlp.Start(ctx, "weatherd", log)
 defer stop(ctx)
 ```
 
@@ -287,8 +297,8 @@ setup skips our two lines and their spans still come out. A library that install
 process-global state on an author's behalf is the convenience that becomes a flag,
 then an option struct, then a debt.
 
-Hence the import rule, enforced by a check beside `no-broker`: **only `observe`
-imports the OTel SDK and exporters**; `natsserve`, `rundsvc`, `natscall` and
+Hence the import rule, enforced by a check beside `no-broker`: **only
+`observe/otlp` imports the OTel SDK and exporters**; `natsserve`, `rundsvc`, `natscall` and
 `natsmicro` import the API alone; `serve`, `call`, `declared` and generated code
 import no OTel package at all. Instruments are created once, in `observe`, and
 handed to `rundsvc` and `natsserve`; a package that makes its own meter is the
@@ -306,16 +316,17 @@ on an upgrade, traces and metrics do not, and logs still reach stdout.
 
 | | change |
 |---|---|
-| `observe` (new) | `Start`; the instruments; the `slog` handler that stamps ids; the readiness state and `/livez` `/readyz`; the `callers.json` reader |
+| `observe` (new) | the instruments; the `slog` handler that stamps ids; `/livez` `/readyz`; the `callers.json` reader |
+| `observe/otlp` (new) | `Start`; `otlptest` records in memory for tests |
 | `natscall` | starts the caller's span; injects it on the request |
 | `rundsvc` | continues the span; records `garm.run.*`; labels `garm.caller_name` from `--callers`; **injects `rund`'s own span context on the tool call, not the caller's** |
 | `natsserve` | continues the span into the handler's `ctx`; records `garm.tool.*`; the error id is the trace id; readiness true after `Start`, false on drain |
-| `natsmicro` | reports drain counts; exposes "started" and "draining" for readiness |
+| `natsmicro` | `Ready()`; records `garm.service.drain` with the in-flight count |
 | `serve` | `Wire(err, id)` unchanged; `Internal`'s message unchanged — the id just means more |
 | `cmd/rund`, `cmd/garmctl`, examples | `observe.Start` at the top of `main`; `--health`; `rund --callers` |
 | `cmd/garmctl topology` | writes `callers.json` (`name ↔ account`, public) beside the credentials |
-| `internal/estate` | an in-memory exporter the tests assert against; health on |
-| `mise.toml` | `no-broker` also refuses OTel in `serve`, `call`, `declared`, generated code; a new `no-sdk` refuses the OTel SDK outside `observe` |
+| `internal/estate` | one in-memory recorder across the three processes, which is what makes end-to-end linkage assertable |
+| `mise.toml` | `no-broker` also refuses OTel in `serve`, `call`, `declared`, generated code; a new `no-sdk` refuses the OTel SDK outside `observe/otlp` |
 | `docs/guide.md` | the two `observe.Start` lines; the two OpenObserve variables; what a trace looks like; the double-shipping sentence |
 
 ---
@@ -348,12 +359,13 @@ before it is trusted — the rule this repository runs on.
    `<base>/v1/traces` with that header present.
 9. **No span attribute carries a payload.** Over every span of a call whose input
    contains a sentinel string, no attribute value contains the sentinel.
-10. **Generated code and `serve` import no OTel package, and only `observe`
+10. **Generated code and `serve` import no OTel package, and only `observe/otlp`
     imports the SDK.** The `no-broker` check extended, and a `no-sdk` check
     beside it.
 11. **A tool author can reach the span.** A handler that reads the span context
     from its `ctx` sees a valid trace id.
-12. **The bus and the listener agree.** For a service in the estate,
+12. **The bus and the listener agree.** For a `natsmicro` service on a bare
+    server — lifecycle agreement is not a permissions question —
     `$SRV.PING.<name>` gets a reply exactly when `/readyz` returns 200, checked
     before `Start` (no reply, 503), after `Start` (reply, 200) and after `Serve`
     has begun to drain (no reply, 503).
