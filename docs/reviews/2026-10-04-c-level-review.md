@@ -1,7 +1,7 @@
 # C-level review — production grade, security, developer experience, scalability, evolution
 
 **Date:** 2026-10-04
-**Status:** findings open — the action list at the end is the input to the next roadmap pass
+**Status:** in progress — see *Progress* below; what remains open is the input to the next roadmap pass
 **Reviewed:** branch `identity-9d` at `d321f71`, after step 9d and both review fix passes
 **Lenses:** CPO · CTO · CISO · Chief AI, against five questions the repository was asked to answer
 
@@ -23,6 +23,23 @@ The tree was surveyed before writing, not recalled:
 | decision records | 15, each with what was rejected |
 | specs | 2, both amended in the commits that found their errors |
 | CI | `mise run ci` locally and on GitHub, identical; 9 tasks including generated-code drift in both directions and `go mod tidy -diff` |
+
+## Progress
+
+Acted on the same day, each in a commit that names the finding:
+
+| finding | state |
+|---|---|
+| `buf breaking` in CI | **done** — proved to fail on a renumbered field (`338f55a`) |
+| `govulncheck` in CI | **done** — found four standard-library vulnerabilities on its first run; Go pinned to 1.26.6 where they are fixed (`338f55a`) |
+| inbound payload guard | **done** — `INVALID` with the size and the limit, before anything is sent (`8e8d185`) |
+| NATS account limits | **done** — payload ceiling and bearer-disallowed on every account, connection ceiling on callers, in the JWT (`8e8d185`) |
+| one bounded retry on `UNAVAILABLE` | **done** — once, on *no responders* only, after 100 ms; a timeout is never retried (`8e8d185`) |
+| a benchmark | **done** — `mise run bench`; [docs/performance.md](../performance.md) carries the baseline: ≈0.2 ms per call serial, ≈0.13 ms parallel |
+| `LICENSE` | **waiting on a decision** — which licence |
+| health and readiness endpoints; metrics; end-to-end traces | **in design** — the observability spec is the next document; see the open question on push vs pull |
+| the operator signing-key shape | open — its own task, recorded in the identity spec's §13 |
+| the authority model, person identity, catalogue signing, multi-cluster, data classification, tool descriptions, `garmctl dev up`, wire constants for a second SDK, tombstones | open — roadmap rows |
 
 The one-sentence verdict: **the engineering culture is production grade; the system
 is not yet, and the gap is operability and authorization, not quality.**

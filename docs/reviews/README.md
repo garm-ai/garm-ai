@@ -15,4 +15,4 @@ month later is the review's failure to be read, and the next review should say s
 
 | review | status |
 |---|---|
-| [C-level: production grade, security, DX, scale, evolution](2026-10-04-c-level-review.md) | findings open — written at `d321f71`, after step 9d |
+| [C-level: production grade, security, DX, scale, evolution](2026-10-04-c-level-review.md) | in progress — six of the first-tier findings closed the same day; see its *Progress* table |

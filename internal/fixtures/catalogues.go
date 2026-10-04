@@ -40,7 +40,7 @@ type Fixture struct {
 }
 
 // Weather is the examples namespace as shipped: one tool service, one agent.
-func Weather(t *testing.T) Fixture {
+func Weather(t testing.TB) Fixture {
 	t.Helper()
 	return Load(t, "weather.binpb", files(weatherv1.File_weather_v1_weather_proto))
 }
@@ -49,7 +49,7 @@ func Weather(t *testing.T) Fixture {
 // its own package, declaring SecondTool. Two services are what make "each may
 // subscribe exactly its own tools" and "a revocation touches nobody else in the
 // account" assertable at all.
-func TwoServices(t *testing.T) Fixture {
+func TwoServices(t testing.TB) Fixture {
 	t.Helper()
 	all := files(weatherv1.File_weather_v1_weather_proto)
 	orig := protodesc.ToFileDescriptorProto(weatherv1.File_weather_v1_weather_proto)
@@ -71,7 +71,7 @@ func TwoServices(t *testing.T) Fixture {
 }
 
 // Empty has files but declares no tool: the catalogue after retiring everything.
-func Empty(t *testing.T) Fixture {
+func Empty(t testing.TB) Fixture {
 	t.Helper()
 	dep := weatherv1.File_weather_v1_weather_proto.Imports().Get(0).FileDescriptor
 	return Load(t, "empty.binpb", files(dep))
@@ -99,7 +99,7 @@ func files(fd protoreflect.FileDescriptor) []*descriptorpb.FileDescriptorProto {
 // Load writes a real catalogue.binpb and loads it through the real resolver,
 // digest and all -- a command is given a URI and a digest, so a test gives it the
 // same thing a deployment does.
-func Load(t *testing.T, name string, files []*descriptorpb.FileDescriptorProto) Fixture {
+func Load(t testing.TB, name string, files []*descriptorpb.FileDescriptorProto) Fixture {
 	t.Helper()
 	raw, err := proto.Marshal(&descriptorpb.FileDescriptorSet{File: files})
 	if err != nil {

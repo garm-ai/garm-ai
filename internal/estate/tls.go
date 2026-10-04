@@ -14,7 +14,7 @@ import (
 // production requires it (spec §6), and the configuration that is tested must be
 // the configuration that is deployed. The certificate itself comes from devtls,
 // which `garmctl topology --dev` also uses -- the second consumer.
-func tlsPair(t *testing.T) (server *tls.Config, client *tls.Config, caPEM []byte) {
+func tlsPair(t testing.TB) (server *tls.Config, client *tls.Config, caPEM []byte) {
 	t.Helper()
 	certPEM, keyPEM, err := devtls.SelfSigned(time.Hour, "127.0.0.1")
 	if err != nil {

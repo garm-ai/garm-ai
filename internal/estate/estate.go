@@ -86,7 +86,7 @@ type Estate struct {
 // different catalogue -- which is what a deployment does when a tool is added or
 // retired. The output's revocations are in its account JWTs; PushAccount is how
 // they reach the server.
-func (e *Estate) Reissue(t *testing.T, cat *catalogue.Catalogue) *topology.Output {
+func (e *Estate) Reissue(t testing.TB, cat *catalogue.Catalogue) *topology.Output {
 	t.Helper()
 	out, err := topology.Generate(topology.Input{
 		Catalogue: cat, Callers: callers,
@@ -103,7 +103,7 @@ func (e *Estate) Reissue(t *testing.T, cat *catalogue.Catalogue) *topology.Outpu
 // over $SYS, with the operations credential, through the full resolver. A revoked
 // user's live connection closes as a result (spec §5) -- that is what the test
 // that calls this is watching.
-func (e *Estate) PushAccount(t *testing.T, encoded string) {
+func (e *Estate) PushAccount(t testing.TB, encoded string) {
 	t.Helper()
 	ac, err := jwt.DecodeAccountClaims(encoded)
 	if err != nil {
@@ -129,17 +129,17 @@ func (e *Estate) PushAccount(t *testing.T, encoded string) {
 
 // EmptyCatalogue has files but declares no tool: the catalogue after retiring
 // everything, the sharpest case for a reissue.
-func EmptyCatalogue(t *testing.T) *catalogue.Catalogue { return fixtures.Empty(t).Catalogue }
+func EmptyCatalogue(t testing.TB) *catalogue.Catalogue { return fixtures.Empty(t).Catalogue }
 
 // WeatherCatalogue is the estate's catalogue MINUS its second service: the
 // catalogue after retiring exactly one tool service, which is what "a revocation
 // touches nobody else in the account" needs.
-func WeatherCatalogue(t *testing.T) *catalogue.Catalogue { return fixtures.Weather(t).Catalogue }
+func WeatherCatalogue(t testing.TB) *catalogue.Catalogue { return fixtures.Weather(t).Catalogue }
 
 // CredsFile writes a role's credential in NATS creds format -- what a command's
 // --creds flag takes -- and returns the path. The file lives in the test's temp
 // dir and dies with it.
-func (e *Estate) CredsFile(t *testing.T, as Role) string {
+func (e *Estate) CredsFile(t testing.TB, as Role) string {
 	t.Helper()
 	c, ok := e.creds[as]
 	if !ok {
@@ -157,7 +157,7 @@ func (e *Estate) CredsFile(t *testing.T, as Role) string {
 }
 
 // CAFile writes the estate's CA as PEM -- what a command's --tls-ca flag takes.
-func (e *Estate) CAFile(t *testing.T) string {
+func (e *Estate) CAFile(t testing.TB) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "ca.pem")
 	if err := os.WriteFile(path, e.caPEM, 0o600); err != nil {
@@ -192,7 +192,7 @@ func (e *Estate) RundLog() string { return e.rundLog.String() }
 // New starts a server in operator mode, a tool service and rund, and tears all
 // three down with the test. The tool service is the EXAMPLE one, deployed exactly
 // as its author does -- with a credential that permits exactly its declared tools.
-func New(t *testing.T) *Estate {
+func New(t testing.TB) *Estate {
 	t.Helper()
 	e := &Estate{}
 	e.loadCatalogue(t)
@@ -296,14 +296,14 @@ func New(t *testing.T) *Estate {
 
 // Connect dials as a role, with that role's credential and TLS, and closes with
 // the test.
-func (e *Estate) Connect(t *testing.T, as Role) *nats.Conn {
+func (e *Estate) Connect(t testing.TB, as Role) *nats.Conn {
 	t.Helper()
 	return e.ConnectWith(t, as)
 }
 
 // ConnectWith is Connect plus options a test needs to observe the connection --
 // nats.NoReconnect and a ClosedHandler, for a test watching a revocation land.
-func (e *Estate) ConnectWith(t *testing.T, as Role, extra ...nats.Option) *nats.Conn {
+func (e *Estate) ConnectWith(t testing.TB, as Role, extra ...nats.Option) *nats.Conn {
 	t.Helper()
 	c, ok := e.creds[as]
 	if !ok {
@@ -335,7 +335,7 @@ func (e *Estate) Topology() *topology.Output { return e.topo }
 // loadCatalogue is the TWO-service namespace: the example weather service, which
 // weatherd answers, and a second service cloned from it, which nothing answers but
 // which holds a credential -- so that two users share the TOOLS account.
-func (e *Estate) loadCatalogue(t *testing.T) {
+func (e *Estate) loadCatalogue(t testing.TB) {
 	t.Helper()
 	fx := fixtures.TwoServices(t)
 	e.Dir, e.CatalogueURI, e.CatalogueSHA = fx.Dir, fx.URI, fx.SHA
