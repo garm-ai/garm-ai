@@ -112,13 +112,36 @@ description = "Refuse a tool author's build that can reach a message broker"
 #
 # The shape is copied from the previous estate's `no-daemon-dependency` CI job,
 # which existed for the same reason and is the one boundary check there that worked.
+#
+# Extended for OpenTelemetry in the same breath: `serve`, `call` and generated code
+# must not import it either -- the span lives on the transport, and a tool author
+# who wants to add to it imports the OTel API in their own module, by choice.
 run = """
 set -e
-for pkg in ./serve ./call ./declared ./images ./fetch ./examples/gen/...; do
-  if go list -deps "$pkg" 2>/dev/null | grep -q 'nats-io'; then
-    echo "$pkg reaches a NATS package:" >&2
-    go list -deps "$pkg" | grep 'nats-io' >&2
-    echo "generated code and the seam it is written against must not import a broker" >&2
+for pkg in ./serve ./call ./declared ./images ./fetch ./run ./examples/gen/...; do
+  if go list -deps "$pkg" 2>/dev/null | grep -Eq 'nats-io|go.opentelemetry.io'; then
+    echo "$pkg reaches a broker or OTel package:" >&2
+    go list -deps "$pkg" | grep -E 'nats-io|go.opentelemetry.io' >&2
+    echo "generated code and the seam it is written against import neither a broker nor OTel" >&2
+    exit 1
+  fi
+done
+"""
+
+[tasks."no-sdk"]
+description = "Refuse an OTel SDK or exporter import anywhere but observe/otlp"
+# observe/otlp.Start configures the SDK, once, at the top of every main. Every
+# other package uses the API, which is a no-op until then -- so a tool author
+# with their own OTel setup is not fought, and a library here never installs
+# process-global state on anyone's behalf (observability spec §7). Proved to
+# fail: with `import _ "go.opentelemetry.io/otel/sdk/trace"` in natsserve.
+run = """
+set -e
+for pkg in ./natsserve ./rundsvc ./natscall ./natsmicro ./observe ./topology; do
+  if go list -deps "$pkg" 2>/dev/null | grep -Eq 'go.opentelemetry.io/otel/(sdk|exporters)'; then
+    echo "$pkg reaches the OTel SDK:" >&2
+    go list -deps "$pkg" | grep -E 'go.opentelemetry.io/otel/(sdk|exporters)' >&2
+    echo "only observe/otlp configures the SDK; everything else uses the API" >&2
     exit 1
   fi
 done
@@ -163,4 +186,4 @@ run = "go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./..."
 
 [tasks.ci]
 description = "Everything CI runs, in order"
-depends = ["lint", "breaking", "vuln", "gen-check", "no-broker", "guide-files", "tidy", "check", "examples", "test"]
+depends = ["lint", "breaking", "vuln", "gen-check", "no-broker", "no-sdk", "guide-files", "tidy", "check", "examples", "test"]

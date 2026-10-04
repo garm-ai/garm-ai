@@ -9,6 +9,7 @@ Run it when something on the call path changes, and add a row.
 | date | commit | serial, ns/op | parallel, ns/op | B/op | allocs/op | machine |
 |---|---|---|---|---|---|---|
 | 2026-10-04 | after `8e8d185` | 191k–221k (≈ 0.2 ms) | 127k–130k (≈ 0.13 ms) | ~19.5k | 229 | Apple Silicon, 10 cores, `go1.26.6`, `-benchtime 2s -count 3` |
+| 2026-10-04 | step 9e, observability | 187k–189k (≈ 0.19 ms) | 130k–131k (≈ 0.13 ms) | ~48.5k | 339 | same machine. Three spans, a propagator on two hops and five counters per call: **+110 allocations and +29 KB per call, no measurable latency** — the estate records spans synchronously in memory, which is more work per call than a deployment's batch processor does |
 
 ## How to read it
 
@@ -19,9 +20,10 @@ Run it when something on the call path changes, and add a row.
 - **Parallel is cheaper per call** because the serial figure is dominated by
   round-trip latency, not CPU. A front door issuing many calls at once sees the
   lower number.
-- **229 allocations is the next thing to look at** if this ever matters: a
-  marshal, an unmarshal and a header map on each of four edges. Nothing here has
-  been tuned, on purpose — a number was needed before a target.
+- **339 allocations is the next thing to look at** if this ever matters: a
+  marshal, an unmarshal and a header map on each of four edges, and since step 9e
+  three spans with their attribute sets. Nothing here has been tuned, on purpose —
+  a number was needed before a target.
 
 ## What it does not measure
 

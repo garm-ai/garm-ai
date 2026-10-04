@@ -178,8 +178,9 @@ credential. The test estate (`internal/estate`) is the same topology stood up in
 process, which is how every test runs against it.
 
 ```
-level=INFO msg=starting nats=nats://127.0.0.1:4222 creds=build/topo/creds/weather.v1.WeatherService.creds name=weatherd version=0.1.0
-level=INFO msg="tool mounted" tool=weather.v1.get_forecast subject=garm.tool.weather.v1.get_forecast declared_at=weather.v1.WeatherService.GetForecast
+level=INFO msg=observability exporter=none endpoint="" headers=[] disabled=false service=weatherd
+level=INFO msg=starting nats=nats://127.0.0.1:4222 creds=build/topo/creds/weather.v1.WeatherService.creds name=weatherd version=0.1.0 health=""
+level=INFO msg=mounted service=weatherd endpoint=weather_v1_get_forecast subject=garm.tool.weather.v1.get_forecast
 ```
 
 **The subject comes from the tool's name, not from the proto path.** Re-home
@@ -196,7 +197,7 @@ svc, err := natsserve.New(natsserve.Config{Name: name, Version: version, Logger:
 err = weatherv1.ServeWeatherService(svc, weatherd.Service{})   // generated
 ...
 err = svc.Start(nc)          // returns only once the tools are ANSWERING
-log.Info("ready")            // a readiness probe hangs off this line
+log.Info("ready")            // /readyz turns 200 on exactly this line
 return svc.Serve(ctx)        // until SIGTERM, then drains
 ```
 
@@ -204,6 +205,51 @@ return svc.Serve(ctx)        // until SIGTERM, then drains
 that was queued behind a slow one. That is why `main` closes the connection with
 `defer` *after* `Run`, and not before: closing early turns a deploy into a handful
 of caller timeouts.
+
+### Seeing it run
+
+Every process opens with the same two lines, and they are the whole of its
+observability setup:
+
+```go
+log := slog.New(observe.Handler(slog.NewTextHandler(os.Stderr, nil)))
+stop, err := otlp.Start(ctx, "weatherd", log)   // reads OTEL_EXPORTER_OTLP_ENDPOINT; none means export nothing
+defer stop(ctx)
+```
+
+With no endpoint the startup line says `observability exporter=none` and nothing
+leaves the process. To ship everything to OpenObserve, two variables and nothing
+else — the code knows no backend's name, only OTLP:
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=https://o2.example.com/api/garm
+export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic $(echo -n 'user@example.com:password' | base64)"
+```
+
+The startup line then reads `exporter=otlp … headers=[Authorization]` — header
+*names*, never values.
+
+**One call is one trace.** `garm.call` in the caller, `garm.run.invoke` in `rund`
+— carrying the caller's account key as `garm.caller` and, given
+`rund --callers build/topo/callers.json`, its name as `garm.caller_name` —
+and `garm.tool` in the tool, as its child. A tool handler finds the span on its
+`ctx`; adding to it is an ordinary OTel API call in the author's own module. The
+id an `INTERNAL` error tells a caller to quote is `rund`'s run id, which is
+`garm.run_id` on that trace — search for it and the whole trace opens, every
+process included. Logs go to stdout for you and over OTLP for the backend, each
+line stamped with its `trace_id`; **do not also tail stdout into OpenObserve**,
+or every line arrives twice.
+
+**Counters, no histogram.** `garm.tool.calls{tool,kind}`, `garm.tool.inflight`,
+`garm.tool.deadline_exceeded`, `garm.run.invocations{tool,caller,caller_name,kind}`,
+`garm.service.drain{service,queued}`. Latency comes from the spans themselves —
+every call is traced, so the backend has every duration exactly.
+
+**Health.** `--health 127.0.0.1:8080` serves `/livez` and `/readyz`. `/readyz` is
+200 exactly when `nats micro ping weatherd` gets an answer: after `Start`
+returned, until the drain begins — and a test holds the two to that, because a
+readiness flag that disagreed with the bus would be the kind of check this
+repository exists to catch.
 
 ### Telling the caller what went wrong
 

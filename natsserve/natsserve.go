@@ -114,6 +114,10 @@ func (s *Service) Serve(ctx context.Context) error { return s.svc.Serve(ctx) }
 // Run is Start then Serve.
 func (s *Service) Run(ctx context.Context, nc *nats.Conn) error { return s.svc.Run(ctx, nc) }
 
+// Ready is what /readyz reports: started, not draining, connected. It agrees with
+// $SRV.PING by construction (natsmicro.Ready).
+func (s *Service) Ready() bool { return s.svc.Ready() }
+
 // Endpoint implements serve.Registrar. Generated code calls it once per tool,
 // before Start.
 func (s *Service) Endpoint(

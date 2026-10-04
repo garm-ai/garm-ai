@@ -20,6 +20,7 @@ import (
 	"github.com/garm-ai/garm-ai/natsconn"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/observe"
+	"github.com/garm-ai/garm-ai/observe/otlp"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundsvc"
 )
@@ -35,26 +36,36 @@ func main() {
 		name    = flag.String("name", "rund", "this service's name, as $SRV.INFO reports it")
 		version = flag.String("version", "0.1.0", "this service's version (semver)")
 		callers = flag.String("callers", "", "callers.json as `garmctl topology` wrote it; names callers on spans and metrics")
+		health  = flag.String("health", "", "address for /livez and /readyz, e.g. 127.0.0.1:8080; empty means no listener")
 	)
 	flag.Parse()
 
-	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	// The whole of this process's observability setup: a handler that stamps
+	// trace ids onto every line and ships it, and the SDK from OTEL_* -- or, with
+	// no endpoint, nothing shipped and a startup line that says so.
+	log := slog.New(observe.Handler(slog.NewTextHandler(os.Stderr, nil)))
+	stop, err := otlp.Start(context.Background(), *name, log)
+	if err != nil {
+		log.Error("observability", "error", err)
+		os.Exit(1)
+	}
+	defer stop(context.Background())
 	// Every value, defaults included, so nobody has to guess which one is in force.
 	log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
-		"name", *name, "version", *version, "callers", *callers, "run_store", "none")
+		"name", *name, "version", *version, "callers", *callers, "health", *health, "run_store", "none")
 
 	if *catURI == "" {
 		log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
 		os.Exit(2)
 	}
-	if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, log); err != nil {
+	if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, log); err != nil {
 		log.Error("stopped", "error", err)
 		os.Exit(1)
 	}
 	log.Info("stopped cleanly")
 }
 
-func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version, callersPath string, log *slog.Logger) error {
+func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version, callersPath, health string, log *slog.Logger) error {
 	ctx := context.Background()
 
 	// A broken table refuses to start rather than labelling half the callers.
@@ -112,6 +123,16 @@ func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, na
 	engine := &run.Engine{Catalogue: &holder, Tools: rundsvc.ToolCaller{NC: nc}, Log: log}
 	if err := rundsvc.Serve(svc, engine, names); err != nil {
 		return err
+	}
+	// The listener is up BEFORE Start, so a scheduler probing early gets 503
+	// rather than connection refused; readiness itself follows svc.Ready.
+	if health != "" {
+		bound, stopHealth, err := observe.ServeHealth(ctx, health, svc.Ready)
+		if err != nil {
+			return err
+		}
+		defer stopHealth(context.Background())
+		log.Info("health", "addr", bound, "livez", "/livez", "readyz", "/readyz")
 	}
 	if err := svc.Start(nc); err != nil {
 		return err

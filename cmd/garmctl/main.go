@@ -16,6 +16,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -23,7 +24,11 @@ import (
 )
 
 func main() {
-	if err := root().Execute(); err != nil {
+	err := root().Execute()
+	// Flush before deciding the exit code: a `garmctl call` that failed is exactly
+	// the span somebody wants to see.
+	_ = stopTelemetry(context.Background())
+	if err != nil {
 		// SilenceErrors is set on the root, so cobra prints NOTHING and this is
 		// the only place an error reaches the user. An earlier revision of this
 		// function carried a comment claiming cobra had already printed it, and

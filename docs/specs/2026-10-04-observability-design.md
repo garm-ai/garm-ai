@@ -1,8 +1,8 @@
 # Observability, end to end
 
 **Date:** 2026-10-04
-**Status:** designed and reviewed — six decisions settled in review (§12); the plan is
-`docs/plans/2026-10-04-observability.md`
+**Status:** built as step 9e, per `docs/plans/2026-10-04-observability.md`; six decisions
+settled in review (§12)
 
 **Spec for:** one trace per call across every process, metrics that answer *is it
 up, how slow is it, who is generating load*, logs that join their traces, and the
