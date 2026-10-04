@@ -2,6 +2,7 @@ package topology
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -10,6 +11,10 @@ import (
 
 	"github.com/garm-ai/garm-ai/declared"
 )
+
+// callerName is a filename-safe identifier. Dots are excluded on purpose: a tool
+// service's name has them, and the two must not be confusable.
+var callerName = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
 // Generate builds the topology for a catalogue. It is deterministic given its
 // inputs except for user keys, which are fresh on every issuance -- that is what
@@ -21,10 +26,28 @@ func Generate(in Input) (*Output, error) {
 	if in.Expiry == 0 {
 		in.Expiry = DefaultExpiry
 	}
+	// Every credential is a FILE named after it and a manifest entry keyed on it,
+	// so a caller's name must be a safe filename and unique among everything else
+	// that gets a credential -- ops, rund, and every tool service. Found in review:
+	// a caller named "rund" was issued a second credential called rund, which the
+	// command then wrote over rund's own file.
+	taken := map[string]bool{"ops": true, "rund": true}
+	for svc := range toolServices(in.Catalogue.Tools) {
+		taken[svc] = true
+	}
+	seen := map[string]bool{}
 	for _, c := range in.Callers {
-		if u := strings.ToUpper(c); u == AccountSYS || u == AccountGARM || u == AccountTOOLS || c == "" {
+		switch {
+		case !callerName.MatchString(c):
+			return nil, fmt.Errorf("topology: caller %q: a name is one or more of A-Z a-z 0-9 - _", c)
+		case strings.EqualFold(c, AccountSYS), strings.EqualFold(c, AccountGARM), strings.EqualFold(c, AccountTOOLS):
 			return nil, fmt.Errorf("topology: caller %q would shadow an account name", c)
+		case taken[c]:
+			return nil, fmt.Errorf("topology: caller %q is already the name of another credential", c)
+		case seen[c]:
+			return nil, fmt.Errorf("topology: caller %q is listed twice", c)
 		}
+		seen[c] = true
 	}
 	opPub, err := in.Keys.Operator.PublicKey()
 	if err != nil {
@@ -164,7 +187,27 @@ func Generate(in Input) (*Output, error) {
 	// ---- the delta against the previous manifest
 	manifest, revoke := delta(in, gen, creds)
 	for _, r := range revoke {
-		accounts[r.Account].RevokeAt(r.Public, r.At)
+		ac, ok := accounts[r.Account]
+		if !ok {
+			// The account is gone from this topology -- a caller that has left --
+			// but its credential is still out there. The revocation has to land in
+			// THAT account, so it is emitted as a tombstone: the account, with no
+			// imports and the revocation, signed by its own key. Without the key
+			// there is no honest way to revoke, and saying so beats not revoking.
+			kp, has := in.Keys.Accounts[r.Account]
+			if !has {
+				return nil, fmt.Errorf("topology: retiring %s needs its signing key to revoke %s, and none was given",
+					r.Account, r.Public)
+			}
+			pub, err := kp.PublicKey()
+			if err != nil {
+				return nil, err
+			}
+			ac = jwt.NewAccountClaims(pub)
+			ac.Name = r.Account
+			accounts[r.Account] = ac
+		}
+		ac.RevokeAt(r.Public, r.At)
 	}
 
 	// ---- encode
