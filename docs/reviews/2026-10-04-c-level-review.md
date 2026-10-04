@@ -36,7 +36,7 @@ Acted on the same day, each in a commit that names the finding:
 | NATS account limits | **done** — payload ceiling and bearer-disallowed on every account, connection ceiling on callers, in the JWT (`8e8d185`) |
 | one bounded retry on `UNAVAILABLE` | **done** — once, on *no responders* only, after 100 ms; a timeout is never retried (`8e8d185`) |
 | a benchmark | **done** — `mise run bench`; [docs/performance.md](../performance.md) carries the baseline: ≈0.2 ms per call serial, ≈0.13 ms parallel |
-| `LICENSE` | **waiting on a decision** — which licence |
+| `LICENSE` | **done** — MIT |
 | health and readiness endpoints; metrics; end-to-end traces | **in design** — the observability spec is the next document; see the open question on push vs pull |
 | the operator signing-key shape | open — its own task, recorded in the identity spec's §13 |
 | the authority model, person identity, catalogue signing, multi-cluster, data classification, tool descriptions, `garmctl dev up`, wire constants for a second SDK, tombstones | open — roadmap rows |
