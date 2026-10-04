@@ -19,10 +19,16 @@ const (
 // server's own _R_.> rather than an inbox.
 //
 // This replaced an explicit publish allow on _R_.> and _INBOX.>. That worked and
-// was over-broad: a tool could publish to ANY reply subject in its account. With
-// allow-responses a tool service has no publish permission at all. Found as a
-// review suggestion and proved by probe: the whole chain runs with it.
+// was over-broad: a tool could publish to ANY reply subject in its account.
 func replies() *jwt.ResponsePermission { return &jwt.ResponsePermission{MaxMsgs: 1} }
+
+// denyAllPublish is what makes allow-responses MEAN something. In NATS an EMPTY
+// publish allow-list is not "publish nothing" -- it is unrestricted. A probe
+// proved it: with no publish permission at all and no allow-responses, a tool's
+// reply still went out, because nothing was restricting it. The first version of
+// this file shipped exactly that and a test asserted it as "publishes nothing".
+// Deny everything explicitly; allow-responses is then the only way out.
+func denyAllPublish() jwt.Permission { return jwt.Permission{Deny: []string{">"}} }
 
 // toolService answers exactly its declared tools, and may publish nothing but
 // a reply to a request it received. names are tool names.
@@ -33,6 +39,7 @@ func toolService(names []string) jwt.Permissions {
 	}
 	return jwt.Permissions{
 		Sub:  jwt.Permission{Allow: sub},
+		Pub:  denyAllPublish(),
 		Resp: replies(),
 	}
 }

@@ -201,7 +201,7 @@ the catalogue.
 ```
 user weatherd, account TOOLS
   subscribe  garm.tool.weather.v1.get_forecast     one allow per DECLARED tool
-  publish    nothing
+  publish    DENIED: >                             an empty allow-list is unrestricted, not empty
   responses  allowed, one per request              see §4.1 — this is not optional
 ```
 
@@ -230,8 +230,15 @@ The first fix was an explicit publish allow on `_R_.>` and `_INBOX.>`. It worked
 and was over-broad — a tool could publish to *any* reply subject in its account.
 **The permission is now NATS's allow-responses**: a subscriber may publish a reply
 to a request it actually received, one per request, and nothing else — across
-accounts included. A tool service has **no publish permission at all**, and `rund`
-publishes only `garm.tool.>`. Proved by probe: the whole chain runs with it.
+accounts included. A tool service's publish is **denied outright** (`>`) and
+allow-responses is its only way out; `rund` publishes only `garm.tool.>`.
+
+**The deny is not decoration.** In NATS an *empty* publish allow-list is
+unrestricted, not empty. The first cut of this change gave a tool service no
+publish permission at all and called that "publishes nothing"; a probe with
+allow-responses removed still got the reply out, because nothing was restricting
+it. Proved both ways now: deny-all with allow-responses answers, deny-all without
+it times out.
 
 ### 4.2 When a tool leaves the catalogue
 
@@ -618,10 +625,11 @@ gaps found in it.
   designed here.
 - **It does not rate-limit.** A valid caller credential can saturate `rund`. NATS
   has per-account limits that could be the first answer; nothing here sets them.
-- **A tool service holds no publish permission.** It answers requests through
-  allow-responses and can reach nothing else. An earlier draft granted `_R_.>` and
-  carried a warning here against "simplifying" it to `>`; the warning is now moot,
-  which is the better outcome.
+- **A tool service's publish is denied, and allow-responses is its only way out.**
+  An earlier draft granted `_R_.>` and warned here against "simplifying" it to
+  `>`. The warning that replaces it: **do not "simplify" the deny away** — an
+  empty allow-list is unrestricted, and a probe proved a tool with neither deny
+  nor allow-responses still replied, because it could publish anything.
 
 ---
 

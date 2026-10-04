@@ -79,14 +79,22 @@ func TestAToolServiceMaySubscribeExactlyItsDeclaredTools(t *testing.T) {
 }
 
 // Spec §4.1, amended: a tool service may publish NOTHING but a reply to a request
-// it received. Allow-responses is the whole of its publish permission -- across
-// accounts too, where the reply subject is the server's _R_.>, which an explicit
-// allow used to cover over-broadly. Property 2 is what proves the reply gets out.
+// it received -- publish is DENIED outright, and allow-responses is the only way
+// out, across accounts too, where the reply subject is the server's _R_.>.
+//
+// The deny is the point. In NATS an empty publish allow-list is UNRESTRICTED,
+// not empty; the first version of this test asserted len(Pub.Allow)==0 as
+// "publishes nothing" and was asserting the opposite. A probe found it: with no
+// publish permission and no allow-responses, the reply still went out.
+// Property 2 is what proves the reply gets out WITH the deny in place.
 func TestAToolServiceMayPublishNothingButReplies(t *testing.T) {
 	out := generate(t, "studio")
 	uc := credential(t, out, "weather.v1.WeatherService")
 	if len(uc.Permissions.Pub.Allow) != 0 {
 		t.Fatalf("a tool service may publish %v; it should publish nothing but replies", uc.Permissions.Pub.Allow)
+	}
+	if deny := uc.Permissions.Pub.Deny; len(deny) != 1 || deny[0] != ">" {
+		t.Fatalf("publish deny is %v, want [>] -- an empty allow-list is unrestricted, not empty", deny)
 	}
 	if uc.Permissions.Resp == nil {
 		t.Fatal("no allow-responses permission: the tool would receive every call and answer none")
