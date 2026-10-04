@@ -156,22 +156,26 @@ The last line is what makes this an example rather than a claim: it is compiled 
 
 The bus runs in **operator mode**: every process connects with a credential whose
 permissions were derived from the catalogue, over TLS. Locally, `garmctl topology
---dev` mints a throwaway set and says so — a deployment's keys are an input the
-generator never produces.
+--dev` mints a throwaway set — keys, credentials, a self-signed certificate, and a
+`nats-server.conf` that uses them — and says so. A deployment's keys are an input
+the generator never produces, its certificate comes from its own CA, and it runs
+the full resolver rather than the preloaded memory one `--dev` writes; the
+[identity spec](specs/2026-10-04-identity-and-transport-security-design.md) §5–§7
+says what each of those is.
 
 ```bash
 garmctl compose examples/images.yaml -o build/catalogue.binpb
 garmctl topology --dev --catalogue file://build/catalogue.binpb --callers forecast -o build/topo
-nats-server --operator build/topo/operator.jwt --resolver_preload ... --tls ... &
-go run ./examples/cmd/weatherd --creds build/topo/creds/weather.v1.WeatherService.creds --tls-ca ca.pem
-go run ./examples/cmd/rund     --creds build/topo/creds/rund.creds --tls-ca ca.pem --catalogue file://build/catalogue.binpb
-go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds --tls-ca ca.pem
+nats-server -c build/topo/nats-server.conf &
+go run ./examples/cmd/weatherd --creds build/topo/creds/weather.v1.WeatherService.creds --tls-ca build/topo/ca.pem
+go run ./cmd/rund              --creds build/topo/creds/rund.creds                      --tls-ca build/topo/ca.pem --catalogue file://build/catalogue.binpb
+go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds                  --tls-ca build/topo/ca.pem
 ```
 
-The server's own configuration — the operator, the resolver, TLS — is the
-deployment's; the [identity spec](specs/2026-10-04-identity-and-transport-security-design.md)
-§5–§7 says what each is for, and the test estate (`internal/estate`) is the same
-topology stood up in process, which is how every test runs against it.
+Every line above is what `cmd/garmctl`'s `TestDevEmitsAServerConfigThatBootsAndAcceptsItsOwnCredentials`
+does: it starts a server from the emitted file and connects with an emitted
+credential. The test estate (`internal/estate`) is the same topology stood up in
+process, which is how every test runs against it.
 
 ```
 level=INFO msg=starting nats=nats://127.0.0.1:4222 creds=build/topo/creds/weather.v1.WeatherService.creds name=weatherd version=0.1.0

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/nats-io/jwt/v2"
@@ -16,6 +18,7 @@ import (
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	"github.com/garm-ai/garm-ai/fetch"
+	"github.com/garm-ai/garm-ai/internal/devtls"
 	"github.com/garm-ai/garm-ai/topology"
 )
 
@@ -93,6 +96,15 @@ func topologyCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			// The manifest FIRST. A manifest entry for a credential that then never
+			// reaches disk yields a harmless revocation on the next run; a credential
+			// on disk that no manifest records is one nothing will ever revoke. Found
+			// in review, with the order the other way round.
+			if !dev {
+				if err := res.Manifest.Save(manifestPath, keys.Operator); err != nil {
+					return err
+				}
+			}
 			if err := writeOutput(out, res, keys.Operator); err != nil {
 				return err
 			}
@@ -100,8 +112,9 @@ func topologyCmd() *cobra.Command {
 				if err := writeKeys(filepath.Join(out, "keys"), keys); err != nil {
 					return err
 				}
-			} else if err := res.Manifest.Save(manifestPath, keys.Operator); err != nil {
-				return err
+				if err := writeDevServer(out, res); err != nil {
+					return err
+				}
 			}
 			fmt.Fprintf(cmd.OutOrStdout(),
 				"ok: generation %d from catalogue %s -- %d accounts, %d credentials, %d revocations, written to %s\n",
@@ -186,6 +199,9 @@ func writeOutput(dir string, res *topology.Output, signer nkeys.KeyPair) error {
 			return err
 		}
 	}
+	if err := res.Manifest.Save(filepath.Join(dir, "manifest.json"), signer); err != nil {
+		return err
+	}
 	if err := os.WriteFile(filepath.Join(dir, "operator.jwt"), []byte(res.OperatorJWT), 0o600); err != nil {
 		return err
 	}
@@ -210,8 +226,58 @@ func writeOutput(dir string, res *topology.Output, signer nkeys.KeyPair) error {
 	if res.Revoke == nil {
 		rev = []byte("[]")
 	}
-	if err := os.WriteFile(filepath.Join(dir, "revocations.json"), rev, 0o600); err != nil {
+	return os.WriteFile(filepath.Join(dir, "revocations.json"), rev, 0o600)
+}
+
+// writeDevServer is --dev only: a server configuration a reader can start, and
+// the self-signed certificate it refers to. The memory resolver with every
+// account preloaded is the simplest server that honours the topology; a
+// deployment runs the full resolver and its own CA, and the guide says so.
+func writeDevServer(dir string, res *topology.Output) error {
+	certPEM, keyPEM, err := devtls.SelfSigned(24*time.Hour, "127.0.0.1", "localhost")
+	if err != nil {
 		return err
 	}
-	return res.Manifest.Save(filepath.Join(dir, "manifest.json"), signer)
+	for name, body := range map[string][]byte{"server.pem": certPEM, "server-key.pem": keyPEM, "ca.pem": certPEM} {
+		if err := os.WriteFile(filepath.Join(dir, name), body, 0o600); err != nil {
+			return err
+		}
+	}
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+	var sysPub string
+	var preload strings.Builder
+	names := make([]string, 0, len(res.Accounts))
+	for name := range res.Accounts {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		ac, err := jwt.DecodeAccountClaims(res.Accounts[name])
+		if err != nil {
+			return err
+		}
+		if name == topology.AccountSYS {
+			sysPub = ac.Subject
+		}
+		fmt.Fprintf(&preload, "  %s: %q\n", ac.Subject, res.Accounts[name])
+	}
+	conf := fmt.Sprintf(`# Written by garmctl topology --dev: a LOCAL server for the topology beside it.
+# A deployment runs the full resolver and a certificate from its own CA; this is
+# the memory resolver with every account preloaded, and a self-signed cert.
+listen: 127.0.0.1:4222
+operator: %q
+system_account: %s
+resolver: MEMORY
+resolver_preload: {
+%s}
+tls {
+  cert_file: %q
+  key_file: %q
+}
+`, filepath.Join(abs, "operator.jwt"), sysPub, preload.String(),
+		filepath.Join(abs, "server.pem"), filepath.Join(abs, "server-key.pem"))
+	return os.WriteFile(filepath.Join(dir, "nats-server.conf"), []byte(conf), 0o600)
 }

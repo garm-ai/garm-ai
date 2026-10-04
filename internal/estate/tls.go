@@ -1,54 +1,34 @@
 package estate
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/pem"
-	"math/big"
-	"net"
 	"testing"
 	"time"
+
+	"github.com/garm-ai/garm-ai/internal/devtls"
 )
 
 // tlsPair is a self-signed server certificate, a client config that trusts it,
 // and the CA as PEM for a command that takes a file. Tests run TLS because
 // production requires it (spec §6), and the configuration that is tested must be
-// the configuration that is deployed.
+// the configuration that is deployed. The certificate itself comes from devtls,
+// which `garmctl topology --dev` also uses -- the second consumer.
 func tlsPair(t *testing.T) (server *tls.Config, client *tls.Config, caPEM []byte) {
 	t.Helper()
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	certPEM, keyPEM, err := devtls.SelfSigned(time.Hour, "127.0.0.1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	tmpl := &x509.Certificate{
-		SerialNumber:          big.NewInt(1),
-		Subject:               pkix.Name{CommonName: "garm test estate"},
-		NotBefore:             time.Now().Add(-time.Minute),
-		NotAfter:              time.Now().Add(time.Hour),
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		IPAddresses:           []net.IP{net.ParseIP("127.0.0.1")},
-		IsCA:                  true,
-		BasicConstraintsValid: true,
-	}
-	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cert, err := x509.ParseCertificate(der)
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
 		t.Fatal(err)
 	}
 	pool := x509.NewCertPool()
-	pool.AddCert(cert)
-	return &tls.Config{
-			Certificates: []tls.Certificate{{Certificate: [][]byte{der}, PrivateKey: key}},
-			MinVersion:   tls.VersionTLS13,
-		}, &tls.Config{
-			RootCAs: pool, ServerName: "127.0.0.1", MinVersion: tls.VersionTLS13,
-		}, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	if !pool.AppendCertsFromPEM(certPEM) {
+		t.Fatal("the self-signed certificate did not parse")
+	}
+	return &tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS13},
+		&tls.Config{RootCAs: pool, ServerName: "127.0.0.1", MinVersion: tls.VersionTLS13},
+		certPEM
 }
