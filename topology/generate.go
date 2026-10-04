@@ -128,20 +128,48 @@ func Generate(in Input) (*Output, error) {
 		keys[name] = kp
 	}
 
-	// ---- users
-	var creds []Credential
-	issue := func(account, name string, p jwt.Permissions) error {
+	// ---- what each process SHOULD hold, decided before anything is issued
+	type want struct {
+		account, name string
+		perms         jwt.Permissions
+	}
+	wants := []want{{AccountSYS, "ops", ops()}, {AccountGARM, "rund", rund()}}
+	services := toolServices(in.Catalogue.Tools)
+	svcNames := make([]string, 0, len(services))
+	for svc := range services {
+		svcNames = append(svcNames, svc)
+	}
+	sort.Strings(svcNames)
+	for _, svc := range svcNames {
+		wants = append(wants, want{AccountTOOLS, svc, toolService(services[svc])})
+	}
+	for _, c := range in.Callers {
+		wants = append(wants, want{CallerPrefix + c, c, caller()})
+	}
+
+	// ---- issue what changed; carry forward what did not
+	//
+	// A credential whose account and permission set are what the manifest already
+	// records is not touched: its entry is copied, no new key is minted, nothing
+	// is revoked, and the process holding it keeps running. That is spec §4.2's
+	// delta -- "credentials whose permission set changed" -- and the reason adding
+	// one tool does not restart every process on the bus. Rotate overrides it.
+	previous := map[string]Entry{}
+	for _, e := range in.Previous.Entries {
+		previous[e.Name] = e
+	}
+	issue := func(account, name string, p jwt.Permissions) (Credential, error) {
 		kp, err := nkeys.CreateUser()
 		if err != nil {
-			return err
+			return Credential{}, err
 		}
 		upub, err := kp.PublicKey()
 		if err != nil {
-			return err
+			return Credential{}, err
 		}
 		seed, err := kp.Seed()
 		if err != nil {
-			return err
+			return Credential{}, err
 		}
 		uc := jwt.NewUserClaims(upub)
 		uc.Name = name
@@ -150,42 +178,39 @@ func Generate(in Input) (*Output, error) {
 		uc.Expires = exp
 		apub, err := keys[account].PublicKey()
 		if err != nil {
-			return err
+			return Credential{}, err
 		}
 		uc.IssuerAccount = apub
 		tok, err := uc.Encode(keys[account])
 		if err != nil {
-			return fmt.Errorf("topology: encoding user %s: %w", name, err)
+			return Credential{}, fmt.Errorf("topology: encoding user %s: %w", name, err)
 		}
-		creds = append(creds, Credential{Name: name, Account: account, Public: upub, JWT: tok, Seed: string(seed)})
-		return nil
+		return Credential{Name: name, Account: account, Public: upub, JWT: tok, Seed: string(seed)}, nil
 	}
-	if err := issue(AccountSYS, "ops", ops()); err != nil {
-		return nil, err
-	}
-	if err := issue(AccountGARM, "rund", rund()); err != nil {
-		return nil, err
-	}
-	services := toolServices(in.Catalogue.Tools)
-	svcNames := make([]string, 0, len(services))
-	for svc := range services {
-		svcNames = append(svcNames, svc)
-	}
-	sort.Strings(svcNames)
-	for _, svc := range svcNames {
-		if err := issue(AccountTOOLS, svc, toolService(services[svc])); err != nil {
+	var creds []Credential
+	var entries []Entry
+	for _, w := range wants {
+		hash := permissionsHash(w.account, w.perms)
+		if p, ok := previous[w.name]; ok && !in.Rotate && p.Account == w.account && p.PermissionsHash == hash {
+			entries = append(entries, p)
+			continue
+		}
+		c, err := issue(w.account, w.name, w.perms)
+		if err != nil {
 			return nil, err
 		}
-	}
-	for _, c := range in.Callers {
-		if err := issue(CallerPrefix+c, c, caller()); err != nil {
-			return nil, err
-		}
+		creds = append(creds, c)
+		entries = append(entries, Entry{
+			Name: c.Name, Account: c.Account, Public: c.Public,
+			CatalogueSHA256: in.Catalogue.SHA256, Generation: gen, PermissionsHash: hash,
+		})
 	}
 	sort.Slice(creds, func(i, j int) bool { return creds[i].Name < creds[j].Name })
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Name < entries[j].Name })
+	manifest := Manifest{Generation: gen, CatalogueSHA256: in.Catalogue.SHA256, IssuedAt: in.Now, Entries: entries}
 
 	// ---- the delta against the previous manifest
-	manifest, revoke := delta(in, gen, creds)
+	revoke := delta(in.Previous, manifest, in.Now)
 	for _, r := range revoke {
 		ac, ok := accounts[r.Account]
 		if !ok {

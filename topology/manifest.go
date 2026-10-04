@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 	"time"
 
+	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 )
 
@@ -105,56 +105,51 @@ func Load(path, operatorPublic string) (*Manifest, error) {
 	return &s.Manifest, nil
 }
 
-// permissionsHash identifies a permission set across reissues. The JWT's payload
-// changes on every issuance (fresh key, new iat), so this hashes the claims
-// segment only after decoding would be circular; instead it hashes the encoded
-// claims, which differ only when the permissions, tags or expiry do -- all of
-// which SHOULD count as a different credential.
-func permissionsHash(c Credential) string {
-	i := strings.Index(c.JWT, ".")
-	j := strings.LastIndex(c.JWT, ".")
-	if i < 0 || j <= i {
-		return ""
-	}
-	sum := sha256.Sum256([]byte(c.JWT[i+1 : j]))
+// permissionsHash is over the PERMISSION SET -- account, subscribe allow, publish
+// allow -- and nothing issuance-specific, so it is the same across two issuances
+// of the same thing. That stability is what lets the generator carry an entry
+// forward instead of reissuing it, and what lets a reader compare a credential's
+// manifest entry with what the startup gate would check.
+func permissionsHash(account string, p jwt.Permissions) string {
+	sub := append([]string(nil), p.Sub.Allow...)
+	pub := append([]string(nil), p.Pub.Allow...)
+	sort.Strings(sub)
+	sort.Strings(pub)
+	body, _ := json.Marshal(struct {
+		Account string   `json:"account"`
+		Sub     []string `json:"sub"`
+		Pub     []string `json:"pub"`
+	}{account, sub, pub})
+	sum := sha256.Sum256(body)
 	return hex.EncodeToString(sum[:8])
 }
 
-// delta compares what was just issued against what the manifest says existed, and
-// emits a revocation for every previous entry: retired if it has no successor,
-// moved if its successor is in another account, and superseded otherwise.
-//
-// Superseded is the common case and it is deliberate. Every run issues fresh user
-// keys, so the previous credential for a CONTINUING service is revoked too: that
-// is the "issue, restart, revoke the old" of spec §5, and it is what makes a
-// removed tool's permission actually disappear from a running process rather than
-// merely from the next credential.
-func delta(in Input, gen int, creds []Credential) (Manifest, []Revocation) {
-	m := Manifest{Generation: gen, CatalogueSHA256: in.Catalogue.SHA256, IssuedAt: in.Now}
-	now := map[string]Credential{}
-	for _, c := range creds {
-		now[c.Name] = c
-		m.Entries = append(m.Entries, Entry{
-			Name: c.Name, Account: c.Account, Public: c.Public,
-			CatalogueSHA256: in.Catalogue.SHA256, Generation: gen,
-			PermissionsHash: permissionsHash(c),
-		})
+// delta compares the manifest just built against the previous one and emits a
+// revocation for every previous credential that is no longer current: retired if
+// its name is gone, moved if its account changed, superseded if it was reissued.
+// A carried-forward entry has the same public key and is left alone.
+func delta(prev *Manifest, cur Manifest, now time.Time) []Revocation {
+	current := map[string]Entry{}
+	for _, e := range cur.Entries {
+		current[e.Name] = e
 	}
 	var rev []Revocation
-	for _, prev := range in.Previous.Entries {
-		cur, still := now[prev.Name]
+	for _, p := range prev.Entries {
+		c, still := current[p.Name]
 		switch {
 		case !still:
-			rev = append(rev, Revocation{Account: prev.Account, Public: prev.Public, At: in.Now,
+			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: now,
 				Why: "retired: no longer in the catalogue"})
-		case cur.Account != prev.Account:
-			rev = append(rev, Revocation{Account: prev.Account, Public: prev.Public, At: in.Now,
+		case c.Public == p.Public:
+			// carried forward, untouched
+		case c.Account != p.Account:
+			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: now,
 				Why: "moved accounts"})
 		default:
-			rev = append(rev, Revocation{Account: prev.Account, Public: prev.Public, At: in.Now,
-				Why: fmt.Sprintf("superseded by generation %d", gen)})
+			rev = append(rev, Revocation{Account: p.Account, Public: p.Public, At: now,
+				Why: fmt.Sprintf("superseded by generation %d", cur.Generation)})
 		}
 	}
 	sort.Slice(rev, func(i, j int) bool { return rev[i].Public < rev[j].Public })
-	return m, rev
+	return rev
 }

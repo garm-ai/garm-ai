@@ -23,8 +23,11 @@ func TestRetiringAServiceRevokesItsCredential(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The same catalogue again. Every credential is REISSUED with a fresh key and
-	// the previous one revoked as superseded (spec §5) -- but nothing is retired.
+	// The same catalogue again: NOTHING changes hands. Spec §4 -- "add a tool,
+	// reissue THAT service's credential" -- means an unchanged permission set is
+	// carried forward, not reissued; the plan's full-rotation reading was
+	// overridden in review because it would restart every process on every
+	// catalogue change. Rotation is an explicit act (TestRotateReissuesEverything).
 	again, err := topology.Generate(topology.Input{
 		Catalogue: weatherCatalogue(t), Previous: &first.Manifest, Keys: keys,
 		Now: time.Date(2026, 10, 5, 12, 0, 0, 0, time.UTC),
@@ -32,12 +35,18 @@ func TestRetiringAServiceRevokesItsCredential(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(again.Revoke) != len(first.Manifest.Entries) {
-		t.Fatalf("an unchanged catalogue revoked %d of %d previous credentials", len(again.Revoke), len(first.Manifest.Entries))
+	if len(again.Revoke) != 0 {
+		t.Fatalf("an unchanged catalogue revoked %v", again.Revoke)
 	}
-	for _, r := range again.Revoke {
-		if !strings.HasPrefix(r.Why, "superseded") {
-			t.Errorf("an unchanged catalogue revoked %s for %q, want superseded", r.Public, r.Why)
+	if len(again.Credentials) != 0 {
+		t.Fatalf("an unchanged catalogue issued %d new credentials", len(again.Credentials))
+	}
+	if len(again.Manifest.Entries) != len(first.Manifest.Entries) {
+		t.Fatalf("the manifest lost entries on carry-forward: %d -> %d", len(first.Manifest.Entries), len(again.Manifest.Entries))
+	}
+	for i := range first.Manifest.Entries {
+		if again.Manifest.Entries[i].Public != first.Manifest.Entries[i].Public {
+			t.Errorf("%s was reissued although nothing about it changed", first.Manifest.Entries[i].Name)
 		}
 	}
 	// Now a catalogue with no tools: the tool service is retired.

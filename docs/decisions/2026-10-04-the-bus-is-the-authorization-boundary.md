@@ -77,6 +77,22 @@ Four corrections, each made in the commit that found it:
   refused by its own check, not by the server. The test speaks the protocol
   directly now, and failed on cue when TLS was made optional.
 
+## What the review corrected
+
+The plan's Task 3 had the generator reissue **every** credential on **every** run,
+revoking the previous ones as superseded, and the build followed it. The spec says
+otherwise — §4: "add a tool → reissue *that* service's credential → restart *it*";
+§4.2: "credentials whose permission set changed" — and the plan's reading would
+have restarted every process on the bus for every catalogue change. The spec is
+the binding authority. A credential whose account and permission set are what the
+manifest records is now **carried forward** untouched; the permission hash is over
+the permission set, so it is stable; and rotation is an explicit `--rotate`, which
+is what §5's "issue, restart, revoke the old" was always describing.
+
+The same review found the generator panicking on a retired caller, accepting
+caller names that corrupted its own files, and a quick start that could not be run.
+Each is fixed in a commit that names it.
+
 ## What this does not decide
 
 Who a *person* is; what any caller may *do*; where the issuance environment lives;

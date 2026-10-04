@@ -146,9 +146,10 @@ func TestTopologyRefusesToRunWithoutAManifest(t *testing.T) {
 	}
 }
 
-// A second issuance against the first's manifest revokes the first's credentials
-// -- the delta, end to end through the command and its files.
-func TestTheSecondIssuanceRevokesTheFirst(t *testing.T) {
+// A second issuance against the first's manifest, with nothing changed, issues
+// nothing and revokes nothing -- the delta of spec §4.2, end to end through the
+// command and its files. --rotate is how everything is reissued on purpose.
+func TestTheSecondIssuanceIssuesOnlyWhatChangedUnlessRotated(t *testing.T) {
 	e := estate.New(t)
 	dev := t.TempDir()
 	if _, _, err := runTopology(t, append(catalogueArgs(e), "--dev", "--callers", "studio", "--out", dev)...); err != nil {
@@ -176,12 +177,27 @@ func TestTheSecondIssuanceRevokesTheFirst(t *testing.T) {
 	if err := json.Unmarshal([]byte(mustRead(t, filepath.Join(second, "revocations.json"))), &rev); err != nil {
 		t.Fatal(err)
 	}
+	if len(rev) != 0 {
+		t.Fatalf("an unchanged catalogue revoked %v; every process would have been restarted for nothing", rev)
+	}
+	if entries, _ := os.ReadDir(filepath.Join(second, "creds")); len(entries) != 0 {
+		t.Fatalf("an unchanged catalogue wrote %d new credentials", len(entries))
+	}
+	// --rotate: everything, on purpose.
+	third := t.TempDir()
+	if _, _, err := runTopology(t, append(catalogueArgs(e),
+		"--callers", "studio", "--keys", keys, "--manifest", manifest, "--rotate", "--out", third)...); err != nil {
+		t.Fatalf("rotation: %v", err)
+	}
+	if err := json.Unmarshal([]byte(mustRead(t, filepath.Join(third, "revocations.json"))), &rev); err != nil {
+		t.Fatal(err)
+	}
 	if len(rev) == 0 {
-		t.Fatal("the second issuance revoked nothing; the first generation's credentials live on")
+		t.Fatal("--rotate revoked nothing")
 	}
 	for _, r := range rev {
 		if !strings.HasPrefix(r.Why, "superseded") {
-			t.Errorf("revoked %s for %q, want superseded", r.Public, r.Why)
+			t.Errorf("rotation revoked %s for %q, want superseded", r.Public, r.Why)
 		}
 	}
 	// And --first against an EXISTING manifest is refused: it would forget it.

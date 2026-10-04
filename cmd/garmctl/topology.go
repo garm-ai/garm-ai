@@ -24,7 +24,7 @@ func topologyCmd() *cobra.Command {
 		catURI, catSHA, catDir string
 		callers                []string
 		keysDir, manifestPath  string
-		first, dev             bool
+		first, dev, rotate     bool
 		out                    string
 	)
 	cmd := &cobra.Command{
@@ -88,6 +88,7 @@ func topologyCmd() *cobra.Command {
 
 			res, err := topology.Generate(topology.Input{
 				Catalogue: cat, Callers: callers, Previous: previous, Keys: keys, Now: time.Now(),
+				Rotate: rotate,
 			})
 			if err != nil {
 				return err
@@ -116,6 +117,7 @@ func topologyCmd() *cobra.Command {
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "the issuance manifest; read as the previous topology, written back after")
 	cmd.Flags().BoolVar(&first, "first", false, "this is the first issuance and there is no manifest yet")
 	cmd.Flags().BoolVar(&dev, "dev", false, "mint throwaway keys for a local estate; never for a deployment")
+	cmd.Flags().BoolVar(&rotate, "rotate", false, "reissue EVERY credential and revoke every previous one; otherwise only what changed is issued")
 	cmd.Flags().StringVarP(&out, "out", "o", "", "directory to write the topology into")
 	return cmd
 }

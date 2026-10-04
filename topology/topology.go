@@ -42,6 +42,12 @@ type Input struct {
 	Now       time.Time
 	// Expiry is the floor under revocation (spec §5). Zero means DefaultExpiry.
 	Expiry time.Duration
+	// Rotate reissues every credential and revokes every previous one -- spec §5's
+	// "issue the new credential, restart that one process, revoke the old", asked
+	// for explicitly. Without it, a credential whose permission set is unchanged
+	// is carried forward untouched (spec §4.2), so adding one tool restarts one
+	// service and not every process on the bus.
+	Rotate bool
 }
 
 // DefaultExpiry: long enough never to cause a reconnect storm, short enough that
