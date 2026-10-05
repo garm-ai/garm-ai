@@ -213,6 +213,10 @@ func TestACallerWithoutATracerStillGetsATracedRun(t *testing.T) {
 	if !ok || run.Parent().IsValid() {
 		t.Fatal("rund should be the root of a fresh trace")
 	}
+	tool, ok := e.Recorder().SpanNamed("garm.tool")
+	if !ok || tool.Parent().SpanID() != run.SpanContext().SpanID() {
+		t.Fatal("the tool is not rund's child")
+	}
 }
 
 // Property 2, end to end: the id a CALLER reads out of an INTERNAL error opens

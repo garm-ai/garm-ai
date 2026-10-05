@@ -13,6 +13,9 @@ import (
 // thing that restarts or routes to a process speaks HTTP and holds no NATS
 // credential; the bus's own view is $SRV.PING, and natsmicro.Ready is held to
 // agree with it (spec §5).
+//
+// The listener comes down when ctx is cancelled OR when stop is called,
+// whichever first; a main tying it to its signal context needs nothing else.
 func ServeHealth(ctx context.Context, addr string, ready func() bool) (bound string, stop func(context.Context) error, err error) {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -33,6 +36,10 @@ func ServeHealth(ctx context.Context, addr string, ready func() bool) (bound str
 		BaseContext:       func(net.Listener) context.Context { return ctx },
 	}
 	go func() { _ = srv.Serve(ln) }()
+	go func() {
+		<-ctx.Done()
+		_ = srv.Close()
+	}()
 	return ln.Addr().String(), func(ctx context.Context) error {
 		if err := srv.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return err

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/nats-io/nkeys"
 )
 
 // CallerNames labels a caller's account key with the name the topology issued it
@@ -29,6 +31,11 @@ func LoadCallerNames(path string) (CallerNames, error) {
 	}
 	names := CallerNames{}
 	for name, key := range byName {
+		// A mistyped or hand-edited key would leave attribution intact (the key on
+		// the span is the server's) and make a name-filtered dashboard lie; refuse.
+		if !nkeys.IsValidPublicAccountKey(key) {
+			return nil, fmt.Errorf("%s: %q is not a public account key (for %q)", path, key, name)
+		}
 		if prev, dup := names[key]; dup {
 			// A label that could be either is a lie; refuse rather than pick.
 			return nil, fmt.Errorf("%s: %q and %q both name account %s", path, prev, name, key)

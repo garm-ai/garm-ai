@@ -179,16 +179,31 @@ func fetch(e *run.Engine, names observe.CallerNames, r micro.Request) {
 	defer span.End()
 	var req runv1.FetchRequest
 	if err := proto.Unmarshal(r.Data(), &req); err != nil {
-		reply(r, serve.Wire(serve.Invalid("the request could not be read as garm.run.v1.FetchRequest"), ""))
+		unreadable := serve.Invalid("the request could not be read as garm.run.v1.FetchRequest")
+		reply(r, serve.Wire(unreadable, ""))
+		mark(span, unreadable)
 		return
 	}
 	span.SetAttributes(observe.KeyRunID.String(req.GetRunId()))
 	resp, failure := e.Fetch(ctx, &req)
 	if failure != nil {
 		reply(r, failure)
+		mark(span, &serve.Error{Kind: failure.GetKind()})
 		return
 	}
+	mark(span, nil)
 	respond(r, resp)
+}
+
+// mark puts the outcome on a span: the kind always, an error status when there
+// was one. record does the same for invoke and also counts; fetch is not an
+// invocation and is not counted.
+func mark(span trace.Span, err error) {
+	kind := observe.Kind(err)
+	span.SetAttributes(observe.KeyKind.String(kind))
+	if err != nil {
+		span.SetStatus(codes.Error, kind)
+	}
 }
 
 func headersOf(r micro.Request) run.Headers {

@@ -57,6 +57,8 @@ type Options struct {
 	Correlation string
 
 	// Traceparent is W3C trace context, carried verbatim and never interpreted.
+	// For a process that never installed a tracer: once one is installed, the
+	// span on ctx is injected on the wire and takes precedence over this.
 	Traceparent string
 }
 

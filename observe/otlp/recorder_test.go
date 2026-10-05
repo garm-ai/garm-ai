@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"testing"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/metric"
 
 	"github.com/garm-ai/garm-ai/observe"
@@ -31,5 +33,26 @@ func TestTheRecorderSeesWhatTheAPIRecords(t *testing.T) {
 	}
 	if logs[0].TraceID() != span.SpanContext().TraceID() {
 		t.Fatal("the log record is not joined to the span's trace")
+	}
+}
+
+// The test estate propagates what production propagates -- trace context AND
+// baggage -- so a baggage regression cannot hide behind a test-only propagator.
+func TestTheRecorderPropagatesBaggageLikeProduction(t *testing.T) {
+	otlptest.Install(t)
+	member, err := baggage.NewMember("tenant", "acme")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bag, err := baggage.New(member)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := baggage.ContextWithBaggage(context.Background(), bag)
+	h := observe.HeaderCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, h)
+	got := baggage.FromContext(otel.GetTextMapPropagator().Extract(context.Background(), h))
+	if got.Member("tenant").Value() != "acme" {
+		t.Fatalf("baggage did not cross the hop: headers %v", h.Keys())
 	}
 }

@@ -176,7 +176,7 @@ contract changed now.
 | `garm.tool.inflight` | up-down counter | `tool` | what is being answered now |
 | `garm.tool.deadline_exceeded` | counter | `tool` | which declared time budgets are lies |
 | `garm.run.invocations` | counter | `tool`, `caller`, `caller_name`, `kind` | **who is generating load**, and what they get back |
-| `garm.service.drain` | counter | `service`, `queued` | how many calls a deploy drained, and whether any were waiting |
+| `garm.service.drain` | counter | `service`, `queued` (bool) | how many drains, and whether any call was waiting at the time — a bool, so the series is bounded; the count is on the log line |
 
 **`$SRV.STATS` is the bus-native view of `garm.tool.calls`** — requests and
 processing time per endpoint, already there, read with `nats micro stats`. It is
@@ -313,7 +313,11 @@ handed to `rundsvc` and `natsserve`; a package that makes its own meter is the
 `otel/sdk/log` v1.47.0, the three `otlp*http` exporters (traces and metrics at
 v1.47.0; **logs at v0.23.0**), and `contrib/bridges/otelslog` **v0.21.0**. The two
 pre-1.0 modules are the logs pipeline. Stated rather than hidden: if either breaks
-on an upgrade, traces and metrics do not, and logs still reach stdout.
+on an upgrade, traces and metrics do not, and logs still reach stdout. Also
+stated: the HTTP exporters pull `google.golang.org/grpc` and `grpc-gateway` in
+transitively (their request types are shared with the gRPC exporters), and
+`protobuf` moved 1.36.11 → 1.36.12 with them — the direct list above is not the
+whole dependency story.
 
 ---
 

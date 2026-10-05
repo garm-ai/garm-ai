@@ -210,8 +210,10 @@ func (s *Service) Serve(ctx context.Context) error {
 
 	s.draining.Store(true)
 	queued := s.inFlightN.Load()
+	// queued is a BOOL on the counter -- whether anything was waiting -- so the
+	// series stays bounded; the count itself goes to the log line below.
 	observe.Instruments().ServiceDrain.Add(context.Background(), 1,
-		metric.WithAttributes(observe.KeyService.String(s.cfg.Name), observe.KeyQueued.Int64(queued)))
+		metric.WithAttributes(observe.KeyService.String(s.cfg.Name), observe.KeyQueued.Bool(queued > 0)))
 	s.log.Info("draining", "service", s.cfg.Name, "in_flight", queued)
 
 	if err := svc.Stop(); err != nil {

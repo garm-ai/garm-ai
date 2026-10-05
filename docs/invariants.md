@@ -165,7 +165,11 @@ for claims the code makes today that nothing checks.
 | The one retry is one span | `natscall.TestTheOneRetryIsOneSpanWithAnEvent` |
 | No endpoint, no exporter, and the line says so; the standard variables — generic and per-signal — reach the backend in OpenObserve's shape; **header values are never logged**; `OTEL_SDK_DISABLED` installs nothing; the final flush is bounded | `otlp.TestNoEndpointMeansNoExporterAndSaysSo`, `TestTheStandardVariablesReachTheBackendAndTheValueIsNotLogged` against a fake receiver at `/api/garm/v1/traces`, `TestASignalSpecificEndpointIsHonoured`, `TestDisabledMeansNoSDKAtAll` (no id, nothing on the wire), `TestStopIsBoundedAgainstADeadBackend` (a receiver that never answers; the first version hung the suite) |
 | Only `observe/otlp` imports the OTel SDK; `serve`, `call`, `run` and generated code import no OTel at all | `mise run no-sdk` and the extended `mise run no-broker`, each proved to fail with one blank import |
-| `callers.json` is every caller and nothing else; a broken file refuses to start | `topology.TestCallerNamesIsEveryCallerAndNothingElse`, `observe.TestABrokenCallersFileRefuses`, `garmctl.TestDevEmitsAThrowawayTopologyAndSaysSo` parses the file it wrote |
+| `callers.json` is every caller and nothing else; a broken file — unparseable, two names for one key, or a key that is not an account key — refuses to start, naming the file | `topology.TestCallerNamesIsEveryCallerAndNothingElse`, `observe.TestABrokenCallersFileRefuses`, `observe.TestAKeyThatIsNotAnAccountKeyRefuses`, `rund.TestABrokenCallersTableRefusesToStartBeforeAnythingElse` (before the catalogue or the bus), `garmctl.TestDevEmitsAThrowawayTopologyAndSaysSo` parses the file it wrote |
+| The health listener honours its context | `observe.TestCancellingTheContextStopsTheHealthListener`. The first version used `ctx` only as the requests' base context and nothing took the listener down but `stop` — found in review |
+| A failed `fetch` is marked on its span like a failed `invoke` | `rundsvc.TestAFailedFetchIsMarkedOnItsSpan` |
+| The test estate propagates what production propagates — trace context and baggage | `otlp.TestTheRecorderPropagatesBaggageLikeProduction` |
+| `garmctl` prints no observability line unless an endpoint is set | `garmctl.TestGarmctlIsQuietAboutObservabilityUnlessAnEndpointIsSet`, through `root()` so the persistent hook runs |
 
 ## Not enforced, and said so
 
