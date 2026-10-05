@@ -128,6 +128,94 @@ func (x *GetForecastResponse) GetHighCelsius() int32 {
 	return 0
 }
 
+type ScheduleReportRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Place         string                 `protobuf:"bytes,1,opt,name=place,proto3" json:"place,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScheduleReportRequest) Reset() {
+	*x = ScheduleReportRequest{}
+	mi := &file_weather_v1_weather_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleReportRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleReportRequest) ProtoMessage() {}
+
+func (x *ScheduleReportRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_weather_v1_weather_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleReportRequest.ProtoReflect.Descriptor instead.
+func (*ScheduleReportRequest) Descriptor() ([]byte, []int) {
+	return file_weather_v1_weather_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ScheduleReportRequest) GetPlace() string {
+	if x != nil {
+		return x.Place
+	}
+	return ""
+}
+
+type ScheduleReportResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReportId      string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScheduleReportResponse) Reset() {
+	*x = ScheduleReportResponse{}
+	mi := &file_weather_v1_weather_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleReportResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleReportResponse) ProtoMessage() {}
+
+func (x *ScheduleReportResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_weather_v1_weather_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleReportResponse.ProtoReflect.Descriptor instead.
+func (*ScheduleReportResponse) Descriptor() ([]byte, []int) {
+	return file_weather_v1_weather_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ScheduleReportResponse) GetReportId() string {
+	if x != nil {
+		return x.ReportId
+	}
+	return ""
+}
+
 var File_weather_v1_weather_proto protoreflect.FileDescriptor
 
 const file_weather_v1_weather_proto_rawDesc = "" +
@@ -139,11 +227,17 @@ const file_weather_v1_weather_proto_rawDesc = "" +
 	"\x04days\x18\x02 \x01(\x05R\x04days\"R\n" +
 	"\x13GetForecastResponse\x12\x18\n" +
 	"\asummary\x18\x01 \x01(\tR\asummary\x12!\n" +
-	"\fhigh_celsius\x18\x02 \x01(\x05R\vhighCelsius2\x85\x01\n" +
+	"\fhigh_celsius\x18\x02 \x01(\x05R\vhighCelsius\"-\n" +
+	"\x15ScheduleReportRequest\x12\x14\n" +
+	"\x05place\x18\x01 \x01(\tR\x05place\"5\n" +
+	"\x16ScheduleReportResponse\x12\x1b\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId2\x82\x02\n" +
 	"\x0eWeatherService\x12s\n" +
 	"\vGetForecast\x12\x1e.weather.v1.GetForecastRequest\x1a\x1f.weather.v1.GetForecastResponse\"#\x92\xb5\x18\x1f\n" +
 	"\x17weather.v1.get_forecast\x1a\x04\n" +
-	"\x02\b\x05B>Z<github.com/garm-ai/garm-ai/examples/gen/weather/v1;weatherv1b\x06proto3"
+	"\x02\b\x05\x12{\n" +
+	"\x0eScheduleReport\x12!.weather.v1.ScheduleReportRequest\x1a\".weather.v1.ScheduleReportResponse\"\"\x92\xb5\x18\x1e\n" +
+	"\x1aweather.v1.schedule_report\"\x00B>Z<github.com/garm-ai/garm-ai/examples/gen/weather/v1;weatherv1b\x06proto3"
 
 var (
 	file_weather_v1_weather_proto_rawDescOnce sync.Once
@@ -157,16 +251,20 @@ func file_weather_v1_weather_proto_rawDescGZIP() []byte {
 	return file_weather_v1_weather_proto_rawDescData
 }
 
-var file_weather_v1_weather_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_weather_v1_weather_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_weather_v1_weather_proto_goTypes = []any{
-	(*GetForecastRequest)(nil),  // 0: weather.v1.GetForecastRequest
-	(*GetForecastResponse)(nil), // 1: weather.v1.GetForecastResponse
+	(*GetForecastRequest)(nil),     // 0: weather.v1.GetForecastRequest
+	(*GetForecastResponse)(nil),    // 1: weather.v1.GetForecastResponse
+	(*ScheduleReportRequest)(nil),  // 2: weather.v1.ScheduleReportRequest
+	(*ScheduleReportResponse)(nil), // 3: weather.v1.ScheduleReportResponse
 }
 var file_weather_v1_weather_proto_depIdxs = []int32{
 	0, // 0: weather.v1.WeatherService.GetForecast:input_type -> weather.v1.GetForecastRequest
-	1, // 1: weather.v1.WeatherService.GetForecast:output_type -> weather.v1.GetForecastResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: weather.v1.WeatherService.ScheduleReport:input_type -> weather.v1.ScheduleReportRequest
+	1, // 2: weather.v1.WeatherService.GetForecast:output_type -> weather.v1.GetForecastResponse
+	3, // 3: weather.v1.WeatherService.ScheduleReport:output_type -> weather.v1.ScheduleReportResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -183,7 +281,7 @@ func file_weather_v1_weather_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_weather_v1_weather_proto_rawDesc), len(file_weather_v1_weather_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -213,3 +213,20 @@ func TestAnUnknownCodeIsUnspecifiedRatherThanAGuess(t *testing.T) {
 		t.Errorf("an unknown code mapped to %v, want UNSPECIFIED", got)
 	}
 }
+
+// FromWire is the inverse of Wire for a caller holding an invokev1.Error -- a
+// fetched run's failure -- so it can act on the kind like any other *Error.
+// The id travels in the message, as the transport's own errors carry it.
+func TestFromWireRebuildsTheCallersError(t *testing.T) {
+	got := serve.FromWire(&invokev1.Error{Kind: invokev1.ErrorKind_ERROR_KIND_INVALID, Message: "place is required", Id: "run-7"})
+	var e *serve.Error
+	if !errors.As(got, &e) || e.Kind != invokev1.ErrorKind_ERROR_KIND_INVALID {
+		t.Fatalf("got %#v", got)
+	}
+	if !strings.Contains(got.Error(), "place is required") || !strings.Contains(got.Error(), "run-7") {
+		t.Fatalf("message %q", got.Error())
+	}
+	if serve.FromWire(nil) != nil {
+		t.Fatal("nil in, non-nil out")
+	}
+}

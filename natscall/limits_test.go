@@ -96,8 +96,8 @@ func TestOneRetryWhenNothingWasListeningYet(t *testing.T) {
 		}
 		t.Fatalf("Invoke: %v", err)
 	}
-	if string(out) != "late but here" {
-		t.Fatalf("got %q", out)
+	if string(out.GetResult()) != "late but here" {
+		t.Fatalf("got %q", out.GetResult())
 	}
 	select {
 	case <-answered:

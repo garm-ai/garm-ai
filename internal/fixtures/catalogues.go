@@ -58,9 +58,12 @@ func TwoServices(t testing.TB) Fixture {
 	clone.Package = proto.String("weather2.v1")
 	clone.MessageType = nil
 	clone.Dependency = append(clone.Dependency, orig.GetName())
-	if len(clone.Service) != 1 || len(clone.Service[0].Method) != 1 {
+	if len(clone.Service) != 1 || len(clone.Service[0].Method) < 1 {
 		t.Fatalf("the weather example changed shape: %d services, %d methods", len(clone.Service), len(clone.Service[0].Method))
 	}
+	// The clone keeps ONE tool -- the sync forecast -- whatever the example
+	// grows: SecondService exists to prove isolation, and one tool is enough.
+	clone.Service[0].Method = clone.Service[0].Method[:1]
 	m := clone.Service[0].Method[0]
 	m.InputType = proto.String(".weather.v1.GetForecastRequest")
 	m.OutputType = proto.String(".weather.v1.GetForecastResponse")

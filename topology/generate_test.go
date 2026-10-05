@@ -64,6 +64,7 @@ func TestAToolServiceMaySubscribeExactlyItsDeclaredTools(t *testing.T) {
 	want := []string{
 		"$SRV.>", // micro's discovery subjects, or AddService fails
 		"garm.tool.weather.v1.get_forecast",
+		"garm.tool.weather.v1.schedule_report", // async or not, a tool is a subject the service answers
 	}
 	if len(got) != len(want) {
 		t.Fatalf("subscribe allow is %v, want %v", got, want)

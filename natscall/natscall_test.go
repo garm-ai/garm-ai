@@ -127,7 +127,7 @@ func TestNoRundAtAllIsUnavailableNotASilentHang(t *testing.T) {
 
 func TestFetchReachesTheCallerAndSaysNotRetained(t *testing.T) {
 	nc := estateConn(t)
-	resp, err := natscall.Client{NC: nc}.Fetch(context.Background(), "r1")
+	resp, err := natscall.Client{NC: nc}.Fetch(context.Background(), "r1", 0)
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
 	}
@@ -152,4 +152,10 @@ func TestTheSameIdempotencyKeyIsTheSameRun(t *testing.T) {
 	}
 	// proved at the engine level in run.TestTheIdempotencyKeyBecomesTheRunID; here
 	// the point is only that the key survives the wire.
+}
+
+// Property 1 (transport half): an async invoke answers pending with the key as
+// the run id, and Fetch with a wait returns the answer.
+func TestAnAsyncInvokeAnswersPendingAndFetchTheResult(t *testing.T) {
+	t.Skip("the estate's run store arrives in Task 3 of the run-store plan; un-skipped there")
 }

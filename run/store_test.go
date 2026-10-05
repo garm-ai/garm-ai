@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"github.com/garm-ai/garm-ai/call"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/run"
@@ -228,5 +229,13 @@ func TestWithoutAStoreFetchIsNotRetained(t *testing.T) {
 	resp, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "k"}, run.Headers{Caller: "ACX"})
 	if failure != nil || resp.GetState() != runv1.RunState_RUN_STATE_NOT_RETAINED {
 		t.Fatalf("%v %v", resp, failure)
+	}
+}
+
+// call.MaxWait is what a generated client asks for per Fetch; the engine's cap
+// is what it gets. `call` imports no engine, so the two are pinned equal here.
+func TestTheClientsMaxWaitIsTheEnginesCap(t *testing.T) {
+	if call.MaxWait != run.MaxFetchWait {
+		t.Fatalf("call.MaxWait %v != run.MaxFetchWait %v", call.MaxWait, run.MaxFetchWait)
 	}
 }

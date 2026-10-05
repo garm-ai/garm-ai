@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
@@ -83,15 +82,16 @@ func callCmd() *cobra.Command {
 			}
 			defer nc.Close()
 
-			// The DECLARED budget plus the hops, so nobody types a timeout.
+			// The DECLARED budget plus the hops, so nobody types a timeout. An
+			// async tool's start is bounded by the most rund holds a request.
 			budget := tool.Budget()
 			if budget <= 0 {
-				budget = 30 * time.Second // an async tool, which rund will refuse anyway
+				budget = call.MaxWait
 			}
 			ctx, cancel := context.WithTimeout(ctx, call.Deadline(budget))
 			defer cancel()
 
-			out, err := natscall.Client{NC: nc}.Invoke(ctx, tool.Name, raw,
+			answer, err := natscall.Client{NC: nc}.Invoke(ctx, tool.Name, raw,
 				call.Options{Idempotency: idempotency})
 			if err != nil {
 				// RETURNED, not printed-and-exited. An earlier revision called
@@ -103,8 +103,14 @@ func callCmd() *cobra.Command {
 				return err
 			}
 
+			if answer.GetPending() != nil {
+				// The run is durable and will finish without us. Say how to read it.
+				fmt.Fprintf(cmd.OutOrStdout(), "pending %s\n", answer.GetRunId())
+				fmt.Fprintf(cmd.ErrOrStderr(), "the run is durable; read it with: garmctl fetch %s --wait 30s\n", answer.GetRunId())
+				return nil
+			}
 			resp := dynamicpb.NewMessage(tool.Method.Output())
-			if err := proto.Unmarshal(out, resp); err != nil {
+			if err := proto.Unmarshal(answer.GetResult(), resp); err != nil {
 				return fmt.Errorf("the answer is not a %s: %w", tool.Method.Output().FullName(), err)
 			}
 			text, err := protojson.MarshalOptions{Multiline: true, Indent: "  "}.Marshal(resp)

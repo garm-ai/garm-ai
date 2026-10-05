@@ -16,6 +16,7 @@ import (
 	context "context"
 	fmt "fmt"
 	call "github.com/garm-ai/garm-ai/call"
+	v1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	serve "github.com/garm-ai/garm-ai/serve"
 	proto "google.golang.org/protobuf/proto"
 	time "time"
@@ -26,12 +27,15 @@ import (
 type WeatherServiceHandler interface {
 	// GetForecast answers the tool "weather.v1.get_forecast".
 	GetForecast(context.Context, *GetForecastRequest) (*GetForecastResponse, error)
+	// ScheduleReport answers the tool "weather.v1.schedule_report".
+	ScheduleReport(context.Context, *ScheduleReportRequest) (*ScheduleReportResponse, error)
 }
 
 // WeatherServiceTools is every tool NAME WeatherService answers, in
 // declaration order: identities, never addresses.
 var WeatherServiceTools = []string{
 	"weather.v1.get_forecast",
+	"weather.v1.schedule_report",
 }
 
 // ServeWeatherService mounts every tool WeatherService declares on r. It
@@ -54,6 +58,28 @@ func ServeWeatherService(r serve.Registrar, h WeatherServiceHandler) error {
 			}
 			if out == nil {
 				return nil, fmt.Errorf("weather.v1.get_forecast: handler returned no response and no error")
+			}
+			return out, nil
+		},
+	); err != nil {
+		return err
+	}
+	if err := r.Endpoint(
+		"weather.v1.schedule_report",
+		"weather.v1.WeatherService.ScheduleReport",
+		0,
+		func() proto.Message { return new(ScheduleReportRequest) },
+		func(ctx context.Context, m proto.Message) (proto.Message, error) {
+			in, ok := m.(*ScheduleReportRequest)
+			if !ok {
+				return nil, fmt.Errorf("weather.v1.schedule_report: request is %T, want %T", m, (*ScheduleReportRequest)(nil))
+			}
+			out, err := h.ScheduleReport(ctx, in)
+			if err != nil {
+				return nil, err
+			}
+			if out == nil {
+				return nil, fmt.Errorf("weather.v1.schedule_report: handler returned no response and no error")
 			}
 			return out, nil
 		},
@@ -92,13 +118,62 @@ func (c WeatherServiceClient) GetForecast(ctx context.Context, in *GetForecastRe
 	}
 	ctx, cancel := context.WithTimeout(ctx, call.Deadline(5*time.Second))
 	defer cancel()
-	raw, err := c.Invoker.Invoke(ctx, "weather.v1.get_forecast", body, o)
+	answer, err := c.Invoker.Invoke(ctx, "weather.v1.get_forecast", body, o)
 	if err != nil {
 		return nil, err
 	}
 	var resp GetForecastResponse
-	if err := proto.Unmarshal(raw, &resp); err != nil {
+	if err := proto.Unmarshal(answer.GetResult(), &resp); err != nil {
 		return nil, fmt.Errorf("weather.v1.get_forecast: the answer is not a %T: %w", &resp, err)
 	}
 	return &resp, nil
+}
+
+// ScheduleReport starts the async tool "weather.v1.schedule_report" and returns the run.
+//
+// An idempotency key is REQUIRED (Options.Idempotency): it becomes the run id,
+// so a retry of this call is the same run rather than a second one. Refused
+// here, before the wire, when it is missing. The deadline covers only the
+// start: the run itself outlives this call. Read it with ScheduleReportResult.
+func (c WeatherServiceClient) ScheduleReport(ctx context.Context, in *ScheduleReportRequest, opts ...call.Options) (call.Ref, error) {
+	var o call.Options
+	if len(opts) > 0 {
+		o = opts[0]
+	}
+	if o.Idempotency == "" {
+		return call.Ref{}, serve.Invalid("weather.v1.schedule_report is async: Options.Idempotency is required, and it becomes the run id")
+	}
+	body, err := proto.Marshal(in)
+	if err != nil {
+		return call.Ref{}, fmt.Errorf("weather.v1.schedule_report: marshalling the request: %w", err)
+	}
+	ctx, cancel := context.WithTimeout(ctx, call.Deadline(call.MaxWait))
+	defer cancel()
+	answer, err := c.Invoker.Invoke(ctx, "weather.v1.schedule_report", body, o)
+	if err != nil {
+		return call.Ref{}, err
+	}
+	return call.Ref{RunID: answer.GetRunId(), Invoker: c.Invoker}, nil
+}
+
+// ScheduleReportResult reads a run ScheduleReport started, holding for up to wait
+// (rund caps it). While the run is RUNNING the typed result is nil and the
+// response says where it is; once FAILED the error is the tool's own, with
+// its kind; once SUCCEEDED the result is decoded.
+func (c WeatherServiceClient) ScheduleReportResult(ctx context.Context, ref call.Ref, wait time.Duration) (*ScheduleReportResponse, *v1.FetchResponse, error) {
+	fetched, err := ref.Fetch(ctx, wait)
+	if err != nil {
+		return nil, nil, err
+	}
+	switch fetched.GetState() {
+	case v1.RunState_RUN_STATE_SUCCEEDED:
+		var resp ScheduleReportResponse
+		if err := proto.Unmarshal(fetched.GetResult(), &resp); err != nil {
+			return nil, fetched, fmt.Errorf("weather.v1.schedule_report: the answer is not a %T: %w", &resp, err)
+		}
+		return &resp, fetched, nil
+	case v1.RunState_RUN_STATE_FAILED:
+		return nil, fetched, serve.FromWire(fetched.GetError())
+	}
+	return nil, fetched, nil
 }

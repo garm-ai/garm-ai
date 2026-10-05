@@ -17,6 +17,14 @@ message GetForecastResponse {
   int32 high_celsius = 2;
 }
 
+message ScheduleReportRequest {
+  string place = 1;
+}
+
+message ScheduleReportResponse {
+  string report_id = 1;
+}
+
 service WeatherService {
   rpc GetForecast(GetForecastRequest) returns (GetForecastResponse) {
     // The name is how everything else refers to this tool: an agent's allowlist,
@@ -29,6 +37,18 @@ service WeatherService {
       // inside 5s AND that no policy may interpose a human. A tool that might
       // ever need approval declares async instead.
       sync: { budget: { seconds: 5 } }
+    };
+  }
+
+  rpc ScheduleReport(ScheduleReportRequest) returns (ScheduleReportResponse) {
+    // ASYNC: the caller gets a run id back, not an answer, and reads the run
+    // later. Nothing about the handler changes -- it is the same plain method
+    // shape as GetForecast; what changes is who waits. The caller MUST send an
+    // idempotency key (it becomes the run id), and a policy may one day put a
+    // human between the call and the handler, which a sync tool forbids.
+    option (garm.tool.v1.tool) = {
+      name: "weather.v1.schedule_report"
+      async: {}
     };
   }
 }

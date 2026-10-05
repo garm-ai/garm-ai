@@ -30,8 +30,9 @@ func TestTheExampleRefusesAnEmptyPlace(t *testing.T) {
 // .proto's name changed, this fails -- which is what stops the guide's prose from
 // citing a name the tree no longer declares.
 func TestTheServiceAnswersTheDeclaredName(t *testing.T) {
-	want := "weather.v1.get_forecast"
-	if got := weatherv1.WeatherServiceTools; len(got) != 1 || got[0] != want {
-		t.Fatalf("WeatherServiceTools is %v, want exactly [%s]", got, want)
+	want := []string{"weather.v1.get_forecast", "weather.v1.schedule_report"}
+	got := weatherv1.WeatherServiceTools
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("WeatherServiceTools is %v, want exactly %v", got, want)
 	}
 }

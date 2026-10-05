@@ -22,6 +22,8 @@ import (
 	"github.com/garm-ai/garm-ai/call"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	"github.com/garm-ai/garm-ai/examples/weatherd"
+	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
 	"github.com/garm-ai/garm-ai/internal/generate"
 	"github.com/garm-ai/garm-ai/serve"
@@ -432,9 +434,70 @@ func TestAnAsyncToolGetsNoDeadline(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 	got := resp.GetFile()[0].GetContent()
-	if strings.Contains(got, "time.Second") || strings.Contains(got, "time.Duration") {
-		t.Errorf("an async tool was given a deadline:\n%s", got)
+	// No INVENTED deadline: the start is bounded by the platform's own cap on
+	// a held request (call.MaxWait), never by a number per tool, and the only
+	// other duration is the wait the caller passes to the result method.
+	if strings.Contains(got, "time.Second") || strings.Contains(got, "time.Millisecond") ||
+		strings.Count(got, "call.Deadline(") != strings.Count(got, "call.Deadline(call.MaxWait)") {
+		t.Errorf("an async tool was given a deadline of its own:\n%s", got)
 	}
+}
+
+// An async tool gets TWO methods -- one that starts the run and returns a
+// reference, one that reads the reference -- and never the sync shape. Flipping
+// a tool's delivery changes the signature, so every caller fails to compile:
+// that is what declaring delivery is for.
+func TestAnAsyncToolGetsAReferenceAndAResultMethod(t *testing.T) {
+	resp, err := probe(t, toolMethod(t, "Freeze", &toolv1.Tool{
+		Name:     "probe.v1.freeze",
+		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}},
+	}, false))
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	got := resp.GetFile()[0].GetContent()
+	for _, want := range []string{
+		"func (c ProbeServiceClient) Freeze(ctx context.Context, in *Req, opts ...call.Options) (call.Ref, error)",
+		"func (c ProbeServiceClient) FreezeResult(ctx context.Context, ref call.Ref, wait time.Duration) (*Res, *",
+		"FetchResponse, error) {",
+		"o.Idempotency == \"\"", // refused locally before the wire
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("the async client lacks %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "Freeze(ctx context.Context, in *Req, opts ...call.Options) (*Res, error)") {
+		t.Error("an async tool got the sync shape")
+	}
+}
+
+// The committed example, used as a consumer: the sync method keeps its shape and
+// the async one has the two methods. This file stops compiling otherwise.
+var (
+	_ func(context.Context, *weatherv1.GetForecastRequest, ...call.Options) (*weatherv1.GetForecastResponse, error)   = weatherv1.WeatherServiceClient{}.GetForecast
+	_ func(context.Context, *weatherv1.ScheduleReportRequest, ...call.Options) (call.Ref, error)                      = weatherv1.WeatherServiceClient{}.ScheduleReport
+	_ func(context.Context, call.Ref, time.Duration) (*weatherv1.ScheduleReportResponse, *runv1.FetchResponse, error) = weatherv1.WeatherServiceClient{}.ScheduleReportResult
+)
+
+// Starting an async run without an idempotency key is refused in the client,
+// before the wire: rund would refuse it too, and failing early is kinder.
+func TestTheAsyncClientRefusesAMissingKeyBeforeTheWire(t *testing.T) {
+	c := weatherv1.NewWeatherServiceClient(exploding{})
+	_, err := c.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "x"})
+	var se *serve.Error
+	if !errors.As(err, &se) || se.Kind != invokev1.ErrorKind_ERROR_KIND_INVALID || !strings.Contains(err.Error(), "Idempotency") {
+		t.Fatalf("got %v, want INVALID naming the key", err)
+	}
+}
+
+// exploding fails the test if the wire is touched.
+type exploding struct{}
+
+func (exploding) Invoke(context.Context, string, []byte, call.Options) (*runv1.InvokeResponse, error) {
+	panic("the wire was touched")
+}
+func (exploding) Fetch(context.Context, string, time.Duration) (*runv1.FetchResponse, error) {
+	panic("the wire was touched")
 }
 
 // TestTheBudgetReachesTheRegistrar, through the real generated binding rather than
@@ -444,12 +507,17 @@ func TestTheBudgetReachesTheRegistrar(t *testing.T) {
 	if err := weatherv1.ServeWeatherService(&r, weatherd.Service{}); err != nil {
 		t.Fatalf("Serve: %v", err)
 	}
-	if len(r.mounts) != 1 {
+	if len(r.mounts) != 2 {
 		t.Fatalf("mounted %d", len(r.mounts))
 	}
-	// weather.proto declares sync: { budget: { seconds: 5 } }
-	if r.mounts[0].budget != 5*time.Second {
-		t.Errorf("budget reached the registrar as %v, want 5s", r.mounts[0].budget)
+	// weather.proto declares sync: { budget: { seconds: 5 } } for the forecast
+	// and async: {} -- no budget -- for the report.
+	budgets := map[string]time.Duration{}
+	for _, m := range r.mounts {
+		budgets[m.name] = m.budget
+	}
+	if budgets["weather.v1.get_forecast"] != 5*time.Second || budgets["weather.v1.schedule_report"] != 0 {
+		t.Errorf("budgets reached the registrar as %v", budgets)
 	}
 }
 
@@ -470,27 +538,6 @@ func TestTheGeneratedClientSetsTheDeclaredBudgetAsItsDeadline(t *testing.T) {
 	// was in the middle of sending.
 	if !strings.Contains(got, "call.Deadline(7*time.Second)") {
 		t.Errorf("the client does not set the declared budget as its deadline:\n%s", got)
-	}
-}
-
-// TestAnAsyncToolGetsNoClientMethod. Its caller receives a reference, not an
-// answer -- a different signature, and no run store gives it meaning yet. Emitting
-// one would be a method that cannot work.
-func TestAnAsyncToolGetsNoClientMethod(t *testing.T) {
-	resp, err := probe(t, toolMethod(t, "Freeze", &toolv1.Tool{
-		Name:     "probe.v1.freeze",
-		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}},
-	}, false))
-	if err != nil {
-		t.Fatalf("Run: %v", err)
-	}
-	got := resp.GetFile()[0].GetContent()
-	if strings.Contains(got, "Client") {
-		t.Errorf("an async tool got a client method:\n%s", got)
-	}
-	// but it still gets a HANDLER: a service answers it, rund just cannot hold its run
-	if !strings.Contains(got, "ProbeServiceHandler") {
-		t.Error("an async tool lost its handler interface")
 	}
 }
 
@@ -529,9 +576,13 @@ type fakeInvoker struct {
 	ctx  context.Context
 }
 
-func (f *fakeInvoker) Invoke(ctx context.Context, tool string, _ []byte, _ call.Options) ([]byte, error) {
+func (f *fakeInvoker) Invoke(ctx context.Context, tool string, _ []byte, _ call.Options) (*runv1.InvokeResponse, error) {
 	f.tool, f.ctx = tool, ctx
-	return f.out, nil
+	return &runv1.InvokeResponse{Outcome: &runv1.InvokeResponse_Result{Result: f.out}}, nil
+}
+
+func (f *fakeInvoker) Fetch(context.Context, string, time.Duration) (*runv1.FetchResponse, error) {
+	return nil, errors.New("not used")
 }
 
 func (f *fakeInvoker) deadline() (time.Duration, bool) {

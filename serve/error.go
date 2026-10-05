@@ -200,3 +200,18 @@ func Wire(err error, id string) *invokev1.Error {
 	}
 	return &invokev1.Error{Kind: e.Kind, Message: message, Id: id}
 }
+
+// FromWire is Wire's inverse, for a caller that holds an invokev1.Error -- a
+// fetched run's failure -- and wants to act on it as it would on a sync call's
+// error: `errors.As(err, &e)` finds the kind. The id joins the message, as the
+// transport's own error path does, so a person reading it can find the run.
+func FromWire(w *invokev1.Error) error {
+	if w == nil {
+		return nil
+	}
+	msg := w.GetMessage()
+	if id := w.GetId(); id != "" {
+		msg += " (id: " + id + ")"
+	}
+	return &Error{Kind: w.GetKind(), Message: msg}
+}

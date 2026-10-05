@@ -92,12 +92,12 @@ func (c AccountsServiceClient) GetCustomer(ctx context.Context, in *GetCustomerR
 	}
 	ctx, cancel := context.WithTimeout(ctx, call.Deadline(2*time.Second))
 	defer cancel()
-	raw, err := c.Invoker.Invoke(ctx, "accounts.v1.get_customer", body, o)
+	answer, err := c.Invoker.Invoke(ctx, "accounts.v1.get_customer", body, o)
 	if err != nil {
 		return nil, err
 	}
 	var resp GetCustomerResponse
-	if err := proto.Unmarshal(raw, &resp); err != nil {
+	if err := proto.Unmarshal(answer.GetResult(), &resp); err != nil {
 		return nil, fmt.Errorf("accounts.v1.get_customer: the answer is not a %T: %w", &resp, err)
 	}
 	return &resp, nil
@@ -174,12 +174,12 @@ func (c PaymentsServiceClient) GetPaymentStatus(ctx context.Context, in *GetPaym
 	}
 	ctx, cancel := context.WithTimeout(ctx, call.Deadline(5*time.Second))
 	defer cancel()
-	raw, err := c.Invoker.Invoke(ctx, "payments.v1.get_payment_status", body, o)
+	answer, err := c.Invoker.Invoke(ctx, "payments.v1.get_payment_status", body, o)
 	if err != nil {
 		return nil, err
 	}
 	var resp GetPaymentStatusResponse
-	if err := proto.Unmarshal(raw, &resp); err != nil {
+	if err := proto.Unmarshal(answer.GetResult(), &resp); err != nil {
 		return nil, fmt.Errorf("payments.v1.get_payment_status: the answer is not a %T: %w", &resp, err)
 	}
 	return &resp, nil

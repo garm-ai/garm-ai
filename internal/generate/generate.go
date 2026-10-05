@@ -49,6 +49,7 @@ import (
 const (
 	servePackage protogen.GoImportPath = "github.com/garm-ai/garm-ai/serve"
 	callPackage  protogen.GoImportPath = "github.com/garm-ai/garm-ai/call"
+	runv1Package protogen.GoImportPath = "github.com/garm-ai/garm-ai/garm/run/v1"
 )
 
 const (
@@ -154,19 +155,13 @@ func file(gen *protogen.Plugin, f *protogen.File) error {
 
 // client emits the typed caller.
 //
-// ONLY SYNC TOOLS GET A METHOD. An async tool's caller receives a reference rather
-// than an answer, which is a different signature -- and there is no run store to
-// give it meaning yet, so emitting one would be a method that cannot work. When
-// Async lands, flipping a tool's delivery changes this signature and every caller
-// FAILS TO COMPILE, which is the whole point of declaring delivery at all.
+// A SYNC tool gets one method that answers. An ASYNC tool gets two: one that
+// starts the run and returns a call.Ref, one that reads the reference and
+// decodes the result once there is one. Flipping a tool's delivery changes the
+// signature and every caller FAILS TO COMPILE, which is the whole point of
+// declaring delivery at all.
 func client(g *protogen.GeneratedFile, s service) {
-	var sync []tool
-	for _, t := range s.tools {
-		if t.budget > 0 {
-			sync = append(sync, t)
-		}
-	}
-	if len(sync) == 0 {
+	if len(s.tools) == 0 {
 		return
 	}
 	name := s.svc.GoName + "Client"
@@ -174,6 +169,9 @@ func client(g *protogen.GeneratedFile, s service) {
 	options := g.QualifiedGoIdent(callPackage.Ident("Options"))
 	deadline := g.QualifiedGoIdent(callPackage.Ident("Deadline"))
 	ctxType := g.QualifiedGoIdent(contextPackage.Ident("Context"))
+	marshal := g.QualifiedGoIdent(protoPackage.Ident("Marshal"))
+	unmarshal := g.QualifiedGoIdent(protoPackage.Ident("Unmarshal"))
+	errorf := g.QualifiedGoIdent(fmtPackage.Ident("Errorf"))
 
 	g.P("// ", name, " calls the tools ", s.svc.GoName, " declares, by NAME.")
 	g.P("//")
@@ -184,42 +182,98 @@ func client(g *protogen.GeneratedFile, s service) {
 	g.P("// New", name, " builds a client over any transport.")
 	g.P("func New", name, "(i ", invoker, ") ", name, " { return ", name, "{Invoker: i} }")
 	g.P()
-	for _, t := range sync {
+	for _, t := range s.tools {
 		in := g.QualifiedGoIdent(t.method.Input.GoIdent)
 		out := g.QualifiedGoIdent(t.method.Output.GoIdent)
-		g.P("// ", t.method.GoName, " calls the tool ", strconv(t.name), ".")
+		if t.budget > 0 {
+			g.P("// ", t.method.GoName, " calls the tool ", strconv(t.name), ".")
+			g.P("//")
+			g.P("// The deadline is ", t.budget.String(), " -- the budget this tool DECLARED --")
+			g.P("// plus the hops. No caller invents a number. A shorter deadline already on")
+			g.P("// ctx still wins, because a caller's own patience is its own business.")
+			g.P("//")
+			g.P("// Only the first Options is used.")
+			g.P("func (c ", name, ") ", t.method.GoName, "(ctx ", ctxType, ", in *", in,
+				", opts ...", options, ") (*", out, ", error) {")
+			g.P("body, err := ", marshal, "(in)")
+			g.P("if err != nil {")
+			g.P("return nil, ", errorf, "(", strconv(t.name+": marshalling the request: %w"), ", err)")
+			g.P("}")
+			g.P("var o ", options)
+			g.P("if len(opts) > 0 {")
+			g.P("o = opts[0]")
+			g.P("}")
+			g.P("ctx, cancel := ", g.QualifiedGoIdent(contextPackage.Ident("WithTimeout")),
+				"(ctx, ", deadline, "(", budgetLiteral(g, t.budget), "))")
+			g.P("defer cancel()")
+			g.P("answer, err := c.Invoker.Invoke(ctx, ", strconv(t.name), ", body, o)")
+			g.P("if err != nil {")
+			// The tool's own error, carried through rather than wrapped: wrapping would
+			// bury the kind a caller is meant to act on.
+			g.P("return nil, err")
+			g.P("}")
+			g.P("var resp ", out)
+			g.P("if err := ", unmarshal, "(answer.GetResult(), &resp); err != nil {")
+			g.P("return nil, ", errorf, "(", strconv(t.name+": the answer is not a %T: %w"), ", &resp, err)")
+			g.P("}")
+			g.P("return &resp, nil")
+			g.P("}")
+			g.P()
+			continue
+		}
+		ref := g.QualifiedGoIdent(callPackage.Ident("Ref"))
+		fetchResp := g.QualifiedGoIdent(runv1Package.Ident("FetchResponse"))
+		g.P("// ", t.method.GoName, " starts the async tool ", strconv(t.name), " and returns the run.")
 		g.P("//")
-		g.P("// The deadline is ", t.budget.String(), " -- the budget this tool DECLARED --")
-		g.P("// plus the hops. No caller invents a number. A shorter deadline already on")
-		g.P("// ctx still wins, because a caller's own patience is its own business.")
-		g.P("//")
-		g.P("// Only the first Options is used.")
+		g.P("// An idempotency key is REQUIRED (Options.Idempotency): it becomes the run id,")
+		g.P("// so a retry of this call is the same run rather than a second one. Refused")
+		g.P("// here, before the wire, when it is missing. The deadline covers only the")
+		g.P("// start: the run itself outlives this call. Read it with ", t.method.GoName, "Result.")
 		g.P("func (c ", name, ") ", t.method.GoName, "(ctx ", ctxType, ", in *", in,
-			", opts ...", options, ") (*", out, ", error) {")
-		g.P("body, err := ", g.QualifiedGoIdent(protoPackage.Ident("Marshal")), "(in)")
-		g.P("if err != nil {")
-		g.P("return nil, ", g.QualifiedGoIdent(fmtPackage.Ident("Errorf")),
-			"(", strconv(t.name+": marshalling the request: %w"), ", err)")
-		g.P("}")
+			", opts ...", options, ") (", ref, ", error) {")
 		g.P("var o ", options)
 		g.P("if len(opts) > 0 {")
 		g.P("o = opts[0]")
 		g.P("}")
-		g.P("ctx, cancel := ", g.QualifiedGoIdent(contextPackage.Ident("WithTimeout")),
-			"(ctx, ", deadline, "(", budgetLiteral(g, t.budget), "))")
-		g.P("defer cancel()")
-		g.P("raw, err := c.Invoker.Invoke(ctx, ", strconv(t.name), ", body, o)")
+		g.P("if o.Idempotency == \"\" {")
+		g.P("return ", ref, "{}, ", g.QualifiedGoIdent(servePackage.Ident("Invalid")),
+			"(", strconv(t.name+" is async: Options.Idempotency is required, and it becomes the run id"), ")")
+		g.P("}")
+		g.P("body, err := ", marshal, "(in)")
 		g.P("if err != nil {")
-		// The tool's own error, carried through rather than wrapped: wrapping would
-		// bury the kind a caller is meant to act on.
-		g.P("return nil, err")
+		g.P("return ", ref, "{}, ", errorf, "(", strconv(t.name+": marshalling the request: %w"), ", err)")
 		g.P("}")
+		g.P("ctx, cancel := ", g.QualifiedGoIdent(contextPackage.Ident("WithTimeout")),
+			"(ctx, ", deadline, "(", g.QualifiedGoIdent(callPackage.Ident("MaxWait")), "))")
+		g.P("defer cancel()")
+		g.P("answer, err := c.Invoker.Invoke(ctx, ", strconv(t.name), ", body, o)")
+		g.P("if err != nil {")
+		g.P("return ", ref, "{}, err")
+		g.P("}")
+		g.P("return ", ref, "{RunID: answer.GetRunId(), Invoker: c.Invoker}, nil")
+		g.P("}")
+		g.P()
+		g.P("// ", t.method.GoName, "Result reads a run ", t.method.GoName, " started, holding for up to wait")
+		g.P("// (rund caps it). While the run is RUNNING the typed result is nil and the")
+		g.P("// response says where it is; once FAILED the error is the tool's own, with")
+		g.P("// its kind; once SUCCEEDED the result is decoded.")
+		g.P("func (c ", name, ") ", t.method.GoName, "Result(ctx ", ctxType, ", ref ", ref,
+			", wait ", g.QualifiedGoIdent(timePackage.Ident("Duration")), ") (*", out, ", *", fetchResp, ", error) {")
+		g.P("fetched, err := ref.Fetch(ctx, wait)")
+		g.P("if err != nil {")
+		g.P("return nil, nil, err")
+		g.P("}")
+		g.P("switch fetched.GetState() {")
+		g.P("case ", g.QualifiedGoIdent(runv1Package.Ident("RunState_RUN_STATE_SUCCEEDED")), ":")
 		g.P("var resp ", out)
-		g.P("if err := ", g.QualifiedGoIdent(protoPackage.Ident("Unmarshal")), "(raw, &resp); err != nil {")
-		g.P("return nil, ", g.QualifiedGoIdent(fmtPackage.Ident("Errorf")),
-			"(", strconv(t.name+": the answer is not a %T: %w"), ", &resp, err)")
+		g.P("if err := ", unmarshal, "(fetched.GetResult(), &resp); err != nil {")
+		g.P("return nil, fetched, ", errorf, "(", strconv(t.name+": the answer is not a %T: %w"), ", &resp, err)")
 		g.P("}")
-		g.P("return &resp, nil")
+		g.P("return &resp, fetched, nil")
+		g.P("case ", g.QualifiedGoIdent(runv1Package.Ident("RunState_RUN_STATE_FAILED")), ":")
+		g.P("return nil, fetched, ", g.QualifiedGoIdent(servePackage.Ident("FromWire")), "(fetched.GetError())")
+		g.P("}")
+		g.P("return nil, fetched, nil")
 		g.P("}")
 		g.P()
 	}

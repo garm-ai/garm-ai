@@ -19,6 +19,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/garm-ai/garm-ai/call"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
@@ -79,16 +80,16 @@ func (c Client) request(ctx context.Context, m *nats.Msg, pattern string) (*nats
 	}
 }
 
-// Invoke sends one InvokeRequest to rund and returns the tool's response bytes.
+// Invoke sends one InvokeRequest to rund and returns rund's answer.
 //
 // It opens the call's span -- the ROOT of the trace unless the caller's ctx is
 // already inside one, in which case this call is a child of the caller's own
 // work. Generated client code stays OTel-free: the span lives here, on the
 // transport, and the propagator puts it on the wire.
-func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Options) (result []byte, err error) {
+func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Options) (resp *runv1.InvokeResponse, err error) {
 	ctx, span := observe.Tracer().Start(ctx, "garm.call", trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(observe.KeyTool.String(tool), observe.KeyRequestBytes.Int(len(input))))
-	defer func() { finish(span, err, len(result)) }()
+	defer func() { finish(span, err, len(resp.GetResult())) }()
 
 	body, err := proto.Marshal(&runv1.InvokeRequest{Tool: tool, Input: input})
 	if err != nil {
@@ -117,20 +118,32 @@ func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Op
 	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
 		return nil, wireError(code, reply)
 	}
-	var resp runv1.InvokeResponse
-	if err := proto.Unmarshal(reply.Data, &resp); err != nil {
+	resp = &runv1.InvokeResponse{}
+	if err := proto.Unmarshal(reply.Data, resp); err != nil {
 		return nil, serve.Internal(fmt.Errorf("the reply is not an InvokeResponse: %w", err))
 	}
-	return resp.GetResult(), nil
+	span.SetAttributes(observe.KeyRunID.String(resp.GetRunId()))
+	return resp, nil
 }
 
-// Fetch asks what happened to a run.
-func (c Client) Fetch(ctx context.Context, runID string) (resp *runv1.FetchResponse, err error) {
+// Fetch asks what happened to a run. wait rides in the body; the request's
+// deadline is wait plus the hops unless ctx is already shorter -- a blocking
+// Fetch must not time out on the transport before rund has answered.
+func (c Client) Fetch(ctx context.Context, runID string, wait time.Duration) (resp *runv1.FetchResponse, err error) {
 	ctx, span := observe.Tracer().Start(ctx, "garm.fetch", trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(observe.KeyRunID.String(runID)))
 	defer func() { finish(span, err, 0) }()
 
-	body, err := proto.Marshal(&runv1.FetchRequest{RunId: runID})
+	req := &runv1.FetchRequest{RunId: runID}
+	if wait > 0 {
+		req.Wait = durationpb.New(wait)
+		if _, has := ctx.Deadline(); !has {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, call.Deadline(wait))
+			defer cancel()
+		}
+	}
+	body, err := proto.Marshal(req)
 	if err != nil {
 		return nil, serve.Internal(err)
 	}
