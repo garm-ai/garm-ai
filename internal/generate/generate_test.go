@@ -571,9 +571,11 @@ func TestTheGeneratedClientTypeChecksEndToEnd(t *testing.T) {
 }
 
 type fakeInvoker struct {
-	tool string
-	out  []byte
-	ctx  context.Context
+	tool    string
+	out     []byte
+	ctx     context.Context
+	states  []runv1.RunState
+	fetches int
 }
 
 func (f *fakeInvoker) Invoke(ctx context.Context, tool string, _ []byte, _ call.Options) (*runv1.InvokeResponse, error) {
@@ -582,7 +584,42 @@ func (f *fakeInvoker) Invoke(ctx context.Context, tool string, _ []byte, _ call.
 }
 
 func (f *fakeInvoker) Fetch(context.Context, string, time.Duration) (*runv1.FetchResponse, error) {
-	return nil, errors.New("not used")
+	f.fetches++
+	if len(f.states) == 0 {
+		return nil, errors.New("not used")
+	}
+	st := f.states[0]
+	if len(f.states) > 1 {
+		f.states = f.states[1:]
+	}
+	resp := &runv1.FetchResponse{State: st}
+	if st == runv1.RunState_RUN_STATE_SUCCEEDED {
+		resp.Outcome = &runv1.FetchResponse_Result{Result: f.out}
+	}
+	return resp, nil
+}
+
+// A typed Result method waits for an ANSWER within its wait: a held Fetch
+// returns on any change (a stage change included), and a stage is not an
+// answer, so the method keeps asking until the run is terminal or the wait is
+// spent. Here rund answers RUNNING twice -- the run moved -- then SUCCEEDED.
+func TestTheResultMethodWaitsForAnAnswerNotAStageChange(t *testing.T) {
+	inv := &fakeInvoker{states: []runv1.RunState{runv1.RunState_RUN_STATE_RUNNING, runv1.RunState_RUN_STATE_RUNNING, runv1.RunState_RUN_STATE_SUCCEEDED}}
+	inv.out, _ = proto.Marshal(&weatherv1.ScheduleReportResponse{ReportId: "r-1"})
+	c := weatherv1.NewWeatherServiceClient(inv)
+	out, resp, err := c.ScheduleReportResult(context.Background(), call.Ref{RunID: "k", Invoker: inv}, 5*time.Second)
+	if err != nil || out.GetReportId() != "r-1" || resp.GetState() != runv1.RunState_RUN_STATE_SUCCEEDED {
+		t.Fatalf("%v %v %v", out, resp, err)
+	}
+	if inv.fetches != 3 {
+		t.Fatalf("%d fetches, want 3", inv.fetches)
+	}
+	// And with no wait at all, one fetch, RUNNING, nil result, nil error.
+	inv = &fakeInvoker{states: []runv1.RunState{runv1.RunState_RUN_STATE_RUNNING}}
+	out, resp, err = weatherv1.NewWeatherServiceClient(inv).ScheduleReportResult(context.Background(), call.Ref{RunID: "k", Invoker: inv}, 0)
+	if err != nil || out != nil || resp.GetState() != runv1.RunState_RUN_STATE_RUNNING || inv.fetches != 1 {
+		t.Fatalf("%v %v %v fetches=%d", out, resp, err, inv.fetches)
+	}
 }
 
 func (f *fakeInvoker) deadline() (time.Duration, bool) {

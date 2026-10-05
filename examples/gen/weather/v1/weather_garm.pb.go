@@ -156,14 +156,27 @@ func (c WeatherServiceClient) ScheduleReport(ctx context.Context, in *ScheduleRe
 	return call.Ref{RunID: answer.GetRunId(), Invoker: c.Invoker}, nil
 }
 
-// ScheduleReportResult reads a run ScheduleReport started, holding for up to wait
-// (rund caps it). While the run is RUNNING the typed result is nil and the
-// response says where it is; once FAILED the error is the tool's own, with
-// its kind; once SUCCEEDED the result is decoded.
+// ScheduleReportResult reads a run ScheduleReport started, waiting up to wait for an
+// ANSWER. A held fetch returns whenever the run changes, a stage change
+// included, and a stage is not an answer: the method keeps asking (each ask
+// capped by rund) until the run is terminal or wait is spent. While still
+// RUNNING the typed result is nil and the response says where the run is;
+// once FAILED the error is the tool's own, with its kind; once SUCCEEDED the
+// result is decoded.
 func (c WeatherServiceClient) ScheduleReportResult(ctx context.Context, ref call.Ref, wait time.Duration) (*ScheduleReportResponse, *v1.FetchResponse, error) {
-	fetched, err := ref.Fetch(ctx, wait)
+	until := time.Now().Add(wait)
+	fetched, err := ref.Fetch(ctx, min(wait, call.MaxWait))
 	if err != nil {
 		return nil, nil, err
+	}
+	for fetched.GetState() == v1.RunState_RUN_STATE_RUNNING && ctx.Err() == nil {
+		left := time.Until(until)
+		if left <= 0 {
+			break
+		}
+		if fetched, err = ref.Fetch(ctx, min(left, call.MaxWait)); err != nil {
+			return nil, nil, err
+		}
 	}
 	switch fetched.GetState() {
 	case v1.RunState_RUN_STATE_SUCCEEDED:

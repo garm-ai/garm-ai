@@ -168,7 +168,10 @@ func TestAnAsyncInvokeAnswersPendingAndFetchTheResult(t *testing.T) {
 	if answer.GetRunId() != "wire-1" || answer.GetPending() == nil {
 		t.Fatalf("got %v, want pending for wire-1", answer)
 	}
-	resp, err := c.Fetch(context.Background(), "wire-1", 10*time.Second)
+	// Await: a single held Fetch returns on any change, a stage change included.
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	resp, err := (call.Ref{RunID: "wire-1", Invoker: c}).Await(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
