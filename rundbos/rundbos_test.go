@@ -38,13 +38,17 @@ type fakeTools struct {
 	calls []call
 	reply []byte
 	err   error
-	block chan struct{} // when non-nil, Call blocks until closed
+	block chan struct{}            // when non-nil, Call blocks until closed
+	gates map[string]chan struct{} // per idempotency key: Call blocks until that one is closed
 }
 
 func (f *fakeTools) Call(ctx context.Context, tool string, input []byte, _ time.Duration, h run.Headers) ([]byte, error) {
 	f.mu.Lock()
 	f.calls = append(f.calls, call{tool, input, h, trace.SpanContextFromContext(ctx).TraceID()})
 	block := f.block
+	if g, ok := f.gates[h.Idempotency]; ok {
+		block = g
+	}
 	f.mu.Unlock()
 	if block != nil {
 		select {
@@ -71,8 +75,13 @@ func holder(t *testing.T) *catalogue.Holder {
 
 func openAs(t *testing.T, url, executor string, tools run.Caller) *rundbos.Store {
 	t.Helper()
+	return openWith(t, url, executor, 2, tools)
+}
+
+func openWith(t *testing.T, url, executor string, workers int, tools run.Caller) *rundbos.Store {
+	t.Helper()
 	s, err := rundbos.Open(context.Background(), rundbos.Config{
-		URL: url, AppName: "garm-test", Executor: executor, Workers: 2, Migrate: true,
+		URL: url, AppName: "garm-test", Executor: executor, Workers: workers, Migrate: true,
 		Logger: slog.New(slog.DiscardHandler),
 	}, holder(t), tools)
 	if err != nil {
@@ -282,6 +291,7 @@ func TestFetchWaitReturnsWhenTheRunCompletes(t *testing.T) {
 	tools := &fakeTools{reply: []byte("late"), block: make(chan struct{})}
 	s := open(t, memory(t), tools)
 	mustStart(t, s, "k-wait")
+	waitUntil(t, "the tool to be called", func() bool { return tools.n() == 1 }) // past the queued→calling change
 	go func() { time.Sleep(300 * time.Millisecond); close(tools.block) }()
 	began := time.Now()
 	st, err := s.Fetch(context.Background(), "k-wait", 10*time.Second)
@@ -300,6 +310,8 @@ func TestFetchWaitIsBounded(t *testing.T) {
 	s := open(t, memory(t), tools)
 	defer close(tools.block)
 	mustStart(t, s, "k-bound")
+	// Settled at calling:0 first: a stage change would return earlier, rightly.
+	waitUntil(t, "the tool to be called", func() bool { return tools.n() == 1 })
 	began := time.Now()
 	st, err := s.Fetch(context.Background(), "k-bound", 300*time.Millisecond)
 	if err != nil || st.Status != run.StatusRunning {
@@ -375,4 +387,87 @@ func TestAReusedKeyOnARunningRunIsTheSameRun(t *testing.T) {
 	if tools.n() != 1 {
 		t.Fatalf("%d calls", tools.n())
 	}
+}
+
+func waitUntil(t *testing.T, what string, cond func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for !cond() {
+		if time.Now().After(deadline) {
+			t.Fatalf("waited 5s for %s", what)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+// Property 9: stage is the run's own word -- calling:<i> while the tool is in
+// flight, done after -- a word and a reference, never a payload.
+func TestStageIsTheRunsWord(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok"), block: make(chan struct{})}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-stage")
+	waitUntil(t, "the tool to be called", func() bool { return tools.n() == 1 })
+	st, err := s.Fetch(context.Background(), "k-stage", 0)
+	if err != nil || st.Status != run.StatusRunning || st.Stage != "calling:0" {
+		t.Fatalf("%+v %v", st, err)
+	}
+	close(tools.block)
+	if st := awaitTerminal(t, s, "k-stage", 5*time.Second); st.Stage != "done" {
+		t.Fatalf("after completion the stage is %q, want done", st.Stage)
+	}
+}
+
+// Review focus 2: a run that is in the queue but not yet dequeued says
+// queued -- not an error, not a hang beyond wait.
+func TestFetchOnAQueuedRunSaysQueued(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok"), gates: map[string]chan struct{}{"k-first:0": make(chan struct{})}}
+	s := openWith(t, memory(t), "test-a", 1, tools) // ONE worker: the second run waits in the queue
+	mustStart(t, s, "k-first")
+	waitUntil(t, "the first run to occupy the worker", func() bool { return tools.n() == 1 })
+	mustStart(t, s, "k-second")
+	began := time.Now()
+	st, err := s.Fetch(context.Background(), "k-second", 300*time.Millisecond)
+	if err != nil || st.Status != run.StatusRunning || st.Stage != "queued" {
+		t.Fatalf("%+v %v", st, err)
+	}
+	if time.Since(began) > 3*time.Second {
+		t.Fatal("Fetch on a queued run hung")
+	}
+	close(tools.gates["k-first:0"])
+	awaitTerminal(t, s, "k-second", 10*time.Second)
+}
+
+// Property 10: a Fetch with a wait returns on a STAGE change, not only on
+// completion -- queued becomes calling:0 when a worker frees up.
+func TestFetchWaitReturnsOnAStageChange(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok"), gates: map[string]chan struct{}{
+		"k-a:0": make(chan struct{}), "k-b:0": make(chan struct{})}}
+	s := openWith(t, memory(t), "test-a", 1, tools)
+	mustStart(t, s, "k-a")
+	waitUntil(t, "k-a to occupy the worker", func() bool { return tools.n() == 1 })
+	mustStart(t, s, "k-b")
+	if st, _ := s.Fetch(context.Background(), "k-b", 0); st.Stage != "queued" {
+		t.Fatalf("k-b is %+v, want queued", st)
+	}
+	type reading struct {
+		st  run.State
+		err error
+	}
+	got := make(chan reading, 1)
+	go func() {
+		st, err := s.Fetch(context.Background(), "k-b", 10*time.Second)
+		got <- reading{st, err}
+	}()
+	time.Sleep(200 * time.Millisecond)
+	close(tools.gates["k-a:0"]) // k-a finishes; k-b is dequeued and blocks in its tool
+	select {
+	case r := <-got:
+		if r.err != nil || r.st.Status != run.StatusRunning || r.st.Stage != "calling:0" {
+			t.Fatalf("%+v %v, want RUNNING at calling:0", r.st, r.err)
+		}
+	case <-time.After(8 * time.Second):
+		t.Fatal("Fetch did not return on the stage change")
+	}
+	close(tools.gates["k-b:0"])
+	awaitTerminal(t, s, "k-b", 5*time.Second)
 }

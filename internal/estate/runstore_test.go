@@ -37,6 +37,9 @@ func TestAnAsyncToolIsPendingThenAnswered(t *testing.T) {
 	if err != nil || resp.GetState() != runv1.RunState_RUN_STATE_SUCCEEDED || out.GetReportId() != "report-Ghent" {
 		t.Fatalf("%v %v %v", out, resp, err)
 	}
+	if resp.GetStage() != "done" {
+		t.Errorf("stage %q, want done", resp.GetStage())
+	}
 }
 
 func TestAnAsyncToolsRefusalIsTheRunsFailure(t *testing.T) {

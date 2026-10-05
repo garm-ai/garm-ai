@@ -184,17 +184,46 @@ func (s *Store) Fetch(ctx context.Context, id string, wait time.Duration) (run.S
 	if err != nil {
 		return run.State{}, storeErr(err)
 	}
-	st, err := s.state(h)
-	if err != nil || wait <= 0 || st.Status != run.StatusRunning {
-		return st, err
+	first, err := s.state(h)
+	if err != nil || wait <= 0 || first.Status != run.StatusRunning {
+		return first, err
 	}
-	if _, err := h.GetResult(dbos.WithHandleTimeout(wait)); err != nil && !errors.Is(err, dbos.ErrTimeout) && ctx.Err() == nil {
-		// A completed-with-error run is a state, not a Fetch failure; only an
-		// infrastructure error is. The re-read below tells them apart.
-		s.log.Debug("waiting on a run", "run", id, "error", err)
+	// Completion is DBOS's blocking read. A STAGE change has no blocking
+	// primitive in the SDK (GetEvent returns at once when the key exists), so it
+	// is a cheap poll inside rund -- the caller's contract is unchanged: one
+	// request, held. Whichever comes first, within wait.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		if _, err := h.GetResult(dbos.WithHandleTimeout(wait)); err != nil && !errors.Is(err, dbos.ErrTimeout) && ctx.Err() == nil {
+			// A completed-with-error run is a state, not a Fetch failure; only
+			// an infrastructure error is. The re-read tells them apart.
+			s.log.Debug("waiting on a run", "run", id, "error", err)
+		}
+	}()
+	deadline := time.Now().Add(wait)
+	tick := time.NewTicker(StagePoll)
+	defer tick.Stop()
+	for {
+		select {
+		case <-done:
+			return s.state(h)
+		case <-ctx.Done():
+			return first, nil
+		case <-tick.C:
+			cur, err := s.state(h)
+			if err != nil {
+				return run.State{}, err
+			}
+			if cur.Stage != first.Stage || cur.Status != run.StatusRunning || time.Now().After(deadline) {
+				return cur, nil
+			}
+		}
 	}
-	return s.state(h)
 }
+
+// StagePoll is how often a held Fetch re-reads the stage.
+const StagePoll = 200 * time.Millisecond
 
 // state is one reading of a run.
 func (s *Store) state(h dbos.WorkflowHandle[outcome]) (run.State, error) {
@@ -204,6 +233,7 @@ func (s *Store) state(h dbos.WorkflowHandle[outcome]) (run.State, error) {
 	}
 	out := run.State{ID: st.ID, Caller: st.AuthenticatedUser, CreatedAt: st.CreatedAt, CompletedAt: st.CompletedAt}
 	out.Tool, _ = st.Attributes["tool"].(string)
+	out.Stage = s.stage(st)
 	switch st.Status {
 	case dbos.WorkflowStatusSuccess:
 		// SUCCESS means the run REACHED AN ANSWER -- the tool's result or the
@@ -229,6 +259,21 @@ func (s *Store) state(h dbos.WorkflowHandle[outcome]) (run.State, error) {
 		out.Status = run.StatusRunning
 	}
 	return out, nil
+}
+
+// stage is the run's latest word about itself: the stage event, or "queued"
+// for a run no workflow has started yet -- there is nobody to set an event
+// for it, so the queue's own status says it.
+func (s *Store) stage(st dbos.WorkflowStatus) string {
+	v, err := dbos.GetEvent[string](s.ctx, st.ID, StageKey, 0)
+	if err == nil && v != "" {
+		return v
+	}
+	switch st.Status {
+	case dbos.WorkflowStatusEnqueued, dbos.WorkflowStatusDelayed, dbos.WorkflowStatusPending:
+		return "queued"
+	}
+	return ""
 }
 
 // Step is one recorded step of a run, in our vocabulary: GetWorkflowSteps
