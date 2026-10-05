@@ -268,6 +268,13 @@ replay after a crash re-sends the same ids, and follows the plan the run was
 started with even if the catalogue changed meanwhile. That is DBOS's
 determinism rule, applied to the one thing here that could vary.
 
+**`--run-store-run-limit`** (default 24h) is the ceiling on one run: from the
+moment a replica starts executing it — a queued run does not burn it waiting —
+until it is `CANCELLED`. It is the deployment's number, not the author's: a
+tool's `limit` bounds one call to its handler, the ceiling bounds the whole run,
+so nothing can hang forever. A per-declaration run limit arrives with a decider,
+which is the thing that runs several steps and waits.
+
 **`--run-store-executor` must be stable across restarts and unique among live
 replicas**: a StatefulSet's ordinal, a laptop's hostname (the default). A run
 that was executing when its replica stopped is recovered only by a relaunch with

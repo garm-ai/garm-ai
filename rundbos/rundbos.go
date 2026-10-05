@@ -63,6 +63,12 @@ type Config struct {
 	// Retry is the first interval between reconnection attempts while the
 	// store is unreachable; it doubles up to RetryMax. 0 means a second.
 	Retry time.Duration
+	// RunLimit is the CEILING on one run: how long it may take from the moment
+	// a replica starts executing it (a queued run does not burn it waiting)
+	// until it is CANCELLED. The deployment's number, not the author's -- a
+	// tool's own limit bounds one call to its handler; this bounds the whole
+	// thing, so nothing can hang forever. 0 means none.
+	RunLimit time.Duration
 }
 
 // RetryMax caps the reconnection interval.
@@ -154,7 +160,7 @@ func (s *Store) connect(ctx context.Context) error {
 	}
 	s.live.Store(&session{ctx: dctx})
 	s.record("up")
-	s.log.Info("run store", "url", Redact(s.cfg.URL), "executor", s.cfg.Executor, "workers", s.cfg.Workers, "migrate", s.cfg.Migrate)
+	s.log.Info("run store", "url", Redact(s.cfg.URL), "executor", s.cfg.Executor, "workers", s.cfg.Workers, "migrate", s.cfg.Migrate, "run_limit", s.cfg.RunLimit)
 	return nil
 }
 
@@ -296,10 +302,17 @@ func (s *Store) Start(ctx context.Context, r run.Run) (run.Started, error) {
 	for k, v := range r.Attributes {
 		attrs[k] = v
 	}
-	_, err = dbos.Enqueue[outcome, run.Run](sess.ctx, QueueName, WorkflowName, r,
+	enqueue := []dbos.EnqueueOption{
 		dbos.WithEnqueueWorkflowID(r.ID),
 		dbos.WithEnqueueAttributes(attrs),
-		dbos.WithEnqueueAuthenticatedUser(r.Caller))
+		dbos.WithEnqueueAuthenticatedUser(r.Caller),
+	}
+	if s.cfg.RunLimit > 0 {
+		// DBOS's durable deadline: computed at dequeue, survives a restart, and
+		// cancels the run -- the step's ctx ends and the row reads CANCELLED.
+		enqueue = append(enqueue, dbos.WithEnqueueTimeout(s.cfg.RunLimit))
+	}
+	_, err = dbos.Enqueue[outcome, run.Run](sess.ctx, QueueName, WorkflowName, r, enqueue...)
 	conflict := errors.Is(err, dbos.ErrConflictingWorkflowID)
 	if err != nil && !conflict {
 		return run.Started{}, s.storeErr(sess, err)

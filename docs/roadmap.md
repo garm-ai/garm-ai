@@ -63,7 +63,7 @@ generated client it did not write, over a transport it does not import.
 | Cost budgets across a run tree | an accountant |
 | A task list filtered by **compartment and principal** | the authority model — and a projection table, since JSONB containment is AND-only and cannot express "any of my compartments" |
 | rund owning a schema and migrations | a listing surface that needs OR queries and real pagination. A deliberate step, because it concedes the second half of the original no-database constraint |
-| A **run** limit — how long the whole run may take across steps and waits — and the check that it is ≥ the largest call limit in an allowlist | a decider. `Async.limit` (one call to the handler) is built; the run's own limit needs the thing that runs several |
+| A **per-declaration** run limit, and the check that it is ≥ the largest call limit in an allowlist | a decider. `Async.limit` (one call to the handler) and `rund --run-store-run-limit` (the deployment's ceiling on any run, `CANCELLED` past it) are built; a limit an author declares for a run needs the thing that runs several steps |
 | Cards of any kind, input, result, approval, context | a renderer |
 | Hot reload of the catalogue, converging every replica | a trigger — a JetStream KV key an operator sets |
 | A descriptor hash over wire shape | two repositories on two contract versions, so drift can exist |

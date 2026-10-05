@@ -699,3 +699,33 @@ func TestAnAbsentSchemaWithMigrateFalseRefusesToStart(t *testing.T) {
 		t.Fatalf("got %v, want a refusal naming --run-store-migrate", err)
 	}
 }
+
+// A run that outlives the replica's run ceiling is CANCELLED: the ceiling is
+// rund's (--run-store-run-limit), applied as the run's durable deadline from
+// the moment it starts executing -- a queued run does not burn it waiting.
+// Here the tool never answers; the run is cancelled in under the ceiling plus
+// the SDK's cancel latency, and the tool saw its context end.
+func TestARunPastTheRunLimitIsCancelled(t *testing.T) {
+	tools := &fakeTools{reply: []byte("never"), block: make(chan struct{})}
+	defer close(tools.block)
+	s, err := rundbos.Open(context.Background(), rundbos.Config{
+		URL: memory(t), AppName: "garm-test", Executor: "test-a", Workers: 1, Migrate: true,
+		Logger: slog.New(slog.DiscardHandler), RunLimit: 500 * time.Millisecond,
+	}, holder(t), tools)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close(context.Background()) })
+	mustStart(t, s, "k-ceiling")
+	began := time.Now()
+	st := awaitTerminal(t, s, "k-ceiling", 10*time.Second)
+	if st.Status != run.StatusCancelled {
+		t.Fatalf("%+v, want CANCELLED", st)
+	}
+	if took := time.Since(began); took > 5*time.Second {
+		t.Fatalf("cancelled after %v, want about the 500ms ceiling", took)
+	}
+	if st.CompletedAt.IsZero() {
+		t.Error("a cancelled run has no completed_at")
+	}
+}

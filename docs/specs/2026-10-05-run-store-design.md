@@ -187,7 +187,7 @@ enum RunState {
   RUN_STATE_RUNNING = 2;      // pending or executing; the distinction is DBOS's, not the caller's
   RUN_STATE_SUCCEEDED = 3;
   RUN_STATE_FAILED = 4;
-  RUN_STATE_CANCELLED = 5;    // reachable only by an operator today; Cancel is a later slice
+  RUN_STATE_CANCELLED = 5;    // an operator's command, or the replica's run ceiling (built: --run-store-run-limit); Cancel the verb is a later slice
 }
 ```
 
@@ -336,7 +336,11 @@ tool is refused per call with the message it carries today, now naming the flag.
 
 - `rund --run-store <url>`: `postgres://…` for a deployment, `sqlite:…` for a
   laptop; empty means sync-only. Credentials in the URL are redacted in the
-  startup line, by the same rule as OTLP headers. **Built:** `--run-store-migrate=false`
+  startup line, by the same rule as OTLP headers. **Built:** `--run-store-run-limit`
+  (default 24h) is the deployment's ceiling on one run, applied as DBOS's durable
+  deadline at enqueue — computed when execution starts, surviving a restart,
+  `CANCELLED` past it. A tool's `Async.limit` bounds one call; this bounds the run;
+  a limit an author declares for a run arrives with a decider. **Built:** `--run-store-migrate=false`
   with a schema that is absent or not current REFUSES TO START naming the flag —
   configuration, not weather; only an unreachable database degrades (§7).
 - The DBOS schema is `dbos`, in a database named `garm`. `Launch` creates and

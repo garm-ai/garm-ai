@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/nats-io/nats.go"
 
@@ -42,6 +43,7 @@ func main() {
 		storeEx = flag.String("run-store-executor", "", "this replica's STABLE executor id; a run executing when a replica dies is recovered only by a relaunch with the same id (a StatefulSet ordinal, a hostname); empty means the hostname; DBOS__VMID overrides")
 		storeWk = flag.Int("run-store-workers", 4, "runs this replica executes at once")
 		storeMg = flag.Bool("run-store-migrate", true, "create and migrate the store's schema at start; false verifies it and refuses to start if it is absent")
+		storeRL = flag.Duration("run-store-run-limit", 24*time.Hour, "the ceiling on one run, from the moment a replica starts executing it until it is CANCELLED; a tool's own limit bounds one call, this bounds the whole run; 0 means none")
 	)
 	flag.Parse()
 
@@ -61,12 +63,12 @@ func main() {
 		// Every value, defaults included, so nobody has to guess which one is in force.
 		log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
 			"name", *name, "version", *version, "callers", *callers, "health", *health,
-			"run_store", storeLabel(*store), "run_store_executor", *storeEx, "run_store_workers", *storeWk, "run_store_migrate", *storeMg)
+			"run_store", storeLabel(*store), "run_store_executor", *storeEx, "run_store_workers", *storeWk, "run_store_migrate", *storeMg, "run_store_run_limit", *storeRL)
 		if *catURI == "" {
 			log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
 			return 2
 		}
-		storeCfg := rundbos.Config{URL: *store, AppName: "garm", Executor: *storeEx, Workers: *storeWk, Migrate: *storeMg, Logger: log}
+		storeCfg := rundbos.Config{URL: *store, AppName: "garm", Executor: *storeEx, Workers: *storeWk, Migrate: *storeMg, RunLimit: *storeRL, Logger: log}
 		if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, storeCfg, log); err != nil {
 			log.Error("stopped", "error", err)
 			return 1
