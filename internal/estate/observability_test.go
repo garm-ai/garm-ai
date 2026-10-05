@@ -153,6 +153,11 @@ func TestNoSpanAttributeCarriesThePayload(t *testing.T) {
 	e := estate.New(t)
 	const sentinel = "PAYLOAD-SENTINEL-7f3a"
 	_ = forecast(t, e, estate.RoleCaller, sentinel)
+	// The tool's span ends in a defer after its reply has gone out: wait,
+	// briefly, for the three spans the call produces before checking them.
+	for deadline := time.Now().Add(2 * time.Second); len(e.Recorder().Spans()) < 3 && time.Now().Before(deadline); {
+		time.Sleep(10 * time.Millisecond)
+	}
 	if len(e.Recorder().Spans()) < 3 {
 		t.Fatal("the call produced fewer than three spans; the check would be vacuous")
 	}

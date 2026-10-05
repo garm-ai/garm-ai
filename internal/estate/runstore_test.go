@@ -19,7 +19,7 @@ import (
 // Properties 1, 2, 3 end to end, through the generated client: pending, then
 // the result; a refusal with its kind.
 func TestAnAsyncToolIsPendingThenAnswered(t *testing.T) {
-	e := estate.New(t)
+	e := estate.New(t, estate.WithStore())
 	client := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
 	ref, err := client.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-ghent"})
 	if err != nil {
@@ -43,7 +43,7 @@ func TestAnAsyncToolIsPendingThenAnswered(t *testing.T) {
 }
 
 func TestAnAsyncToolsRefusalIsTheRunsFailure(t *testing.T) {
-	e := estate.New(t)
+	e := estate.New(t, estate.WithStore())
 	client := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
 	ref, err := client.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{}, call.Options{Idempotency: "k-empty"})
 	if err != nil {
@@ -59,7 +59,7 @@ func TestAnAsyncToolsRefusalIsTheRunsFailure(t *testing.T) {
 // Property 13 end to end: a storeless rund refuses the async tool naming the
 // flag and answers the sync one; Fetch says NOT_RETAINED.
 func TestAStorelessRundIsSyncOnly(t *testing.T) {
-	e := estate.New(t, estate.WithoutStore())
+	e := estate.New(t)
 	client := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
 	_, err := client.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "x"}, call.Options{Idempotency: "k"})
 	var se *serve.Error
@@ -75,7 +75,7 @@ func TestAStorelessRundIsSyncOnly(t *testing.T) {
 // it. batch's Fetch of studio's run is NOT_FOUND -- not DENIED: the run's
 // existence is not batch's to learn.
 func TestARunIsVisibleOnlyToItsInvokingAccount(t *testing.T) {
-	e := estate.New(t)
+	e := estate.New(t, estate.WithStore())
 	studio := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
 	ref, err := studio.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-owned"})
 	if err != nil {
@@ -95,7 +95,7 @@ func TestARunIsVisibleOnlyToItsInvokingAccount(t *testing.T) {
 // Property 5 on the wire: the same key with a different request is INVALID
 // and names the key.
 func TestAReusedKeyWithADifferentRequestIsInvalidOnTheWire(t *testing.T) {
-	e := estate.New(t)
+	e := estate.New(t, estate.WithStore())
 	studio := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
 	if _, err := studio.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-dup"}); err != nil {
 		t.Fatal(err)

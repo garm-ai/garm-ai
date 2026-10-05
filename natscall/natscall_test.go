@@ -127,7 +127,7 @@ func TestNoRundAtAllIsUnavailableNotASilentHang(t *testing.T) {
 
 func TestFetchReachesTheCallerAndSaysNotRetained(t *testing.T) {
 	// A rund with NO store: with one, an id it never saw is NOT_FOUND.
-	nc := estate.New(t, estate.WithoutStore()).Connect(t, estate.RoleCaller)
+	nc := estateConn(t)
 	resp, err := natscall.Client{NC: nc}.Fetch(context.Background(), "r1", 0)
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
@@ -158,7 +158,7 @@ func TestTheSameIdempotencyKeyIsTheSameRun(t *testing.T) {
 // Property 1 (transport half): an async invoke answers pending with the key as
 // the run id -- never a result -- and Fetch with a wait returns the answer.
 func TestAnAsyncInvokeAnswersPendingAndFetchTheResult(t *testing.T) {
-	nc := estateConn(t)
+	nc := estate.New(t, estate.WithStore()).Connect(t, estate.RoleCaller)
 	c := natscall.Client{NC: nc}
 	body, _ := proto.Marshal(&weatherv1.ScheduleReportRequest{Place: "Ghent"})
 	answer, err := c.Invoke(context.Background(), "weather.v1.schedule_report", body, call.Options{Idempotency: "wire-1"})

@@ -95,18 +95,20 @@ type Estate struct {
 // Option shapes an estate.
 type Option func(*options)
 
-type options struct{ noStore, storeDown bool }
+type options struct{ store, storeDown bool }
 
-// WithoutStore is today's rund: sync only, no run store. For the tests that
-// prove what a storeless rund says.
-func WithoutStore() Option { return func(o *options) { o.noStore = true } }
+// WithStore gives rund a run store -- rundbos on a SQLite file in the test's
+// temp dir. OPT-IN: a DBOS runtime is a real cost per test, and the many tests
+// about identity, rotation and tracing have no run to hold. Without it the
+// estate is a storeless rund: sync only, async refused naming the flag.
+func WithStore() Option { return func(o *options) { o.store = true } }
 
 // WithStoreDown is a rund whose store is configured but unreachable at start:
 // the database's directory is a FILE, so it cannot be created. StoreUp makes
-// it reachable, and the store reconnects on its own.
-func WithStoreDown() Option { return func(o *options) { o.storeDown = true } }
+// it reachable, and the store reconnects on its own. Implies WithStore.
+func WithStoreDown() Option { return func(o *options) { o.store, o.storeDown = true, true } }
 
-// Store is the estate's run store, nil under WithoutStore.
+// Store is the estate's run store, nil without WithStore.
 func (e *Estate) Store() *rundbos.Store { return e.store }
 
 // StoreUp makes a WithStoreDown estate's database reachable and waits for the
@@ -413,7 +415,7 @@ func New(t testing.TB, opts ...Option) *Estate {
 		Tools:     rundsvc.ToolCaller{NC: rundNC},
 		Log:       rundLog,
 	}
-	if !o.noStore {
+	if o.store {
 		// The run store on a SQLite file in the test's temp dir -- the same
 		// rundbos a deployment runs on Postgres, no container. A stable
 		// executor id, as a deployment's (spec §2).

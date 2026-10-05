@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
@@ -74,11 +75,21 @@ func TestToolCountersCountWhatHappened(t *testing.T) {
 	run(t, s, nc)
 	call(t, nc, natsserve.Subject("probe.count"), &emptypb.Empty{})
 	call(t, nc, natsserve.Subject("probe.count"), &emptypb.Empty{})
+	// The counting is the handler's DEFER, which runs after the reply has gone
+	// out -- so a caller can hold its answer a moment before the counters say
+	// so. Read them until they settle, briefly; a wrong count stays wrong.
 	ctx := context.Background()
-	if n := rec.Counter(ctx, "garm.tool.calls", observe.KeyTool.String("probe.count"), observe.KeyKind.String("OK")); n != 2 {
+	calls := func() int64 {
+		return rec.Counter(ctx, "garm.tool.calls", observe.KeyTool.String("probe.count"), observe.KeyKind.String("OK"))
+	}
+	inflight := func() int64 { return rec.Counter(ctx, "garm.tool.inflight", observe.KeyTool.String("probe.count")) }
+	for deadline := time.Now().Add(2 * time.Second); (calls() != 2 || inflight() != 0) && time.Now().Before(deadline); {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if n := calls(); n != 2 {
 		t.Errorf("calls{OK} = %d, want 2", n)
 	}
-	if n := rec.Counter(ctx, "garm.tool.inflight", observe.KeyTool.String("probe.count")); n != 0 {
+	if n := inflight(); n != 0 {
 		t.Errorf("inflight = %d after both answered, want 0", n)
 	}
 }

@@ -31,7 +31,7 @@ func runFetch(t *testing.T, e *estate.Estate, args ...string) (stdout string, er
 // Against a rund with no store, fetch says NOT_RETAINED -- the honest answer,
 // printed for a person -- and exits 0: nothing went wrong.
 func TestFetchSaysNotRetainedWithoutAStore(t *testing.T) {
-	e := estate.New(t, estate.WithoutStore())
+	e := estate.New(t)
 	out, err := runFetch(t, e, "some-run", "--wait", "1s")
 	if err != nil {
 		t.Fatalf("fetch: %v\n%s", err, out)
@@ -42,7 +42,7 @@ func TestFetchSaysNotRetainedWithoutAStore(t *testing.T) {
 }
 
 func TestFetchRefusesAMalformedWait(t *testing.T) {
-	e := estate.New(t, estate.WithoutStore())
+	e := estate.New(t)
 	if _, err := runFetch(t, e, "some-run", "--wait", "soon"); err == nil {
 		t.Fatal("a malformed --wait was accepted")
 	}
