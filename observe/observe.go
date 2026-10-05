@@ -38,6 +38,7 @@ const (
 	KeyResponseBytes  = attribute.Key("garm.response_bytes")
 	KeyService        = attribute.Key("garm.service")
 	KeyQueued         = attribute.Key("garm.queued") // bool: was anything waiting at the drain
+	KeyState          = attribute.Key("garm.state")  // up | down: the run store's reachability
 )
 
 // Tracer is the module's tracer, from whatever provider is global.
@@ -64,6 +65,7 @@ type Metrics struct {
 	ToolDeadlineExceeded metric.Int64Counter       // garm.tool.deadline_exceeded {tool}
 	RunInvocations       metric.Int64Counter       // garm.run.invocations {tool, caller, caller_name, kind}
 	ServiceDrain         metric.Int64Counter       // garm.service.drain {service, queued}
+	RunStore             metric.Int64Counter       // garm.run.store {state}: each transition of the store's reachability
 }
 
 var (
@@ -91,6 +93,7 @@ func newInstruments() *Metrics {
 		ToolDeadlineExceeded: must(m.Int64Counter("garm.tool.deadline_exceeded", metric.WithDescription("tool calls that ran past their declared deadline"))),
 		RunInvocations:       must(m.Int64Counter("garm.run.invocations", metric.WithDescription("invocations rund answered, by caller and outcome kind"))),
 		ServiceDrain:         must(m.Int64Counter("garm.service.drain", metric.WithDescription("drains, with how many calls were in flight"))),
+		RunStore:             must(m.Int64Counter("garm.run.store", metric.WithDescription("run store reachability transitions, by state"))),
 	}
 }
 

@@ -16,6 +16,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -78,29 +79,58 @@ type Estate struct {
 	// rather than running it.
 	Catalogue *catalogue.Holder
 
-	srv     *natsserver.Server
-	tls     *tls.Config
-	topo    *topology.Output
-	creds   map[Role]topology.Credential
-	keys    topology.Keys
-	root    nkeys.KeyPair // the throwaway root, apart from keys, as it would be
-	rundLog *lockedBuffer
-	caPEM   []byte
-	rec     *otlptest.Recorder
-	store   *rundbos.Store
+	srv      *natsserver.Server
+	tls      *tls.Config
+	topo     *topology.Output
+	creds    map[Role]topology.Credential
+	keys     topology.Keys
+	root     nkeys.KeyPair // the throwaway root, apart from keys, as it would be
+	rundLog  *lockedBuffer
+	caPEM    []byte
+	rec      *otlptest.Recorder
+	store    *rundbos.Store
+	storeDir string
 }
 
 // Option shapes an estate.
 type Option func(*options)
 
-type options struct{ noStore bool }
+type options struct{ noStore, storeDown bool }
 
 // WithoutStore is today's rund: sync only, no run store. For the tests that
 // prove what a storeless rund says.
 func WithoutStore() Option { return func(o *options) { o.noStore = true } }
 
+// WithStoreDown is a rund whose store is configured but unreachable at start:
+// the database's directory is a FILE, so it cannot be created. StoreUp makes
+// it reachable, and the store reconnects on its own.
+func WithStoreDown() Option { return func(o *options) { o.storeDown = true } }
+
 // Store is the estate's run store, nil under WithoutStore.
 func (e *Estate) Store() *rundbos.Store { return e.store }
+
+// StoreUp makes a WithStoreDown estate's database reachable and waits for the
+// store to reconnect.
+func (e *Estate) StoreUp(t testing.TB) {
+	t.Helper()
+	if err := os.Remove(e.storeDir); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(e.storeDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		_, err := e.store.Fetch(context.Background(), "probe", 0)
+		if errors.Is(err, run.ErrNotFound) {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("the store did not come back: %v", err)
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
 
 // Reissue runs the generator again, against THIS estate's manifest and keys, for a
 // different catalogue -- which is what a deployment does when a tool is added or
@@ -387,9 +417,15 @@ func New(t testing.TB, opts ...Option) *Estate {
 		// The run store on a SQLite file in the test's temp dir -- the same
 		// rundbos a deployment runs on Postgres, no container. A stable
 		// executor id, as a deployment's (spec §2).
+		e.storeDir = filepath.Join(t.TempDir(), "store")
+		if o.storeDown {
+			if err := os.WriteFile(e.storeDir, []byte("in the way"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+		}
 		store, err := rundbos.Open(context.Background(), rundbos.Config{
-			URL: rundbos.FileURL(filepath.Join(t.TempDir(), "runs.db")), AppName: "estate",
-			Executor: "estate-rund", Workers: 2, Migrate: true, Logger: rundLog,
+			URL: rundbos.FileURL(filepath.Join(e.storeDir, "runs.db")), AppName: "estate",
+			Executor: "estate-rund", Workers: 2, Migrate: true, Logger: rundLog, Retry: 100 * time.Millisecond,
 		}, e.Catalogue, engine.Tools)
 		if err != nil {
 			t.Fatal(err)

@@ -12,16 +12,21 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/url"
 	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/dbos-inc/dbos-transact-golang/dbos"
 	_ "github.com/dbos-inc/dbos-transact-golang/dbos/driver/sqlite" // sqlite: URLs, pure Go: the estate needs no Postgres
+	"go.opentelemetry.io/otel/metric"
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/serve"
 )
@@ -55,21 +60,40 @@ type Config struct {
 	// for a deployment that owns its migrations.
 	Migrate bool
 	Logger  *slog.Logger
+	// Retry is the first interval between reconnection attempts while the
+	// store is unreachable; it doubles up to RetryMax. 0 means a second.
+	Retry time.Duration
 }
 
+// RetryMax caps the reconnection interval.
+const RetryMax = 30 * time.Second
+
 // Store implements run.Store on DBOS.
+//
+// The DBOS runtime behind it is a SESSION that can be absent: when the
+// database is unreachable at start or lost later, the store is degraded --
+// Start and Fetch say UNAVAILABLE naming the store, a reconnection runs in the
+// background with backoff, and rund keeps serving sync calls, which never
+// touch this (spec §7). A deployment watches garm.run.store{state}.
 type Store struct {
 	cfg   Config
 	cat   *catalogue.Holder
 	tools run.Caller
 	log   *slog.Logger
-	ctx   dbos.Context
+
+	live     atomic.Pointer[session]
+	retrying atomic.Bool
+	closed   chan struct{}
+	wg       sync.WaitGroup
 }
+
+type session struct{ ctx dbos.Context }
 
 var _ run.Store = (*Store)(nil)
 
-// Open connects, registers the workflow and the queue, and launches -- which
-// recovers this executor's PENDING runs. An unreachable store is an error here.
+// Open validates the configuration -- a URL that is not a store is an error,
+// never "degraded" -- and connects. An unreachable database degrades the store
+// rather than failing Open: rund starts, serves sync, and reconnects on its own.
 func Open(ctx context.Context, cfg Config, cat *catalogue.Holder, tools run.Caller) (*Store, error) {
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
@@ -83,35 +107,141 @@ func Open(ctx context.Context, cfg Config, cat *catalogue.Holder, tools run.Call
 	if cfg.AppName == "" {
 		cfg.AppName = "garm"
 	}
+	if cfg.Retry <= 0 {
+		cfg.Retry = time.Second
+	}
 	if !strings.HasPrefix(cfg.URL, "postgres://") && !strings.HasPrefix(cfg.URL, "postgresql://") && !strings.HasPrefix(cfg.URL, "sqlite:") {
 		return nil, fmt.Errorf("rundbos: --run-store must be postgres://… or sqlite:…, not %q", Redact(cfg.URL))
 	}
-	s := &Store{cfg: cfg, cat: cat, tools: tools, log: cfg.Logger}
-	dctx, err := dbos.NewContext(ctx, dbos.Config{
-		AppName:        cfg.AppName,
-		DatabaseURL:    cfg.URL,
-		ExecutorID:     cfg.Executor,
-		Logger:         cfg.Logger,
-		SkipMigrations: !cfg.Migrate,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("rundbos: %w", err)
+	s := &Store{cfg: cfg, cat: cat, tools: tools, log: cfg.Logger, closed: make(chan struct{})}
+	if err := s.connect(ctx); err != nil {
+		s.log.Warn("run store unreachable; serving sync only until it returns",
+			"url", Redact(cfg.URL), "error", err, "retry", cfg.Retry)
+		s.record("down")
+		s.retry()
 	}
-	dbos.RegisterWorkflow(dctx, s.invoke, dbos.WithWorkflowName(WorkflowName))
-	if _, err := dbos.RegisterQueue(dctx, QueueName, dbos.WithWorkerConcurrency(cfg.Workers)); err != nil {
-		return nil, fmt.Errorf("rundbos: %w", err)
-	}
-	if err := dbos.Launch(dctx); err != nil {
-		return nil, fmt.Errorf("rundbos: launch: %w", err)
-	}
-	s.ctx = dctx
-	s.log.Info("run store", "url", Redact(cfg.URL), "executor", cfg.Executor, "workers", cfg.Workers, "migrate", cfg.Migrate)
 	return s, nil
 }
 
-// Close shuts the DBOS runtime down, waiting briefly for in-flight steps.
+// connect builds a DBOS session: context, workflow, queue, Launch (which
+// recovers this executor's in-flight runs).
+func (s *Store) connect(ctx context.Context) error {
+	dctx, err := dbos.NewContext(ctx, dbos.Config{
+		AppName:                s.cfg.AppName,
+		DatabaseURL:            s.cfg.URL,
+		ExecutorID:             s.cfg.Executor,
+		Logger:                 s.cfg.Logger,
+		SkipMigrations:         !s.cfg.Migrate,
+		SystemDBStartupTimeout: 10 * time.Second,
+	})
+	if err != nil {
+		return err
+	}
+	dbos.RegisterWorkflow(dctx, s.invoke, dbos.WithWorkflowName(WorkflowName))
+	if _, err := dbos.RegisterQueue(dctx, QueueName, dbos.WithWorkerConcurrency(s.cfg.Workers)); err != nil {
+		return err
+	}
+	if err := dbos.Launch(dctx); err != nil {
+		return err
+	}
+	s.live.Store(&session{ctx: dctx})
+	s.record("up")
+	s.log.Info("run store", "url", Redact(s.cfg.URL), "executor", s.cfg.Executor, "workers", s.cfg.Workers, "migrate", s.cfg.Migrate)
+	return nil
+}
+
+// retry reconnects in the background, doubling the interval up to RetryMax,
+// until the store is back or Close. One retrier at a time.
+func (s *Store) retry() {
+	if !s.retrying.CompareAndSwap(false, true) {
+		return
+	}
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		defer s.retrying.Store(false)
+		interval := s.cfg.Retry
+		for {
+			select {
+			case <-s.closed:
+				return
+			case <-time.After(interval):
+			}
+			if err := s.connect(context.Background()); err == nil {
+				s.log.Info("run store back", "url", Redact(s.cfg.URL))
+				return
+			} else {
+				s.log.Warn("run store still unreachable", "url", Redact(s.cfg.URL), "error", err, "retry", min(interval*2, RetryMax))
+			}
+			interval = min(interval*2, RetryMax)
+		}
+	}()
+}
+
+// session is the live session, or the UNAVAILABLE the caller gets without one.
+func (s *Store) session() (*session, error) {
+	if sess := s.live.Load(); sess != nil {
+		return sess, nil
+	}
+	return nil, serve.Unavailable("the run store is unreachable (--run-store %s); sync tools are unaffected", Redact(s.cfg.URL))
+}
+
+// lost marks a session down after an error that says the database went away,
+// and starts the retry. Only a connection failure degrades: a tool's refusal
+// and the port's own errors are answers.
+func (s *Store) lost(sess *session, err error) {
+	if !IsConnectionError(err) || !s.live.CompareAndSwap(sess, nil) {
+		return
+	}
+	s.log.Warn("run store lost; serving sync only until it returns", "url", Redact(s.cfg.URL), "error", err)
+	s.record("down")
+	go func() { _ = dbos.Shutdown(sess.ctx, 5*time.Second) }()
+	s.retry()
+}
+
+func (s *Store) record(state string) {
+	observe.Instruments().RunStore.Add(context.Background(), 1, metric.WithAttributes(observe.KeyState.String(state)))
+}
+
+// IsConnectionError says whether err is the database being unreachable, as
+// opposed to an answer: a dial failure, a closed pool, a lost connection.
+func IsConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var se *serve.Error
+	if errors.As(err, &se) && se.Cause == nil {
+		return false
+	}
+	var op *net.OpError
+	if errors.As(err, &op) {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	for _, sign := range []string{"connection refused", "failed to connect", "connection reset", "broken pipe",
+		"database is closed", "closed pool", "unexpected eof", "no such host", "not a directory", "unable to open database"} {
+		if strings.Contains(msg, sign) {
+			return true
+		}
+	}
+	return false
+}
+
+// Close stops the retry and shuts the live session down, waiting briefly for
+// in-flight steps. An in-flight run stays PENDING on this executor's name --
+// the SDK treats a shutdown as "not a cancellation request" -- and a relaunch
+// with the same id recovers it.
 func (s *Store) Close(ctx context.Context) error {
-	return dbos.Shutdown(s.ctx, 5*time.Second)
+	select {
+	case <-s.closed:
+	default:
+		close(s.closed)
+	}
+	s.wg.Wait()
+	if sess := s.live.Swap(nil); sess != nil {
+		return dbos.Shutdown(sess.ctx, 5*time.Second)
+	}
+	return nil
 }
 
 // FileURL is a SQLite store at path, for a laptop and the estate. Not
@@ -139,17 +269,21 @@ func (s *Store) Start(ctx context.Context, r run.Run) (run.Started, error) {
 	if r.ID == "" {
 		return run.Started{}, serve.Invalid("a run needs an idempotency key: it is the run id")
 	}
-	if h, err := dbos.RetrieveWorkflow[outcome](s.ctx, r.ID); err == nil {
+	sess, err := s.session()
+	if err != nil {
+		return run.Started{}, err
+	}
+	if h, err := dbos.RetrieveWorkflow[outcome](sess.ctx, r.ID); err == nil {
 		st, err := h.GetStatus()
 		if err != nil {
-			return run.Started{}, storeErr(err)
+			return run.Started{}, s.storeErr(sess, err)
 		}
 		if fp, _ := st.Attributes["fingerprint"].(string); fp != r.Fingerprint {
 			return run.Started{}, serve.Invalid("the idempotency key %s was used for a different request", r.ID)
 		}
 		return run.Started{ID: r.ID, Existing: true}, nil
 	} else if !errors.Is(err, dbos.ErrNonExistentWorkflow) {
-		return run.Started{}, storeErr(err)
+		return run.Started{}, s.storeErr(sess, err)
 	}
 	attrs := map[string]any{
 		"tool": r.Tool, "caller": r.Caller, "caller_name": r.CallerName, "fingerprint": r.Fingerprint,
@@ -158,7 +292,7 @@ func (s *Store) Start(ctx context.Context, r run.Run) (run.Started, error) {
 	for k, v := range r.Attributes {
 		attrs[k] = v
 	}
-	_, err := dbos.Enqueue[outcome, run.Run](s.ctx, QueueName, WorkflowName, r,
+	_, err = dbos.Enqueue[outcome, run.Run](sess.ctx, QueueName, WorkflowName, r,
 		dbos.WithEnqueueWorkflowID(r.ID),
 		dbos.WithEnqueueAttributes(attrs),
 		dbos.WithEnqueueAuthenticatedUser(r.Caller))
@@ -168,7 +302,7 @@ func (s *Store) Start(ctx context.Context, r run.Run) (run.Started, error) {
 			// the enqueue: the first one won, and this is the same run.
 			return run.Started{ID: r.ID, Existing: true}, nil
 		}
-		return run.Started{}, storeErr(err)
+		return run.Started{}, s.storeErr(sess, err)
 	}
 	return run.Started{ID: r.ID}, nil
 }
@@ -177,14 +311,18 @@ func (s *Store) Start(ctx context.Context, r run.Run) (run.Started, error) {
 // on DBOS's own completion read for up to wait -- one request held, not a
 // poller -- and answers with whatever state the run is in then.
 func (s *Store) Fetch(ctx context.Context, id string, wait time.Duration) (run.State, error) {
-	h, err := dbos.RetrieveWorkflow[outcome](s.ctx, id)
+	sess, err := s.session()
+	if err != nil {
+		return run.State{}, err
+	}
+	h, err := dbos.RetrieveWorkflow[outcome](sess.ctx, id)
 	if errors.Is(err, dbos.ErrNonExistentWorkflow) {
 		return run.State{}, run.ErrNotFound
 	}
 	if err != nil {
-		return run.State{}, storeErr(err)
+		return run.State{}, s.storeErr(sess, err)
 	}
-	first, err := s.state(h)
+	first, err := s.state(sess, h)
 	if err != nil || wait <= 0 || first.Status != run.StatusRunning {
 		return first, err
 	}
@@ -207,11 +345,11 @@ func (s *Store) Fetch(ctx context.Context, id string, wait time.Duration) (run.S
 	for {
 		select {
 		case <-done:
-			return s.state(h)
+			return s.state(sess, h)
 		case <-ctx.Done():
 			return first, nil
 		case <-tick.C:
-			cur, err := s.state(h)
+			cur, err := s.state(sess, h)
 			if err != nil {
 				return run.State{}, err
 			}
@@ -226,14 +364,14 @@ func (s *Store) Fetch(ctx context.Context, id string, wait time.Duration) (run.S
 const StagePoll = 200 * time.Millisecond
 
 // state is one reading of a run.
-func (s *Store) state(h dbos.WorkflowHandle[outcome]) (run.State, error) {
+func (s *Store) state(sess *session, h dbos.WorkflowHandle[outcome]) (run.State, error) {
 	st, err := h.GetStatus()
 	if err != nil {
-		return run.State{}, storeErr(err)
+		return run.State{}, s.storeErr(sess, err)
 	}
 	out := run.State{ID: st.ID, Caller: st.AuthenticatedUser, CreatedAt: st.CreatedAt, CompletedAt: st.CompletedAt}
 	out.Tool, _ = st.Attributes["tool"].(string)
-	out.Stage = s.stage(st)
+	out.Stage = s.stage(sess, st)
 	switch st.Status {
 	case dbos.WorkflowStatusSuccess:
 		// SUCCESS means the run REACHED AN ANSWER -- the tool's result or the
@@ -241,7 +379,7 @@ func (s *Store) state(h dbos.WorkflowHandle[outcome]) (run.State, error) {
 		// returns at once.
 		res, err := h.GetResult(dbos.WithHandleTimeout(5 * time.Second))
 		if err != nil {
-			return run.State{}, storeErr(err)
+			return run.State{}, s.storeErr(sess, err)
 		}
 		if res.Error != nil {
 			out.Status, out.Error = run.StatusFailed, res.Error
@@ -264,8 +402,8 @@ func (s *Store) state(h dbos.WorkflowHandle[outcome]) (run.State, error) {
 // stage is the run's latest word about itself: the stage event, or "queued"
 // for a run no workflow has started yet -- there is nobody to set an event
 // for it, so the queue's own status says it.
-func (s *Store) stage(st dbos.WorkflowStatus) string {
-	v, err := dbos.GetEvent[string](s.ctx, st.ID, StageKey, 0)
+func (s *Store) stage(sess *session, st dbos.WorkflowStatus) string {
+	v, err := dbos.GetEvent[string](sess.ctx, st.ID, StageKey, 0)
 	if err == nil && v != "" {
 		return v
 	}
@@ -286,9 +424,13 @@ type Step struct {
 
 // Steps reads a run's step log.
 func (s *Store) Steps(ctx context.Context, id string) ([]Step, error) {
-	infos, err := dbos.GetWorkflowSteps(s.ctx, id, dbos.WithStepsLoadOutput(true))
+	sess, err := s.session()
 	if err != nil {
-		return nil, storeErr(err)
+		return nil, err
+	}
+	infos, err := dbos.GetWorkflowSteps(sess.ctx, id, dbos.WithStepsLoadOutput(true))
+	if err != nil {
+		return nil, s.storeErr(sess, err)
 	}
 	out := make([]Step, 0, len(infos))
 	for _, i := range infos {
@@ -313,9 +455,10 @@ func (s *Store) Steps(ctx context.Context, id string) ([]Step, error) {
 }
 
 // storeErr: DBOS's own errors reach the caller as UNAVAILABLE naming the store;
-// the cause stays in the log.
-func storeErr(err error) error {
-	return serve.Unavailable("the run store did not answer").Because(err)
+// the cause stays in the log. A connection failure also degrades the store.
+func (s *Store) storeErr(sess *session, err error) error {
+	s.lost(sess, err)
+	return serve.Unavailable("the run store did not answer (--run-store %s)", Redact(s.cfg.URL)).Because(err)
 }
 
 // wireOf turns a tool's error into what the wire carries, with the run id.

@@ -106,3 +106,27 @@ func TestAReusedKeyWithADifferentRequestIsInvalidOnTheWire(t *testing.T) {
 		t.Fatalf("got %v, want INVALID naming k-dup", err)
 	}
 }
+
+// Property 12 end to end: with the store down, the sync tool answers and the
+// async one is UNAVAILABLE naming the store; when the store returns, the async
+// tool runs. Sync is sovereign.
+func TestSyncIsSovereignWhenTheStoreIsDown(t *testing.T) {
+	e := estate.New(t, estate.WithStoreDown())
+	client := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
+	if out, err := client.GetForecast(context.Background(), &weatherv1.GetForecastRequest{Place: "Ghent"}); err != nil || out.GetSummary() == "" {
+		t.Fatalf("sync with the store down: %v %v", out, err)
+	}
+	_, err := client.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-down"})
+	var se *serve.Error
+	if !errors.As(err, &se) || se.Kind != invokev1.ErrorKind_ERROR_KIND_UNAVAILABLE || !strings.Contains(err.Error(), "run store") {
+		t.Fatalf("async with the store down: %v, want UNAVAILABLE naming the store", err)
+	}
+	e.StoreUp(t)
+	ref, err := client.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-up"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out, _, err := client.ScheduleReportResult(context.Background(), ref, 10*time.Second); err != nil || out.GetReportId() != "report-Ghent" {
+		t.Fatalf("after the store returned: %v %v", out, err)
+	}
+}
