@@ -285,10 +285,12 @@ or every line arrives twice.
 every call is traced, so the backend has every duration exactly.
 
 **Health.** `--health 127.0.0.1:8080` serves `/livez` and `/readyz`. `/readyz` is
-200 exactly when `nats micro ping weatherd` gets an answer: after `Start`
-returned, until the drain begins — and a test holds the two to that, because a
-readiness flag that disagreed with the bus would be the kind of check this
-repository exists to catch.
+200 exactly while the service answers `$SRV.PING` — after `Start` returned,
+until the drain begins — and a test holds the two to that, because a readiness
+flag that disagreed with the bus would be the kind of check this repository
+exists to catch. (Under operator mode, `nats micro ping` needs a credential in
+the service's account that may publish `$SRV.>`; none of the issued ones may,
+by design — the HTTP endpoint is the operator's view.)
 
 ### Telling the caller what went wrong
 

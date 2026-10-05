@@ -6,6 +6,11 @@
 [tools]
 go = "1.26.6"
 buf = "1"
+# The quick start's server and the CLI that reads $SRV.PING, pinned like the
+# rest: a getting-started that assumes a tool on PATH is a getting-started that
+# works on one laptop. nats-server matches the version the tests embed.
+"go:github.com/nats-io/nats-server/v2" = "2.15.0"
+"go:github.com/nats-io/natscli/nats" = "0.5.0"
 
 [env]
 GOWORK = "off"
@@ -155,6 +160,13 @@ done
 [tasks.test]
 description = "go test"
 run = "go test ./... -race"
+
+[tasks.e2e]
+description = "The quick start, end to end, on this laptop: a server, weatherd, rund, one forecast; not in CI (it binds 127.0.0.1:4222)"
+# README.md's Getting started is a claim; this is the thing that checks it. Not
+# in CI because it takes the laptop's 4222 and 8080/8081 -- the dev-boot test in
+# cmd/garmctl is the in-process version and IS in CI.
+run = "bash scripts/e2e.sh"
 
 [tasks.bench]
 description = "The per-call cost of the whole chain; not in CI, by design"

@@ -28,12 +28,15 @@ go run ./cmd/rund              --creds build/topo/creds/rund.creds --tls-ca buil
 go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds --tls-ca build/topo/ca.pem
 ```
 
+Or all of it in one go, with the answer checked: `mise run e2e`.
+
 `forecast` names a tool and nothing else; it reaches `rund`, which reaches
 `weatherd`, and the answer comes back through three accounts the caller cannot
 cross by itself. Set `OTEL_EXPORTER_OTLP_ENDPOINT` (and `_HEADERS`) and every one
 of those processes ships one trace per call to whatever is listening; unset,
 each says `observability exporter=none` and ships nothing. `curl
-127.0.0.1:8080/readyz` is 200 exactly when `nats micro ping rund` gets an answer.
+127.0.0.1:8080/readyz` is 200 exactly while `rund` answers `$SRV.PING` — after
+`Start`, until it begins to drain — and a test holds the two to that.
 
 A deployment replaces `--dev` with a root ceremony run offline once
 (`garmctl operator init`) and an issuance environment that holds the signing
