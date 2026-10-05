@@ -103,7 +103,37 @@ func (e *Estate) Reissue(t testing.TB, cat *catalogue.Catalogue) *topology.Outpu
 	}
 	e.topo = out
 	e.ApplyNewKeys(out)
+	e.adoptCredentials(out)
 	return out
+}
+
+// Issue reissues against the current catalogue and manifest -- an ordinary
+// issuance, which is what step two of a rotation is.
+func (e *Estate) Issue(t testing.TB) *topology.Output { return e.Reissue(t, e.Catalogue.Current()) }
+
+// RotateSigning is step one of the signing-keys spec's §4 for one account.
+func (e *Estate) RotateSigning(t testing.TB, account string) *topology.Output {
+	t.Helper()
+	out, err := topology.Generate(topology.Input{
+		Catalogue: e.Catalogue.Current(), Callers: callers,
+		Previous: &e.topo.Manifest, Keys: e.keys, Now: time.Now(), RotateSigning: []string{account},
+	})
+	if err != nil {
+		t.Fatalf("rotating %s: %v", account, err)
+	}
+	e.topo = out
+	e.ApplyNewKeys(out)
+	e.adoptCredentials(out)
+	return out
+}
+
+// adoptCredentials makes a reissued credential the one Connect uses, as a
+// deployment rolling out new files would. (Reissue did not, which was harmless
+// until a rotation made the difference matter.)
+func (e *Estate) adoptCredentials(out *topology.Output) {
+	for _, c := range out.Credentials {
+		e.creds[Role(c.Name)] = c
+	}
 }
 
 // Keys is the estate's issuance keys -- what a deployment's issuance environment

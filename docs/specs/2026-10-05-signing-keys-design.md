@@ -172,7 +172,13 @@ manifest carries the state between them.
    suspended for the rotating account, the one reason an unchanged credential is
    ever re-signed, and the manifest entry says `"reason": "rotation"`;
 4. the manifest records `accounts.GARM.retiring = <old public key>`;
-5. every other account is carried forward untouched.
+5. every other account is carried forward untouched;
+6. the account's superseded credentials are **not** revoked — both keys are
+   listed precisely so they keep working while the new ones roll out, and a
+   `RevokeAt` in the pushed account JWT would close them on the spot (found by
+   the live estate: the first build did revoke them, and step one's push cut
+   the old connection). Retiring the key at step two is what invalidates them,
+   all at once, by construction.
 
 Deployments roll out the new credential files. In between, `garmctl topology
 --status` (and the next issuance's log) says: *GARM: signing key retiring; the
@@ -181,9 +187,9 @@ its new credential.*
 
 **Step two** — the next ordinary issuance:
 
-6. sees `retiring` on GARM, drops the old key from the account JWT, records the
+7. sees `retiring` on GARM, drops the old key from the account JWT, records the
    retirement with its generation, and clears `retiring`;
-7. refuses to do so if any manifest entry still names the retiring key as its
+8. refuses to do so if any manifest entry still names the retiring key as its
    signer — which cannot happen after a complete step one, and is exactly what
    happens if someone hand-edits the manifest or re-runs step one with a
    different caller list. The refusal names the credentials.

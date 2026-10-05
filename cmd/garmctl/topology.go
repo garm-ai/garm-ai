@@ -20,6 +20,7 @@ import (
 	"github.com/garm-ai/garm-ai/catalogue"
 	"github.com/garm-ai/garm-ai/fetch"
 	"github.com/garm-ai/garm-ai/internal/devtls"
+	"github.com/garm-ai/garm-ai/natsconn"
 	"github.com/garm-ai/garm-ai/topology"
 )
 
@@ -31,6 +32,9 @@ func topologyCmd() *cobra.Command {
 		manifestPath           string
 		first, dev, rotate     bool
 		out                    string
+		rotateSigning          []string
+		status, verifyLive     bool
+		natsURL, opsCreds, ca  string
 	)
 	cmd := &cobra.Command{
 		Use:   "topology",
@@ -49,6 +53,9 @@ func topologyCmd() *cobra.Command {
 			"a first issuance says --first on purpose, and --first against an\n" +
 			"existing manifest is refused, because it would forget what was issued.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if status {
+				return printStatus(cmd, keysDir, manifestPath)
+			}
 			if catURI == "" || out == "" {
 				return errors.New("--catalogue and --out are required")
 			}
@@ -99,12 +106,25 @@ func topologyCmd() *cobra.Command {
 				}
 			}
 
+			// Step two of a rotation retires a key. --verify-live asks the bus first:
+			// a key any live connection was signed by is not retired, by name
+			// (spec §4). With nothing retiring, nothing is asked.
+			if verifyLive {
+				if err := verifyNothingLiveOnRetiringKeys(previous, rotateSigning, natsURL, opsCreds, ca); err != nil {
+					return err
+				}
+			}
 			res, err := topology.Generate(topology.Input{
 				Catalogue: cat, Callers: callers, Previous: previous, Keys: keys, Now: time.Now(),
-				Rotate: rotate,
+				Rotate: rotate, RotateSigning: rotateSigning,
 			})
 			if err != nil {
 				return err
+			}
+			for name, rec := range res.Manifest.Accounts {
+				if rec.Retiring != "" {
+					fmt.Fprintf(cmd.ErrOrStderr(), "%s: signing key retiring; the old key %s is still listed -- roll the new credentials out, then run an issuance (with --verify-live) to retire it\n", name, rec.Retiring)
+				}
 			}
 			// New account keys FIRST, then the manifest, then the output. A key that
 			// never reached disk is an account nothing can ever issue for again --
@@ -149,6 +169,12 @@ func topologyCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&first, "first", false, "this is the first issuance and there is no manifest yet")
 	cmd.Flags().BoolVar(&dev, "dev", false, "mint throwaway keys for a local estate; never for a deployment")
 	cmd.Flags().BoolVar(&rotate, "rotate", false, "reissue EVERY credential and revoke every previous one; otherwise only what changed is issued")
+	cmd.Flags().StringSliceVar(&rotateSigning, "rotate-signing", nil, "accounts whose SIGNING KEY is replaced: the new key is listed beside the old and every credential of the account reissued; the next issuance retires the old key")
+	cmd.Flags().BoolVar(&status, "status", false, "print the manifest's state -- generation, accounts, any retiring key -- and issue nothing")
+	cmd.Flags().BoolVar(&verifyLive, "verify-live", false, "before retiring a signing key, ask the cluster (with --ops-creds) and refuse if any live connection still uses it")
+	cmd.Flags().StringVar(&natsURL, "nats", "", "NATS URL, for --verify-live")
+	cmd.Flags().StringVar(&opsCreds, "ops-creds", "", "the ops credential, for --verify-live")
+	cmd.Flags().StringVar(&ca, "tls-ca", "", "PEM the server's certificate chains to, for --verify-live")
 	cmd.Flags().StringVarP(&out, "out", "o", "", "directory to write the topology into")
 	return cmd
 }
@@ -363,4 +389,84 @@ tls {
 `, filepath.Join(abs, "operator.jwt"), sysPub, preload.String(),
 		filepath.Join(abs, "server.pem"), filepath.Join(abs, "server-key.pem"))
 	return os.WriteFile(filepath.Join(dir, "nats-server.conf"), []byte(conf), 0o600)
+}
+
+// verifyNothingLiveOnRetiringKeys is --verify-live: for every account retiring a
+// key that this issuance would drop, ask the cluster which keys its live
+// connections were signed by, and refuse to retire one still in use.
+func verifyNothingLiveOnRetiringKeys(previous *topology.Manifest, rotating []string, natsURL, opsCreds, ca string) error {
+	skip := map[string]bool{}
+	for _, name := range rotating {
+		skip[name] = true
+	}
+	retiring := map[string]string{} // retiring key -> account
+	for name, rec := range previous.Accounts {
+		if rec.Retiring != "" && !skip[name] {
+			retiring[rec.Retiring] = name
+		}
+	}
+	if len(retiring) == 0 {
+		return nil // nothing to retire; nothing to ask
+	}
+	if natsURL == "" || opsCreds == "" {
+		return errors.New("--verify-live needs --nats and --ops-creds")
+	}
+	nc, err := natsconn.Connect(natsURL, natsconn.Options{Creds: opsCreds, CA: ca})
+	if err != nil {
+		return fmt.Errorf("--verify-live: %w", err)
+	}
+	defer nc.Close()
+	live, err := liveSigners(nc, 2*time.Second)
+	if err != nil {
+		return fmt.Errorf("--verify-live: %w", err)
+	}
+	for key, account := range retiring {
+		if conns := live[key]; len(conns) > 0 {
+			sort.Strings(conns)
+			return fmt.Errorf("--verify-live: %s's retiring key %s still signs %d live connection(s): %s -- roll them out first",
+				account, key, len(conns), strings.Join(conns, ", "))
+		}
+	}
+	return nil
+}
+
+// printStatus is --status: the manifest's state, and nothing issued.
+func printStatus(cmd *cobra.Command, keysDir, manifestPath string) error {
+	if keysDir == "" || manifestPath == "" {
+		return errors.New("--status needs --keys and --manifest")
+	}
+	keys, err := readKeys(keysDir, nil)
+	if err != nil {
+		return err
+	}
+	opPub, err := keys.OperatorSigning.PublicKey()
+	if err != nil {
+		return err
+	}
+	m, err := topology.Load(manifestPath, opPub)
+	if err != nil {
+		return err
+	}
+	w := cmd.OutOrStdout()
+	fmt.Fprintf(w, "generation %d from catalogue %s, issued %s; %d credentials\n",
+		m.Generation, m.CatalogueSHA256[:12], m.IssuedAt.Format(time.RFC3339), len(m.Entries))
+	names := make([]string, 0, len(m.Accounts))
+	for name := range m.Accounts {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		rec := m.Accounts[name]
+		fmt.Fprintf(w, "  %s  identity %s  signing %s\n", name, rec.Identity, rec.Signing)
+		if rec.Retiring != "" {
+			var still int
+			for _, e := range m.Entries {
+				if e.Account == name && e.SigningKey == rec.Retiring {
+					still++
+				}
+			}
+			fmt.Fprintf(w, "    RETIRING %s (%d credentials still name it): roll the new credentials out, then run an issuance with --verify-live to retire it\n", rec.Retiring, still)
+		}
+	}
+	return nil
 }

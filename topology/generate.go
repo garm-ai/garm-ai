@@ -111,6 +111,46 @@ func Generate(in Input) (*Output, error) {
 	}
 	signingPub := func(name string) (string, error) { return keys[name].Signing.PublicKey() }
 
+	// ---- rotation, step one (spec §4): a new signing key, listed beside the old
+	// one; every credential of the account is reissued under it below.
+	retiring := map[string]string{}
+	rotating := map[string]bool{}
+	for _, name := range in.RotateSigning {
+		if _, ok := keys[name]; !ok {
+			return nil, fmt.Errorf("topology: --rotate-signing %s: no such account in this topology", name)
+		}
+		if in.Previous.Accounts[name].Retiring != "" {
+			return nil, fmt.Errorf("topology: %s is already retiring a signing key; retire it (an ordinary issuance) before rotating again", name)
+		}
+		old, err := signingPub(name)
+		if err != nil {
+			return nil, err
+		}
+		sign, err := nkeys.CreateAccount()
+		if err != nil {
+			return nil, err
+		}
+		k := keys[name]
+		k.Signing = sign
+		keys[name] = k
+		newKeys[name] = NewAccountKeys{Signing: sign}
+		retiring[name] = old
+		rotating[name] = true
+	}
+	// ---- rotation, step two: a key retiring from a previous step one is dropped
+	// now -- unless something still names it, which only a hand-edited manifest
+	// can arrange. Dropped means: simply not listed, and not recorded.
+	for name, rec := range in.Previous.Accounts {
+		if rec.Retiring == "" || rotating[name] {
+			continue
+		}
+		for _, e := range in.Previous.Entries {
+			if e.Account == name && e.SigningKey == rec.Retiring {
+				return nil, fmt.Errorf("topology: %s's retiring key %s still signs %s; it cannot be retired", name, rec.Retiring, e.Name)
+			}
+		}
+	}
+
 	sysPub := keys[AccountSYS].Identity
 	garmPub := keys[AccountGARM].Identity
 	toolsPub := keys[AccountTOOLS].Identity
@@ -131,6 +171,9 @@ func Generate(in Input) (*Output, error) {
 			return nil, err
 		}
 		ac.SigningKeys.Add(sp)
+		if old, ok := retiring[name]; ok {
+			ac.SigningKeys.Add(old) // listed until the next issuance retires it
+		}
 		return ac, nil
 	}
 	sys, err := newAccount(AccountSYS, sysPub)
@@ -265,7 +308,7 @@ func Generate(in Input) (*Output, error) {
 	for _, w := range wants {
 		hash := permissionsHash(w.account, w.perms)
 		p, had := previous[w.name]
-		if had && !in.Rotate && p.Account == w.account && p.PermissionsHash == hash {
+		if had && !in.Rotate && !rotating[w.account] && p.Account == w.account && p.PermissionsHash == hash {
 			p.Reason = ""
 			entries = append(entries, p)
 			continue
@@ -275,7 +318,10 @@ func Generate(in Input) (*Output, error) {
 			return nil, err
 		}
 		reason := "new"
-		if had {
+		switch {
+		case rotating[w.account]:
+			reason = "rotation"
+		case had:
 			reason = "catalogue"
 		}
 		creds = append(creds, c)
@@ -293,12 +339,26 @@ func Generate(in Input) (*Output, error) {
 		if err != nil {
 			return nil, err
 		}
-		records[name] = AccountRecord{Identity: k.Identity, Signing: sp}
+		records[name] = AccountRecord{Identity: k.Identity, Signing: sp, Retiring: retiring[name]}
 	}
 	manifest := Manifest{Generation: gen, CatalogueSHA256: in.Catalogue.SHA256, IssuedAt: in.Now, Accounts: records, Entries: entries}
 
 	// ---- the delta against the previous manifest
+	//
+	// A rotating account's superseded credentials are NOT revoked at step one:
+	// both keys are listed precisely so the old credentials keep working while
+	// the new ones roll out, and a RevokeAt in the pushed account JWT would close
+	// them on the spot. Retiring the old key at step two is what invalidates
+	// them, by construction and for every one of them at once.
 	revoke := delta(in.Previous, manifest, in.Now)
+	kept := revoke[:0]
+	for _, r := range revoke {
+		if rotating[r.Account] && strings.HasPrefix(r.Why, "superseded") {
+			continue
+		}
+		kept = append(kept, r)
+	}
+	revoke = kept
 	for _, r := range revoke {
 		ac, ok := accounts[r.Account]
 		if !ok {
