@@ -27,6 +27,8 @@ func run(t *testing.T, e *estate.Estate, args ...string) (stdout, stderr string,
 	cmd.SilenceErrors = true // main is what prints an error, exactly once
 	cmd.SetArgs(append([]string{
 		"--nats", e.URL,
+		"--creds", e.CredsFile(t, estate.RoleCaller),
+		"--tls-ca", e.CAFile(t),
 		"--catalogue", e.CatalogueURI,
 		"--catalogue-sha256", e.CatalogueSHA,
 		"--catalogue-dir", e.Dir,
@@ -106,7 +108,7 @@ func TestAnUnknownToolNamesTheCatalogue(t *testing.T) {
 	if err == nil {
 		t.Fatal("an unknown tool was called")
 	}
-	if !strings.Contains(err.Error(), "c.binpb") {
+	if !strings.Contains(err.Error(), e.CatalogueURI) {
 		t.Errorf("the refusal does not say which catalogue was searched: %v", err)
 	}
 }

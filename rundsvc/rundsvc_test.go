@@ -31,9 +31,18 @@ import (
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
 	"github.com/garm-ai/garm-ai/run"
+	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 	"github.com/garm-ai/garm-ai/rundsvc"
 	"github.com/garm-ai/garm-ai/serve"
 )
+
+// asRewritten is what the server delivers to rund after a caller's account import
+// inserts its key at token 4. These tests run on a bare server with no accounts,
+// so the test does the rewrite the import would -- the estate tests cover the
+// real mapping.
+func asRewritten(subject string) string {
+	return strings.Replace(subject, "garm.run.v1.", "garm.run.v1.ATESTACCOUNT.", 1)
+}
 
 func quiet() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
 
@@ -129,8 +138,10 @@ func theCatalogue(t *testing.T) *catalogue.Holder {
 	return &h
 }
 
-// estate stands up the whole chain: a tool service, and rund in front of it.
-func estate(t *testing.T) (caller *nats.Conn, stop func()) {
+// bareServer stands up the whole chain on an OPEN server -- no accounts, no TLS.
+// The subject rewrite an account import does is done by hand here (asRewritten);
+// internal/estate is where the real topology is exercised.
+func bareServer(t *testing.T) (caller *nats.Conn, stop func()) {
 	t.Helper()
 	url := server(t)
 
@@ -154,7 +165,7 @@ func estate(t *testing.T) (caller *nats.Conn, stop func()) {
 		t.Fatal(err)
 	}
 	e := &run.Engine{Catalogue: theCatalogue(t), Tools: rundsvc.ToolCaller{NC: rundNC}, Log: quiet()}
-	if err := rundsvc.Serve(svc, e); err != nil {
+	if err := rundsvc.Serve(svc, e, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start(rundNC); err != nil {
@@ -189,7 +200,7 @@ func invoke(t *testing.T, nc *nats.Conn, tool string, in proto.Message, hdr map[
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := nats.NewMsg(rundsvc.SubjectInvoke)
+	m := nats.NewMsg(asRewritten(rundsvc.SubjectInvoke))
 	m.Data = req
 	for k, v := range hdr {
 		m.Header.Set(k, v)
@@ -207,7 +218,7 @@ func invoke(t *testing.T, nc *nats.Conn, tool string, in proto.Message, hdr map[
 // garm.run.v1.invoke with a NAME, and the answer comes back from a tool service the
 // caller never addressed.
 func TestACallerReachesAToolWithoutKnowingItsSubject(t *testing.T) {
-	nc, _ := estate(t)
+	nc, _ := bareServer(t)
 
 	reply := invoke(t, nc, "weather.v1.get_forecast",
 		&weatherv1.GetForecastRequest{Place: "Ghent", Days: 3}, nil)
@@ -233,6 +244,7 @@ func TestACallerReachesAToolWithoutKnowingItsSubject(t *testing.T) {
 
 // TestTheIdChainReachesTheToolAcrossTwoHops. Correlation spans; causation chains.
 func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
+	otlptest.Install(t) // a real propagator, so the trace crosses the hop
 	url := server(t)
 
 	// a bare subscriber standing in for a tool, so the headers rund SENT are
@@ -257,7 +269,7 @@ func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
 	rundNC := connect(t, url)
 	svc, _ := natsmicro.New(natsmicro.Config{Name: "rund", Version: "0.1.0", Logger: quiet()})
 	e := &run.Engine{Catalogue: theCatalogue(t), Tools: rundsvc.ToolCaller{NC: rundNC}, Log: quiet()}
-	if err := rundsvc.Serve(svc, e); err != nil {
+	if err := rundsvc.Serve(svc, e, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start(rundNC); err != nil {
@@ -272,7 +284,9 @@ func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
 		map[string]string{
 			rundsvc.HeaderCorrelation: "c1",
 			rundsvc.HeaderMessage:     "m0",
-			rundsvc.HeaderTraceparent: "00-aaaa-bbbb-01",
+			// A VALID W3C header: the propagator rejects anything else, and the
+			// claim here is that a trace is CONTINUED, not copied.
+			rundsvc.HeaderTraceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
 			rundsvc.HeaderIdempotency: "key-1",
 		})
 
@@ -287,8 +301,10 @@ func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
 	if got := seen.Get(rundsvc.HeaderMessage); got == "m0" || got == "" {
 		t.Errorf("rund reused the caller's message id (%q) instead of minting one", got)
 	}
-	if got := seen.Get(rundsvc.HeaderTraceparent); got != "00-aaaa-bbbb-01" {
-		t.Errorf("traceparent reached the tool as %q", got)
+	// The trace is the caller's; the parent span is RUND's, not the caller's --
+	// the tool is this hop's child (observability spec §1.2).
+	if got := seen.Get(rundsvc.HeaderTraceparent); !strings.Contains(got, "0af7651916cd43dd8448eb211c80319c") || strings.Contains(got, "b7ad6b7169203331") {
+		t.Errorf("traceparent reached the tool as %q; want the caller's trace under rund's own span", got)
 	}
 	// the run's key is key-1; a tool call's key must be derived from it, not equal
 	if got := seen.Get(rundsvc.HeaderIdempotency); got == "key-1" || !strings.HasPrefix(got, "key-1:") {
@@ -297,7 +313,7 @@ func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
 }
 
 func TestAnUnknownToolIsNotFound(t *testing.T) {
-	nc, _ := estate(t)
+	nc, _ := bareServer(t)
 	reply := invoke(t, nc, "weather.v1.nope", &weatherv1.GetForecastRequest{}, nil)
 
 	code := reply.Header.Get(micro.ErrorCodeHeader)
@@ -309,7 +325,7 @@ func TestAnUnknownToolIsNotFound(t *testing.T) {
 // TestAnAsyncToolIsRefusedBecauseThereIsNoStore, and says so -- rather than
 // pretending the tool does not exist, which a caller would act on wrongly.
 func TestAnAsyncToolIsRefusedBecauseThereIsNoStore(t *testing.T) {
-	nc, _ := estate(t)
+	nc, _ := bareServer(t)
 	for _, tool := range []string{"extra.v1.freeze", "extra.v1.planner"} {
 		reply := invoke(t, nc, tool, &weatherv1.GetForecastRequest{}, nil)
 		code := reply.Header.Get(micro.ErrorCodeHeader)
@@ -323,9 +339,9 @@ func TestAnAsyncToolIsRefusedBecauseThereIsNoStore(t *testing.T) {
 }
 
 func TestFetchSaysNotRetained(t *testing.T) {
-	nc, _ := estate(t)
+	nc, _ := bareServer(t)
 	body, _ := proto.Marshal(&runv1.FetchRequest{RunId: "r1"})
-	m := nats.NewMsg(rundsvc.SubjectFetch)
+	m := nats.NewMsg(asRewritten(rundsvc.SubjectFetch))
 	m.Data = body
 	reply, err := nc.RequestMsg(m, 5*time.Second)
 	if err != nil {

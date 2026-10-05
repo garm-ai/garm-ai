@@ -1,6 +1,19 @@
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"context"
+	"log/slog"
+	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/garm-ai/garm-ai/observe"
+	"github.com/garm-ai/garm-ai/observe/otlp"
+)
+
+// stopTelemetry flushes what a subcommand recorded; main calls it after Execute.
+// A no-op until a subcommand actually runs, so `garmctl --help` sets nothing up.
+var stopTelemetry = func(context.Context) error { return nil }
 
 func root() *cobra.Command {
 	cmd := &cobra.Command{
@@ -15,8 +28,20 @@ func root() *cobra.Command {
 			"reference and no compile error when a name is wrong.",
 		SilenceUsage:  true, // a usage dump after a real failure buries the cause
 		SilenceErrors: true, // main prints it once
+		// The same two lines every process opens with -- here, once a subcommand is
+		// about to run, so --help and a usage error print no observability line.
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			log := slog.New(observe.Handler(slog.NewTextHandler(os.Stderr, nil)))
+			stop, err := otlp.Start(cmd.Context(), "garmctl", log)
+			if err != nil {
+				return err
+			}
+			stopTelemetry = stop
+			return nil
+		},
 	}
 	cmd.AddCommand(composeCmd())
 	cmd.AddCommand(callCmd())
+	cmd.AddCommand(topologyCmd())
 	return cmd
 }

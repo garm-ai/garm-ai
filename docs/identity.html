@@ -716,13 +716,16 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
     <h3 style="margin-top:34px">Three slices, each complete on its own</h3>
     <div class="two">
       <div class="card">
-        <h3>1 · Process identity <span class="s s-des">next</span></h3>
+        <h3>1 · Process identity <span class="s s-ver">built</span></h3>
         <p>Accounts, exports, imports, per-service permissions. No new service, no
           tokens, nothing to verify — the server enforces all of it.</p>
         <p>Closes the hole where a misdirected request was answered because two
           unrelated types both carry a string in field one. It establishes who called
           and <b>decides nothing with it</b> — any caller may still invoke any tool
           through rund. Gating is the authority model's job, later.</p>
+        <p>Built 2026-10-04: thirteen properties as tests, every one proved to fail
+          first, and every test in the repository now runs against operator mode over
+          TLS. Four things the build corrected in the spec are in the decision record.</p>
       </div>
       <div class="card">
         <h3>2 · Connection identity <span class="s s-des">after</span></h3>

@@ -26,6 +26,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -33,10 +34,15 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/micro"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/garm-ai/garm-ai/natsmicro"
+	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/serve"
 )
 
@@ -95,7 +101,11 @@ func New(cfg Config) (*Service, error) {
 	return &Service{svc: svc, log: svc.Log()}, nil
 }
 
-// Start mounts every tool and returns once they are answering.
+// Start mounts every tool and returns once they are answering -- or refuses,
+// before mounting anything, if this process's own credential does not cover a
+// mount. That refusal names the tool; the alternative is a service that starts
+// cleanly and never answers (spec §4.3). The gate is natsmicro's, so rund is
+// gated by the same code.
 func (s *Service) Start(nc *nats.Conn) error { return s.svc.Start(nc) }
 
 // Serve answers until ctx is cancelled, then drains.
@@ -103,6 +113,10 @@ func (s *Service) Serve(ctx context.Context) error { return s.svc.Serve(ctx) }
 
 // Run is Start then Serve.
 func (s *Service) Run(ctx context.Context, nc *nats.Conn) error { return s.svc.Run(ctx, nc) }
+
+// Ready is what /readyz reports: started, not draining, connected. It agrees with
+// $SRV.PING by construction (natsmicro.Ready).
+func (s *Service) Ready() bool { return s.svc.Ready() }
 
 // Endpoint implements serve.Registrar. Generated code calls it once per tool,
 // before Start.
@@ -133,10 +147,19 @@ func (s *Service) Endpoint(
 // politely waited for it to.
 //
 // context.Background() rather than the process's values, because a call's context
-// belongs to the CALL. Per-request values -- a trace id, a deadline -- arrive from
-// the request, and that is a later step.
+// belongs to the CALL. Per-request values -- the trace, the deadline -- arrive from
+// the request: the caller's trace is continued here, and the span is what the
+// handler finds on its ctx (observability spec §1).
 func (s *Service) answer(e endpoint, r micro.Request) {
-	ctx := context.Background()
+	ctx := otel.GetTextMapPropagator().Extract(context.Background(), observe.HeaderCarrier(r.Headers()))
+	ctx, span := observe.Tracer().Start(ctx, "garm.tool", trace.WithSpanKind(trace.SpanKindServer),
+		trace.WithAttributes(observe.KeyTool.String(e.tool), observe.KeyDeadlineMillis.Int64(e.budget.Milliseconds()),
+			observe.KeyRequestBytes.Int(len(r.Data()))))
+	defer span.End()
+	inst := observe.Instruments()
+	toolAttr := metric.WithAttributes(observe.KeyTool.String(e.tool))
+	inst.ToolInflight.Add(ctx, 1, toolAttr)
+	defer inst.ToolInflight.Add(ctx, -1, toolAttr)
 	// The budget the tool's own .proto declared becomes the handler's deadline.
 	//
 	// Step 8 deliberately imposed none, on the grounds that "a hung tool is the
@@ -157,19 +180,23 @@ func (s *Service) answer(e endpoint, r micro.Request) {
 		// The caller sent bytes this tool cannot read. That is INVALID and the
 		// unmarshal error is a LOCAL detail -- it can quote field numbers and
 		// lengths from whatever was actually sent.
-		s.fail(e, r, serve.Invalid("the request could not be read as %s", e.method).Because(err))
+		s.fail(ctx, e, r, serve.Invalid("the request could not be read as %s", e.method).Because(err))
 		return
 	}
 
 	out, err := e.handle(ctx, in)
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		// The declaration lied, whatever the handler then returned.
+		inst.ToolDeadlineExceeded.Add(ctx, 1, toolAttr)
+	}
 	if err != nil {
-		s.fail(e, r, err)
+		s.fail(ctx, e, r, err)
 		return
 	}
 
 	body, err := proto.Marshal(out)
 	if err != nil {
-		s.fail(e, r, serve.Internal(fmt.Errorf("marshalling the response: %w", err)))
+		s.fail(ctx, e, r, serve.Internal(fmt.Errorf("marshalling the response: %w", err)))
 		return
 	}
 	if err := r.Respond(body); err != nil {
@@ -177,18 +204,30 @@ func (s *Service) answer(e endpoint, r micro.Request) {
 		// server's max_payload. Replying with an error is the difference between a
 		// caller learning this and a caller hanging to its own deadline, and the
 		// error reply is small enough to fit where the response did not.
-		s.fail(e, r, serve.Internal(fmt.Errorf("sending the response: %w", err)))
+		s.fail(ctx, e, r, serve.Internal(fmt.Errorf("sending the response: %w", err)))
+		return
 	}
+	span.SetAttributes(observe.KeyKind.String("OK"), observe.KeyResponseBytes.Int(len(body)))
+	inst.ToolCalls.Add(ctx, 1, metric.WithAttributes(observe.KeyTool.String(e.tool), observe.KeyKind.String("OK")))
 }
 
 // fail is the single exit for every error, so no path can forget to reply.
-func (s *Service) fail(e endpoint, r micro.Request, err error) {
-	id := correlationID()
+//
+// The id a caller is told to quote is the TRACE id when there is one -- quoting
+// it opens the whole trace in every process the call crossed -- and a random one
+// when there is not, so a caller with no tracer still has something to quote.
+func (s *Service) fail(ctx context.Context, e endpoint, r micro.Request, err error) {
+	id := correlationID(ctx)
 	w := serve.Wire(err, id)
+	kind := observe.Kind(err)
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(observe.KeyKind.String(kind))
+	span.SetStatus(codes.Error, kind)
+	observe.Instruments().ToolCalls.Add(ctx, 1, metric.WithAttributes(observe.KeyTool.String(e.tool), observe.KeyKind.String(kind)))
 
 	// The other half of "the cause never crosses the wire". err here still carries
 	// the full chain; this is the only place it is recorded, and the id is the join.
-	s.log.Error("tool call failed",
+	s.log.ErrorContext(ctx, "tool call failed",
 		"id", id,
 		"tool", e.tool,
 		"kind", w.GetKind().String(),
@@ -208,12 +247,16 @@ func (s *Service) fail(e endpoint, r micro.Request, err error) {
 	}
 	if replyErr := r.Error(serve.Code(w.GetKind()), description, body); replyErr != nil {
 		// Reaching here means the caller gets nothing, so it must be visible.
-		s.log.Error("could not reply with the error", "id", id, "tool", e.tool, "error", replyErr)
+		s.log.ErrorContext(ctx, "could not reply with the error", "id", id, "tool", e.tool, "error", replyErr)
 	}
 }
 
-// correlationID is the token a caller quotes and an operator joins on.
-func correlationID() string {
+// correlationID is the token a caller quotes and an operator joins on: the trace
+// id when a span is active, else sixteen random hex characters.
+func correlationID(ctx context.Context) string {
+	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
+		return sc.TraceID().String()
+	}
 	var b [8]byte
 	if _, err := rand.Read(b[:]); err != nil {
 		// Never observed; crypto/rand does not fail on supported platforms. An

@@ -171,7 +171,7 @@
   <g class="ae weak tA tB"><path d="M700 110 L640 110 L640 80 L600 80" marker-end="url(#d-weak)"/>
   </g>
   <g class="ae call tA tB"><path d="M105 92 L105 170" marker-end="url(#d-call)"/>
-    <text class="strong" x="113" y="128">garm.run.v1.invoke</text>
+    <text class="strong" x="113" y="128">garm.run.v1.invoke → ...v1.&lt;ACCOUNT&gt;.invoke</text>
   </g>
   <g class="ae call tA tB"><path d="M460 112 L460 170" marker-end="url(#d-call)"/>
     <text x="468" y="148">every hop below is rund's</text>
@@ -218,7 +218,7 @@
   </g>
   <g class="an ok tA tB"><rect x="20" y="170" width="920" height="62" rx="9"/>
     <text class="t1" x="480" y="194" text-anchor="middle">NATS cluster</text>
-    <text class="t2" x="480" y="210" text-anchor="middle">garm.run.v1.*   garm.tool.&lt;name&gt;   garm.decider.&lt;kind&gt;.&lt;impl&gt;   garm.run.event.&lt;id&gt;</text>
+    <text class="t2" x="480" y="210" text-anchor="middle">operator mode · TLS · accounts GARM (rund) · TOOLS (every tool service) · CALLER-* (one each) · the server puts the caller's account in token 4</text>
   </g>
   <g class="an ok tA tB"><rect x="20" y="290" width="210" height="76" rx="9"/>
     <text class="t1" x="125" y="314" text-anchor="middle">paymentsd</text>
@@ -299,7 +299,9 @@
           <b>2s — the declared budget</b>, not a number the caller chose. Headers carry
           correlation, causation, message id, the idempotency key and
           <code>traceparent</code>.</li>
-        <li><span class="m">bus</span> request on <code>garm.run.v1.invoke</code>.</li>
+        <li><span class="m">bus</span> request on <code>garm.run.v1.invoke</code>, which the
+          caller's account import rewrites to <code>garm.run.v1.&lt;ACCOUNT&gt;.invoke</code> —
+          the server places the key; the caller never writes it.</li>
         <li><span class="m">rund</span> resolves the name in the catalogue →
           <code>Sync{2s}</code>. Refuses here if approval policy were attached to a sync
           tool. Creates run <code>r1</code> and <b>stores nothing</b> — the dashed line to

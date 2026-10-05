@@ -4,7 +4,7 @@
 # silently changes which code builds, and the previous estate spent real time on
 # LSP errors that were a workspace artefact rather than a compile failure.
 [tools]
-go = "1.26"
+go = "1.26.6"
 buf = "1"
 
 [env]
@@ -112,13 +112,36 @@ description = "Refuse a tool author's build that can reach a message broker"
 #
 # The shape is copied from the previous estate's `no-daemon-dependency` CI job,
 # which existed for the same reason and is the one boundary check there that worked.
+#
+# Extended for OpenTelemetry in the same breath: `serve`, `call` and generated code
+# must not import it either -- the span lives on the transport, and a tool author
+# who wants to add to it imports the OTel API in their own module, by choice.
 run = """
 set -e
-for pkg in ./serve ./call ./declared ./images ./fetch ./examples/gen/...; do
-  if go list -deps "$pkg" 2>/dev/null | grep -q 'nats-io'; then
-    echo "$pkg reaches a NATS package:" >&2
-    go list -deps "$pkg" | grep 'nats-io' >&2
-    echo "generated code and the seam it is written against must not import a broker" >&2
+for pkg in ./serve ./call ./declared ./images ./fetch ./run ./examples/gen/...; do
+  if go list -deps "$pkg" 2>/dev/null | grep -Eq 'nats-io|go.opentelemetry.io'; then
+    echo "$pkg reaches a broker or OTel package:" >&2
+    go list -deps "$pkg" | grep -E 'nats-io|go.opentelemetry.io' >&2
+    echo "generated code and the seam it is written against import neither a broker nor OTel" >&2
+    exit 1
+  fi
+done
+"""
+
+[tasks."no-sdk"]
+description = "Refuse an OTel SDK or exporter import anywhere but observe/otlp"
+# observe/otlp.Start configures the SDK, once, at the top of every main. Every
+# other package uses the API, which is a no-op until then -- so a tool author
+# with their own OTel setup is not fought, and a library here never installs
+# process-global state on anyone's behalf (observability spec §7). Proved to
+# fail: with `import _ "go.opentelemetry.io/otel/sdk/trace"` in natsserve.
+run = """
+set -e
+for pkg in ./natsserve ./rundsvc ./natscall ./natsmicro ./observe ./topology; do
+  if go list -deps "$pkg" 2>/dev/null | grep -Eq 'go.opentelemetry.io/otel/(sdk|exporters)'; then
+    echo "$pkg reaches the OTel SDK:" >&2
+    go list -deps "$pkg" | grep -E 'go.opentelemetry.io/otel/(sdk|exporters)' >&2
+    echo "only observe/otlp configures the SDK; everything else uses the API" >&2
     exit 1
   fi
 done
@@ -128,6 +151,39 @@ done
 description = "go test"
 run = "go test ./... -race"
 
+[tasks.bench]
+description = "The per-call cost of the whole chain; not in CI, by design"
+# A benchmark that gates a build is a flaky build. Run it when something on the
+# call path changes and put the number in docs/performance.md beside the last one.
+run = "go test ./natscall/ -run '^$' -bench 'BenchmarkTheLoop' -benchtime 2s -count 3"
+
+[tasks.tidy]
+description = "Fail if go.mod is not what 'go mod tidy' would write"
+# A dependency promoted from indirect to direct, or dropped, shows up here and
+# nowhere else: the build does not care, and a reviewer reading go.mod is told the
+# wrong thing. `go mod tidy -diff` exits non-zero when it would change anything,
+# which is the whole check. Proved to fail: this task was added while go.mod still
+# listed a directly-imported module as indirect, and it failed until 'go mod tidy'.
+run = "go mod tidy -diff"
+
+[tasks.breaking]
+description = "Fail if a proto change would break a caller built against main"
+# The contract says v1. This is the only thing that makes that true: a renumbered
+# field, a removed message, a changed type compiles fine and breaks every caller
+# built before it, and nothing else here would notice. Compared against main, so a
+# pull request is caught; on main itself it compares main to main and passes.
+# Proved to fail: renumbering a field in error.proto made it exit 100.
+run = "buf breaking --against '.git#branch=main'"
+
+[tasks.vuln]
+description = "Fail on a known vulnerability in any dependency"
+# Nine direct dependencies and a public repository. govulncheck reports only
+# vulnerabilities in code paths this module actually reaches, so a finding is a
+# real one. Pinned, because a check that moves on its own is a check nobody can
+# reproduce. Not proved to fail: there is no vulnerable dependency to prove it
+# with, and adding one on purpose is the wrong kind of proof.
+run = "go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./..."
+
 [tasks.ci]
 description = "Everything CI runs, in order"
-depends = ["lint", "gen-check", "no-broker", "guide-files", "check", "examples", "test"]
+depends = ["lint", "breaking", "vuln", "gen-check", "no-broker", "no-sdk", "guide-files", "tidy", "check", "examples", "test"]

@@ -6,7 +6,14 @@ import (
 	"testing"
 
 	"github.com/garm-ai/garm-ai/internal/estate"
+	"github.com/garm-ai/garm-ai/natsconn"
 )
+
+// conn is what a deployment hands the example: a credential and a CA.
+func conn(t *testing.T, e *estate.Estate) natsconn.Options {
+	t.Helper()
+	return natsconn.Options{Creds: e.CredsFile(t, estate.RoleCaller), CA: e.CAFile(t)}
+}
 
 // The example is RUN here, not merely compiled.
 //
@@ -18,7 +25,7 @@ func TestTheExampleCallerGetsAForecastNamingOnlyTheTool(t *testing.T) {
 	e := estate.New(t)
 	var out, errOut bytes.Buffer
 
-	if code := forecast(e.URL, "Ghent", 3, &out, &errOut); code != 0 {
+	if code := forecast(e.URL, conn(t, e), "Ghent", 3, &out, &errOut); code != 0 {
 		t.Fatalf("exit %d; stderr: %s", code, errOut.String())
 	}
 	if !strings.Contains(out.String(), "Ghent") {
@@ -38,7 +45,7 @@ func TestTheExampleCallerShowsTheKindAndExitsNonZero(t *testing.T) {
 	e := estate.New(t)
 	var out, errOut bytes.Buffer
 
-	if code := forecast(e.URL, "", 3, &out, &errOut); code == 0 {
+	if code := forecast(e.URL, conn(t, e), "", 3, &out, &errOut); code == 0 {
 		t.Fatal("a refused call exited 0")
 	}
 	if !strings.HasPrefix(errOut.String(), "INTERNAL: ") {
@@ -53,7 +60,7 @@ func TestTheExampleCallerShowsTheKindAndExitsNonZero(t *testing.T) {
 // never a NATS server, so Connect fails outright.
 func TestTheExampleCallerWithNothingListeningSaysSo(t *testing.T) {
 	var out, errOut bytes.Buffer
-	if code := forecast("nats://127.0.0.1:1", "Ghent", 3, &out, &errOut); code == 0 {
+	if code := forecast("nats://127.0.0.1:1", natsconn.Options{}, "Ghent", 3, &out, &errOut); code == 0 {
 		t.Fatal("a call with no server exited 0")
 	}
 	if errOut.Len() == 0 {

@@ -1,8 +1,11 @@
 # Identity and transport security
 
 **Date:** 2026-10-04
-**Status:** active — this spec's §2–§10 are **step 9d**; §11 sketches the two slices
-after it and specifies nothing
+**Status:** active — §2–§10 are **built** (step 9d, 2026-10-04) except §10 step 5, which is a
+deployment — and whose **first precondition the generator cannot yet produce**: it signs
+accounts with the operator key itself, so the root is not offline and accounts carry no
+signing keys (§13). §11 sketches the two slices after it and specifies nothing. Four things the
+build corrected are in [the decision record](../decisions/2026-10-04-the-bus-is-the-authorization-boundary.md)
 
 **Spec for:** a NATS operator-mode topology, a generator that emits it from the
 catalogue, and the caller identity that falls out of it.
@@ -177,9 +180,13 @@ caller from token 4 of `Subject()`, which `micro.Request` exposes.
 - `SubjectInvoke` and `SubjectFetch` become **patterns**, not the subjects a caller
   publishes. The "nothing answered on X" message must name the pattern honestly, or
   it will send an operator looking for a subject nobody publishes.
-- The caller arrives as a 56-character account key. `rund` maps it to a name
-  through the generated topology; an unmapped key is logged and treated as unknown,
-  never as absent.
+- The caller arrives as a 56-character account key, and **`rund` logs the key, not
+  a name.** This spec first said `rund` would map it "through the generated
+  topology"; a reviewer noticed it does not, and the ruling is that it should not:
+  the mapping lives in the issuance manifest, which `rund` must never read — `rund`
+  holds a credential and a catalogue, and nothing else. An operator joins the key
+  to a name through the manifest, the way a correlation id is joined to a log.
+  A name in `rund`'s log would be a lookup in the data path for a label.
 - `micro` endpoint subjects must accept a wildcard. They do.
 - **"No responders" is a security win and a developer-experience trap.** A
   developer who addresses a tool directly gets the same answer as for a tool that is
@@ -198,7 +205,8 @@ the catalogue.
 ```
 user weatherd, account TOOLS
   subscribe  garm.tool.weather.v1.get_forecast     one allow per DECLARED tool
-  publish    _R_.>                                 see §4.1 — this is not optional
+  publish    DENIED: >                             an empty allow-list is unrestricted, not empty
+  responses  allowed, one per request              see §4.1 — this is not optional
 ```
 
 **Declaring a tool is what creates its permission, and a service cannot answer a
@@ -213,16 +221,28 @@ reload does not help a tool service the way it helps `rund`. A tool service's
 permission lags the catalogue by exactly one credential issuance, and §4.3 is what
 makes that lag loud instead of silent.
 
-### 4.1 `_R_.>`, and the failure it prevents
+### 4.1 Replies, and the failure that proved the point
 
 A cross-account service reply arrives on **`_R_.<x>.<y>`, not `_INBOX.>`**
-(`replyPrefix = "_R_."`, nats-server `server/accounts.go`). A tool whose publish
-permission allows only the inbox prefix **receives the call and is silently refused
-the reply**; the caller waits out its own deadline and reports a hung tool.
+(`replyPrefix = "_R_."`, nats-server `server/accounts.go`). A tool that may not
+publish there **receives the call and is silently refused the reply**; the caller
+waits out its own deadline and reports a hung tool. Found by a probe that failed,
+and written here rather than in a commit message because a generator that gets
+this wrong produces an estate that looks correct and times out.
 
-Found by a probe that failed. It is written here in the specification, not left in
-a commit message, because a generator that omits it produces an estate that looks
-correct and times out.
+The first fix was an explicit publish allow on `_R_.>` and `_INBOX.>`. It worked
+and was over-broad — a tool could publish to *any* reply subject in its account.
+**The permission is now NATS's allow-responses**: a subscriber may publish a reply
+to a request it actually received, one per request, and nothing else — across
+accounts included. A tool service's publish is **denied outright** (`>`) and
+allow-responses is its only way out; `rund` publishes only `garm.tool.>`.
+
+**The deny is not decoration.** In NATS an *empty* publish allow-list is
+unrestricted, not empty. The first cut of this change gave a tool service no
+publish permission at all and called that "publishes nothing"; a probe with
+allow-responses removed still got the reply out, because nothing was restricting
+it. Proved both ways now: deny-all with allow-responses answers, deny-all without
+it times out.
 
 ### 4.2 When a tool leaves the catalogue
 
@@ -497,8 +517,9 @@ before it is trusted.
 4. Two caller accounts are distinguishable at `rund`.
 5. A caller publishing today's `garm.run.v1.invoke` still reaches `rund`.
 6. A tool service cannot subscribe to a tool it does not declare.
-7. A tool service **can** reply — the `_R_.>` permission is present. Fails as a
-   timeout rather than a refusal if omitted, which is why it is its own property.
+7. A tool service **can** reply — allow-responses is present and nothing else is.
+   Fails as a timeout rather than a refusal if omitted, which is why it is its own
+   property.
 8. A revoked user cannot connect; no other user of that account is affected.
 8a. Removing a tool from the catalogue produces a **revocation** in the generator's
     output, not merely a smaller next credential.
@@ -529,13 +550,18 @@ Chosen so the repository is never in a state where the tests pass and nothing is
 enforced.
 
 1. **The generator and its tests**, with no server involved. Property 9.
-2. **The test estate switches to operator mode.** No production change. Every
-   existing test then runs against a production-shaped server — the step most likely
-   to expose a wrong assumption, and reversible.
+2. **The test estate switches to operator mode, and `rund`'s subscription moves
+   with it.** No production change. Every existing test then runs against a
+   production-shaped server — the step most likely to expose a wrong assumption,
+   and reversible. *Corrected by the build:* this spec first put the subscription
+   move in step 4, after the estate switch. It cannot go there — a caller's import
+   rewrites `garm.run.v1.invoke` to `garm.run.v1.<ACCOUNT>.invoke`, so an `rund`
+   still mounted on the flat subject receives nothing and every chain test times
+   out. The two are one step.
 3. **The isolation tests land.** Properties 1, 2, 6, 7 — 1 and 2 in the same commit,
    for the reason in §9.
-4. **`rund`'s subscription moves** to the wildcard and begins reading the caller
-   identity, which nothing yet *uses*. Properties 3, 4, 5.
+4. **`rund` begins reading the caller identity** off the subject it already
+   receives on, which nothing yet *uses*. Properties 3, 4, 5.
 5. **Deployment credentials**, when everything above is green — **and not before
    three preconditions hold**, none of which is code: the operator root is offline
    and accounts are signed by a signing key (§5.1); the issuance environment exists
@@ -603,10 +629,11 @@ gaps found in it.
   designed here.
 - **It does not rate-limit.** A valid caller credential can saturate `rund`. NATS
   has per-account limits that could be the first answer; nothing here sets them.
-- **`_R_.>` is a broad grant, and this is why it is safe.** A tool may publish to any
-  reply subject in its account. It is safe because reply subjects are random and a
-  tool sees only its own; it would stop being safe the day someone "simplifies" it
-  to `>`, and this sentence is here for that person.
+- **A tool service's publish is denied, and allow-responses is its only way out.**
+  An earlier draft granted `_R_.>` and warned here against "simplifying" it to
+  `>`. The warning that replaces it: **do not "simplify" the deny away** — an
+  empty allow-list is unrestricted, and a probe proved a tool with neither deny
+  nor allow-responses still replied, because it could publish anything.
 
 ---
 
@@ -640,6 +667,15 @@ gaps found in it.
   is** — the process the token was minted for, which `exec` already names — and state
   that the binding is transport-enforced. Taking the RFC's name for a non-conformant
   member is the one option to rule out.
+
+- **The generator does not yet produce §5.1's key shape.** It emits a self-signed
+  operator JWT and signs every account with the same key, so `Keys.Operator` *is*
+  the root; users are signed by each account's identity key, so an account carries
+  no signing key to rotate. Found in review. The change is to the generator's
+  inputs — a root-signed operator JWT taken as given and verified, a signing keypair
+  per account alongside its identity public key — and to what a deployment keeps.
+  It is its own task, and until it lands §10 step 5's first checkbox cannot be
+  ticked; the status line says so.
 
 - **Where does the issuance environment live, and what drives it?** §5.1 names what
   it must be; the deployment decides whether that is a CI job with a secret store or

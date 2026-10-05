@@ -33,9 +33,11 @@ type Headers struct {
 	Causation string
 	// Message identifies this call. Always minted by the sender.
 	Message string
-	// Traceparent is W3C trace context, carried verbatim. A latency trace and a
-	// correlation id are different things: a trace is sampled, and an audit trail
-	// with a sampling rate is not one.
+	// Traceparent is the W3C trace context as it ARRIVED, recorded for the audit
+	// trail. It is not what the transport forwards: rundsvc propagates its own
+	// span from ctx, so the tool is this hop's child. A latency trace and a
+	// correlation id are different things: a trace may be sampled, and an audit
+	// trail with a sampling rate is not one.
 	Traceparent string
 	// Idempotency, when supplied, becomes the run id so that a retry is the same
 	// run rather than a second one.
@@ -131,13 +133,13 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 	if !ok {
 		// NOT_FOUND names the catalogue, because "unknown tool" is unactionable
 		// when the question is really which namespace is loaded.
-		return nil, e.fail(runID, h, req.GetTool(), serve.NotFound(
+		return nil, e.fail(ctx, runID, h, req.GetTool(), serve.NotFound(
 			"no tool named %q in the catalogue loaded from %s", req.GetTool(), cat.Source))
 	}
 
 	actions, err := plan(tool, req.GetInput())
 	if err != nil {
-		return nil, e.fail(runID, h, tool.Name, err)
+		return nil, e.fail(ctx, runID, h, tool.Name, err)
 	}
 
 	var last []byte
@@ -154,12 +156,16 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 
 		out, callErr := e.Tools.Call(ctx, a.tool, a.input, a.budget, step)
 		if callErr != nil {
-			return nil, e.fail(runID, h, a.tool, callErr)
+			return nil, e.fail(ctx, runID, h, a.tool, callErr)
 		}
 		last = out
 	}
 
-	e.log().Info("invoked",
+	// The *Context forms: ctx carries the call's span, and the handler the
+	// process installed stamps the trace id onto this line -- the one with the
+	// run id, the correlation id and the catalogue, which is the one an operator
+	// reads. The engine itself imports nothing of OTel.
+	e.log().InfoContext(ctx, "invoked",
 		"run", runID, "tool", tool.Name,
 		"correlation", h.Correlation, "causation", h.Causation,
 		"catalogue", cat.SHA256)
@@ -172,9 +178,9 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 
 // fail logs the cause and returns what the caller is told. The cause chain is
 // recorded here and nowhere else; the wire gets a kind, a chosen message and an id.
-func (e *Engine) fail(runID string, h Headers, tool string, err error) *invokev1.Error {
+func (e *Engine) fail(ctx context.Context, runID string, h Headers, tool string, err error) *invokev1.Error {
 	w := serve.Wire(err, runID)
-	e.log().Error("invoke failed",
+	e.log().ErrorContext(ctx, "invoke failed",
 		"run", runID, "tool", tool, "kind", w.GetKind().String(),
 		"correlation", h.Correlation, "error", err)
 	return w

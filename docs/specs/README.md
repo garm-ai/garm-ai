@@ -19,6 +19,7 @@ lines 3 and 4 — the same shape as [../decisions/](../decisions/), deliberately
 | `docs/specs/` | how a component works, with numbered call stacks | you are about to build or change it |
 | [`docs/decisions/`](../decisions/) | why a choice was made, and what was rejected | somebody questions the choice |
 | [`docs/invariants.md`](../invariants.md) | what holds, and the test that keeps it | you want to know what is actually enforced |
+| [`docs/reviews/`](../reviews/) | a dated grading of the whole repository against a stated bar, with an action list | you want to know where it falls short today |
 
 A spec may design further ahead than the code is built — `rund`'s does, by six
 operations. That is only safe with a table saying what each unbuilt piece waits
@@ -37,4 +38,5 @@ amended to match (§7.3).
 | spec | status |
 |---|---|
 | [rund — the run manager](2026-10-03-rund-design.md) | active — step 9 builds §9.1 only |
-| [identity and transport security](2026-10-04-identity-and-transport-security-design.md) | active — §2–§10 are step 9d; §11 sketches what follows |
+| [identity and transport security](2026-10-04-identity-and-transport-security-design.md) | active — §2–§10 built as step 9d, bar the deployment step; §11 sketches what follows |
+| [observability, end to end](2026-10-04-observability-design.md) | active — built as step 9e; §11 says what it leaves out |

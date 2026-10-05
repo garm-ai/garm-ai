@@ -8,16 +8,22 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/micro"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/garm-ai/garm-ai/call"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
+	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/rundsvc"
 	"github.com/garm-ai/garm-ai/serve"
 )
@@ -27,8 +33,63 @@ type Client struct{ NC *nats.Conn }
 
 var _ call.Invoker = Client{}
 
+// retryAfter is the pause before the ONE retry a call gets, and only for "no
+// responders" -- the one failure that proves the request reached nobody and so
+// cannot have executed. Long enough for a deploy's new instance to have
+// subscribed; short enough that a caller's budget is not spent waiting.
+const retryAfter = 100 * time.Millisecond
+
+// request sends m and answers for the two things the transport gets wrong on its
+// own (review findings):
+//
+// A request over the server's payload limit used to surface as a transport error
+// with no kind, which a caller reads as UNAVAILABLE and retries forever. It is
+// INVALID -- large artefacts do not cross this bus by rule -- and is refused
+// here, before anything is sent, saying how big it was and what the limit is.
+//
+// "No responders" is retried exactly once. It is the one error that proves the
+// request was delivered to nobody, so a retry cannot double-execute anything; it
+// is also exactly what a caller sees in the seconds a deploy is swapping
+// instances. A timeout is NOT retried: the request may have executed.
+func (c Client) request(ctx context.Context, m *nats.Msg, pattern string) (*nats.Msg, error) {
+	if limit := c.NC.MaxPayload(); limit > 0 && int64(len(m.Data)) > limit {
+		return nil, serve.Invalid("the request is %d bytes and this bus accepts at most %d; large inputs go to the artefact store and a reference travels",
+			len(m.Data), limit)
+	}
+	reply, err := c.NC.RequestMsgWithContext(ctx, m)
+	if errors.Is(err, nats.ErrNoResponders) {
+		select {
+		case <-ctx.Done():
+			return nil, serve.Unavailable("nothing is answering %s -- is rund running?", pattern).Because(err)
+		case <-time.After(retryAfter):
+		}
+		// ONE span: a caller made one call. The retry is an event on it.
+		trace.SpanFromContext(ctx).AddEvent("retry", trace.WithAttributes(attribute.String("reason", "no responders")))
+		reply, err = c.NC.RequestMsgWithContext(ctx, m)
+	}
+	switch {
+	case err == nil:
+		return reply, nil
+	case errors.Is(err, nats.ErrMaxPayload):
+		// The size check above should have caught it; this is the backstop if a
+		// server's limit is lower than the one it advertised at connect.
+		return nil, serve.Invalid("the request exceeds the bus's payload limit").Because(err)
+	default:
+		return nil, serve.Unavailable("nothing is answering %s -- is rund running?", pattern).Because(err)
+	}
+}
+
 // Invoke sends one InvokeRequest to rund and returns the tool's response bytes.
-func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Options) ([]byte, error) {
+//
+// It opens the call's span -- the ROOT of the trace unless the caller's ctx is
+// already inside one, in which case this call is a child of the caller's own
+// work. Generated client code stays OTel-free: the span lives here, on the
+// transport, and the propagator puts it on the wire.
+func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Options) (result []byte, err error) {
+	ctx, span := observe.Tracer().Start(ctx, "garm.call", trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(observe.KeyTool.String(tool), observe.KeyRequestBytes.Int(len(input))))
+	defer func() { finish(span, err, len(result)) }()
+
 	body, err := proto.Marshal(&runv1.InvokeRequest{Tool: tool, Input: input})
 	if err != nil {
 		return nil, serve.Internal(fmt.Errorf("marshalling the request: %w", err))
@@ -44,11 +105,14 @@ func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Op
 	// the chain, and claiming a cause it does not have would invent a parent.
 	set(m, rundsvc.HeaderMessage, newID())
 	set(m, rundsvc.HeaderIdempotency, o.Idempotency)
+	// The span on ctx wins; o.Traceparent is for a caller with no tracer that
+	// still wants to pass a context through verbatim.
 	set(m, rundsvc.HeaderTraceparent, o.Traceparent)
+	otel.GetTextMapPropagator().Inject(ctx, observe.HeaderCarrier(m.Header))
 
-	reply, err := c.NC.RequestMsgWithContext(ctx, m)
+	reply, err := c.request(ctx, m, rundsvc.PatternInvoke)
 	if err != nil {
-		return nil, serve.Unavailable("rund did not answer on %s", rundsvc.SubjectInvoke).Because(err)
+		return nil, err
 	}
 	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
 		return nil, wireError(code, reply)
@@ -61,7 +125,11 @@ func (c Client) Invoke(ctx context.Context, tool string, input []byte, o call.Op
 }
 
 // Fetch asks what happened to a run.
-func (c Client) Fetch(ctx context.Context, runID string) (*runv1.FetchResponse, error) {
+func (c Client) Fetch(ctx context.Context, runID string) (resp *runv1.FetchResponse, err error) {
+	ctx, span := observe.Tracer().Start(ctx, "garm.fetch", trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(observe.KeyRunID.String(runID)))
+	defer func() { finish(span, err, 0) }()
+
 	body, err := proto.Marshal(&runv1.FetchRequest{RunId: runID})
 	if err != nil {
 		return nil, serve.Internal(err)
@@ -69,19 +137,30 @@ func (c Client) Fetch(ctx context.Context, runID string) (*runv1.FetchResponse, 
 	m := nats.NewMsg(rundsvc.SubjectFetch)
 	m.Data = body
 	set(m, rundsvc.HeaderMessage, newID())
+	otel.GetTextMapPropagator().Inject(ctx, observe.HeaderCarrier(m.Header))
 
-	reply, err := c.NC.RequestMsgWithContext(ctx, m)
+	reply, err := c.request(ctx, m, rundsvc.PatternFetch)
 	if err != nil {
-		return nil, serve.Unavailable("rund did not answer on %s", rundsvc.SubjectFetch).Because(err)
+		return nil, err
 	}
 	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
 		return nil, wireError(code, reply)
 	}
-	var resp runv1.FetchResponse
-	if err := proto.Unmarshal(reply.Data, &resp); err != nil {
+	var out runv1.FetchResponse
+	if err := proto.Unmarshal(reply.Data, &out); err != nil {
 		return nil, serve.Internal(err)
 	}
-	return &resp, nil
+	return &out, nil
+}
+
+// finish records the outcome on the span: the kind as an attribute always, an
+// error status only when there was one.
+func finish(span trace.Span, err error, responseBytes int) {
+	span.SetAttributes(observe.KeyKind.String(observe.Kind(err)), observe.KeyResponseBytes.Int(responseBytes))
+	if err != nil {
+		span.SetStatus(codes.Error, observe.Kind(err))
+	}
+	span.End()
 }
 
 // wireError rebuilds the error a caller should see.

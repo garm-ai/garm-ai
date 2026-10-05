@@ -27,7 +27,7 @@ import (
 // knowledge of either.
 func estateConn(t *testing.T) *nats.Conn {
 	t.Helper()
-	return estate.New(t).Connect(t)
+	return estate.New(t).Connect(t, estate.RoleCaller)
 }
 
 // ---------------------------------------------------------------------------
@@ -118,7 +118,9 @@ func TestNoRundAtAllIsUnavailableNotASilentHang(t *testing.T) {
 	if !errors.As(err, &e) || e.Kind != invokev1.ErrorKind_ERROR_KIND_UNAVAILABLE {
 		t.Fatalf("got %v, want UNAVAILABLE", err)
 	}
-	if !strings.Contains(e.Message, rundsvc.SubjectInvoke) {
+	// The message names what rund ANSWERS on -- the pattern -- not the flat subject
+	// the caller published, which nothing mounts (spec §3.1).
+	if !strings.Contains(e.Message, rundsvc.PatternInvoke) {
 		t.Errorf("the error does not say what did not answer: %q", e.Message)
 	}
 }
