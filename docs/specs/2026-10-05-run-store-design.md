@@ -1,7 +1,7 @@
 # The run store: a run that outlives the call
 
 **Date:** 2026-10-05
-**Status:** designed — nothing built; the plan follows review of this document
+**Status:** active — built as step **10** ([plan](../plans/2026-10-05-run-store.md)); the four amendments execution made are marked **built:** inline. §12 says what it leaves out
 
 **Spec for:** the asynchronous path of `rund` — a tool declared `async` is invoked,
 the caller gets a run id back immediately, the run is executed durably by whichever
@@ -43,7 +43,9 @@ SDK, behind one Go interface.
 ```go
 // Package run; the engine's view of durability. One implementation is DBOS
 // (package rundbos); one is none (sync-only, today's rund). The engine never
-// imports either.
+// imports either. Built: the workflow's step 0 is the PLAN -- the catalogue is
+// read once and the action list checkpointed, so a replay after a catalogue
+// change follows the plan the run was started with (property 18).
 type Store interface {
 	// Start makes the run durable and returns once it is: the id is the caller's
 	// idempotency key, and a second Start with the same key and the same
@@ -202,8 +204,11 @@ and `compartments`, empty for now — are attributes from day one, because DBOS'
 attribute filter is containment (AND, one compartment at a time) and the rund spec's
 §7.3.2 task-list shape depends on them being there.
 
-**Waiting.** `wait` is implemented on DBOS's blocking reads — `GetResult` for
-completion, `GetEvent` on the `stage` key for a stage change — not on polling.
+**Waiting.** `wait` is implemented on DBOS's blocking read for completion
+(`GetResult` with a handle timeout). **Built:** a stage change has no blocking
+primitive in the SDK (`GetEvent` returns at once when the key exists), so it is
+a 200 ms re-read inside `rund` (`rundbos.StagePoll`); the caller's contract is
+unchanged — one request, held, never a poller on the bus.
 `rund` caps `wait` at **`MaxFetchWait = 30s`**; a longer request is clamped, not
 refused, and the response says what it waited for. A caller's NATS request deadline
 must cover `wait`; the generated client derives it (`wait + call.Overhead`). A
@@ -211,10 +216,16 @@ thousand front doors waiting are a thousand blocked goroutines in `rund`, not a
 thousand pollers on the bus.
 
 **What is answered.** `state` from DBOS's status (`PENDING`/`ENQUEUED` → `RUNNING`;
-`SUCCESS` → `SUCCEEDED` with the result; `ERROR` → `FAILED` with the tool's kind and
-message, exactly as a sync failure would have carried them; `CANCELLED` → `CANCELLED`);
-`stage` from the event (§5); the two timestamps from the workflow row. A sync tool's
-id is `NOT_RETAINED`, as today.
+`CANCELLED` → `CANCELLED`); `stage` from the event (§5); the two timestamps and
+the tool from the workflow row. **Built:** the tool's error is the workflow's
+*returned value*, not a Go error — DBOS serialises a returned error to its text,
+and the kind would have had to be smuggled through it — so DBOS `SUCCESS` means
+"the run reached an answer" (the result, or the tool's refusal with its kind,
+exactly as a sync failure would have carried it → `FAILED`) and DBOS `ERROR`
+means "the run could not be executed" (→ `FAILED`, `INTERNAL`). **Built:** with a
+store, an id the store has never seen is `NOT_FOUND`, the same answer as a
+foreign run; `NOT_RETAINED` stays the answer only when `rund` has no store, since
+the engine cannot tell a sync id from an unknown one once a store exists.
 
 ---
 
@@ -225,7 +236,7 @@ values from an enum this spec owns:
 
 | stage | set when |
 |---|---|
-| `queued` | at `Start`, before the first dequeue |
+| `queued` | **built:** reported by `Fetch` from DBOS's `ENQUEUED` status — no workflow exists yet to set an event |
 | `calling:<step>` | just before a tool call step |
 | `done` | the workflow is returning |
 
@@ -325,9 +336,12 @@ tool is refused per call with the message it carries today, now naming the flag.
   verify, never create) and applies `MigrationStatements` with its own tooling; the
   `dbos` CLI's `migrate` is one such tool. **`rund` therefore knows no migration**
   of its own: it has no table.
-- **The estate runs DBOS on `sqlite::memory:`** (pure Go driver). Every property
-  below is proved without a container, and the resilience property with two
-  in-process `rund`s sharing one SQLite file.
+- **The estate runs DBOS on a SQLite file** in the test's temp dir (pure Go
+  driver). **Built:** not `sqlite::memory:` — DBOS pools eight connections, and
+  with the pure-Go driver each connection to `:memory:` is its own empty
+  database, while a shared-cache memory database locks table-wide under the
+  pool. Every property below is proved without a container, and the resilience
+  property with two in-process `rund`s sharing one SQLite file.
 - **Postgres joins `compose.yaml`** with this slice — `garm-postgres`, database
   `garm`, a volume — and `mise run e2e-compose` runs one async invoke through it:
   `pending`, then `fetch --wait` to the result. The quick start's native path stays
@@ -407,6 +421,9 @@ Each proved to fail first.
     caller's correlation id and, as step 0's causation, the caller's message id;
     in property 11's replay the two requests the tool saw carry the **same**
     message id and the same `run_id:0` key.
+18. **A replay follows the plan recorded at start.** The successor's catalogue
+    has no tools at all; the recovered run still finishes with its answer, because
+    the plan was step 0's checkpoint (`rundbos.TestAReplayFollowsThePlanRecordedAtStart`).
 
 ---
 

@@ -223,7 +223,42 @@ go run ./cmd/rund --creds build/topo/creds/rund.creds --tls-ca build/topo/ca.pem
 `--run-store` takes `sqlite:<path>` on a laptop and `postgres://…` in a
 deployment (credentials in the URL are redacted in the startup line). Without
 it, `rund` serves the sync tools and refuses an async one per call, naming the
-flag.
+flag. With it unreachable, `rund` still starts: sync answers, async says
+`UNAVAILABLE` naming the store, and the store reconnects on its own
+(`garm.run.store{state}` counts each transition).
+
+From a caller, the generated client has **two** methods for the tool where a
+sync tool has one — which is why flipping a tool's delivery is a compile error
+for every caller:
+
+```go
+ref, err := client.ScheduleReport(ctx, &weatherv1.ScheduleReportRequest{Place: "Ghent"},
+    call.Options{Idempotency: key})          // REQUIRED: the key is the run id; refused before the wire without one
+...
+out, resp, err := client.ScheduleReportResult(ctx, ref, 30*time.Second)   // waits up to 30s for an ANSWER
+```
+
+`ScheduleReportResult` returns the typed result once `SUCCEEDED`, the tool's own
+error (its kind, as a sync call would carry it) once `FAILED`, and `nil` with the
+response saying where the run is (`stage=queued`, `calling:0`) while it is still
+`RUNNING`. `ref.Await(ctx)` loops until terminal. From the command line:
+
+```bash
+garmctl call weather.v1.schedule_report '{"place":"Ghent"}' --idempotency-key report-1 ...   # pending report-1
+garmctl fetch report-1 --wait 30s ...                                                        # SUCCEEDED stage=done tool=weather.v1.schedule_report  {"reportId": "report-Ghent"}
+```
+
+Only the account that started a run can read it; another's `fetch` is
+`NOT_FOUND`. The same key with a different request is `INVALID`: a key names
+one request, and DBOS alone would have answered the second from the first's
+recording.
+
+**What the store records.** Step 0 of every run is the *plan* — the catalogue
+is read once and the action list checkpointed — then one step per tool call
+under the key `<run id>:<i>`, with a message id derived from the same pair. A
+replay after a crash re-sends the same ids, and follows the plan the run was
+started with even if the catalogue changed meanwhile. That is DBOS's
+determinism rule, applied to the one thing here that could vary.
 
 **`--run-store-executor` must be stable across restarts and unique among live
 replicas**: a StatefulSet's ordinal, a laptop's hostname (the default). A run

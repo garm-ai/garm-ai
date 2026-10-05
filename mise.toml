@@ -174,14 +174,14 @@ description = "go test"
 run = "go test ./... -race"
 
 [tasks.e2e]
-description = "The quick start, end to end, on this laptop: a server, weatherd, rund, one forecast; not in CI (it binds 127.0.0.1:4222)"
+description = "The quick start, end to end, on this laptop: a server, weatherd, rund with a SQLite run store, one forecast, one async run; not in CI (it binds 127.0.0.1:4222)"
 # README.md's Getting started is a claim; this is the thing that checks it. Not
 # in CI because it takes the laptop's 4222 and 8080/8081 -- the dev-boot test in
 # cmd/garmctl is the in-process version and IS in CI.
 run = "bash scripts/e2e.sh"
 
 [tasks."e2e-compose"]
-description = "The quick start against compose.yaml's nats and OpenObserve, with the forecast's trace looked up in OpenObserve"
+description = "The quick start against compose.yaml's nats, OpenObserve and Postgres: the forecast, one async run through the Postgres run store, both traces looked up in OpenObserve"
 # docker compose up -d first (after garmctl topology --dev -o build/topo). This
 # is the proof that the OTLP path reaches a real backend, not only the fake
 # receiver the unit tests use. NATS_PORT and O2_PORT follow compose.yaml's.

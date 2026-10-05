@@ -10,6 +10,7 @@ Run it when something on the call path changes, and add a row.
 |---|---|---|---|---|---|---|
 | 2026-10-04 | after `8e8d185` | 191k–221k (≈ 0.2 ms) | 127k–130k (≈ 0.13 ms) | ~19.5k | 229 | Apple Silicon, 10 cores, `go1.26.6`, `-benchtime 2s -count 3` |
 | 2026-10-04 | step 9e, observability | 187k–189k (≈ 0.19 ms) | 130k–131k (≈ 0.13 ms) | ~48.5k | 339 | same machine. Three spans, a propagator on two hops and five counters per call: **+110 allocations and +29 KB per call, no measurable latency** — the estate records spans synchronously in memory, which is more work per call than a deployment's batch processor does |
+| 2026-10-05 | step 10, the run store | 193k–251k (≈ 0.19–0.25 ms, noisy) | 141k–144k (≈ 0.14 ms) | ~48.5k | 348 | same machine. The sync path touches no store; what moved is the client: `Invoker.Invoke` now returns the decoded `InvokeResponse` (pending or result) instead of the result bytes, so the generated client reads one field more — **+9 allocations, ~+1 KB per call, latency within the noise** |
 
 ## How to read it
 

@@ -29,6 +29,7 @@ one component in more detail. They link here rather than repeating it.
 | Every test runs against operator mode, TLS, the full resolver | `internal/estate` |
 | One trace per call; the quoted id opens it; counters by tool and caller; `/readyz` agrees with `$SRV.PING`; OTLP to OpenObserve | `estate.TestOneCallIsOneTraceWithRundBetweenCallerAndTool` · `natsmicro.TestReadyAgreesWithPingThroughTheLifecycle` — step **9e** |
 | The root offline; accounts signed by an operator signing key, credentials by account signing keys, enforced by the server; two-step rotation with `--verify-live` | `estate.TestTheServerRefusesAnAccountSignedByTheRoot` · `estate.TestRotationKeepsTheOldCredentialAliveUntilStepTwo` · `garmctl.TestVerifyLiveRefusesWhileTheOldKeyIsStillOnTheWire` — step **9f** |
+| **The run store**: an async tool is `pending{run_id}` once durable, executed from a DBOS queue by a replica, read back with `Fetch --wait`; the plan is step 0 and a replay follows it; the key is fingerprinted; a run is visible to its invoking account only; sync is sovereign when the store is down; only `rundbos` imports DBOS | `estate.TestAnAsyncToolIsPendingThenAnswered` · `rundbos.TestAStoppedReplicasRunIsFinishedByItsSuccessorWithTheSameIdentity` · `rundbos.TestAReplayFollowsThePlanRecordedAtStart` · `estate.TestSyncIsSovereignWhenTheStoreIsDown` · `mise run no-sdk` — step **10** |
 
 ## Being built
 
@@ -48,11 +49,10 @@ generated client it did not write, over a transport it does not import.
 
 | | waits on |
 |---|---|
-| `Async` delivery; `Fetch` returning a result | **the run store** |
-| `Cancel` · `Suspend` · `Resume`, and the `CANCELLING` state | the run store |
-| A run deadline or a decider lease, so a dead decider cannot hang a run | the run store (DBOS timers) |
-| Retry policy, keyed on error **kind** | the run store, for anything outliving a call |
-| Run events, `Progress`, and a per-run subject subscribers read | the run store, and a subscriber |
+| `Cancel` · `Suspend` · `Resume`, and the `CANCELLING` state | the authority model — the store's own commands exist; who may issue them does not |
+| A run deadline or a decider lease, so a dead decider cannot hang a run | a decider (DBOS timers are there) |
+| Retry policy, keyed on error **kind** | a decider — a tool-call step retries `UNAVAILABLE` three times today, fixed, not declared |
+| Run events, `Progress`, and a per-run subject subscribers read | push |
 | Replay for a late subscriber | a UI that needs history |
 | `Report`, and every terminal state but `SUCCEEDED`/`FAILED` | a decider |
 | `ProvideContext` · `Answer` · `Question` · `NeedsInfo` | a decider |
@@ -61,7 +61,6 @@ generated client it did not write, over a transport it does not import.
 | Approval, `ApprovalNeeded`, and policy that may interpose a human | the run store **and** the authority model |
 | Guardrails before and after a call | something to check — the authority model |
 | Cost budgets across a run tree | an accountant |
-| Refusing a reused idempotency key whose **input differs** | the run store. DBOS ignores the new input and returns the old result, which is a correct-looking answer to a question nobody asked |
 | A task list filtered by **compartment and principal** | the authority model — and a projection table, since JSONB containment is AND-only and cannot express "any of my compartments" |
 | rund owning a schema and migrations | a listing surface that needs OR queries and real pagination. A deliberate step, because it concedes the second half of the original no-database constraint |
 | A run limit, and the check that it is ≥ the largest budget in an allowlist | `Async.run_limit` |
@@ -86,9 +85,8 @@ what it waited on.
 
 | | waits on |
 |---|---|
-| **The run store** — async `Invoke` → `pending{run_id}`, durable execution on a DBOS queue by any replica, `Fetch` with `wait`, ownership by invoking account, sync sovereign when the store is down | nothing — [spec](specs/2026-10-05-run-store-design.md) written, plan next |
-| **Push** — a subscriber sees a run's events without polling; decides DBOS reads from a `Client` vs NATS events on `garm.run.v1.<ACCOUNT>.events` | the run store |
-| The authority model, then `Cancel` / `Approve` / deciders on it | the run store |
+| **Push** — a subscriber sees a run's events without polling: DBOS streams as the record, a NATS stream export `garm.run.v1.*.out.>` for live delivery; `Answer` as `Send` for a decider that needs input | nothing — the run store is built; next |
+| The authority model, then `Cancel` / `Approve` / deciders on it | push, so an approver can be told |
 | **Cross-executor recovery** — a dead replica's in-flight runs taken over by a live one without DBOS's Conductor; a lease and a heartbeat, because DBOS re-enqueues a dead executor's runs only at that executor's own relaunch | the run store; a liveness signal DBOS does not keep |
 
 ## Found, not yet fixed

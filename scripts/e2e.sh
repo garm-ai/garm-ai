@@ -14,6 +14,7 @@ cd "$(dirname "$0")/.."
 mode="${1:-native}"
 nats_port="${NATS_PORT:-4222}"
 o2_port="${O2_PORT:-5080}"
+pg_port="${PG_PORT:-5432}"
 o2_user="root@example.com"; o2_pass="Complexpass#123"   # compose.yaml's local defaults
 if [ "$mode" = compose ]; then
   out=build/topo
@@ -47,7 +48,10 @@ if [ "$mode" = compose ]; then
   [ -f "$topo/nats-server.docker.conf" ] || fail "$topo has no topology; run: garmctl topology --dev --catalogue file://build/catalogue.binpb --callers forecast -o build/topo && docker compose up -d"
   docker inspect -f '{{.State.Health.Status}}' garm-nats 2>/dev/null | grep -q healthy || fail "garm-nats is not healthy; docker compose up -d first"
   curl -fsS -o /dev/null "http://127.0.0.1:${o2_port}/healthz" || fail "OpenObserve is not answering on 127.0.0.1:${o2_port}; docker compose up -d first"
+  docker inspect -f '{{.State.Health.Status}}' garm-postgres 2>/dev/null | grep -q healthy || fail "garm-postgres is not healthy; docker compose up -d first"
+  run_store="postgres://garm:garm@127.0.0.1:${pg_port}/garm?sslmode=disable"
 else
+  run_store="sqlite:$out/runs.db"
   topo="$out/topo"
   say "topology --dev: a THROWAWAY operator, accounts, one credential per process, a server config"
   "$bin/garmctl" topology --dev --catalogue "file://$out/catalogue.binpb" --callers forecast -o "$topo"
@@ -71,7 +75,7 @@ for port in 8080 8081; do
 done
 "$bin/weatherd" --nats "$nats_url" --creds "$topo/creds/weather.v1.WeatherService.creds" --tls-ca "$topo/ca.pem" --health 127.0.0.1:8081 > "$out/weatherd.log" 2>&1 &
 pids+=($!)
-"$bin/rund" --nats "$nats_url" --creds "$topo/creds/rund.creds" --tls-ca "$topo/ca.pem" --catalogue "file://$out/catalogue.binpb" --callers "$topo/callers.json" --health 127.0.0.1:8080 > "$out/rund.log" 2>&1 &
+"$bin/rund" --nats "$nats_url" --creds "$topo/creds/rund.creds" --tls-ca "$topo/ca.pem" --catalogue "file://$out/catalogue.binpb" --callers "$topo/callers.json" --health 127.0.0.1:8080 --run-store "$run_store" > "$out/rund.log" 2>&1 &
 pids+=($!)
 
 ready() { [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$1/readyz")" = "200" ]; }
@@ -84,6 +88,22 @@ say "forecast: a caller that names a tool and nothing else"
 answer=$("$bin/forecast" --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" --place Ghent --days 2 2>"$out/forecast.log")
 echo "$answer"
 [[ "$answer" == *"Ghent"* && "$answer" == *"high"* ]] || fail "the forecast did not come back through the chain: $answer"
+
+say "schedule_report: an ASYNC tool -- pending now, the answer from the run store"
+grep -q 'msg="run store"' "$out/rund.log" || fail "rund did not open the run store: $(grep -i 'run store' "$out/rund.log" | tail -3)"
+grep 'msg="run store"' "$out/rund.log" | sed 's/^/  /'
+key="e2e-$(date +%s)"
+pending=$("$bin/garmctl" call weather.v1.schedule_report '{"place":"Ghent"}' --idempotency-key "$key" \
+  --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" \
+  --catalogue "file://$out/catalogue.binpb" 2>"$out/call.log")
+echo "  $pending"
+[[ "$pending" == "pending $key" ]] || fail "the async call did not come back pending with the key as the run id: $pending ($(cat "$out/call.log"))"
+fetched=$("$bin/garmctl" fetch "$key" --wait 30s \
+  --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" \
+  --catalogue "file://$out/catalogue.binpb" 2>"$out/fetch.log")
+echo "$fetched" | sed 's/^/  /'
+[[ "$fetched" == *"SUCCEEDED"* && "$fetched" == *"report-Ghent"* ]] || fail "fetch did not return the run's answer: $fetched ($(cat "$out/fetch.log"))"
+grep -q "msg=\"run started\"" "$out/rund.log" || fail "rund logged no run start"
 
 say "what each process said at startup"
 grep -h "msg=observability" "$out/weatherd.log" "$out/rund.log" "$out/forecast.log" | sed 's/^/  /'
@@ -112,6 +132,22 @@ if [ "$mode" = compose ]; then
   echo "  trace $trace_id: $found"
   [[ "$found" == *"forecast/garm.call"* && "$found" == *"rund/garm.run.invoke"* && "$found" == *"weatherd/garm.tool"* ]] \
     || fail "OpenObserve does not hold the three spans of trace $trace_id (got: '$found')"
+
+  say "OpenObserve: the async run -- the tool's span, executed from the queue, in the trace the caller started"
+  run_trace=$(grep -oE 'msg="run started".*trace_id=[0-9a-f]+' "$out/rund.log" | tail -1 | sed -E 's/.*trace_id=//')
+  [ -n "$run_trace" ] || fail "no trace id on rund's run-started line"
+  found=""
+  for _ in $(seq 1 30); do
+    now=$(python3 -c 'import time; print(int(time.time()*1e6))'); start=$((now - 600 * 1000000))
+    found=$(curl -s -u "$o2_user:$o2_pass" -H 'Content-Type: application/json' "http://127.0.0.1:${o2_port}/api/default/_search?type=traces" \
+      -d "{\"query\":{\"sql\":\"SELECT operation_name, service_name FROM default WHERE trace_id = '$run_trace'\",\"start_time\":$start,\"end_time\":$now,\"from\":0,\"size\":10}}" \
+      | python3 -c "import sys,json; d=json.load(sys.stdin); print(' '.join(sorted(h['service_name']+'/'+h['operation_name'] for h in d.get('hits',[]))))")
+    [[ "$found" == *"rund/garm.run.invoke"* && "$found" == *"weatherd/garm.tool"* ]] && break
+    sleep 1
+  done
+  echo "  trace $run_trace: $found"
+  [[ "$found" == *"rund/garm.run.invoke"* && "$found" == *"weatherd/garm.tool"* ]] \
+    || fail "OpenObserve does not hold the async run's invoke and tool spans under one trace (got: '$found')"
 fi
 
 say "drain: SIGTERM, readyz goes 503, the processes exit cleanly"
