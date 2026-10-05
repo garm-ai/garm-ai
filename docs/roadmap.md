@@ -27,6 +27,7 @@ one component in more detail. They link here rather than repeating it.
 | Only `rund` calls `garm.tool.>` — the caller's permission refuses it, and the account boundary behind that | `estate.TestACallerCannotReachAToolSubject` beside `TestRundReachesTheToolItImports` |
 | A caller's identity arrives in the subject, placed by the server | `rundsvc.TestTheCallerIsTokenFourAndMustBeAnAccountKey` · `TestRundLogsTheCallingAccount` |
 | Every test runs against operator mode, TLS, the full resolver | `internal/estate` |
+| One trace per call; the quoted id opens it; counters by tool and caller; `/readyz` agrees with `$SRV.PING`; OTLP to OpenObserve | `estate.TestOneCallIsOneTraceWithRundBetweenCallerAndTool` · `natsmicro.TestReadyAgreesWithPingThroughTheLifecycle` — step **9e** |
 
 ## Being built
 

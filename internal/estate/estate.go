@@ -34,6 +34,8 @@ import (
 	"github.com/garm-ai/garm-ai/internal/fixtures"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
+	"github.com/garm-ai/garm-ai/observe"
+	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundsvc"
 	"github.com/garm-ai/garm-ai/topology"
@@ -80,6 +82,7 @@ type Estate struct {
 	keys    topology.Keys
 	rundLog *lockedBuffer
 	caPEM   []byte
+	rec     *otlptest.Recorder
 }
 
 // Reissue runs the generator again, against THIS estate's manifest and keys, for a
@@ -189,12 +192,33 @@ func (l *lockedBuffer) String() string {
 // RundLog is everything rund has logged so far in this estate.
 func (e *Estate) RundLog() string { return e.rundLog.String() }
 
+// Recorder is what the estate's processes recorded: spans, counters, log records.
+func (e *Estate) Recorder() *otlptest.Recorder { return e.rec }
+
+// AccountKey is the public key of a caller role's account -- the value the server
+// places at token 4 and rund reports as garm.caller.
+func (e *Estate) AccountKey(as Role) string {
+	kp, ok := e.keys.Accounts[topology.CallerPrefix+string(as)]
+	if !ok {
+		return ""
+	}
+	pub, err := kp.PublicKey()
+	if err != nil {
+		return ""
+	}
+	return pub
+}
+
 // New starts a server in operator mode, a tool service and rund, and tears all
 // three down with the test. The tool service is the EXAMPLE one, deployed exactly
 // as its author does -- with a credential that permits exactly its declared tools.
 func New(t testing.TB) *Estate {
 	t.Helper()
 	e := &Estate{}
+	// The three processes share THIS process, so one recorder sees the caller's,
+	// rund's and the tool's spans -- which is what makes end-to-end linkage
+	// assertable at all.
+	e.rec = otlptest.Install(t)
 	e.loadCatalogue(t)
 
 	// The topology, from the SAME generator a deployment runs. Keys are fresh
@@ -274,11 +298,14 @@ func New(t testing.TB) *Estate {
 	}
 	rundNC := e.Connect(t, RoleRund)
 	e.rundLog = &lockedBuffer{}
+	// The caller table names studio and deliberately NOT batch, so a test can see
+	// both halves of "named when known, by key alone when not" (spec §1.1).
+	names := observe.CallerNames{e.AccountKey(RoleCaller): string(RoleCaller)}
 	if err := rundsvc.Serve(svc, &run.Engine{
 		Catalogue: e.Catalogue,
 		Tools:     rundsvc.ToolCaller{NC: rundNC},
-		Log:       slog.New(slog.NewTextHandler(e.rundLog, nil)),
-	}); err != nil {
+		Log:       slog.New(observe.Handler(slog.NewTextHandler(e.rundLog, nil))),
+	}, names); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start(rundNC); err != nil {

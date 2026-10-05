@@ -243,7 +243,21 @@ func writeOutput(dir string, res *topology.Output, signer nkeys.KeyPair) error {
 	if res.Revoke == nil {
 		rev = []byte("[]")
 	}
-	return os.WriteFile(filepath.Join(dir, "revocations.json"), rev, 0o600)
+	if err := os.WriteFile(filepath.Join(dir, "revocations.json"), rev, 0o600); err != nil {
+		return err
+	}
+	// callers.json is PUBLIC -- name -> account key, both already in the account
+	// JWTs -- and 0o644 says so beside the 0o600 credentials. rund takes it as
+	// --callers to label spans and counters with a name a person can read.
+	names, err := topology.CallerNames(res)
+	if err != nil {
+		return err
+	}
+	callers, err := json.MarshalIndent(names, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(dir, "callers.json"), callers, 0o644)
 }
 
 // writeDevServer is --dev only: a server configuration a reader can start, and

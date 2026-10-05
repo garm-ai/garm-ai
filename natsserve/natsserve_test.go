@@ -20,6 +20,8 @@ import (
 	"github.com/garm-ai/garm-ai/examples/weatherd"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	"github.com/garm-ai/garm-ai/natsserve"
+	"github.com/garm-ai/garm-ai/observe"
+	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 	"github.com/garm-ai/garm-ai/serve"
 )
 
@@ -593,6 +595,7 @@ func TestADeclaredBudgetBecomesTheHandlersDeadline(t *testing.T) {
 // TestAHandlerPastItsBudgetIsCancelled. Past the budget the caller has given up,
 // so the work is unread -- and for a tool with side effects, worse than wasted.
 func TestAHandlerPastItsBudgetIsCancelled(t *testing.T) {
+	rec := otlptest.Install(t)
 	nc := conn(t, 0)
 	s, err := natsserve.New(natsserve.Config{Name: "probed", Version: "0.1.0", Logger: quiet()})
 	if err != nil {
@@ -619,6 +622,10 @@ func TestAHandlerPastItsBudgetIsCancelled(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("the handler was never cancelled")
+	}
+	// ...and the declaration that lied is counted against the tool.
+	if n := rec.Counter(context.Background(), "garm.tool.deadline_exceeded", observe.KeyTool.String("probe.tool")); n != 1 {
+		t.Errorf("garm.tool.deadline_exceeded = %d, want 1", n)
 	}
 }
 

@@ -19,6 +19,8 @@ import (
 	"github.com/garm-ai/garm-ai/fetch"
 	"github.com/garm-ai/garm-ai/natsconn"
 	"github.com/garm-ai/garm-ai/natsmicro"
+	"github.com/garm-ai/garm-ai/observe"
+	"github.com/garm-ai/garm-ai/observe/otlp"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundsvc"
 )
@@ -33,27 +35,50 @@ func main() {
 		catDir  = flag.String("catalogue-dir", ".", "what a relative file:// catalogue resolves against")
 		name    = flag.String("name", "rund", "this service's name, as $SRV.INFO reports it")
 		version = flag.String("version", "0.1.0", "this service's version (semver)")
+		callers = flag.String("callers", "", "callers.json as `garmctl topology` wrote it; names callers on spans and metrics")
+		health  = flag.String("health", "", "address for /livez and /readyz, e.g. 127.0.0.1:8080; empty means no listener")
 	)
 	flag.Parse()
 
-	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
-	// Every value, defaults included, so nobody has to guess which one is in force.
-	log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
-		"name", *name, "version", *version, "run_store", "none")
-
-	if *catURI == "" {
-		log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
-		os.Exit(2)
-	}
-	if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, log); err != nil {
-		log.Error("stopped", "error", err)
+	// The whole of this process's observability setup: a handler that stamps
+	// trace ids onto every line and ships it, and the SDK from OTEL_* -- or, with
+	// no endpoint, nothing shipped and a startup line that says so.
+	log := slog.New(observe.Handler(slog.NewTextHandler(os.Stderr, nil)))
+	stop, err := otlp.Start(context.Background(), *name, log)
+	if err != nil {
+		log.Error("observability", "error", err)
 		os.Exit(1)
 	}
-	log.Info("stopped cleanly")
+	// Flushed before EVERY exit, the failing ones included: "no catalogue" and
+	// "stopped: <error>" are exactly the lines an operator wants shipped, and a
+	// deferred stop does not run through os.Exit.
+	code := func() int {
+		// Every value, defaults included, so nobody has to guess which one is in force.
+		log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
+			"name", *name, "version", *version, "callers", *callers, "health", *health, "run_store", "none")
+		if *catURI == "" {
+			log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
+			return 2
+		}
+		if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, log); err != nil {
+			log.Error("stopped", "error", err)
+			return 1
+		}
+		log.Info("stopped cleanly")
+		return 0
+	}()
+	_ = stop(context.Background())
+	os.Exit(code)
 }
 
-func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version string, log *slog.Logger) error {
+func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version, callersPath, health string, log *slog.Logger) error {
 	ctx := context.Background()
+
+	// A broken table refuses to start rather than labelling half the callers.
+	names, err := observe.LoadCallerNames(callersPath)
+	if err != nil {
+		return err
+	}
 
 	// Loaded and RE-VERIFIED before anything is mounted. compose may have run with
 	// an older binary that lacked a rule added since, so a catalogue valid when it
@@ -102,8 +127,18 @@ func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, na
 	defer nc.Close()
 
 	engine := &run.Engine{Catalogue: &holder, Tools: rundsvc.ToolCaller{NC: nc}, Log: log}
-	if err := rundsvc.Serve(svc, engine); err != nil {
+	if err := rundsvc.Serve(svc, engine, names); err != nil {
 		return err
+	}
+	// The listener is up BEFORE Start, so a scheduler probing early gets 503
+	// rather than connection refused; readiness itself follows svc.Ready.
+	if health != "" {
+		bound, stopHealth, err := observe.ServeHealth(ctx, health, svc.Ready)
+		if err != nil {
+			return err
+		}
+		defer stopHealth(context.Background())
+		log.Info("health", "addr", bound, "livez", "/livez", "readyz", "/readyz")
 	}
 	if err := svc.Start(nc); err != nil {
 		return err

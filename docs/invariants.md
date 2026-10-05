@@ -149,6 +149,24 @@ Things not built at all are not here — they are in
 [docs/roadmap.md](roadmap.md), beside what each one waits on. This table is only
 for claims the code makes today that nothing checks.
 
+### Observability
+
+| invariant | kept true by |
+|---|---|
+| One call is one trace, with `rund` between caller and tool | `estate.TestOneCallIsOneTraceWithRundBetweenCallerAndTool` — three spans, one trace id, the tool's parent is `rund`'s span. Proved to fail by injecting from `context.Background()` in `ToolCaller` |
+| The tool receives **`rund`'s** span, not the caller's forwarded header | `rundsvc.TestTheToolCallCarriesRundsOwnSpanNotTheCallers`, on the wire; `TestWithNoSpanRundForwardsNoTraceparent` — a garbage header is not passed on. Today's code forwarded it verbatim, and that test failed on it |
+| The caller's `traceparent` is correlation, never attribution | `estate.TestAMalformedTraceparentStillYieldsAnAttributedTrace` — a fresh root trace, the tool its child, `garm.caller` the server-placed account |
+| The id a tool's `INTERNAL` error carries **is the trace id** | `natsserve.TestTheErrorIDIsTheTraceID`; `TestWithoutATracerTheIDIsStillSomething` keeps the fallback honest. End to end, `estate.TestTheIDACallerQuotesOpensTheTrace`: `rund`'s id is the run id, which is `garm.run_id` on the same trace |
+| A log line inside a span carries its trace id — the engine's own `invoked` line included | `observe.TestALogLineInsideASpanCarriesItsTraceID`; `estate.TestRundsLogLineCarriesTheTraceID` on `rund`'s real log, asserting the line that carries the run id, not only the transport's. The first version checked only the thin `invoke caller=` line and the engine's diagnosis line was unstamped — found in review |
+| **No span attribute, log attribute or envelope-written log body carries a payload** | `estate.TestNoSpanAttributeCarriesThePayload` — a sentinel in the input, checked against every attribute of every span and every shipped log record; refuses to run if fewer than three spans exist. Proved to fail by adding the input as an attribute. A tool author's own error text is outside it, and the guide says so |
+| Counters count what happened, with the kind | `natsserve.TestToolCountersCountWhatHappened`, `rundsvc.TestAnInvocationIsCounted`, `estate.TestCountersCountOneCall`; a lying deadline in `natsserve.TestAHandlerPastItsBudgetIsCancelled` |
+| A caller is named when known and **never dropped** when not | `estate.TestAKnownCallerIsNamedAndAnUnknownOneIsStillCounted` — the estate's table names `studio` and deliberately not `batch`. Proved to fail by skipping the counter for an unnamed caller; a first "probe" that returned early after the key was already set dropped nothing and was not one |
+| `/readyz` is 200 **exactly when** `$SRV.PING` answers | `natsmicro.TestReadyAgreesWithPingThroughTheLifecycle` — before `Start`, after it, after the drain; `TestReadyGoesFalseBeforeTheLastCallIsAnswered` with a blocked handler; `TestReadyIsFalseWhileDisconnected`. Proved to fail both ways |
+| The one retry is one span | `natscall.TestTheOneRetryIsOneSpanWithAnEvent` |
+| No endpoint, no exporter, and the line says so; the standard variables — generic and per-signal — reach the backend in OpenObserve's shape; **header values are never logged**; `OTEL_SDK_DISABLED` installs nothing; the final flush is bounded | `otlp.TestNoEndpointMeansNoExporterAndSaysSo`, `TestTheStandardVariablesReachTheBackendAndTheValueIsNotLogged` against a fake receiver at `/api/garm/v1/traces`, `TestASignalSpecificEndpointIsHonoured`, `TestDisabledMeansNoSDKAtAll` (no id, nothing on the wire), `TestStopIsBoundedAgainstADeadBackend` (a receiver that never answers; the first version hung the suite) |
+| Only `observe/otlp` imports the OTel SDK; `serve`, `call`, `run` and generated code import no OTel at all | `mise run no-sdk` and the extended `mise run no-broker`, each proved to fail with one blank import |
+| `callers.json` is every caller and nothing else; a broken file refuses to start | `topology.TestCallerNamesIsEveryCallerAndNothingElse`, `observe.TestABrokenCallersFileRefuses`, `garmctl.TestDevEmitsAThrowawayTopologyAndSaysSo` parses the file it wrote |
+
 ## Not enforced, and said so
 
 | claim | why nothing checks it |

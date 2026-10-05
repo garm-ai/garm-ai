@@ -31,6 +31,7 @@ import (
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
 	"github.com/garm-ai/garm-ai/run"
+	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 	"github.com/garm-ai/garm-ai/rundsvc"
 	"github.com/garm-ai/garm-ai/serve"
 )
@@ -164,7 +165,7 @@ func bareServer(t *testing.T) (caller *nats.Conn, stop func()) {
 		t.Fatal(err)
 	}
 	e := &run.Engine{Catalogue: theCatalogue(t), Tools: rundsvc.ToolCaller{NC: rundNC}, Log: quiet()}
-	if err := rundsvc.Serve(svc, e); err != nil {
+	if err := rundsvc.Serve(svc, e, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start(rundNC); err != nil {
@@ -243,6 +244,7 @@ func TestACallerReachesAToolWithoutKnowingItsSubject(t *testing.T) {
 
 // TestTheIdChainReachesTheToolAcrossTwoHops. Correlation spans; causation chains.
 func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
+	otlptest.Install(t) // a real propagator, so the trace crosses the hop
 	url := server(t)
 
 	// a bare subscriber standing in for a tool, so the headers rund SENT are
@@ -267,7 +269,7 @@ func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
 	rundNC := connect(t, url)
 	svc, _ := natsmicro.New(natsmicro.Config{Name: "rund", Version: "0.1.0", Logger: quiet()})
 	e := &run.Engine{Catalogue: theCatalogue(t), Tools: rundsvc.ToolCaller{NC: rundNC}, Log: quiet()}
-	if err := rundsvc.Serve(svc, e); err != nil {
+	if err := rundsvc.Serve(svc, e, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start(rundNC); err != nil {
@@ -282,7 +284,9 @@ func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
 		map[string]string{
 			rundsvc.HeaderCorrelation: "c1",
 			rundsvc.HeaderMessage:     "m0",
-			rundsvc.HeaderTraceparent: "00-aaaa-bbbb-01",
+			// A VALID W3C header: the propagator rejects anything else, and the
+			// claim here is that a trace is CONTINUED, not copied.
+			rundsvc.HeaderTraceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
 			rundsvc.HeaderIdempotency: "key-1",
 		})
 
@@ -297,8 +301,10 @@ func TestTheIdChainReachesTheToolAcrossTwoHops(t *testing.T) {
 	if got := seen.Get(rundsvc.HeaderMessage); got == "m0" || got == "" {
 		t.Errorf("rund reused the caller's message id (%q) instead of minting one", got)
 	}
-	if got := seen.Get(rundsvc.HeaderTraceparent); got != "00-aaaa-bbbb-01" {
-		t.Errorf("traceparent reached the tool as %q", got)
+	// The trace is the caller's; the parent span is RUND's, not the caller's --
+	// the tool is this hop's child (observability spec §1.2).
+	if got := seen.Get(rundsvc.HeaderTraceparent); !strings.Contains(got, "0af7651916cd43dd8448eb211c80319c") || strings.Contains(got, "b7ad6b7169203331") {
+		t.Errorf("traceparent reached the tool as %q; want the caller's trace under rund's own span", got)
 	}
 	// the run's key is key-1; a tool call's key must be derived from it, not equal
 	if got := seen.Get(rundsvc.HeaderIdempotency); got == "key-1" || !strings.HasPrefix(got, "key-1:") {
