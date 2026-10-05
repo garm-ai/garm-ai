@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/garm-ai/garm-ai/natsconn"
+	"github.com/garm-ai/garm-ai/rundbos"
 )
 
 // A broken --callers table refuses to start, naming the file, BEFORE anything
@@ -19,7 +20,7 @@ func TestABrokenCallersTableRefusesToStartBeforeAnythingElse(t *testing.T) {
 		t.Fatal(err)
 	}
 	err := serveRund("nats://127.0.0.1:1", natsconn.Options{}, "file://does-not-exist.binpb", "", t.TempDir(),
-		"rund", "0.1.0", p, "", slog.New(slog.DiscardHandler))
+		"rund", "0.1.0", p, "", rundbos.Config{}, slog.New(slog.DiscardHandler))
 	if err == nil || !strings.Contains(err.Error(), p) {
 		t.Fatalf("err = %v, want one naming %s", err, p)
 	}

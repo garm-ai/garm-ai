@@ -39,6 +39,7 @@ import (
 	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 	"github.com/garm-ai/garm-ai/run"
+	"github.com/garm-ai/garm-ai/rundbos"
 	"github.com/garm-ai/garm-ai/rundsvc"
 	"github.com/garm-ai/garm-ai/topology"
 )
@@ -86,7 +87,20 @@ type Estate struct {
 	rundLog *lockedBuffer
 	caPEM   []byte
 	rec     *otlptest.Recorder
+	store   *rundbos.Store
 }
+
+// Option shapes an estate.
+type Option func(*options)
+
+type options struct{ noStore bool }
+
+// WithoutStore is today's rund: sync only, no run store. For the tests that
+// prove what a storeless rund says.
+func WithoutStore() Option { return func(o *options) { o.noStore = true } }
+
+// Store is the estate's run store, nil under WithoutStore.
+func (e *Estate) Store() *rundbos.Store { return e.store }
 
 // Reissue runs the generator again, against THIS estate's manifest and keys, for a
 // different catalogue -- which is what a deployment does when a tool is added or
@@ -269,8 +283,12 @@ func (e *Estate) AccountKey(as Role) string {
 // New starts a server in operator mode, a tool service and rund, and tears all
 // three down with the test. The tool service is the EXAMPLE one, deployed exactly
 // as its author does -- with a credential that permits exactly its declared tools.
-func New(t testing.TB) *Estate {
+func New(t testing.TB, opts ...Option) *Estate {
 	t.Helper()
+	var o options
+	for _, opt := range opts {
+		opt(&o)
+	}
 	e := &Estate{}
 	// The three processes share THIS process, so one recorder sees the caller's,
 	// rund's and the tool's spans -- which is what makes end-to-end linkage
@@ -359,11 +377,28 @@ func New(t testing.TB) *Estate {
 	// The caller table names studio and deliberately NOT batch, so a test can see
 	// both halves of "named when known, by key alone when not" (spec §1.1).
 	names := observe.CallerNames{e.AccountKey(RoleCaller): string(RoleCaller)}
-	if err := rundsvc.Serve(svc, &run.Engine{
+	rundLog := slog.New(observe.Handler(slog.NewTextHandler(e.rundLog, nil)))
+	engine := &run.Engine{
 		Catalogue: e.Catalogue,
 		Tools:     rundsvc.ToolCaller{NC: rundNC},
-		Log:       slog.New(observe.Handler(slog.NewTextHandler(e.rundLog, nil))),
-	}, names); err != nil {
+		Log:       rundLog,
+	}
+	if !o.noStore {
+		// The run store on a SQLite file in the test's temp dir -- the same
+		// rundbos a deployment runs on Postgres, no container. A stable
+		// executor id, as a deployment's (spec §2).
+		store, err := rundbos.Open(context.Background(), rundbos.Config{
+			URL: rundbos.FileURL(filepath.Join(t.TempDir(), "runs.db")), AppName: "estate",
+			Executor: "estate-rund", Workers: 2, Migrate: true, Logger: rundLog,
+		}, e.Catalogue, engine.Tools)
+		if err != nil {
+			t.Fatal(err)
+		}
+		e.store = store
+		engine.Store = store
+		t.Cleanup(func() { _ = store.Close(context.Background()) })
+	}
+	if err := rundsvc.Serve(svc, engine, names); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start(rundNC); err != nil {

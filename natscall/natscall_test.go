@@ -126,7 +126,8 @@ func TestNoRundAtAllIsUnavailableNotASilentHang(t *testing.T) {
 }
 
 func TestFetchReachesTheCallerAndSaysNotRetained(t *testing.T) {
-	nc := estateConn(t)
+	// A rund with NO store: with one, an id it never saw is NOT_FOUND.
+	nc := estate.New(t, estate.WithoutStore()).Connect(t, estate.RoleCaller)
 	resp, err := natscall.Client{NC: nc}.Fetch(context.Background(), "r1", 0)
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
@@ -155,7 +156,27 @@ func TestTheSameIdempotencyKeyIsTheSameRun(t *testing.T) {
 }
 
 // Property 1 (transport half): an async invoke answers pending with the key as
-// the run id, and Fetch with a wait returns the answer.
+// the run id -- never a result -- and Fetch with a wait returns the answer.
 func TestAnAsyncInvokeAnswersPendingAndFetchTheResult(t *testing.T) {
-	t.Skip("the estate's run store arrives in Task 3 of the run-store plan; un-skipped there")
+	nc := estateConn(t)
+	c := natscall.Client{NC: nc}
+	body, _ := proto.Marshal(&weatherv1.ScheduleReportRequest{Place: "Ghent"})
+	answer, err := c.Invoke(context.Background(), "weather.v1.schedule_report", body, call.Options{Idempotency: "wire-1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if answer.GetRunId() != "wire-1" || answer.GetPending() == nil {
+		t.Fatalf("got %v, want pending for wire-1", answer)
+	}
+	resp, err := c.Fetch(context.Background(), "wire-1", 10*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.GetState() != runv1.RunState_RUN_STATE_SUCCEEDED || resp.GetTool() != "weather.v1.schedule_report" {
+		t.Fatalf("fetched %v", resp)
+	}
+	var out weatherv1.ScheduleReportResponse
+	if err := proto.Unmarshal(resp.GetResult(), &out); err != nil || out.GetReportId() != "report-Ghent" {
+		t.Fatalf("result %v %v", &out, err)
+	}
 }
