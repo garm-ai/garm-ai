@@ -43,7 +43,10 @@ func TestInitOperatorWritesAStrictRootSignedOperator(t *testing.T) {
 // operator.go. Every other file is checked by reading it, because a test that
 // called Generate and hoped is not a proof of absence.
 func TestTheOnlyCreateOperatorIsInOperatorGo(t *testing.T) {
-	var offenders []string
+	// The one legitimate file by its FULL path, and exactly one hit required --
+	// a test that only forbids would pass vacuously once the call is renamed
+	// away, and "any file named operator.go" would exempt cmd/garmctl's too.
+	var hits []string
 	_ = filepath.WalkDir("..", func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 			return nil
@@ -52,12 +55,12 @@ func TestTheOnlyCreateOperatorIsInOperatorGo(t *testing.T) {
 		if err != nil {
 			return nil
 		}
-		if strings.Contains(string(body), "nkeys.CreateOperator(") && filepath.Base(path) != "operator.go" {
-			offenders = append(offenders, path)
+		if strings.Contains(string(body), "nkeys.CreateOperator(") {
+			hits = append(hits, filepath.ToSlash(path))
 		}
 		return nil
 	})
-	if len(offenders) > 0 {
-		t.Fatalf("CreateOperator outside topology/operator.go: %v", offenders)
+	if len(hits) != 1 || hits[0] != "../topology/operator.go" {
+		t.Fatalf("nkeys.CreateOperator must appear in exactly ../topology/operator.go; found %v", hits)
 	}
 }

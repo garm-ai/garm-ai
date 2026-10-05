@@ -98,3 +98,24 @@ func TestReplaceSigningKeyRefusesAnExistingOutAndPrintsTheSequence(t *testing.T)
 		}
 	}
 }
+
+// Deferred minor 14: a half-made ceremony directory (a failed first run) is
+// refused with a way forward, not a bare "exists".
+func TestOperatorInitNamesTheWayForwardForAHalfMadeDirectory(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "ceremony")
+	if err := os.MkdirAll(filepath.Join(dir, "root"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	_, _, err := runOperator(t, "init", "--out", dir)
+	if err == nil || !strings.Contains(err.Error(), "remove") {
+		t.Fatalf("err = %v, want a refusal that says to remove the half-made directory and run again", err)
+	}
+	complete := filepath.Join(t.TempDir(), "done")
+	if _, _, err := runOperator(t, "init", "--out", complete); err != nil {
+		t.Fatal(err)
+	}
+	_, _, err = runOperator(t, "init", "--out", complete)
+	if err == nil || strings.Contains(err.Error(), "remove") {
+		t.Fatalf("err = %v, want a refusal that does NOT suggest removing a complete ceremony", err)
+	}
+}

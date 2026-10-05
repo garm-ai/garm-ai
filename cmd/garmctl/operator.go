@@ -37,6 +37,9 @@ func operatorInitCmd() *cobra.Command {
 				return errors.New("--out is required")
 			}
 			if _, err := os.Stat(out); err == nil {
+				if _, err := os.Stat(filepath.Join(out, "keys", "operator.jwt")); err != nil {
+					return fmt.Errorf("%s exists but holds no keys/operator.jwt -- a ceremony that did not finish; remove the directory and run again", out)
+				}
 				return fmt.Errorf("%s exists; a ceremony is not repeated by accident", out)
 			}
 			op, err := topology.InitOperator()

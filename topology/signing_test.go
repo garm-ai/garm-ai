@@ -231,3 +231,41 @@ func TestLoadAcceptsAnySignerTheOperatorLists(t *testing.T) {
 		t.Fatal("a manifest signed by an unlisted key loaded")
 	}
 }
+
+// Deferred minor 8: the operator JWT's validity window and self-signature are
+// checked -- an nsc-made operator with an expiry would otherwise mint a whole
+// generation the server rejects, with no explanation from the generator.
+func TestAnExpiredOrForeignSignedOperatorJWTIsRefused(t *testing.T) {
+	keys := topology.FreshKeys(nil)
+	op, _ := topology.InitOperator()
+	signPub, _ := op.Signing.PublicKey()
+	rootPub, _ := op.Root.PublicKey()
+
+	expired := jwt.NewOperatorClaims(rootPub)
+	expired.StrictSigningKeyUsage = true
+	expired.SigningKeys.Add(signPub)
+	expired.Expires = time.Now().Add(-time.Hour).Unix()
+	encoded, err := expired.Encode(op.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys.OperatorJWT, keys.OperatorSigning = encoded, op.Signing
+	_, err = topology.Generate(topology.Input{Catalogue: fixtures.Weather(t).Catalogue, Previous: topology.Empty(), Keys: keys, Now: time.Now()})
+	if err == nil || !strings.Contains(err.Error(), "expired") {
+		t.Fatalf("err = %v, want a refusal naming the expiry", err)
+	}
+
+	other, _ := nkeys.CreateOperator()
+	foreign := jwt.NewOperatorClaims(rootPub) // subject is the root, but signed by someone else
+	foreign.StrictSigningKeyUsage = true
+	foreign.SigningKeys.Add(signPub)
+	encoded, err = foreign.Encode(other)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys.OperatorJWT = encoded
+	_, err = topology.Generate(topology.Input{Catalogue: fixtures.Weather(t).Catalogue, Previous: topology.Empty(), Keys: keys, Now: time.Now()})
+	if err == nil || !strings.Contains(err.Error(), "self-signed") {
+		t.Fatalf("err = %v, want a refusal because the operator JWT is not self-signed", err)
+	}
+}
