@@ -38,7 +38,7 @@ Acted on the same day, each in a commit that names the finding:
 | a benchmark | **done** — `mise run bench`; [docs/performance.md](../performance.md) carries the baseline: ≈0.2 ms per call serial, ≈0.13 ms parallel |
 | `LICENSE` | **done** — MIT |
 | health and readiness endpoints; metrics; end-to-end traces | **done** — step 9e: one trace per call, counters, `/livez` `/readyz` held to agree with `$SRV.PING`, everything over OTLP; [the spec](../specs/2026-10-04-observability-design.md) and [the plan](../plans/2026-10-04-observability.md). The `$SYS` per-account figures are deliberately not re-exported (spec §4) |
-| the operator signing-key shape | open — its own task, recorded in the identity spec's §13 |
+| the operator signing-key shape | **done** — step 9f: the root offline (`garmctl operator init`), accounts signed by an operator signing key, credentials by account signing keys, `StrictSigningKeyUsage` enforced by the server, two-step rotation with `--verify-live`; [the spec](../specs/2026-10-05-signing-keys-design.md) |
 | the authority model, person identity, catalogue signing, multi-cluster, data classification, tool descriptions, `garmctl dev up`, wire constants for a second SDK, tombstones | open — roadmap rows |
 
 The one-sentence verdict: **the engineering culture is production grade; the system

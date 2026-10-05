@@ -266,6 +266,15 @@
         </div>
       </div>
     </figure>
+    <p><b>And what each box holds to prove who it is</b> <span class="s s-ver">built · step 9f</span>:
+      every process a credential file signed by its <em>account's signing key</em>;
+      the issuance job the operator signing key and each account's signing key
+      (<code>--keys</code>, a mounted secret in a cluster; a new account's keys go
+      to <code>--keys-out</code>); nothing on this drawing the root, which signed the
+      operator JWT once, offline, and lives in custody. Rotating an account's key is
+      two issuances with both keys listed in between, and <code>--verify-live</code>
+      asks the cluster which key each live connection still uses before the old one
+      is retired — the check <code>kubectl rollout status</code> is not.</p>
     <p class="note"><b>There is no box for the single-step decider, and that is the
       point.</b> It runs <em>inside</em> rund, so it is not something you deploy —
       every plain tool call, sync or async, is answered without a decider process

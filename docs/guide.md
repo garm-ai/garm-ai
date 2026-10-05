@@ -177,6 +177,40 @@ does: it starts a server from the emitted file and connects with an emitted
 credential. The test estate (`internal/estate`) is the same topology stood up in
 process, which is how every test runs against it.
 
+### A deployment's keys
+
+`--dev` mints a throwaway operator and discards its root. A deployment runs the
+root ceremony **once, offline**, and hands `topology` only what it needs:
+
+```bash
+garmctl operator init --out ceremony            # OFFLINE, once; then move ceremony/root to custody
+garmctl topology --keys ceremony/keys --manifest manifest.json --first \
+  --catalogue file://build/catalogue.binpb --callers studio -o topo
+```
+
+Three keys, three places: the **root** signs the operator JWT and nothing else,
+and lives in custody — `topology` refuses a `--keys` that holds it; the
+**operator signing key** signs every account and lives where issuance runs; each
+**account's signing key** signs its credentials. A new caller's keys are born at
+issuance and written to `--keys-out` (default `--keys`; a scratch path where
+`--keys` is a read-only mount), its identity seed under `archive/` where nothing
+reads it. The server enforces the shape: with `StrictSigningKeyUsage` on, an
+account signed by the root or a user signed by an identity key is refused.
+
+Rotating an account's signing key is two issuances, so nothing goes down:
+
+```bash
+garmctl topology --keys … --manifest … --rotate-signing GARM …   # new key listed beside the old; GARM's credentials reissued
+# roll the new credential files out
+garmctl topology --keys … --manifest … --verify-live --nats … --ops-creds … …   # retires the old key -- refusing, by name, if any live connection still uses it
+garmctl topology --status --keys … --manifest …                  # what is retiring, in between
+```
+
+`--verify-live` asks the cluster which key each live connection was signed by.
+On Kubernetes `kubectl rollout status` is necessary and not sufficient — a
+Deployment can be "rolled out" with one pod still reconnecting on an old mount —
+and this is the check that is.
+
 ```
 level=INFO msg=observability exporter=none endpoint="" headers=[] disabled=false service=weatherd
 level=INFO msg=starting nats=nats://127.0.0.1:4222 creds=build/topo/creds/weather.v1.WeatherService.creds name=weatherd version=0.1.0 health=""

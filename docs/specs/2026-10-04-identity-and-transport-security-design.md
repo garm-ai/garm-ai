@@ -1,11 +1,12 @@
 # Identity and transport security
 
 **Date:** 2026-10-04
-**Status:** active — §2–§10 are **built** (step 9d, 2026-10-04) except §10 step 5, which is a
-deployment — and whose **first precondition the generator cannot yet produce**: it signs
-accounts with the operator key itself, so the root is not offline and accounts carry no
-signing keys (§13). §11 sketches the two slices after it and specifies nothing. Four things the
-build corrected are in [the decision record](../decisions/2026-10-04-the-bus-is-the-authorization-boundary.md)
+**Status:** active — §2–§10 are **built** (step 9d, 2026-10-04; §5.1's key shape as step 9f,
+2026-10-05, per [the signing-keys spec](2026-10-05-signing-keys-design.md)) except §10 step 5,
+which is a deployment. Its first precondition — the root offline, accounts signed by a signing
+key — is now something the generator produces and the server enforces. §11 sketches the two
+slices after it and specifies nothing. Four things the build corrected are in
+[the decision record](../decisions/2026-10-04-the-bus-is-the-authorization-boundary.md)
 
 **Spec for:** a NATS operator-mode topology, a generator that emits it from the
 catalogue, and the caller identity that falls out of it.
@@ -405,6 +406,15 @@ there; it does not take them anywhere else.
 **SYS credentials** push resolver updates and read `$SYS`. Operations only (§6),
 issued from the same environment, held by nothing in the data path.
 
+**Built as step 9f** — [the signing-keys spec](2026-10-05-signing-keys-design.md):
+`garmctl operator init` is the root ceremony; `topology` takes the root-signed
+operator JWT and the operator signing key, refuses a directory holding the root,
+and mints account keys on first sight; `StrictSigningKeyUsage` makes the server
+refuse what this section forbids; rotation is two issuances with `--verify-live`.
+One correction to the paragraph above: "an HSM-backed signer" is not a switch —
+nkeys are ed25519 and the signer needs the raw seed; the realistic shape is a
+secret store with audited, short-lived access (signing-keys spec §10).
+
 **The issuance environment is the security boundary** of this whole slice, and the
 generator being a CLI is a statement about its interface, not about where it runs.
 A CI job with an audited secret store is the minimum; an HSM-backed signer is the
@@ -564,7 +574,8 @@ enforced.
    receives on, which nothing yet *uses*. Properties 3, 4, 5.
 5. **Deployment credentials**, when everything above is green — **and not before
    three preconditions hold**, none of which is code: the operator root is offline
-   and accounts are signed by a signing key (§5.1); the issuance environment exists
+   and accounts are signed by a signing key (§5.1 — producible since step 9f, and a
+   `--keys` holding the root is refused); the issuance environment exists
    and is where the generator runs (§5.1); and TLS is on (§6). Each is a checkbox a
    reviewer ticks, and a deployment without all three is not this design.
 
@@ -668,14 +679,13 @@ gaps found in it.
   that the binding is transport-enforced. Taking the RFC's name for a non-conformant
   member is the one option to rule out.
 
-- **The generator does not yet produce §5.1's key shape.** It emits a self-signed
-  operator JWT and signs every account with the same key, so `Keys.Operator` *is*
-  the root; users are signed by each account's identity key, so an account carries
-  no signing key to rotate. Found in review. The change is to the generator's
-  inputs — a root-signed operator JWT taken as given and verified, a signing keypair
-  per account alongside its identity public key — and to what a deployment keeps.
-  It is its own task, and until it lands §10 step 5's first checkbox cannot be
-  ticked; the status line says so.
+- ~~**The generator does not yet produce §5.1's key shape.**~~ **Closed, step 9f.**
+  It did emit a self-signed operator JWT and sign every account with the same key,
+  so `Keys.Operator` *was* the root, and users were signed by each account's
+  identity key. Found in review; built as [the signing-keys spec](2026-10-05-signing-keys-design.md):
+  a root-signed operator JWT taken as given and verified, a signing keypair per
+  account beside its identity *public* key, and the server enforcing the shape.
+  §10 step 5's first checkbox is producible.
 
 - **Where does the issuance environment live, and what drives it?** §5.1 names what
   it must be; the deployment decides whether that is a CI job with a secret store or

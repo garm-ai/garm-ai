@@ -1,7 +1,7 @@
 # Signing keys: the root offline, accounts that can rotate
 
 **Date:** 2026-10-05
-**Status:** designed — nothing built; the plan follows review of this document
+**Status:** built as step 9f, per `docs/plans/2026-10-05-signing-keys.md`; §10 says what it leaves out
 
 **Spec for:** the key shape the identity spec's §5.1 describes and the generator does
 not yet produce — a root that signs nothing day to day, an operator signing key
