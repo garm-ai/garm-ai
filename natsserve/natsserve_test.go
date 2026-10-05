@@ -360,17 +360,37 @@ func TestRunDrainsCallsThatAreQueuedButNotYetDispatched(t *testing.T) {
 	})
 	stop := run(t, s, nc)
 
+	// Both requests are PUBLISHED here, synchronously, and the two flushes
+	// prove where they are before the drain begins: the caller's flush means
+	// the server has routed both to the service's connection, and the
+	// service's flush means its client has read everything the server sent
+	// before that -- so the second call is in the subscription's queue, behind
+	// the first. (An earlier shape published from goroutines and waited only
+	// for the first handler to enter; on a slow runner the second request
+	// could still be unsent when the drain started, and "no responders" was
+	// the test racing itself, not the drain failing.)
 	const calls = 2
-	replies := make(chan error, calls)
-	for i := 0; i < calls; i++ {
-		go func() {
-			body, _ := proto.Marshal(&weatherv1.GetForecastRequest{Place: "x"})
-			_, err := caller.Request("garm.tool.probe.tool", body, 5*time.Second)
-			replies <- err
-		}()
+	body, _ := proto.Marshal(&weatherv1.GetForecastRequest{Place: "x"})
+	inboxes := make([]*nats.Subscription, calls)
+	for i := range inboxes {
+		inbox := nats.NewInbox()
+		sub, err := caller.SubscribeSync(inbox)
+		if err != nil {
+			t.Fatal(err)
+		}
+		inboxes[i] = sub
+		if err := caller.PublishRequest("garm.tool.probe.tool", inbox, body); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := caller.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	if err := nc.Flush(); err != nil {
+		t.Fatal(err)
 	}
 
-	// The first handler is running; the second call is now queued behind it.
+	// The first handler is running; the second call is queued behind it.
 	<-entered
 	if err := stop(); err != nil {
 		t.Fatalf("Run returned %v", err)
@@ -390,8 +410,8 @@ func TestRunDrainsCallsThatAreQueuedButNotYetDispatched(t *testing.T) {
 	if done != calls {
 		t.Errorf("Run returned with %d of %d calls answered", done, calls)
 	}
-	for i := 0; i < calls; i++ {
-		if err := <-replies; err != nil {
+	for i, sub := range inboxes {
+		if _, err := sub.NextMsg(5 * time.Second); err != nil {
 			t.Errorf("call %d was never answered: %v", i+1, err)
 		}
 	}
