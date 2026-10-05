@@ -41,3 +41,4 @@ amended to match (§7.3).
 | [identity and transport security](2026-10-04-identity-and-transport-security-design.md) | active — §2–§10 built as steps 9d and 9f, bar the deployment step itself; §11 sketches what follows |
 | [observability, end to end](2026-10-04-observability-design.md) | active — built as step 9e; §11 says what it leaves out |
 | [signing keys: the root offline, accounts that can rotate](2026-10-05-signing-keys-design.md) | active — built as step 9f; §10 says what it leaves out |
+| [the run store: a run that outlives the call](2026-10-05-run-store-design.md) | designed — nothing built; the plan follows review. Builds the rund spec's §7.3 as far as invoke and fetch |

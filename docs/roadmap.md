@@ -82,6 +82,14 @@ declaration and enforced by nothing is worse than none — it reads as a guarant
 They return one at a time, each with its enforcer, each with a row above naming
 what it waited on.
 
+## Next
+
+| | waits on |
+|---|---|
+| **The run store** — async `Invoke` → `pending{run_id}`, durable execution on a DBOS queue by any replica, `Fetch` with `wait`, ownership by invoking account, sync sovereign when the store is down | nothing — [spec](specs/2026-10-05-run-store-design.md) written, plan next |
+| **Push** — a subscriber sees a run's events without polling; decides DBOS reads from a `Client` vs NATS events on `garm.run.v1.<ACCOUNT>.events` | the run store |
+| The authority model, then `Cancel` / `Approve` / deciders on it | the run store |
+
 ## Found, not yet fixed
 
 | | why it stands, for now |
