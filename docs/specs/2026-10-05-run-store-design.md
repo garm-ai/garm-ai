@@ -62,7 +62,11 @@ type Run struct {
 	Caller      string            // the invoking account's public key
 	CallerName  string            // its label, if known
 	Attributes  map[string]string // correlation, tenant, compartments: the cheap dimensions
-	Traceparent string            // continued by the step that executes
+	// The ENVELOPE the caller sent, kept with the run because execution happens
+	// later, on another replica, when the request is long gone (§6.1).
+	Correlation string // the caller's, or the run id if it sent none
+	Message     string // the caller's message id: the causation of step 0
+	Traceparent string // continued by the step that executes
 }
 
 type Started struct {
@@ -237,6 +241,44 @@ The standing rule is unchanged and restated: **a model never sets a key.** For a
 call made on a model's behalf the decider supplies it, and a model's output reaches
 only `InvokeRequest.input`.
 
+### 6.1 The id chain across a durable run
+
+Today the chain is one function deep: the engine takes the caller's headers, mints
+a message id per step, sets each step's causation to the previous message id, and
+the tool receives all of it. A durable run breaks that in two places, and this is
+how each is kept.
+
+**The request is gone when the run executes.** So the envelope is stored with the
+`Run` at `Start` — `Correlation`, the caller's `Message` id, `Traceparent`, and the
+key — and the workflow reads them from its durable input. Nothing about a step's
+headers comes from a request.
+
+**A step can be replayed.** A replica dying mid-step means DBOS re-executes it
+under the same `run_id:i`; if the engine minted a fresh message id on the replay
+the tool would see two message ids for one logical call and the trail would show
+two causes. So **inside a run, message ids are deterministic**: step `i`'s message
+id is `hash(run_id, i)` — it looks like every other id and leaks nothing — and its
+causation is the caller's message id for `i = 0`, step `i−1`'s message id after.
+A replay re-sends the *same* message, which is what "requested twice, executed
+once" should look like on the wire: the tool's idempotency check collapses it and
+the audit shows one cause.
+
+What the tool receives is therefore unchanged in shape:
+
+| header | sync, today | inside a durable run |
+|---|---|---|
+| `Garm-Correlation-Id` | the caller's, or the run id | the same, from the stored envelope |
+| `Garm-Causation-Id` | the previous step's message id; the caller's for step 0 | the same, derived from durable state |
+| `Garm-Message-Id` | minted per step | `hash(run_id, i)`: stable across replay |
+| `Garm-Idempotency-Key` | `run_id:i` | `run_id:i` |
+| `traceparent` | rund's span | the run's trace, continued by the executing step |
+
+And the reason this matters beyond replay: when `Approve` lands, the approval is a
+`Send` whose message id becomes the causation of the step it unblocks — the rund
+spec's frame 8, *the chain records that a human caused the call* — which is only
+possible because causation is set per step from durable state, not from the
+request that started the run.
+
 ---
 
 ## 7. When the store is unreachable: sync is sovereign
@@ -292,7 +334,8 @@ tool is refused per call with the message it carries today, now naming the flag.
 | does `Fetch` wait | yes, `wait` capped at 30 s on DBOS's blocking reads (§4); **push is the next slice** | immediate only — a thousand pollers; push now — forces the DBOS-reads-vs-NATS-events choice before its first consumer exists |
 | how callers read `stage` | through `rund`'s `Fetch`; the DBOS `Client` path is for operators and dashboards | a database credential for callers — a caller holds a NATS credential, and `Fetch` is what authority will gate |
 
-Settled without a question: the wire (§3); the fingerprint (§6); one `RunAsStep` per
+Settled without a question: the wire (§3); the fingerprint (§6); the envelope stored
+with the run and deterministic message ids inside it (§6.1); one `RunAsStep` per
 tool call, `UNAVAILABLE`-only retry (§1); the caller's `traceparent` stored at
 `Start` and continued by the executing step; `--run-store`/`--run-store-migrate`
 (§8); DBOS on SQLite in the estate (§8).
@@ -343,6 +386,10 @@ Each proved to fail first.
     is absent.
 16. **The port is the only DBOS importer.** `mise run no-sdk`'s sibling: `run`,
     `rundsvc`, `natscall` import nothing from `dbos-inc`; only `rundbos` does.
+17. **The id chain survives durability and replay.** The tool receives the
+    caller's correlation id and, as step 0's causation, the caller's message id;
+    in property 11's replay the two requests the tool saw carry the **same**
+    message id and the same `run_id:0` key.
 
 ---
 
@@ -352,7 +399,8 @@ Each proved to fail first.
    `FetchResponse` fields, `RunState.CANCELLED`; `rund` without `--run-store`
    unchanged. Properties 6, 13, 16.
 2. `rundbos` on SQLite in the estate: `Start`, the `invoke` workflow with one step
-   per tool call, `Fetch` without `wait`. Properties 1, 2, 3, 14.
+   per tool call, the envelope and deterministic message ids, `Fetch` without
+   `wait`. Properties 1, 2, 3, 14, 17.
 3. The fingerprint and ownership. Properties 4, 5, 7.
 4. `wait` and `stage`. Properties 8, 9, 10.
 5. The queue and two replicas. Property 11.
