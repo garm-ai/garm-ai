@@ -80,10 +80,15 @@ func openAs(t *testing.T, url, executor string, tools run.Caller) *rundbos.Store
 
 func openWith(t *testing.T, url, executor string, workers int, tools run.Caller) *rundbos.Store {
 	t.Helper()
+	return openOn(t, url, executor, workers, tools, holder(t))
+}
+
+func openOn(t *testing.T, url, executor string, workers int, tools run.Caller, cat *catalogue.Holder) *rundbos.Store {
+	t.Helper()
 	s, err := rundbos.Open(context.Background(), rundbos.Config{
 		URL: url, AppName: "garm-test", Executor: executor, Workers: workers, Migrate: true,
 		Logger: slog.New(slog.DiscardHandler),
-	}, holder(t), tools)
+	}, cat, tools)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -470,4 +475,105 @@ func TestFetchWaitReturnsOnAStageChange(t *testing.T) {
 	}
 	close(tools.gates["k-b:0"])
 	awaitTerminal(t, s, "k-b", 5*time.Second)
+}
+
+// die stops a replica the way a deploy does: Close. The SDK treats a shutdown
+// as "not a cancellation request" -- the in-flight run's row stays PENDING on
+// this executor's name, which is exactly what recovery looks for.
+func die(t *testing.T, s *rundbos.Store) {
+	t.Helper()
+	if err := s.Close(context.Background()); err != nil {
+		t.Logf("close: %v", err)
+	}
+}
+
+// Property 11: a run that was executing when its replica stopped is finished
+// by a successor with the SAME executor id; a replica with a different id does
+// not take it (spec §2's limit: distribution is the queue's, recovery is the
+// identity's). The tool sees the same step key and message id both times.
+func TestAStoppedReplicasRunIsFinishedByItsSuccessorWithTheSameIdentity(t *testing.T) {
+	file := memory(t)
+	tools := &fakeTools{reply: []byte("done"), block: make(chan struct{})}
+	a := openAs(t, file, "test-a", tools)
+	mustStart(t, a, "k-rec")
+	waitUntil(t, "the step to be in flight", func() bool { return tools.n() == 1 })
+	die(t, a)
+
+	// A replica with a DIFFERENT identity does not take the run.
+	other := openAs(t, file, "test-b", tools)
+	time.Sleep(1500 * time.Millisecond)
+	if st, err := other.Fetch(context.Background(), "k-rec", 0); err != nil || st.Status != run.StatusRunning {
+		t.Fatalf("a different executor took the run: %+v %v", st, err)
+	}
+	if tools.n() != 1 {
+		t.Fatalf("%d tool calls before the successor", tools.n())
+	}
+
+	// The successor with the SAME identity recovers it; the tool is released;
+	// the run finishes.
+	close(tools.block)
+	successor := openAs(t, file, "test-a", tools)
+	st := awaitTerminal(t, successor, "k-rec", 15*time.Second)
+	if st.Status != run.StatusSucceeded || string(st.Result) != "done" {
+		t.Fatalf("%+v", st)
+	}
+	tools.mu.Lock()
+	defer tools.mu.Unlock()
+	if len(tools.calls) < 1 || len(tools.calls) > 2 {
+		t.Fatalf("%d tool calls", len(tools.calls))
+	}
+	for _, c := range tools.calls {
+		if c.h.Idempotency != "k-rec:0" || c.h.Message != tools.calls[0].h.Message {
+			t.Fatalf("a replayed step changed its ids: %+v", c.h)
+		}
+	}
+}
+
+// Property 18: the replay follows the plan recorded at start, not the
+// catalogue at replay time -- here the successor's catalogue has no tools at all.
+func TestAReplayFollowsThePlanRecordedAtStart(t *testing.T) {
+	file := memory(t)
+	tools := &fakeTools{reply: []byte("done"), block: make(chan struct{})}
+	a := openAs(t, file, "test-a", tools)
+	mustStart(t, a, "k-pin")
+	waitUntil(t, "the step to be in flight", func() bool { return tools.n() == 1 })
+	die(t, a)
+	close(tools.block)
+	var empty catalogue.Holder
+	empty.Set(fixtures.Empty(t).Catalogue)
+	successor := openOn(t, file, "test-a", 2, tools, &empty)
+	st := awaitTerminal(t, successor, "k-pin", 15*time.Second)
+	if st.Status != run.StatusSucceeded || string(st.Result) != "done" {
+		t.Fatalf("the replay re-planned against the new catalogue: %+v", st)
+	}
+}
+
+// Review focus 5: two LIVE replicas sharing an identity is the
+// misconfiguration the guide warns about. The second's Launch re-enqueues the
+// first's in-flight run and both may execute it; the step key collapses the
+// duplicate at the tool, and the run succeeds once. The outcome is asserted,
+// not endorsed.
+func TestTwoLiveReplicasWithOneIdentityIsTheMisconfigurationTheGuideWarnsAbout(t *testing.T) {
+	file := memory(t)
+	tools := &fakeTools{reply: []byte("done"), block: make(chan struct{})}
+	first := openAs(t, file, "test-a", tools)
+	mustStart(t, first, "k-twin")
+	waitUntil(t, "the step to be in flight", func() bool { return tools.n() == 1 })
+	second := openAs(t, file, "test-a", tools) // same identity, first still alive
+	time.Sleep(500 * time.Millisecond)
+	close(tools.block)
+	st := awaitTerminal(t, second, "k-twin", 15*time.Second)
+	if st.Status != run.StatusSucceeded {
+		t.Fatalf("%+v", st)
+	}
+	tools.mu.Lock()
+	defer tools.mu.Unlock()
+	if n := len(tools.calls); n < 1 || n > 2 {
+		t.Fatalf("%d tool calls", n)
+	}
+	for _, c := range tools.calls {
+		if c.h.Idempotency != "k-twin:0" {
+			t.Fatalf("a duplicate execution changed the step key: %+v", c.h)
+		}
+	}
 }

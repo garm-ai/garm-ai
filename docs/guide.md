@@ -207,6 +207,34 @@ that was queued behind a slow one. That is why `main` closes the connection with
 `defer` *after* `Run`, and not before: closing early turns a deploy into a handful
 of caller timeouts.
 
+### An async tool
+
+`weather.v1.schedule_report` declares `async: {}`. Its handler is the same plain
+method shape as the forecast's; what changes is who waits. The caller gets
+`pending <run id>` back and reads the run later, and a replica of `rund` runs the
+handler from a durable queue rather than from the caller's request. That needs a
+run store:
+
+```bash
+go run ./cmd/rund --creds build/topo/creds/rund.creds --tls-ca build/topo/ca.pem \
+  --catalogue file://build/catalogue.binpb --run-store sqlite:build/runs.db
+```
+
+`--run-store` takes `sqlite:<path>` on a laptop and `postgres://…` in a
+deployment (credentials in the URL are redacted in the startup line). Without
+it, `rund` serves the sync tools and refuses an async one per call, naming the
+flag.
+
+**`--run-store-executor` must be stable across restarts and unique among live
+replicas**: a StatefulSet's ordinal, a laptop's hostname (the default). A run
+that was executing when its replica stopped is recovered only by a relaunch with
+the *same* id — the queue distributes new work, the identity recovers in-flight
+work. Two live replicas sharing an identity re-execute each other's in-flight
+runs (the step's idempotency key collapses the duplicate at the tool, but it is
+a misconfiguration, not a feature). A Deployment's pod names are not stable, so
+a Deployment's in-flight runs wait for a later slice (`docs/roadmap.md`,
+"Cross-executor recovery").
+
 ### A deployment's keys
 
 `--dev` mints a throwaway operator and discards its root. A deployment runs the
