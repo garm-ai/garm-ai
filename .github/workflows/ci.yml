@@ -24,6 +24,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # `buf breaking --against '.git#branch=main'` clones THIS checkout and
+          # asks it for main. A pull request's checkout is a shallow merge ref
+          # with no main in it, so every PR run failed on exactly that line while
+          # the push-to-main runs passed (main against main). Found after five
+          # merges: full history, and main fetched as a local branch.
+          fetch-depth: 0
+
+      - name: Make main available to buf breaking
+        if: github.ref != 'refs/heads/main'
+        run: git fetch --no-tags origin +refs/heads/main:refs/heads/main
 
       # The toolchain comes from mise.toml and nowhere else. No setup-go here: a
       # second place naming a Go version is a second place for it to disagree,
