@@ -360,7 +360,10 @@ func syncD(d time.Duration) *toolv1.Tool_Sync {
 	return &toolv1.Tool_Sync{Sync: &toolv1.Sync{Budget: durationpb.New(d)}}
 }
 func syncRaw(s *toolv1.Sync) *toolv1.Tool_Sync { return &toolv1.Tool_Sync{Sync: s} }
-func asyncD() *toolv1.Tool_Async               { return &toolv1.Tool_Async{Async: &toolv1.Async{}} }
+func asyncD() *toolv1.Tool_Async {
+	return &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(60 * time.Second)}}
+}
+func asyncRaw(a *toolv1.Async) *toolv1.Tool_Async { return &toolv1.Tool_Async{Async: a} }
 
 func problems(t *testing.T, tool *toolv1.Tool) []declared.DeliveryProblem {
 	t.Helper()
@@ -439,7 +442,10 @@ func TestSyncWithoutABudgetIsRefused(t *testing.T) {
 // TestBudgetIsZeroForAnythingNotSync is why a caller must ask IsSync rather than
 // compare Budget to zero -- the two would otherwise be indistinguishable from a
 // sync tool whose budget nobody set, which is a thing compose refuses anyway.
-func TestBudgetIsZeroForAnythingNotSync(t *testing.T) {
+//
+// Budget is the time one CALL to the tool has: a sync tool's budget, an async
+// tool's limit. An agent has no handler to call, so zero.
+func TestBudgetIsTheLimitForAsyncAndZeroForAnAgent(t *testing.T) {
 	set, err := withTool(t, &toolv1.Tool{Name: "probe.v1.freeze", Delivery: asyncD()})
 	if err != nil {
 		t.Fatal(err)
@@ -448,8 +454,38 @@ func TestBudgetIsZeroForAnythingNotSync(t *testing.T) {
 	if tool.IsSync() {
 		t.Error("an async tool reports IsSync")
 	}
-	if tool.Budget() != 0 {
-		t.Errorf("Budget is %v for an async tool, want 0", tool.Budget())
+	if tool.Budget() != 60*time.Second {
+		t.Errorf("Budget is %v for an async tool, want its 60s limit", tool.Budget())
+	}
+	set, err = withTool(t, &toolv1.Tool{Name: "probe.v1.assistant", Delivery: asyncD(),
+		Agent: &toolv1.Agent{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	agent, _ := set.Tool("probe.v1.assistant")
+	if agent.Budget() != 0 {
+		t.Errorf("Budget is %v for an agent, want 0: nothing calls an agent's handler", agent.Budget())
+	}
+}
+
+// TestAsyncWithoutALimitIsRefused: an async tool is still a CALL to a handler,
+// made by rund from the queue, and the one party who knows how long that call
+// may take is the author. Without it rund would have to invent a deadline --
+// and a timeout it invented would be retried into duplicate work.
+func TestAsyncWithoutALimitIsRefused(t *testing.T) {
+	for name, a := range map[string]*toolv1.Async{
+		"no limit":   {},
+		"zero limit": {Limit: durationpb.New(0)},
+		"negative":   {Limit: durationpb.New(-time.Second)},
+	} {
+		p := problems(t, &toolv1.Tool{Name: "probe.v1.freeze", Delivery: asyncRaw(a)})
+		if len(p) != 1 || !strings.Contains(p[0].Reason, "limit") {
+			t.Errorf("%s produced %d problems, want 1 naming the limit: %v", name, len(p), p)
+		}
+	}
+	// An agent declares no limit: it has no handler, and its own steps carry theirs.
+	if p := problems(t, &toolv1.Tool{Name: "probe.v1.assistant", Delivery: asyncRaw(&toolv1.Async{}), Agent: &toolv1.Agent{}}); len(p) != 0 {
+		t.Errorf("an agent without a limit was refused: %v", p)
 	}
 }
 

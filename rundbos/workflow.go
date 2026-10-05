@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/dbos-inc/dbos-transact-golang/dbos"
 	"go.opentelemetry.io/otel"
@@ -34,6 +35,19 @@ type plan struct {
 	Actions []run.Action
 	Error   *invokev1.Error
 }
+
+// stepOutcome is a tool-call step's checkpoint: the tool's bytes, or the
+// tool's error with its kind. A VALUE, never a returned error: DBOS flattens a
+// returned error to its text, and a replay would read the tool's INVALID back
+// as INTERNAL. Only a cancellation is returned as a Go error.
+type stepOutcome struct {
+	Result []byte
+	Error  *invokev1.Error
+}
+
+// StepBackoff is the pause between attempts of one tool call that answered
+// UNAVAILABLE without having timed out.
+const StepBackoff = 200 * time.Millisecond
 
 // invoke is the engine's plan loop made durable: one step per action, each
 // under deterministic headers (run.StepHeaders), the stage set before each.
@@ -67,20 +81,16 @@ func (s *Store) invoke(ctx dbos.Context, r run.Run) (outcome, error) {
 			return outcome{}, err
 		}
 		h := run.StepHeaders(r, i)
-		out, err := dbos.RunAsStep(ctx, func(c context.Context) ([]byte, error) {
-			return s.tools.Call(continueTrace(c, r.Traceparent), a.Tool, a.Input, a.Budget, h)
-		},
-			dbos.WithStepName(h.Idempotency),
-			dbos.WithStepMaxRetries(StepAttempts-1),
-			dbos.WithStepRetryPredicate(func(err error) bool { return observe.Kind(err) == "UNAVAILABLE" }))
+		out, err := dbos.RunAsStep(ctx, func(c context.Context) (stepOutcome, error) {
+			return s.call(continueTrace(c, r.Traceparent), a, h, r.ID)
+		}, dbos.WithStepName(h.Idempotency), dbos.WithStepMaxRetries(0))
 		if err != nil {
-			if toolErr := unwrapStep(err); toolErr != nil {
-				// The tool's own kind -- after bounded retries for UNAVAILABLE.
-				return outcome{Error: wireOf(toolErr, r.ID)}, nil
-			}
 			return outcome{}, err // cancelled, or DBOS itself
 		}
-		last = out
+		if out.Error != nil {
+			return outcome{Error: out.Error}, nil
+		}
+		last = out.Result
 	}
 	if err := dbos.SetEvent(ctx, StageKey, "done"); err != nil {
 		return outcome{}, err
@@ -88,14 +98,31 @@ func (s *Store) invoke(ctx dbos.Context, r run.Run) (outcome, error) {
 	return outcome{Result: last}, nil
 }
 
-// unwrapStep finds the tool's *serve.Error inside DBOS's wrapping -- a step
-// error, or the retries-exhausted error whose cause is the last attempt's.
-func unwrapStep(err error) *serve.Error {
-	var se *serve.Error
-	if errors.As(err, &se) {
-		return se
+// call is one tool-call step's body: up to StepAttempts calls, retried only
+// when the tool was UNAVAILABLE and the call did NOT time out. A timed-out call
+// may well be in flight -- retrying it is what multiplies the work -- so it
+// fails the run after one attempt, with the declared limit in the message.
+// Every answer, the tool's refusal included, is returned as a value.
+func (s *Store) call(ctx context.Context, a run.Action, h run.Headers, runID string) (stepOutcome, error) {
+	for attempt := 1; ; attempt++ {
+		out, err := s.tools.Call(ctx, a.Tool, a.Input, a.Budget, h)
+		if err == nil {
+			return stepOutcome{Result: out}, nil
+		}
+		if ctx.Err() != nil {
+			return stepOutcome{}, ctx.Err() // the workflow was cancelled: not an answer
+		}
+		retryable := observe.Kind(err) == "UNAVAILABLE" && !errors.Is(err, context.DeadlineExceeded)
+		if !retryable || attempt >= StepAttempts {
+			return stepOutcome{Error: wireOf(err, runID)}, nil
+		}
+		s.log.Warn("tool unavailable; retrying", "run", runID, "tool", a.Tool, "attempt", attempt, "error", err)
+		select {
+		case <-time.After(StepBackoff):
+		case <-ctx.Done():
+			return stepOutcome{}, ctx.Err()
+		}
 	}
-	return nil
 }
 
 // continueTrace puts the run's stored trace context on the step's ctx, so the

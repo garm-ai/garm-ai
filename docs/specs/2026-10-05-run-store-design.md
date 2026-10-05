@@ -45,7 +45,14 @@ SDK, behind one Go interface.
 // (package rundbos); one is none (sync-only, today's rund). The engine never
 // imports either. Built: the workflow's step 0 is the PLAN -- the catalogue is
 // read once and the action list checkpointed, so a replay after a catalogue
-// change follows the plan the run was started with (property 18).
+// change follows the plan the run was started with (property 18). Built: a
+// tool-call step's checkpoint is a VALUE (bytes, or the tool's error with its
+// kind), never a returned error, which DBOS flattens to text and a replay would
+// read back as INTERNAL; the bounded UNAVAILABLE retry is the step's own loop,
+// and a call that TIMED OUT is not retried -- the work may be in flight. The
+// call's deadline is the tool's declared Async.limit (review of this slice found
+// the sync-era 30s fallback deciding it); a limit on the RUN arrives with a
+// decider.
 type Store interface {
 	// Start makes the run durable and returns once it is: the id is the caller's
 	// idempotency key, and a second Start with the same key and the same
@@ -329,7 +336,9 @@ tool is refused per call with the message it carries today, now naming the flag.
 
 - `rund --run-store <url>`: `postgres://…` for a deployment, `sqlite:…` for a
   laptop; empty means sync-only. Credentials in the URL are redacted in the
-  startup line, by the same rule as OTLP headers.
+  startup line, by the same rule as OTLP headers. **Built:** `--run-store-migrate=false`
+  with a schema that is absent or not current REFUSES TO START naming the flag —
+  configuration, not weather; only an unreachable database degrades (§7).
 - The DBOS schema is `dbos`, in a database named `garm`. `Launch` creates and
   migrates it by default — right for a laptop and the estate. A deployment that
   owns its migrations passes `--run-store-migrate=false` (DBOS's `SkipMigrations`:

@@ -67,7 +67,7 @@ func ServeWeatherService(r serve.Registrar, h WeatherServiceHandler) error {
 	if err := r.Endpoint(
 		"weather.v1.schedule_report",
 		"weather.v1.WeatherService.ScheduleReport",
-		0,
+		time.Minute,
 		func() proto.Message { return new(ScheduleReportRequest) },
 		func(ctx context.Context, m proto.Message) (proto.Message, error) {
 			in, ok := m.(*ScheduleReportRequest)

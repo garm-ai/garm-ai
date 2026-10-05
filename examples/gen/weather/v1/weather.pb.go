@@ -231,13 +231,14 @@ const file_weather_v1_weather_proto_rawDesc = "" +
 	"\x15ScheduleReportRequest\x12\x14\n" +
 	"\x05place\x18\x01 \x01(\tR\x05place\"5\n" +
 	"\x16ScheduleReportResponse\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId2\x82\x02\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId2\x86\x02\n" +
 	"\x0eWeatherService\x12s\n" +
 	"\vGetForecast\x12\x1e.weather.v1.GetForecastRequest\x1a\x1f.weather.v1.GetForecastResponse\"#\x92\xb5\x18\x1f\n" +
 	"\x17weather.v1.get_forecast\x1a\x04\n" +
-	"\x02\b\x05\x12{\n" +
-	"\x0eScheduleReport\x12!.weather.v1.ScheduleReportRequest\x1a\".weather.v1.ScheduleReportResponse\"\"\x92\xb5\x18\x1e\n" +
-	"\x1aweather.v1.schedule_report\"\x00B>Z<github.com/garm-ai/garm-ai/examples/gen/weather/v1;weatherv1b\x06proto3"
+	"\x02\b\x05\x12\x7f\n" +
+	"\x0eScheduleReport\x12!.weather.v1.ScheduleReportRequest\x1a\".weather.v1.ScheduleReportResponse\"&\x92\xb5\x18\"\n" +
+	"\x1aweather.v1.schedule_report\"\x04\n" +
+	"\x02\b<B>Z<github.com/garm-ai/garm-ai/examples/gen/weather/v1;weatherv1b\x06proto3"
 
 var (
 	file_weather_v1_weather_proto_rawDescOnce sync.Once

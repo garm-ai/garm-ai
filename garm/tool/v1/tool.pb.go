@@ -235,12 +235,19 @@ func (x *Sync) GetBudget() *durationpb.Duration {
 }
 
 // Async: the call returns a reference and the state outlives it.
-//
-// Empty today. It is shaped to grow a run limit -- how long the RUN may take,
-// which is a different concept from a call's budget and arrives with the store
-// that lets a run outlive its call.
 type Async struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// How long ONE CALL to the handler may take, made by rund from the run's
+	// queue rather than by the caller. The same two-enforcer shape as Sync.budget:
+	// rund's request to the tool expires at it, and the handler's own deadline is
+	// it, both read from this declaration. A limit the platform invented would be
+	// retried into duplicate work; the author is the one party who knows.
+	//
+	// Required and positive for a tool a service answers. An agent declares none:
+	// nothing calls an agent's handler, and its own steps carry theirs. A limit on
+	// the RUN -- how long the whole thing may take across steps and waits -- is a
+	// different concept and arrives with a decider.
+	Limit         *durationpb.Duration `protobuf:"bytes,1,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -273,6 +280,13 @@ func (x *Async) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Async.ProtoReflect.Descriptor instead.
 func (*Async) Descriptor() ([]byte, []int) {
 	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Async) GetLimit() *durationpb.Duration {
+	if x != nil {
+		return x.Limit
+	}
+	return nil
 }
 
 // What rund runs when a tool declares one.
@@ -423,8 +437,9 @@ const file_garm_tool_v1_tool_proto_rawDesc = "" +
 	"\n" +
 	"\bdelivery\"9\n" +
 	"\x04Sync\x121\n" +
-	"\x06budget\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x06budget\"\a\n" +
-	"\x05Async\"4\n" +
+	"\x06budget\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x06budget\"8\n" +
+	"\x05Async\x12/\n" +
+	"\x05limit\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x05limit\"4\n" +
 	"\x05Agent\x12+\n" +
 	"\x05tools\x18\x01 \x03(\v2\x15.garm.tool.v1.ToolRefR\x05tools\"\x1d\n" +
 	"\aToolRef\x12\x12\n" +
@@ -458,14 +473,15 @@ var file_garm_tool_v1_tool_proto_depIdxs = []int32{
 	1, // 1: garm.tool.v1.Tool.sync:type_name -> garm.tool.v1.Sync
 	2, // 2: garm.tool.v1.Tool.async:type_name -> garm.tool.v1.Async
 	5, // 3: garm.tool.v1.Sync.budget:type_name -> google.protobuf.Duration
-	4, // 4: garm.tool.v1.Agent.tools:type_name -> garm.tool.v1.ToolRef
-	6, // 5: garm.tool.v1.tool:extendee -> google.protobuf.MethodOptions
-	0, // 6: garm.tool.v1.tool:type_name -> garm.tool.v1.Tool
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	6, // [6:7] is the sub-list for extension type_name
-	5, // [5:6] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	5, // 4: garm.tool.v1.Async.limit:type_name -> google.protobuf.Duration
+	4, // 5: garm.tool.v1.Agent.tools:type_name -> garm.tool.v1.ToolRef
+	6, // 6: garm.tool.v1.tool:extendee -> google.protobuf.MethodOptions
+	0, // 7: garm.tool.v1.tool:type_name -> garm.tool.v1.Tool
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	7, // [7:8] is the sub-list for extension type_name
+	6, // [6:7] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_garm_tool_v1_tool_proto_init() }

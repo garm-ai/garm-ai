@@ -51,7 +51,7 @@ generated client it did not write, over a transport it does not import.
 |---|---|
 | `Cancel` · `Suspend` · `Resume`, and the `CANCELLING` state | the authority model — the store's own commands exist; who may issue them does not |
 | A run deadline or a decider lease, so a dead decider cannot hang a run | a decider (DBOS timers are there) |
-| Retry policy, keyed on error **kind** | a decider — a tool-call step retries `UNAVAILABLE` three times today, fixed, not declared |
+| Retry policy, keyed on error **kind** | a decider — a tool-call step retries `UNAVAILABLE` three times today, fixed, not declared, and never a call that timed out |
 | Run events, `Progress`, and a per-run subject subscribers read | push |
 | Replay for a late subscriber | a UI that needs history |
 | `Report`, and every terminal state but `SUCCEEDED`/`FAILED` | a decider |
@@ -63,7 +63,7 @@ generated client it did not write, over a transport it does not import.
 | Cost budgets across a run tree | an accountant |
 | A task list filtered by **compartment and principal** | the authority model — and a projection table, since JSONB containment is AND-only and cannot express "any of my compartments" |
 | rund owning a schema and migrations | a listing surface that needs OR queries and real pagination. A deliberate step, because it concedes the second half of the original no-database constraint |
-| A run limit, and the check that it is ≥ the largest budget in an allowlist | `Async.run_limit` |
+| A **run** limit — how long the whole run may take across steps and waits — and the check that it is ≥ the largest call limit in an allowlist | a decider. `Async.limit` (one call to the handler) is built; the run's own limit needs the thing that runs several |
 | Cards of any kind, input, result, approval, context | a renderer |
 | Hot reload of the catalogue, converging every replica | a trigger — a JetStream KV key an operator sets |
 | A descriptor hash over wire shape | two repositories on two contract versions, so drift can exist |

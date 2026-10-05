@@ -100,11 +100,19 @@ message Sync {
 }
 
 // Async: the call returns a reference and the state outlives it.
-//
-// Empty today. It is shaped to grow a run limit -- how long the RUN may take,
-// which is a different concept from a call's budget and arrives with the store
-// that lets a run outlive its call.
-message Async {}
+message Async {
+  // How long ONE CALL to the handler may take, made by rund from the run's
+  // queue rather than by the caller. The same two-enforcer shape as Sync.budget:
+  // rund's request to the tool expires at it, and the handler's own deadline is
+  // it, both read from this declaration. A limit the platform invented would be
+  // retried into duplicate work; the author is the one party who knows.
+  //
+  // Required and positive for a tool a service answers. An agent declares none:
+  // nothing calls an agent's handler, and its own steps carry theirs. A limit on
+  // the RUN -- how long the whole thing may take across steps and waits -- is a
+  // different concept and arrives with a decider.
+  google.protobuf.Duration limit = 1;
+}
 
 // What rund runs when a tool declares one.
 //

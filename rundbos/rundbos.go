@@ -115,6 +115,12 @@ func Open(ctx context.Context, cfg Config, cat *catalogue.Holder, tools run.Call
 	}
 	s := &Store{cfg: cfg, cat: cat, tools: tools, log: cfg.Logger, closed: make(chan struct{})}
 	if err := s.connect(ctx); err != nil {
+		if !cfg.Migrate && !IsConnectionError(err) {
+			// The deployment said it owns the migrations and the schema is not
+			// there (or not current): configuration, not weather. Refuse to
+			// start, as the flag promises, rather than degrade behind one warning.
+			return nil, fmt.Errorf("rundbos: --run-store-migrate=false and the store's schema is not usable: %w", err)
+		}
 		s.log.Warn("run store unreachable; serving sync only until it returns",
 			"url", Redact(cfg.URL), "error", err, "retry", cfg.Retry)
 		s.record("down")
@@ -139,9 +145,11 @@ func (s *Store) connect(ctx context.Context) error {
 	}
 	dbos.RegisterWorkflow(dctx, s.invoke, dbos.WithWorkflowName(WorkflowName))
 	if _, err := dbos.RegisterQueue(dctx, QueueName, dbos.WithWorkerConcurrency(s.cfg.Workers)); err != nil {
+		_ = dbos.Shutdown(dctx, 5*time.Second) // NewContext opened a pool: a failed session must not leak it
 		return err
 	}
 	if err := dbos.Launch(dctx); err != nil {
+		_ = dbos.Shutdown(dctx, 5*time.Second)
 		return err
 	}
 	s.live.Store(&session{ctx: dctx})
@@ -273,13 +281,9 @@ func (s *Store) Start(ctx context.Context, r run.Run) (run.Started, error) {
 	if err != nil {
 		return run.Started{}, err
 	}
-	if h, err := dbos.RetrieveWorkflow[outcome](sess.ctx, r.ID); err == nil {
-		st, err := h.GetStatus()
-		if err != nil {
-			return run.Started{}, s.storeErr(sess, err)
-		}
-		if fp, _ := st.Attributes["fingerprint"].(string); fp != r.Fingerprint {
-			return run.Started{}, serve.Invalid("the idempotency key %s was used for a different request", r.ID)
+	if _, err := dbos.RetrieveWorkflow[outcome](sess.ctx, r.ID); err == nil {
+		if _, err := s.fingerprintMatches(sess, r); err != nil {
+			return run.Started{}, err
 		}
 		return run.Started{ID: r.ID, Existing: true}, nil
 	} else if !errors.Is(err, dbos.ErrNonExistentWorkflow) {
@@ -296,15 +300,36 @@ func (s *Store) Start(ctx context.Context, r run.Run) (run.Started, error) {
 		dbos.WithEnqueueWorkflowID(r.ID),
 		dbos.WithEnqueueAttributes(attrs),
 		dbos.WithEnqueueAuthenticatedUser(r.Caller))
-	if err != nil {
-		if errors.Is(err, dbos.ErrConflictingWorkflowID) {
-			// Raced with another Start of the same key between the lookup and
-			// the enqueue: the first one won, and this is the same run.
-			return run.Started{ID: r.ID, Existing: true}, nil
-		}
+	conflict := errors.Is(err, dbos.ErrConflictingWorkflowID)
+	if err != nil && !conflict {
 		return run.Started{}, s.storeErr(sess, err)
 	}
-	return run.Started{ID: r.ID}, nil
+	// Two Starts with one key can both pass the lookup above; whichever won the
+	// enqueue owns the key, and DBOS answers the other from its record. So the
+	// RECORDED fingerprint decides, for every Start: a different request under
+	// an existing key is refused even when it lost the race by a microsecond.
+	if _, err := s.fingerprintMatches(sess, r); err != nil {
+		return run.Started{}, err
+	}
+	return run.Started{ID: r.ID, Existing: conflict}, nil
+}
+
+// fingerprintMatches reads the run's recorded fingerprint and compares it to
+// the request's: true when they agree (the same request), the INVALID refusal
+// when they do not. A run that cannot be read is the store's failure.
+func (s *Store) fingerprintMatches(sess *session, r run.Run) (bool, error) {
+	h, err := dbos.RetrieveWorkflow[outcome](sess.ctx, r.ID)
+	if err != nil {
+		return false, s.storeErr(sess, err)
+	}
+	st, err := h.GetStatus()
+	if err != nil {
+		return false, s.storeErr(sess, err)
+	}
+	if fp, _ := st.Attributes["fingerprint"].(string); fp != r.Fingerprint {
+		return false, serve.Invalid("the idempotency key %s was used for a different request", r.ID)
+	}
+	return true, nil
 }
 
 // Fetch answers for a run. With wait > 0 and the run still running, it blocks
@@ -315,7 +340,11 @@ func (s *Store) Fetch(ctx context.Context, id string, wait time.Duration) (run.S
 	if err != nil {
 		return run.State{}, err
 	}
-	h, err := dbos.RetrieveWorkflow[outcome](sess.ctx, id)
+	// The handle lives on a child of the session that ENDS WITH THIS FETCH, so
+	// the completion wait below cannot outlive an early return on a stage change.
+	wctx, cancel := dbos.WithCancel(sess.ctx)
+	defer cancel()
+	h, err := dbos.RetrieveWorkflow[outcome](wctx, id)
 	if errors.Is(err, dbos.ErrNonExistentWorkflow) {
 		return run.State{}, run.ErrNotFound
 	}

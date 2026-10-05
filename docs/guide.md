@@ -41,8 +41,11 @@ hours with the author doing nothing wrong. A tool that might ever need a person
 declares `async`.
 
 The budget is **required and positive**, because it exists so that no caller has to
-invent a deadline. An agent may never declare `sync` at all: both decider kinds are
-durable, so an agent cannot complete inside a call.
+invent a deadline. An `async` tool declares a **limit** instead — how long one call
+to its handler may take, made by `rund` from the run's queue — for the same reason:
+a timeout the platform invented would be retried into duplicate work. An agent
+declares neither: it may never be `sync` (both decider kinds are durable, so an
+agent cannot complete inside a call), and nothing calls an agent's handler.
 
 The `name` is how everything else refers to it: an agent's allowlist, a log line,
 a policy. Choose it deliberately — it is the identity, and the proto path is not.
@@ -209,8 +212,10 @@ of caller timeouts.
 
 ### An async tool
 
-`weather.v1.schedule_report` declares `async: {}`. Its handler is the same plain
-method shape as the forecast's; what changes is who waits. The caller gets
+`weather.v1.schedule_report` declares `async: { limit: { seconds: 60 } }`. Its
+handler is the same plain method shape as the forecast's; what changes is who
+waits. The limit is the handler's own deadline and `rund`'s request timeout for
+one call, read from the declaration by both — not how long the run may take. The caller gets
 `pending <run id>` back and reads the run later, and a replica of `rund` runs the
 handler from a durable queue rather than from the caller's request. That needs a
 run store:
@@ -254,8 +259,11 @@ one request, and DBOS alone would have answered the second from the first's
 recording.
 
 **What the store records.** Step 0 of every run is the *plan* — the catalogue
-is read once and the action list checkpointed — then one step per tool call
-under the key `<run id>:<i>`, with a message id derived from the same pair. A
+is read once and the action list checkpointed, the declared limit with it — then
+one step per tool call under the key `<run id>:<i>`, with a message id derived
+from the same pair. A call that answers `UNAVAILABLE` is tried three times; a
+call that *times out* is not retried at all, because the work may be in flight
+and a retry is what multiplies it: the run fails `UNAVAILABLE` naming the limit. A
 replay after a crash re-sends the same ids, and follows the plan the run was
 started with even if the catalogue changed meanwhile. That is DBOS's
 determinism rule, applied to the one thing here that could vary.

@@ -428,17 +428,18 @@ func TestTheDeclaredBudgetIsEmittedReadably(t *testing.T) {
 func TestAnAsyncToolGetsNoDeadline(t *testing.T) {
 	resp, err := probe(t, toolMethod(t, "Do", &toolv1.Tool{
 		Name:     "probe.v1.freeze",
-		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}},
+		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(time.Minute)}},
 	}, false))
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	got := resp.GetFile()[0].GetContent()
-	// No INVENTED deadline: the start is bounded by the platform's own cap on
-	// a held request (call.MaxWait), never by a number per tool, and the only
-	// other duration is the wait the caller passes to the result method.
-	if strings.Contains(got, "time.Second") || strings.Contains(got, "time.Millisecond") ||
-		strings.Count(got, "call.Deadline(") != strings.Count(got, "call.Deadline(call.MaxWait)") {
+	// No INVENTED deadline on the CLIENT: the start is bounded by the platform's
+	// own cap on a held request (call.MaxWait), never by a number per tool, and
+	// the only other duration is the wait the caller passes to the result
+	// method. (The declared limit reaches the handler's Serve registration, as a
+	// sync budget does -- that is the tool's deadline, not a caller's.)
+	if strings.Count(got, "call.Deadline(") != strings.Count(got, "call.Deadline(call.MaxWait)") {
 		t.Errorf("an async tool was given a deadline of its own:\n%s", got)
 	}
 }
@@ -450,7 +451,7 @@ func TestAnAsyncToolGetsNoDeadline(t *testing.T) {
 func TestAnAsyncToolGetsAReferenceAndAResultMethod(t *testing.T) {
 	resp, err := probe(t, toolMethod(t, "Freeze", &toolv1.Tool{
 		Name:     "probe.v1.freeze",
-		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}},
+		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(time.Minute)}},
 	}, false))
 	if err != nil {
 		t.Fatalf("Run: %v", err)
@@ -516,7 +517,8 @@ func TestTheBudgetReachesTheRegistrar(t *testing.T) {
 	for _, m := range r.mounts {
 		budgets[m.name] = m.budget
 	}
-	if budgets["weather.v1.get_forecast"] != 5*time.Second || budgets["weather.v1.schedule_report"] != 0 {
+	// and async: { limit: { seconds: 60 } } for the report: the handler's own deadline.
+	if budgets["weather.v1.get_forecast"] != 5*time.Second || budgets["weather.v1.schedule_report"] != 60*time.Second {
 		t.Errorf("budgets reached the registrar as %v", budgets)
 	}
 }

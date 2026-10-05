@@ -78,13 +78,19 @@ func (t Tool) IsAgent() bool { return t.Agent != nil }
 // IsSync reports whether the answer comes back within the call.
 func (t Tool) IsSync() bool { return t.Sync != nil }
 
-// Budget is how long a caller must be prepared to wait. Zero for anything that is
-// not sync, which is why a caller checks IsSync rather than comparing to zero.
+// Budget is how long ONE CALL to this tool has: a sync tool's budget, which its
+// caller waits out, or an async tool's limit, which rund applies when it calls
+// the handler from the run's queue. Zero for an agent -- nothing calls an
+// agent's handler -- which is why a caller checks IsSync rather than comparing
+// to zero.
 func (t Tool) Budget() time.Duration {
-	if t.Sync == nil {
-		return 0
+	switch {
+	case t.Sync != nil:
+		return t.Sync.GetBudget().AsDuration()
+	case t.Async != nil && !t.IsAgent():
+		return t.Async.GetLimit().AsDuration()
 	}
-	return t.Sync.GetBudget().AsDuration()
+	return 0
 }
 
 // Set is every tool a descriptor set declares, indexed by name.
@@ -340,11 +346,12 @@ func (p DeliveryProblem) String() string {
 //
 // # Three refusals, and each one can actually fire
 //
-// A fourth was specified and dropped before it was written: "an agent whose budget
-// is below the largest in its allowlist". An agent may never be Sync, so it has no
-// budget, so that check could never fire -- and a check that cannot fail is worse
-// than no check, because it reads as a guarantee. It becomes real when Async grows
-// a run limit, and the spec says so there instead.
+// A fifth was specified and dropped before it was written: "an agent whose budget
+// is below the largest in its allowlist". An agent may never be Sync and has no
+// call limit of its own, so that check could never fire -- and a check that
+// cannot fail is worse than no check, because it reads as a guarantee. It
+// becomes real when a RUN limit arrives with a decider, and the spec says so
+// there instead.
 func (s *Set) DeliveryProblems() []DeliveryProblem {
 	var out []DeliveryProblem
 	for _, t := range s.Tools() {
@@ -367,6 +374,12 @@ func (s *Set) DeliveryProblems() []DeliveryProblem {
 		case t.IsSync() && t.Budget() <= 0:
 			out = append(out, DeliveryProblem{t.Name,
 				"declares sync with no positive budget: a caller would have to invent a deadline", t.Method})
+
+		// An async tool is still one call to a handler, made by rund from the
+		// queue; a limit rund invented would be retried into duplicate work.
+		case !t.IsSync() && !t.IsAgent() && t.Budget() <= 0:
+			out = append(out, DeliveryProblem{t.Name,
+				"declares async with no positive limit: rund would have to invent how long a call to it may take", t.Method})
 		}
 	}
 	return out

@@ -86,7 +86,8 @@ func Run(gen *protogen.Plugin) error {
 // tool pairs a declared identity with the method that answers it.
 type tool struct {
 	name   string
-	budget time.Duration // zero unless delivery is Sync
+	budget time.Duration // a sync tool's budget or an async tool's call limit; zero for an agent
+	sync   bool
 	method *protogen.Method
 }
 
@@ -113,7 +114,7 @@ func file(gen *protogen.Plugin, f *protogen.File) error {
 				return fmt.Errorf("%s declares the tool %q and streams: a tool is one request and one response",
 					m.Desc.FullName(), t.Name)
 			}
-			tools = append(tools, tool{name: t.Name, budget: t.Budget(), method: m})
+			tools = append(tools, tool{name: t.Name, budget: t.Budget(), sync: t.IsSync(), method: m})
 		}
 		if len(tools) > 0 {
 			services = append(services, service{svc: s, tools: tools})
@@ -185,7 +186,7 @@ func client(g *protogen.GeneratedFile, s service) {
 	for _, t := range s.tools {
 		in := g.QualifiedGoIdent(t.method.Input.GoIdent)
 		out := g.QualifiedGoIdent(t.method.Output.GoIdent)
-		if t.budget > 0 {
+		if t.sync {
 			g.P("// ", t.method.GoName, " calls the tool ", strconv(t.name), ".")
 			g.P("//")
 			g.P("// The deadline is ", t.budget.String(), " -- the budget this tool DECLARED --")

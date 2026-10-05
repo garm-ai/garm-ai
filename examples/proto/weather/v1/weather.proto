@@ -48,7 +48,10 @@ service WeatherService {
     // human between the call and the handler, which a sync tool forbids.
     option (garm.tool.v1.tool) = {
       name: "weather.v1.schedule_report"
-      async: {}
+      // The LIMIT is how long one call to this handler may take, made by rund
+      // from the queue: the handler's own deadline and rund's request timeout,
+      // both from here. Not how long the run may take.
+      async: { limit: { seconds: 60 } }
     };
   }
 }

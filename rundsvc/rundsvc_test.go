@@ -20,6 +20,7 @@ import (
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
@@ -30,8 +31,8 @@ import (
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
-	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
+	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundsvc"
 	"github.com/garm-ai/garm-ai/serve"
 )
@@ -108,7 +109,7 @@ func theCatalogue(t *testing.T) *catalogue.Holder {
 				{Name: proto.String("Freeze"), InputType: proto.String(".extra.v1.Req"),
 					OutputType: proto.String(".extra.v1.Res"),
 					Options: opts(&toolv1.Tool{Name: "extra.v1.freeze",
-						Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}}})},
+						Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(time.Minute)}}})},
 				{Name: proto.String("Plan"), InputType: proto.String(".extra.v1.Req"),
 					OutputType: proto.String(".extra.v1.Res"),
 					Options: opts(&toolv1.Tool{Name: "extra.v1.planner",

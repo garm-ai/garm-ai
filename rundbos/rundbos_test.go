@@ -6,6 +6,8 @@ import (
 	"errors"
 	"log/slog"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -575,5 +577,125 @@ func TestTwoLiveReplicasWithOneIdentityIsTheMisconfigurationTheGuideWarnsAbout(t
 		if c.h.Idempotency != "k-twin:0" {
 			t.Fatalf("a duplicate execution changed the step key: %+v", c.h)
 		}
+	}
+}
+
+// A call that TIMED OUT is not retried: the work may well be in flight, and
+// retrying is what multiplies it. The run fails UNAVAILABLE after one call.
+func TestATimedOutCallIsNotRetried(t *testing.T) {
+	tools := &fakeTools{err: serve.Unavailable("weather.v1.schedule_report did not answer within 1m0s").Because(context.DeadlineExceeded)}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-timeout")
+	st := awaitTerminal(t, s, "k-timeout", 10*time.Second)
+	if st.Status != run.StatusFailed || st.Error.GetKind() != invokev1.ErrorKind_ERROR_KIND_UNAVAILABLE {
+		t.Fatalf("%+v", st)
+	}
+	if tools.n() != 1 {
+		t.Fatalf("a timed-out call was retried: %d calls", tools.n())
+	}
+}
+
+// The plan carries the tool's DECLARED limit as the step's budget -- the
+// example declares 60s -- so rund never invents a deadline for an async call.
+func TestThePlanCarriesTheDeclaredLimit(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok")}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-limit")
+	awaitTerminal(t, s, "k-limit", 5*time.Second)
+	steps, err := s.Steps(context.Background(), "k-limit")
+	if err != nil || len(steps) < 1 {
+		t.Fatal(err)
+	}
+	var p struct{ Actions []run.Action }
+	if err := json.Unmarshal(steps[0].Output, &p); err != nil || len(p.Actions) != 1 || p.Actions[0].Budget != 60*time.Second {
+		t.Fatalf("the plan's budget: %s (%v), want 60s", steps[0].Output, err)
+	}
+}
+
+// A tool's refusal is recorded in the step's checkpoint as a VALUE carrying the
+// kind -- never as a step error, which DBOS flattens to text and which a replay
+// would read back as INTERNAL. The step log shows no error and the kind.
+func TestTheStepRecordsTheToolsKindAsAValue(t *testing.T) {
+	tools := &fakeTools{err: serve.Invalid("place is required")}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-value")
+	awaitTerminal(t, s, "k-value", 5*time.Second)
+	steps, err := s.Steps(context.Background(), "k-value")
+	if err != nil || len(steps) != 2 {
+		t.Fatalf("%v %+v", err, steps)
+	}
+	if steps[1].Error != "" {
+		t.Fatalf("the tool's refusal was recorded as a step ERROR (%q): a replay reads that back as text", steps[1].Error)
+	}
+	var o struct{ Error *invokev1.Error }
+	if err := json.Unmarshal(steps[1].Output, &o); err != nil || o.Error.GetKind() != invokev1.ErrorKind_ERROR_KIND_INVALID {
+		t.Fatalf("the step's checkpoint does not carry the kind: %s (%v)", steps[1].Output, err)
+	}
+}
+
+// A held Fetch that returns early -- on a stage change -- leaves no goroutine
+// behind polling the store for the rest of its wait.
+func TestAHeldFetchLeavesNoGoroutineBehind(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok"), gates: map[string]chan struct{}{"k-a:0": make(chan struct{}), "k-b:0": make(chan struct{})}}
+	s := openWith(t, memory(t), "test-a", 1, tools)
+	mustStart(t, s, "k-a")
+	waitUntil(t, "k-a to occupy the worker", func() bool { return tools.n() == 1 })
+	mustStart(t, s, "k-b")
+	done := make(chan struct{})
+	go func() { defer close(done); _, _ = s.Fetch(context.Background(), "k-b", 20*time.Second) }()
+	time.Sleep(200 * time.Millisecond)
+	close(tools.gates["k-a:0"]) // k-b moves queued → calling:0; the held Fetch returns
+	<-done
+	// The SDK's result poll sleeps a fixed second between reads, so a cancelled
+	// wait ends within that second -- bounded by the SDK's interval, not by wait.
+	time.Sleep(1500 * time.Millisecond)
+	if n := goroutinesIn("rundbos.(*Store).Fetch"); n != 0 {
+		t.Fatalf("%d goroutine(s) still inside Fetch after it returned: the completion wait outlived it", n)
+	}
+	close(tools.gates["k-b:0"])
+	awaitTerminal(t, s, "k-b", 5*time.Second)
+}
+
+// goroutinesIn counts goroutines whose stack mentions fn.
+func goroutinesIn(fn string) int {
+	buf := make([]byte, 1<<20)
+	n := runtime.Stack(buf, true)
+	return strings.Count(string(buf[:n]), fn)
+}
+
+// Two Starts with one key and DIFFERENT requests, racing: at most one is
+// accepted, and the run's recorded fingerprint is the accepted request's. The
+// loser must be INVALID -- never pending for a run that is somebody else's.
+func TestConcurrentStartsWithOneKeyAndTwoRequestsNeverBothSucceed(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok")}
+	s := open(t, memory(t), tools)
+	for i := 0; i < 40; i++ {
+		key := "k-race-" + strconv.Itoa(i)
+		a := run.Run{ID: key, Tool: asyncTool, Input: []byte("a"), Fingerprint: run.Fingerprint(asyncTool, []byte("a")), Caller: "ACX", Message: "m0"}
+		b := run.Run{ID: key, Tool: asyncTool, Input: []byte("b"), Fingerprint: run.Fingerprint(asyncTool, []byte("b")), Caller: "ACX", Message: "m0"}
+		var wg sync.WaitGroup
+		var errA, errB error
+		wg.Add(2)
+		go func() { defer wg.Done(); _, errA = s.Start(context.Background(), a) }()
+		go func() { defer wg.Done(); _, errB = s.Start(context.Background(), b) }()
+		wg.Wait()
+		if errA == nil && errB == nil {
+			t.Fatalf("%s: both requests were accepted under one key", key)
+		}
+		if errA != nil && errB != nil {
+			t.Fatalf("%s: both refused: %v / %v", key, errA, errB)
+		}
+	}
+}
+
+// --run-store-migrate=false with no schema is a CONFIGURATION error -- the
+// deployment said it owns the migrations and did not run them -- so rund
+// refuses to start, naming the flag, rather than degrading quietly.
+func TestAnAbsentSchemaWithMigrateFalseRefusesToStart(t *testing.T) {
+	_, err := rundbos.Open(context.Background(), rundbos.Config{
+		URL: memory(t), AppName: "garm-test", Executor: "test-a", Migrate: false, Logger: slog.New(slog.DiscardHandler),
+	}, holder(t), &fakeTools{})
+	if err == nil || !strings.Contains(err.Error(), "--run-store-migrate") {
+		t.Fatalf("got %v, want a refusal naming --run-store-migrate", err)
 	}
 }

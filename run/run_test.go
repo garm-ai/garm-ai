@@ -87,7 +87,7 @@ func syncTool(name string, d time.Duration) *toolv1.Tool {
 		Sync: &toolv1.Sync{Budget: durationpb.New(d)}}}
 }
 func asyncTool(name string) *toolv1.Tool {
-	return &toolv1.Tool{Name: name, Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}}}
+	return &toolv1.Tool{Name: name, Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(time.Minute)}}}
 }
 func agent(name string, allow ...string) *toolv1.Tool {
 	refs := make([]*toolv1.ToolRef, 0, len(allow))
