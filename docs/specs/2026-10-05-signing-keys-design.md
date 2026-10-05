@@ -82,9 +82,12 @@ root belongs.
 `--keys` is new. The generator mints its identity and signing keypairs and
 returns them in `Output.NewKeys`; `garmctl topology` writes
 `<ACCOUNT>.pub`, `<ACCOUNT>.signing.nk` and `archive/<ACCOUNT>.identity.nk`
-(0600, written once, never read) before anything else is written. A second
-issuance finds them and mints nothing — the identity public key is stable
-across issuances, and a test holds it so.
+(0600, written once, never read) to **`--keys-out`** before anything else is
+written. `--keys-out` defaults to `--keys` on a laptop; in a cluster `--keys`
+is a mounted secret and read-only, so `--keys-out` is a scratch path the
+issuance job then stores into the secret store. A second issuance finds the
+keys in `--keys` and mints nothing — the identity public key is stable across
+issuances, `--keys` itself is never written, and a test holds both.
 
 ---
 
@@ -179,12 +182,19 @@ its new credential.*
    happens if someone hand-edits the manifest or re-runs step one with a
    different caller list. The refusal names the credentials.
 
-**What the generator cannot know** is whether the rollout finished. It knows
-every credential was *issued*; it does not know every process *restarted*. That
-is the operator's step, the status line exists to make it visible, and a
-deployment that automates rollout gates step two on its own evidence. Said here
-so nobody reads "the generator checks for stragglers" as "the generator checks
-the rollout".
+**What the generator cannot know from the manifest** is whether the rollout
+finished: it knows every credential was *issued*, not that every process
+*reconnected* with it. But the bus knows. Every live connection's user JWT
+names the key that signed it, and the system account's `CONNZ` request lists
+them. So step two takes **`--verify-live`**: with the ops credential it asks
+the cluster and **refuses to retire a key that any live connection was signed
+by**, naming the connections. Evidence from the bus, not a hope about the
+rollout — and it works on a laptop exactly as on a cluster. On Kubernetes
+`kubectl rollout status` is necessary and not sufficient: a Deployment can be
+"rolled out" with one pod still reconnecting on an old mount. (`nats.go`
+re-reads a credentials file on reconnect, and a mounted Secret updates in
+place, so a pod often picks up its new credential without a restart; useful,
+and not what step two relies on.)
 
 **Per-credential revocation is unchanged.** `RevokeAt` in the account JWT, dated
 at or after the credential's `iat`, pushed over `$SYS`. Rotation is for a key;
@@ -233,7 +243,7 @@ a message that says to start with `--first` under the new shape.
 | `topology/testkeys.go` | `FreshKeys` produces the new shape, including a throwaway root and a root-signed operator JWT |
 | `topology/operator.go` (new) | `InitOperator() (root, signing nkeys.KeyPair, operatorJWT string, err)` — the one `CreateOperator` |
 | `cmd/garmctl/operator.go` (new) | `operator init`; `--replace-signing-key` |
-| `cmd/garmctl/topology.go` | `readKeys`/`writeKeys` for the new layout; refuse `root.nk`; write new accounts' keys first; `--rotate-signing`; `--status` |
+| `cmd/garmctl/topology.go` | `readKeys`/`writeKeys` for the new layout; refuse `root.nk`; write new accounts' keys to `--keys-out` first; `--rotate-signing`; `--status`; `--verify-live` over `$SYS` `CONNZ` |
 | `internal/estate` | the new shape; `StrictSigningKeyUsage` on the server; `Rotate(t, account)` for the rotation tests |
 | `docs/specs/…identity…` | §5.1 status: built; §13 item closed; §10 step 5's first precondition now producible |
 | `docs/identity.html`, `docs/deployment.html` | the key table and the rotation sequence |
@@ -280,6 +290,10 @@ Each proved to fail first.
     untouched.
 11. **Step two refuses stragglers.** A manifest hand-edited so one GARM entry
     still names the retiring key makes the next issuance refuse, naming it.
+11a. **`--verify-live` refuses while the old key is still on the wire.** On the
+    live estate after step one, with one connection still holding the old
+    `rund` credential, step two with `--verify-live` refuses and names it;
+    close that connection and step two proceeds.
 12. **`operator init` refuses to repeat.** A second run against the same `--out`
     exits non-zero and writes nothing; the first run's last line names `root/`.
 13. **Every identity property still holds under the new shape.** The estate
@@ -322,6 +336,13 @@ migration (§5).
 ---
 
 ## 10. What this does not do
+
+- **It does not make an HSM a configuration option.** The identity spec's §5.1
+  names "an HSM-backed signer" as the shape a bank will ask for. nkeys are
+  ed25519 and the signer needs the raw seed; a cloud KMS cannot sign an nkeys
+  JWT in place. The realistic cluster shape is the seed in a secret store with
+  audited, short-lived access. The generator is unchanged either way — keys are
+  an input — but "HSM" should not be read as a switch.
 
 - **It does not design the issuance environment.** §5.1 of the identity spec
   names what it must be; this slice makes the generator's inputs match it. The
