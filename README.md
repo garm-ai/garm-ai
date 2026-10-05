@@ -5,7 +5,45 @@ time.
 
 Declare a tool as an RPC method carrying one option. Compose many repositories'
 declarations into one verified namespace. Generate the transport glue, so a tool
-author implements an interface and writes nothing else.
+author implements an interface and writes nothing else. Put it on a NATS bus in
+operator mode, where every process holds a credential derived from the catalogue
+and the caller's identity is placed in the subject by the server. Trace every
+call end to end.
+
+## Getting started
+
+Seven commands, on a laptop. Every one of them is run by `mise run ci` in some
+form, so if this block is wrong the build is red.
+
+```bash
+mise install                                                   # the toolchain, pinned in mise.toml
+mise run ci                                                    # lint · breaking · vuln · generated Go current · no broker / no SDK in a tool author's build · examples composed · tests with -race against a real nats-server
+
+garmctl compose examples/images.yaml -o build/catalogue.binpb  # two repositories' declarations -> one verified namespace
+garmctl topology --dev --catalogue file://build/catalogue.binpb --callers forecast -o build/topo
+                                                               # a THROWAWAY operator, accounts, one credential per process, a server config -- never for a deployment
+nats-server -c build/topo/nats-server.conf &                   # operator mode, TLS, every account preloaded
+go run ./examples/cmd/weatherd --creds build/topo/creds/weather.v1.WeatherService.creds --tls-ca build/topo/ca.pem --health 127.0.0.1:8081
+go run ./cmd/rund              --creds build/topo/creds/rund.creds --tls-ca build/topo/ca.pem --catalogue file://build/catalogue.binpb --callers build/topo/callers.json --health 127.0.0.1:8080
+go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds --tls-ca build/topo/ca.pem
+```
+
+`forecast` names a tool and nothing else; it reaches `rund`, which reaches
+`weatherd`, and the answer comes back through three accounts the caller cannot
+cross by itself. Set `OTEL_EXPORTER_OTLP_ENDPOINT` (and `_HEADERS`) and every one
+of those processes ships one trace per call to whatever is listening; unset,
+each says `observability exporter=none` and ships nothing. `curl
+127.0.0.1:8080/readyz` is 200 exactly when `nats micro ping rund` gets an answer.
+
+A deployment replaces `--dev` with a root ceremony run offline once
+(`garmctl operator init`) and an issuance environment that holds the signing
+keys; [docs/guide.md](docs/guide.md) §4 walks through both, and the rotation
+that follows.
+
+**To write a tool**, read [docs/guide.md](docs/guide.md) from the top: one
+`.proto` option, one Go interface, and the process is forty lines. **To
+understand the shape**, start with [docs/concepts.md](docs/concepts.md) and the
+three drawings below.
 
 ## Documentation
 
@@ -23,16 +61,28 @@ author implements an interface and writes nothing else.
   `.proto` to a running call, with built / next / designed-only filterable.
   <https://claude.ai/artifact/8WincMNCabDf7nUJ944SLJ>
 - **[docs/deployment.html](docs/deployment.html)** — the deployment view: DBOS and
-  Temporal as two implementations of one declared kind, and a synchronous call traced
-  frame by frame into a core banking system.
-  <https://claude.ai/artifact/1wsUsYKhDPumcWYNdFNoeK>
+  Temporal as two implementations of one declared kind, a synchronous call traced
+  frame by frame into a core banking system, and what each box holds to prove who
+  it is. <https://claude.ai/artifact/1wsUsYKhDPumcWYNdFNoeK>
+- **[docs/identity.html](docs/identity.html)** — the identity model: accounts,
+  credentials, the caller placed in the subject by the server, the three keys and
+  who holds each, and what is built versus designed.
+  <https://claude.ai/artifact/9yks2uHDSptE3nAe8MocK1>
 - **[docs/specs/](docs/specs/)** — how a component works, with numbered call
-  stacks. **Specs for this repository live in this repository**, not in the private
-  design record beside it.
+  stacks and the properties stated as tests: `rund`, identity and transport
+  security, observability, signing keys. **Specs for this repository live in this
+  repository**, not in the private design record beside it.
+- **[docs/plans/](docs/plans/)** — the implementation plan each spec was built
+  from, task by task; read one to see how a property was proved to fail first.
 - **[docs/decisions/](docs/decisions/)** — one file per decision, titled by the
   decision, each recording what was rejected and why. Each carries a `**Status:**`
   line from `active · parked · superseded by <file>` — grep it before trusting a
   file, because a stale decision reads as current.
+- **[docs/reviews/](docs/reviews/)** — dated gradings of the whole repository
+  against a stated bar, with an action list and a progress table that says what
+  each finding became.
+- **[docs/performance.md](docs/performance.md)** — the per-call cost of the whole
+  chain, one row per measurement, and what the number does not include.
 
 The step-by-step history is **`git log`**. Every commit message carries its own
 reasoning, and it is the one record that cannot drift from the code, because it is
@@ -59,17 +109,26 @@ generated** — `garmctl compose` prints the count, no document transcribes it.
 | `call/` | the seam a generated **client** is written against | and `call.Deadline`, which adds the hops to a declared budget |
 | `catalogue/` | the verified namespace rund serves | immutable, digest-identified, behind an atomic pointer |
 | `run/` | rund's engine | no NATS type in any signature |
-| `rundsvc/`, `natscall/` | rund on NATS, and reaching it | the only packages a caller or server need not import |
-| `cmd/rund` | the run manager | the only way a caller reaches a tool |
-| `natsserve/` | the transport | mounts a tool at `garm.tool.<name>`, drains on shutdown. **The only package that imports a broker** |
+| `rundsvc/`, `natscall/` | rund on NATS, and reaching it | `rund` reads the caller's account off the subject the server rewrote; `natscall` opens the call's span and never changes what it publishes |
+| `cmd/rund` | the run manager | the only way a caller reaches a tool; `--callers` names them, `--health` answers a scheduler |
+| `natsserve/` | the transport | mounts a tool at `garm.tool.<name>`, continues the caller's trace into the handler, drains on shutdown |
+| `natsmicro/` | one NATS micro service, shared by `natsserve` and `rund` | the startup gate (a credential that does not cover a mount refuses to start), the drain that drops no work, `Ready()` held to agree with `$SRV.PING` |
+| `natsconn/` | how a command connects | a credential file and a CA; the ten lines four commands share |
+| `topology/` | the NATS operator-mode topology, generated from the catalogue | accounts, one credential per process with permissions derived from its declared tools, a signed issuance manifest, revocation by delta, signing keys and their rotation. **Keys are an input**: the root never enters it |
+| `cmd/garmctl topology` / `operator` | the generator on disk, and the root ceremony | `--dev` for a laptop; `--keys`, `--keys-out`, `--rotate-signing`, `--verify-live` for a deployment |
+| `observe/`, `observe/otlp/` | OpenTelemetry: the API side, and the only importer of the SDK | one trace per call, the quoted error id is the trace id, counters, `/livez` `/readyz`; everything over OTLP from the standard `OTEL_*` variables |
+| `internal/estate/` | the whole chain in one process, for tests | operator mode, TLS, the full resolver, an in-memory telemetry recorder — the configuration that is tested is the one that is deployed |
 | `proto/garm/invoke/v1/` | what a tool says when it cannot answer | five kinds. No cause field, deliberately |
 | `examples/` | the guide, executable | two buf modules, as two repositories |
 
 ```
 mise install        the toolchain, from mise.toml and nowhere else
-mise run ci         lint and vet · generated Go matches the protos · no broker in a
-                    tool author's build · the declaration check · the examples
+mise run ci         lint and vet · buf breaking against main · govulncheck ·
+                    generated Go matches the protos · no broker and no OTel SDK
+                    in a tool author's build · the guide names only files that
+                    exist · go.mod tidy · the declaration check · the examples
                     composed · tests with -race against a real nats-server
+mise run bench      the per-call cost of the whole chain; not in CI, by design
 ```
 
 ## The rule this repository exists to keep
@@ -128,10 +187,12 @@ third fixture shape appears, that is the moment to check whether one can go.
 
 ## What is next
 
-**Nothing calls a tool for you.** A caller marshals a request and does
-`nc.Request(natsserve.Subject(name), body, timeout)` itself. A generated client, and
-whether discovery (`$SRV.INFO`) or a composed catalogue is how a caller learns what
-exists, is the next step.
+**Nothing authorizes anything.** A caller's identity is proved — placed in the
+subject by the server, carried on every trace — and then not used: any caller may
+invoke any tool through `rund`. The order the last review set, and the roadmap
+keeps: the run store (async delivery, `Fetch` with a result, audit) → **the
+authority model** → person identity. [docs/roadmap.md](docs/roadmap.md) has every
+unbuilt thing beside what it waits on.
 
 ## What is deliberately absent
 
@@ -144,10 +205,10 @@ authority model is where all four of 2026-10-02's bugs lived.
 
 ## Working on this
 
-One person, committing to `main`, with every step gated by review in conversation
-before the code exists — which is a tighter gate than a pull request, and consistent
-with this estate's standing rule that nothing is in production and we fix forward.
-
-Branches and pull requests start at the first of: a second committer, or the first
-consumer repository pinning a tag of this one. That is when breaking `main` starts
-costing somebody else.
+Every slice is designed before it is built — a spec with its properties stated as
+tests, reviewed one question at a time, then a plan — and built on a branch with
+every property **proved to fail** before it is trusted: break the mechanism, watch
+the test fail, restore. One fresh-context review of the whole branch at the end;
+its Critical and Important findings are fixed test-first before the pull request
+merges, and its minors are listed, not forgotten. Nothing is in production, so the
+standing rule is break fast and fix forward, with zero technical debt carried.

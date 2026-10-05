@@ -20,7 +20,20 @@ type Manifest struct {
 	Generation      int       `json:"generation"`
 	CatalogueSHA256 string    `json:"catalogue_sha256"`
 	IssuedAt        time.Time `json:"issued_at"`
-	Entries         []Entry   `json:"entries"`
+	// Accounts records every account's public keys -- identity, signing, and a
+	// retiring signing key between the two steps of a rotation (spec §4, §5).
+	Accounts map[string]AccountRecord `json:"accounts"`
+	Entries  []Entry                  `json:"entries"`
+}
+
+// AccountRecord is one account's keys as the manifest knows them. All public.
+type AccountRecord struct {
+	Identity string `json:"identity"`
+	Signing  string `json:"signing"`
+	Retiring string `json:"retiring,omitempty"`
+	// Retired is every signing key ever dropped from this account, by the
+	// generation that dropped it -- a retirement is recorded, not just done.
+	Retired map[string]int `json:"retired,omitempty"`
 }
 
 // Entry is one issued credential, without its seed -- the manifest is a record of
@@ -37,11 +50,18 @@ type Entry struct {
 	// at or before its timestamp -- and in.Now is the caller's clock, not the
 	// encoder's.
 	IssuedAt int64 `json:"issued_at"`
+	// SigningKey is the public key that signed this credential, so a rotation
+	// can say what it reissued and a retirement can check nothing still names
+	// the old key.
+	SigningKey string `json:"signing_key"`
+	// Reason is why this entry was issued: "new", "catalogue", "rotation";
+	// empty for a carry-forward.
+	Reason string `json:"reason,omitempty"`
 }
 
 // Empty is the explicit first manifest. Explicit, because a generator that treated
 // "no manifest" as "nothing was issued before" would never revoke anything.
-func Empty() *Manifest { return &Manifest{} }
+func Empty() *Manifest { return &Manifest{Accounts: map[string]AccountRecord{}} }
 
 type signed struct {
 	Manifest  Manifest `json:"manifest"`
@@ -77,10 +97,12 @@ func (m *Manifest) Save(path string, signer nkeys.KeyPair) error {
 	return os.WriteFile(path, raw, 0o600)
 }
 
-// Load reads a manifest and verifies it was signed by operatorPublic. A manifest
-// signed by anything else is refused: the generator trusts its previous state
-// only because it was the generator that wrote it.
-func Load(path, operatorPublic string) (*Manifest, error) {
+// Load reads a manifest and verifies it was signed by one of signers -- the
+// operator signing keys the operator JWT lists, so a manifest signed by a key
+// that has since been replaced (and is still listed) loads. A manifest signed by
+// anything else is refused: the generator trusts its previous state only because
+// it was the generator that wrote it.
+func Load(path string, signers ...string) (*Manifest, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -89,9 +111,14 @@ func Load(path, operatorPublic string) (*Manifest, error) {
 	if err := json.Unmarshal(raw, &s); err != nil {
 		return nil, fmt.Errorf("topology: %s is not a manifest: %w", path, err)
 	}
-	if s.Signer != operatorPublic {
-		return nil, fmt.Errorf("topology: %s was signed by %s, not the operator", path, s.Signer)
+	var listed bool
+	for _, k := range signers {
+		listed = listed || s.Signer == k
 	}
+	if !listed {
+		return nil, fmt.Errorf("topology: %s was signed by %s, not an operator signing key the operator lists", path, s.Signer)
+	}
+	operatorPublic := s.Signer
 	body, err := canonical(s.Manifest)
 	if err != nil {
 		return nil, err
@@ -106,6 +133,9 @@ func Load(path, operatorPublic string) (*Manifest, error) {
 	}
 	if err := pub.Verify(body, sig); err != nil {
 		return nil, fmt.Errorf("topology: %s: signature does not verify", path)
+	}
+	if s.Manifest.Accounts == nil {
+		return nil, fmt.Errorf("topology: %s predates signing keys and cannot be continued; start again with --first under the new key layout", path)
 	}
 	return &s.Manifest, nil
 }
@@ -149,15 +179,15 @@ func delta(prev *Manifest, cur Manifest, now time.Time) []Revocation {
 		switch {
 		case !still:
 			rev = append(rev, Revocation{Name: p.Name, Account: p.Account, Public: p.Public, At: at,
-				Why: "retired: no longer in the catalogue"})
+				Kind: Retired, Why: "retired: no longer in the catalogue"})
 		case c.Public == p.Public:
 			// carried forward, untouched
 		case c.Account != p.Account:
 			rev = append(rev, Revocation{Name: p.Name, Account: p.Account, Public: p.Public, At: at,
-				Why: "moved accounts"})
+				Kind: Moved, Why: "moved accounts"})
 		default:
 			rev = append(rev, Revocation{Name: p.Name, Account: p.Account, Public: p.Public, At: at,
-				Why: fmt.Sprintf("superseded by generation %d", cur.Generation)})
+				Kind: Superseded, Why: fmt.Sprintf("superseded by generation %d", cur.Generation)})
 		}
 	}
 	sort.Slice(rev, func(i, j int) bool { return rev[i].Public < rev[j].Public })

@@ -28,6 +28,7 @@ one component in more detail. They link here rather than repeating it.
 | A caller's identity arrives in the subject, placed by the server | `rundsvc.TestTheCallerIsTokenFourAndMustBeAnAccountKey` · `TestRundLogsTheCallingAccount` |
 | Every test runs against operator mode, TLS, the full resolver | `internal/estate` |
 | One trace per call; the quoted id opens it; counters by tool and caller; `/readyz` agrees with `$SRV.PING`; OTLP to OpenObserve | `estate.TestOneCallIsOneTraceWithRundBetweenCallerAndTool` · `natsmicro.TestReadyAgreesWithPingThroughTheLifecycle` — step **9e** |
+| The root offline; accounts signed by an operator signing key, credentials by account signing keys, enforced by the server; two-step rotation with `--verify-live` | `estate.TestTheServerRefusesAnAccountSignedByTheRoot` · `estate.TestRotationKeepsTheOldCredentialAliveUntilStepTwo` · `garmctl.TestVerifyLiveRefusesWhileTheOldKeyIsStillOnTheWire` — step **9f** |
 
 ## Being built
 

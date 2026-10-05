@@ -1,7 +1,6 @@
 package topology_test
 
 import (
-	"strings"
 	"testing"
 	"time"
 
@@ -51,9 +50,11 @@ func TestRetiringACallerRevokesItsCredentialAndEmitsATombstone(t *testing.T) {
 	}
 }
 
-// A revocation needs the account's signing key. Without it the generator cannot do
-// what the manifest obliges it to, and must say so rather than silently not revoke.
-func TestRetiringACallerWithoutItsKeyIsRefused(t *testing.T) {
+// A tombstone needs no key of the departed account: it is built from the
+// manifest's record of the account and signed by the operator signing key like
+// any other. (Under the old shape this test asserted a refusal without the
+// account's key; the manifest now carries what the tombstone needs.)
+func TestRetiringACallerWhoseKeysAreGoneStillEmitsATombstone(t *testing.T) {
 	keys := topology.FreshKeys([]string{"studio"})
 	first, err := topology.Generate(topology.Input{
 		Catalogue: weatherCatalogue(t), Callers: []string{"studio"},
@@ -63,15 +64,23 @@ func TestRetiringACallerWithoutItsKeyIsRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 	delete(keys.Accounts, topology.CallerPrefix+"studio")
-	_, err = topology.Generate(topology.Input{
+	second, err := topology.Generate(topology.Input{
 		Catalogue: weatherCatalogue(t), Callers: nil,
 		Previous: &first.Manifest, Keys: keys, Now: time.Now(),
 	})
-	if err == nil {
-		t.Fatal("a retirement with no key to revoke with was accepted")
+	if err != nil {
+		t.Fatalf("retiring a caller whose keys are gone: %v", err)
 	}
-	if !strings.Contains(err.Error(), "CALLER-studio") {
-		t.Errorf("the refusal does not name the account: %v", err)
+	ac, err := jwt.DecodeAccountClaims(second.Accounts[topology.CallerPrefix+"studio"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	opPub, _ := keys.OperatorSigning.PublicKey()
+	if ac.Issuer != opPub || len(ac.Revocations) == 0 {
+		t.Fatalf("tombstone issued by %s with %d revocations", ac.Issuer, len(ac.Revocations))
+	}
+	if ac.Subject != first.Manifest.Accounts[topology.CallerPrefix+"studio"].Identity {
+		t.Error("the tombstone is not the departed account")
 	}
 }
 

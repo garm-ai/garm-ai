@@ -56,6 +56,7 @@ func root() (*cobra.Command, func(context.Context) error) {
 	cmd.AddCommand(composeCmd())
 	cmd.AddCommand(callCmd())
 	cmd.AddCommand(topologyCmd())
+	cmd.AddCommand(operatorCmd())
 	return cmd, func(ctx context.Context) error { return stop(ctx) }
 }
 

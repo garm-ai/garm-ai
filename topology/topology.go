@@ -4,8 +4,10 @@
 // `garmctl topology`, to disk -- so the configuration that is tested is the
 // configuration that is deployed. Nothing else may build accounts or users.
 //
-// Keys are an INPUT. This package signs with what it is given and never invents
-// a key it also trusts; FreshKeys exists for tests and --dev and says so.
+// The root and the operator signing key are an INPUT this package never
+// produces (operator.go is the one place an operator key is created, for the
+// ceremony); account keys are born here on first sight of an account and handed
+// back in Output.NewKeys. FreshKeys exists for tests and --dev and says so.
 package topology
 
 import (
@@ -26,21 +28,30 @@ const (
 	CallerPrefix = "CALLER-"
 )
 
-// Keys is what signs.
-//
-// NOT YET THE SHAPE SPEC §5.1 DESCRIBES, and said plainly: Operator here signs the
-// operator JWT itself and every account, so it IS the root, and users are signed by
-// each account's identity key rather than by an account signing key. §5.1 wants the
-// root offline, signing only operator signing keys, with accounts carrying signing
-// keys for users. That is an input-shape change to this struct and to the generator
-// -- a root-signed operator JWT taken as input, a signing keypair per account -- and
-// it has to land before §10 step 5's first precondition can be ticked. Found in
-// review; recorded in the spec's status and §13 rather than fixed in the same
-// pass, because it changes what a deployment keeps and is its own task.
+// Keys is what signs. The shape the identity spec's §5.1 describes and the
+// signing-keys spec §1 pins: THE ROOT IS NOT HERE. OperatorJWT is root-signed and
+// taken as given; OperatorSigning signs accounts; each account's Signing signs
+// its users and activations; Identity is a PUBLIC key, so nothing here can ever
+// encode with an identity seed.
 type Keys struct {
-	Operator nkeys.KeyPair
-	// Accounts by account name: SYS, GARM, TOOLS, and CALLER-<n> for each caller.
-	Accounts map[string]nkeys.KeyPair
+	OperatorJWT     string
+	OperatorSigning nkeys.KeyPair
+	// Accounts by name: SYS, GARM, TOOLS, CALLER-<n>. An account missing here is
+	// NEW: Generate mints its keys and returns them in Output.NewKeys.
+	Accounts map[string]AccountKeys
+}
+
+// AccountKeys is one account's keys as the issuance environment holds them.
+type AccountKeys struct {
+	Identity string // public; the seed is archived by the caller, read by nothing
+	Signing  nkeys.KeyPair
+}
+
+// NewAccountKeys is what Generate minted and the caller must keep: both pairs for
+// a new account; Signing only for a rotation (Identity nil).
+type NewAccountKeys struct {
+	Identity nkeys.KeyPair
+	Signing  nkeys.KeyPair
 }
 
 // Input is everything Generate needs. Previous is REQUIRED; Empty() is explicit.
@@ -58,6 +69,16 @@ type Input struct {
 	// is carried forward untouched (spec §4.2), so adding one tool restarts one
 	// service and not every process on the bus.
 	Rotate bool
+	// RotateSigning names accounts whose signing key is replaced: a new key is
+	// minted and listed beside the old, and every credential of the account is
+	// reissued under it (spec §4 step one). The old key is dropped at the next
+	// issuance that finds it retiring. Refused together with Rotate: the two
+	// say opposite things about the old credentials.
+	RotateSigning []string
+	// Reissue names credentials to reissue regardless of carry-forward -- the
+	// repair for a credential file that never landed after the manifest was
+	// saved. The entry's reason says "reissued".
+	Reissue []string
 }
 
 // DefaultExpiry: long enough never to cause a reconnect storm, short enough that
@@ -91,7 +112,19 @@ type Credential struct {
 	// IssuedAt is the JWT's own iat, unix seconds -- the wall clock at encoding,
 	// which is what the server compares a revocation against.
 	IssuedAt int64
+	// SigningKey is the public key that signed the JWT.
+	SigningKey string
 }
+
+// RevocationKind is WHY a credential is revoked, typed so that code matches on
+// it -- a sentence a human reads is not something a filter should grep.
+type RevocationKind string
+
+const (
+	Retired    RevocationKind = "retired"    // its name left the catalogue or the caller list
+	Moved      RevocationKind = "moved"      // reissued in another account
+	Superseded RevocationKind = "superseded" // reissued in the same account
+)
 
 // Revocation is an instruction to the deployment: this user, in this account,
 // is revoked for every credential issued before At. Name is the credential's,
@@ -101,7 +134,15 @@ type Revocation struct {
 	Account string
 	Public  string
 	At      time.Time
+	Kind    RevocationKind
 	Why     string
+}
+
+// Retirement is a signing key an issuance dropped from an account -- step two
+// of a rotation -- so the command can say so and the manifest records it.
+type Retirement struct {
+	Account string
+	Key     string
 }
 
 // Output is what a consumer applies.
@@ -112,4 +153,9 @@ type Output struct {
 	Credentials []Credential
 	Manifest    Manifest
 	Revoke      []Revocation
+	// NewKeys is every account key Generate minted: a new account's pair, or a
+	// rotation's new signing key. The caller writes them where --keys-out says.
+	NewKeys map[string]NewAccountKeys
+	// Retired is every signing key this issuance dropped (spec §4 step two).
+	Retired []Retirement
 }

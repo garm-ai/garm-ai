@@ -171,6 +171,31 @@ for claims the code makes today that nothing checks.
 | The test estate propagates what production propagates — trace context and baggage | `otlp.TestTheRecorderPropagatesBaggageLikeProduction` |
 | `garmctl` prints no observability line unless an endpoint is set | `garmctl.TestGarmctlIsQuietAboutObservabilityUnlessAnEndpointIsSet`, through `root()` so the persistent hook runs |
 
+### Signing keys
+
+| invariant | kept true by |
+|---|---|
+| **The server refuses an account signed by the root** | `estate.TestTheServerRefusesAnAccountSignedByTheRoot` — strict signing-key usage on the operator JWT, enforced by the resolver on a `$SYS` push. Proved to fail with strict off *and* the generator's own check removed, so the refusal observed is the server's |
+| **The server refuses a user signed by an account's identity key** | `estate.TestTheServerRefusesAUserSignedByAnIdentityKey` — the same user signed by the signing key connects |
+| The generator cannot create an operator key, and refuses without one | `topology.TestTheOnlyCreateOperatorIsInOperatorGo` reads every non-test file; `TestGenerateRefusesWithoutAnOperatorSigningKey` |
+| The operator JWT must list the signing key handed in, and be strict | `topology.TestGenerateRefusesAnOperatorJWTThatDoesNotListItsSigningKey`, `TestAnOperatorJWTWithoutStrictSigningIsRefused`, `TestInitOperatorWritesAStrictRootSignedOperator` |
+| Nothing is signed by an identity key: accounts by the operator signing key, users and activations by the account signing key | `topology.TestEverythingIsSignedByASigningKeyAndNothingByAnIdentity`; `Keys.Accounts[].Identity` is a `string`, so the type forbids it |
+| `topology` refuses a `--keys` holding the root | `garmctl.TestTopologyRefusesAKeysDirectoryHoldingTheRoot`, before anything is read |
+| A new account's keys are born once, written to `--keys-out`, never to `--keys`; the archive is never read | `topology.TestANewCallersKeysAreBornOnce`; `garmctl.TestAccountKeysAreBornOnceAndTheArchiveIsNeverRead` (archive deleted, `--keys` fingerprinted); an unwritable `--keys-out` fails before the manifest or a credential is written (`TestAnUnwritableKeysOutFailsBeforeAnythingIsWritten`) |
+| A key that disagrees with the manifest is refused — identity **and signing** | `topology.TestAKeysIdentityThatDisagreesWithTheManifestIsRefused`, `TestAKeysSigningKeyThatDisagreesWithTheManifestIsRefused` — a key swapped under a running estate is the attack, not a typo. The signing half was missing and found in review: a swapped seed listed only the new key and left every carried-forward credential dead on the push |
+| `--rotate` and `--rotate-signing` together are refused; revocations carry a typed kind | `topology.TestRotateAndRotateSigningTogetherAreRefused`, `TestRevocationsCarryATypedKind` — the step-one filter matched a sentence before |
+| A retirement is recorded, announced, and needs an explicit decision | `topology.TestStepTwoRecordsTheRetirement`; `garmctl.TestRetirementNeedsAnExplicitDecisionAndIsAnnounced` — an issuance that would drop a key refuses without `--verify-live` or `--no-verify-live` |
+| Step one archives the superseded signing seed; seeds are written atomically | `garmctl.TestRotationArchivesTheOldSigningSeed` |
+| `--verify-live` fails closed: pages every server's connections; fewer servers than `--servers` is no evidence | `garmctl.TestLiveSignersPagesThroughConnz` (page size 1), `TestVerifyLiveRefusesWhenFewerServersAnswerThanExpected` |
+| A credential file missing from `--out` is reissued and announced | `garmctl.TestAMissingCredentialFileIsReissued`; `topology.TestANamedCredentialIsReissuedOnRequest` |
+| A manifest signed by a replaced operator signing key still loads while listed; `replace-signing-key` refuses an existing `--out` and prints the adoption sequence | `topology.TestLoadAcceptsAnySignerTheOperatorLists`, `garmctl.TestAManifestSignedByTheReplacedKeyStillLoads`, `TestReplaceSigningKeyRefusesAnExistingOutAndPrintsTheSequence` |
+| Rotation step one lists both keys, reissues only that account, revokes nothing | `topology.TestRotationStepOneListsBothKeysAndReissuesOnlyThatAccount`; `estate.TestRotationKeepsTheOldCredentialAliveUntilStepTwo` — the first build revoked the superseded credentials and step one's push cut the old connection |
+| Step two retires the key; the old credential's live connection closes and it is refused on reconnect; a straggler or a second rotation while retiring is refused | `topology.TestRotationStepTwoRetiresTheOldKey`, `TestStepTwoRefusesAStraggler`, `TestRotatingAnAlreadyRetiringAccountIsRefused`; `estate.TestRotationKeepsTheOldCredentialAliveUntilStepTwo` |
+| **`--verify-live` refuses to retire a key any live connection still uses, by name** | `garmctl.TestVerifyLiveRefusesWhileTheOldKeyIsStillOnTheWire` over the real `$SYS` `CONNZ`; `TestLiveSignersSeesTheIssuerKey` pins the field; `TestVerifyLiveIsInertWhenNothingIsRetiring` (no connection made) |
+| `operator init` writes the root apart and refuses to repeat | `garmctl.TestOperatorInitWritesTheRootApartAndRefusesToRepeat`; `TestReplaceSigningKeyListsBothKeys` for the operator-level first half |
+| `--status` reports a retiring key and issues nothing | `garmctl.TestStatusReportsARetiringKeyAndIssuesNothing` |
+| The manifest is signed by the operator signing key, never the root | `garmctl.TestTheManifestCarriesTheCatalogueDigestAndVerifies` asserts the root does *not* verify it |
+
 ## Not enforced, and said so
 
 | claim | why nothing checks it |

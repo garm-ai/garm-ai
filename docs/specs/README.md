@@ -38,5 +38,6 @@ amended to match (§7.3).
 | spec | status |
 |---|---|
 | [rund — the run manager](2026-10-03-rund-design.md) | active — step 9 builds §9.1 only |
-| [identity and transport security](2026-10-04-identity-and-transport-security-design.md) | active — §2–§10 built as step 9d, bar the deployment step; §11 sketches what follows |
+| [identity and transport security](2026-10-04-identity-and-transport-security-design.md) | active — §2–§10 built as steps 9d and 9f, bar the deployment step itself; §11 sketches what follows |
 | [observability, end to end](2026-10-04-observability-design.md) | active — built as step 9e; §11 says what it leaves out |
+| [signing keys: the root offline, accounts that can rotate](2026-10-05-signing-keys-design.md) | active — built as step 9f; §10 says what it leaves out |

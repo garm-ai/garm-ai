@@ -16,6 +16,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -27,6 +28,7 @@ import (
 	"github.com/nats-io/jwt/v2"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nkeys"
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
@@ -80,6 +82,7 @@ type Estate struct {
 	topo    *topology.Output
 	creds   map[Role]topology.Credential
 	keys    topology.Keys
+	root    nkeys.KeyPair // the throwaway root, apart from keys, as it would be
 	rundLog *lockedBuffer
 	caPEM   []byte
 	rec     *otlptest.Recorder
@@ -99,7 +102,59 @@ func (e *Estate) Reissue(t testing.TB, cat *catalogue.Catalogue) *topology.Outpu
 		t.Fatalf("reissuing: %v", err)
 	}
 	e.topo = out
+	e.ApplyNewKeys(out)
+	e.adoptCredentials(out)
 	return out
+}
+
+// Issue reissues against the current catalogue and manifest -- an ordinary
+// issuance, which is what step two of a rotation is.
+func (e *Estate) Issue(t testing.TB) *topology.Output { return e.Reissue(t, e.Catalogue.Current()) }
+
+// RotateSigning is step one of the signing-keys spec's §4 for one account.
+func (e *Estate) RotateSigning(t testing.TB, account string) *topology.Output {
+	t.Helper()
+	out, err := topology.Generate(topology.Input{
+		Catalogue: e.Catalogue.Current(), Callers: callers,
+		Previous: &e.topo.Manifest, Keys: e.keys, Now: time.Now(), RotateSigning: []string{account},
+	})
+	if err != nil {
+		t.Fatalf("rotating %s: %v", account, err)
+	}
+	e.topo = out
+	e.ApplyNewKeys(out)
+	e.adoptCredentials(out)
+	return out
+}
+
+// adoptCredentials makes a reissued credential the one Connect uses, as a
+// deployment rolling out new files would. (Reissue did not, which was harmless
+// until a rotation made the difference matter.)
+func (e *Estate) adoptCredentials(out *topology.Output) {
+	for _, c := range out.Credentials {
+		e.creds[Role(c.Name)] = c
+	}
+}
+
+// Keys is the estate's issuance keys -- what a deployment's issuance environment
+// holds. No root: it is in OperatorRoot, apart, as it would be.
+func (e *Estate) Keys() topology.Keys { return e.keys }
+
+// OperatorRoot is the throwaway root the estate's operator JWT was signed with,
+// kept ONLY so a test can sign something badly and watch the server refuse it.
+func (e *Estate) OperatorRoot() nkeys.KeyPair { return e.root }
+
+// ApplyNewKeys folds what an issuance minted into the estate's keys, as the
+// issuance environment would keep them.
+func (e *Estate) ApplyNewKeys(out *topology.Output) {
+	for name, nk := range out.NewKeys {
+		k := e.keys.Accounts[name]
+		if nk.Identity != nil {
+			k.Identity, _ = nk.Identity.PublicKey()
+		}
+		k.Signing = nk.Signing
+		e.keys.Accounts[name] = k
+	}
 }
 
 // PushAccount updates one account on the running server the way operations does:
@@ -108,14 +163,23 @@ func (e *Estate) Reissue(t testing.TB, cat *catalogue.Catalogue) *topology.Outpu
 // that calls this is watching.
 func (e *Estate) PushAccount(t testing.TB, encoded string) {
 	t.Helper()
+	if err := e.TryPushAccount(t, encoded); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TryPushAccount is PushAccount that returns the server's refusal instead of
+// failing the test, for a test whose point is the refusal.
+func (e *Estate) TryPushAccount(t testing.TB, encoded string) error {
+	t.Helper()
 	ac, err := jwt.DecodeAccountClaims(encoded)
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
 	ops := e.Connect(t, RoleOps)
 	reply, err := ops.Request("$SYS.REQ.ACCOUNT."+ac.Subject+".CLAIMS.UPDATE", []byte(encoded), 5*time.Second)
 	if err != nil {
-		t.Fatalf("pushing %s: %v", ac.Name, err)
+		return fmt.Errorf("pushing %s: %w", ac.Name, err)
 	}
 	var resp struct {
 		Error *struct {
@@ -123,11 +187,12 @@ func (e *Estate) PushAccount(t testing.TB, encoded string) {
 		} `json:"error"`
 	}
 	if err := json.Unmarshal(reply.Data, &resp); err != nil {
-		t.Fatalf("pushing %s: unreadable reply %q", ac.Name, reply.Data)
+		return fmt.Errorf("pushing %s: unreadable reply %q", ac.Name, reply.Data)
 	}
 	if resp.Error != nil {
-		t.Fatalf("pushing %s: the server refused it: %s", ac.Name, resp.Error.Description)
+		return fmt.Errorf("pushing %s: the server refused it: %s", ac.Name, resp.Error.Description)
 	}
+	return nil
 }
 
 // EmptyCatalogue has files but declares no tool: the catalogue after retiring
@@ -198,15 +263,7 @@ func (e *Estate) Recorder() *otlptest.Recorder { return e.rec }
 // AccountKey is the public key of a caller role's account -- the value the server
 // places at token 4 and rund reports as garm.caller.
 func (e *Estate) AccountKey(as Role) string {
-	kp, ok := e.keys.Accounts[topology.CallerPrefix+string(as)]
-	if !ok {
-		return ""
-	}
-	pub, err := kp.PublicKey()
-	if err != nil {
-		return ""
-	}
-	return pub
+	return e.keys.Accounts[topology.CallerPrefix+string(as)].Identity
 }
 
 // New starts a server in operator mode, a tool service and rund, and tears all
@@ -223,7 +280,15 @@ func New(t testing.TB) *Estate {
 
 	// The topology, from the SAME generator a deployment runs. Keys are fresh
 	// because this is a test; a deployment's are an input.
-	keys := topology.FreshKeys(callers)
+	//
+	// The operator comes from the same ceremony a deployment runs; the root is
+	// kept apart on the estate for the tests that sign badly on purpose.
+	op, err := topology.InitOperator()
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.root = op.Root
+	keys := topology.FreshKeysFor(op, callers)
 	topo, err := topology.Generate(topology.Input{
 		Catalogue: e.Catalogue.Current(), Callers: callers,
 		Previous: topology.Empty(), Keys: keys, Now: time.Now(),
@@ -237,7 +302,7 @@ func New(t testing.TB) *Estate {
 		e.creds[Role(c.Name)] = c
 	}
 
-	op, err := jwt.DecodeOperatorClaims(topo.OperatorJWT)
+	opClaims, err := jwt.DecodeOperatorClaims(topo.OperatorJWT)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -247,16 +312,9 @@ func New(t testing.TB) *Estate {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sysPub, err := keys.Accounts[topology.AccountSYS].PublicKey()
-	if err != nil {
-		t.Fatal(err)
-	}
+	sysPub := keys.Accounts[topology.AccountSYS].Identity
 	for name, encoded := range topo.Accounts {
-		pub, err := keys.Accounts[name].PublicKey()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := res.Store(pub, encoded); err != nil {
+		if err := res.Store(keys.Accounts[name].Identity, encoded); err != nil {
 			t.Fatalf("preloading %s: %v", name, err)
 		}
 	}
@@ -265,7 +323,7 @@ func New(t testing.TB) *Estate {
 	e.tls, e.caPEM = clientTLS, caPEM
 	srv, err := natsserver.NewServer(&natsserver.Options{
 		Host: "127.0.0.1", Port: -1, NoLog: true, NoSigs: true,
-		TrustedOperators: []*jwt.OperatorClaims{op},
+		TrustedOperators: []*jwt.OperatorClaims{opClaims},
 		AccountResolver:  res,
 		SystemAccount:    sysPub,
 		TLSConfig:        serverTLS, // and nothing without it: property 11

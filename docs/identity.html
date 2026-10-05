@@ -766,11 +766,36 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
           wrong without being dangerous.</li>
         <li><b>Deployment credentials last</b>, when everything above is green — and
           only once three things that are not code hold: the operator root is offline
-          and accounts are signed by a signing key; the generator runs in a controlled
-          issuance environment, never a laptop; and TLS is on. This is the one-way
-          door — step 2 reverts with a commit, this one is a rollout.</li>
+          and accounts are signed by a signing key <span class="s s-ver">built · step 9f</span>;
+          the generator runs in a controlled issuance environment, never a laptop; and
+          TLS is on. This is the one-way door — step 2 reverts with a commit, this one
+          is a rollout.</li>
       </ol>
     </div>
+
+    <h3>The keys, and who holds each <span class="s s-ver">built · step 9f</span></h3>
+    <p>Three keys, three places — and the <em>server</em> enforces the shape: with
+      strict signing-key usage on the operator JWT, NATS refuses an account signed by
+      the root and a user signed by an account's identity key. The test estate proves
+      both refusals against a real server.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>key</th><th>signs</th><th>lives</th><th>created by</th></tr></thead>
+        <tbody>
+          <tr><td><b>operator root</b></td><td>the operator JWT, once</td><td><b>offline</b>; never where <code>topology</code> runs — a <code>--keys</code> holding it is refused</td><td><code>garmctl operator init</code>, offline</td></tr>
+          <tr><td><b>operator signing key</b></td><td>every account JWT, the manifest</td><td>the issuance environment, <code>--keys/operator-signing.nk</code></td><td><code>operator init</code>, listed in the operator JWT</td></tr>
+          <tr><td><b>account identity</b></td><td>nothing after creation — it <em>is</em> the account's name</td><td>its public key in <code>--keys</code>; its seed under <code>archive/</code>, read by nothing</td><td>the generator, on first sight of the account</td></tr>
+          <tr><td><b>account signing key</b></td><td>every credential and activation of the account</td><td>the issuance environment, <code>--keys/&lt;ACCOUNT&gt;.signing.nk</code></td><td>the generator, with the identity</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>Rotating an account's signing key is two issuances</b>, so nothing goes
+      down. <code>--rotate-signing GARM</code> mints a new key, lists it beside the
+      old, reissues GARM's credentials under it and revokes nothing; the deployment
+      rolls the new files out; the next issuance retires the old key — and with
+      <code>--verify-live</code> it first asks the cluster which key each live
+      connection was signed by, and refuses, naming the connection, while any still
+      uses the old one. Evidence from the bus, not a hope about the rollout.</p>
   </section>
 
   <hr class="rule">
