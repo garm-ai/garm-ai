@@ -15,6 +15,7 @@ import (
 	"fmt"
 
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
+	"github.com/garm-ai/garm-ai/serve"
 )
 
 // Service answers the weather tools.
@@ -40,6 +41,19 @@ func (Service) GetForecast(_ context.Context, in *weatherv1.GetForecastRequest) 
 		Summary:     fmt.Sprintf("%d day(s) over %s: clear", days, in.GetPlace()),
 		HighCelsius: 21,
 	}, nil
+}
+
+// ScheduleReport answers "weather.v1.schedule_report".
+//
+// It is async in the .proto and nothing here shows it: the signature is the
+// same plain shape, and a replica of rund calls it from the run's queue rather
+// than the caller's request. A refusal is a DELIBERATE kind here, so the caller
+// reading the run later sees INVALID and the words, not a bare INTERNAL.
+func (Service) ScheduleReport(_ context.Context, in *weatherv1.ScheduleReportRequest) (*weatherv1.ScheduleReportResponse, error) {
+	if in.GetPlace() == "" {
+		return nil, serve.Invalid("place is required")
+	}
+	return &weatherv1.ScheduleReportResponse{ReportId: "report-" + in.GetPlace()}, nil
 }
 
 // The one line that makes the example an example rather than a claim. Add a tool

@@ -1,7 +1,7 @@
 # The run store: a run that outlives the call
 
 **Date:** 2026-10-05
-**Status:** designed — nothing built; the plan follows review of this document
+**Status:** active — built as step **10** ([plan](../plans/2026-10-05-run-store.md)); the four amendments execution made are marked **built:** inline. §12 says what it leaves out
 
 **Spec for:** the asynchronous path of `rund` — a tool declared `async` is invoked,
 the caller gets a run id back immediately, the run is executed durably by whichever
@@ -43,7 +43,16 @@ SDK, behind one Go interface.
 ```go
 // Package run; the engine's view of durability. One implementation is DBOS
 // (package rundbos); one is none (sync-only, today's rund). The engine never
-// imports either.
+// imports either. Built: the workflow's step 0 is the PLAN -- the catalogue is
+// read once and the action list checkpointed, so a replay after a catalogue
+// change follows the plan the run was started with (property 18). Built: a
+// tool-call step's checkpoint is a VALUE (bytes, or the tool's error with its
+// kind), never a returned error, which DBOS flattens to text and a replay would
+// read back as INTERNAL; the bounded UNAVAILABLE retry is the step's own loop,
+// and a call that TIMED OUT is not retried -- the work may be in flight. The
+// call's deadline is the tool's declared Async.limit (review of this slice found
+// the sync-era 30s fallback deciding it); a limit on the RUN arrives with a
+// decider.
 type Store interface {
 	// Start makes the run durable and returns once it is: the id is the caller's
 	// idempotency key, and a second Start with the same key and the same
@@ -106,27 +115,42 @@ kind fails the run with that kind.
 
 ## 2. Every run goes through one queue
 
-`Start` enqueues on a DBOS queue named **`runs`** (`WithQueue`, `WithWorkflowID(key)`),
-and returns when the enqueue is durable. Any `rund` replica listening on `runs`
-dequeues and executes; a replica that dies mid-run leaves a `PENDING` workflow that
-the next dequeue picks up and resumes from its last completed step.
+`Start` enqueues on a DBOS queue named **`runs`** (`WithWorkflowID(key)`), and
+returns when the enqueue is durable. Any `rund` replica listening on `runs`
+dequeues an **`ENQUEUED`** run and executes it: that is what makes replicas
+interchangeable for *new* work, gives concurrency and rate limits per queue, and
+makes `WithDeduplicationID` native. The cost is one dequeue hop, milliseconds.
 
-Why a queue rather than running the workflow in the replica that received the
-`Invoke`: DBOS recovers an interrupted workflow when a process with the **same
-executor id** launches again, and a restarted pod in a Deployment has a new one. A
-queue makes replicas interchangeable — a Deployment is the right shape — gives
-concurrency and rate limits per queue for free, and makes `WithDeduplicationID`
-native. The cost is one dequeue hop between `Invoke` and execution, milliseconds,
-and "which replica" stops being a fact about a run.
+**What the queue does not do — read from the SDK, not assumed.** Once dequeued a
+run is `PENDING` and owned by the executor that claimed it. If that replica dies
+mid-run, the queue runner does **not** take the run over: it claims `ENQUEUED`
+rows only. DBOS re-enqueues a dead executor's `PENDING` runs in exactly two
+places — at `Launch`, for **the launching process's own executor id**, and on a
+request from its paid Conductor. (`dbos/recovery.go`, `queue.go`'s claim,
+`sysdb.ReenqueueForRecovery`, v1.5.0.) The first draft of this section said "the
+next dequeue picks it up"; it does not.
 
-`--run-store-workers N` is each replica's worker concurrency on `runs`; the
-queue's global concurrency is a deployment's DBOS configuration, not a flag.
+So recovery of in-flight work rests on one thing: **a replica's executor id is
+stable across restarts.** `rund --run-store-executor <id>` names it; it defaults
+to the hostname, which is stable on a laptop and in a StatefulSet, and is *not*
+stable for a Deployment's pods. The guide says which to use. Everything in flight
+on `rund-2` when it dies is finished by `rund-2` when it returns, from its last
+completed step; everything still `ENQUEUED` is taken by whoever is up. That is the
+honest split: **distribution is the queue's, recovery is the identity's.**
 
-**The resilience property this buys:** *start a run, kill the replica executing it
-after the tool has been called and before the step is recorded, and another replica
-finishes it; the tool was requested twice and executed once (the step key), and
-`Fetch` sees one result.* The throwaway spike proved the primitives; this is the
-same property on the real path, in the estate, with two in-process `rund`s.
+Cross-executor recovery without the Conductor — a lease, a heartbeat, a reaper
+that re-enqueues what a provably dead replica held — is a later slice, listed on
+the roadmap beside what it waits on (a liveness signal DBOS does not keep).
+Building it now would be guessing whether an executor is dead, and a guess here
+is a run executed twice.
+
+**The resilience property this buys:** *start a run, stop the replica executing it
+after the tool has been called and before the step is recorded, relaunch a replica
+with the same executor id, and it finishes the run; the tool was requested twice
+and executed once (the step key), and `Fetch` sees one result.* The throwaway
+spike proved the primitives; this is the same property on the real path, in the
+estate — two DBOS contexts on one SQLite file, the second launched with the
+first's executor id after the first is shut down mid-step.
 
 ---
 
@@ -163,7 +187,7 @@ enum RunState {
   RUN_STATE_RUNNING = 2;      // pending or executing; the distinction is DBOS's, not the caller's
   RUN_STATE_SUCCEEDED = 3;
   RUN_STATE_FAILED = 4;
-  RUN_STATE_CANCELLED = 5;    // reachable only by an operator today; Cancel is a later slice
+  RUN_STATE_CANCELLED = 5;    // an operator's command, or the replica's run ceiling (built: --run-store-run-limit); Cancel the verb is a later slice
 }
 ```
 
@@ -187,8 +211,11 @@ and `compartments`, empty for now — are attributes from day one, because DBOS'
 attribute filter is containment (AND, one compartment at a time) and the rund spec's
 §7.3.2 task-list shape depends on them being there.
 
-**Waiting.** `wait` is implemented on DBOS's blocking reads — `GetResult` for
-completion, `GetEvent` on the `stage` key for a stage change — not on polling.
+**Waiting.** `wait` is implemented on DBOS's blocking read for completion
+(`GetResult` with a handle timeout). **Built:** a stage change has no blocking
+primitive in the SDK (`GetEvent` returns at once when the key exists), so it is
+a 200 ms re-read inside `rund` (`rundbos.StagePoll`); the caller's contract is
+unchanged — one request, held, never a poller on the bus.
 `rund` caps `wait` at **`MaxFetchWait = 30s`**; a longer request is clamped, not
 refused, and the response says what it waited for. A caller's NATS request deadline
 must cover `wait`; the generated client derives it (`wait + call.Overhead`). A
@@ -196,10 +223,16 @@ thousand front doors waiting are a thousand blocked goroutines in `rund`, not a
 thousand pollers on the bus.
 
 **What is answered.** `state` from DBOS's status (`PENDING`/`ENQUEUED` → `RUNNING`;
-`SUCCESS` → `SUCCEEDED` with the result; `ERROR` → `FAILED` with the tool's kind and
-message, exactly as a sync failure would have carried them; `CANCELLED` → `CANCELLED`);
-`stage` from the event (§5); the two timestamps from the workflow row. A sync tool's
-id is `NOT_RETAINED`, as today.
+`CANCELLED` → `CANCELLED`); `stage` from the event (§5); the two timestamps and
+the tool from the workflow row. **Built:** the tool's error is the workflow's
+*returned value*, not a Go error — DBOS serialises a returned error to its text,
+and the kind would have had to be smuggled through it — so DBOS `SUCCESS` means
+"the run reached an answer" (the result, or the tool's refusal with its kind,
+exactly as a sync failure would have carried it → `FAILED`) and DBOS `ERROR`
+means "the run could not be executed" (→ `FAILED`, `INTERNAL`). **Built:** with a
+store, an id the store has never seen is `NOT_FOUND`, the same answer as a
+foreign run; `NOT_RETAINED` stays the answer only when `rund` has no store, since
+the engine cannot tell a sync id from an unknown one once a store exists.
 
 ---
 
@@ -210,7 +243,7 @@ values from an enum this spec owns:
 
 | stage | set when |
 |---|---|
-| `queued` | at `Start`, before the first dequeue |
+| `queued` | **built:** reported by `Fetch` from DBOS's `ENQUEUED` status — no workflow exists yet to set an event |
 | `calling:<step>` | just before a tool call step |
 | `done` | the workflow is returning |
 
@@ -303,16 +336,25 @@ tool is refused per call with the message it carries today, now naming the flag.
 
 - `rund --run-store <url>`: `postgres://…` for a deployment, `sqlite:…` for a
   laptop; empty means sync-only. Credentials in the URL are redacted in the
-  startup line, by the same rule as OTLP headers.
+  startup line, by the same rule as OTLP headers. **Built:** `--run-store-run-limit`
+  (default 24h) is the deployment's ceiling on one run, applied as DBOS's durable
+  deadline at enqueue — computed when execution starts, surviving a restart,
+  `CANCELLED` past it. A tool's `Async.limit` bounds one call; this bounds the run;
+  a limit an author declares for a run arrives with a decider. **Built:** `--run-store-migrate=false`
+  with a schema that is absent or not current REFUSES TO START naming the flag —
+  configuration, not weather; only an unreachable database degrades (§7).
 - The DBOS schema is `dbos`, in a database named `garm`. `Launch` creates and
   migrates it by default — right for a laptop and the estate. A deployment that
   owns its migrations passes `--run-store-migrate=false` (DBOS's `SkipMigrations`:
   verify, never create) and applies `MigrationStatements` with its own tooling; the
   `dbos` CLI's `migrate` is one such tool. **`rund` therefore knows no migration**
   of its own: it has no table.
-- **The estate runs DBOS on `sqlite::memory:`** (pure Go driver). Every property
-  below is proved without a container, and the resilience property with two
-  in-process `rund`s sharing one SQLite file.
+- **The estate runs DBOS on a SQLite file** in the test's temp dir (pure Go
+  driver). **Built:** not `sqlite::memory:` — DBOS pools eight connections, and
+  with the pure-Go driver each connection to `:memory:` is its own empty
+  database, while a shared-cache memory database locks table-wide under the
+  pool. Every property below is proved without a container, and the resilience
+  property with two in-process `rund`s sharing one SQLite file.
 - **Postgres joins `compose.yaml`** with this slice — `garm-postgres`, database
   `garm`, a volume — and `mise run e2e-compose` runs one async invoke through it:
   `pending`, then `fetch --wait` to the result. The quick start's native path stays
@@ -328,7 +370,7 @@ tool is refused per call with the message it carries today, now naming the flag.
 |---|---|---|
 | scope | async `Invoke` + `Fetch`, the port, the fingerprint, the store-down behaviour; **not** `Cancel`/`Approve`/deciders | each of those is a command on a run somebody else started, better designed once the authority model exists than built as "anyone may" |
 | the shape of run state | not ours to choose: DBOS's status is authoritative, `RunState` is a projection (rund spec §7.3.2) — the question was withdrawn | a history table of our own — two state machines |
-| who executes a run | every async run through one DBOS queue, `runs`; replicas interchangeable (§2) | direct execution pinned to a StatefulSet identity — a replica's runs wait out its restart; a reaper of our own — queues already are one |
+| who executes a run | every async run through one DBOS queue, `runs`, so new work is distributed; **recovery of in-flight work needs a stable executor id** (`--run-store-executor`), because DBOS re-enqueues a dead executor's `PENDING` runs only at that executor's own relaunch — corrected after reading the SDK (§2) | interchangeable replicas with automatic takeover — not what the OSS SDK does; a reaper of our own — a guess about liveness that executes a run twice |
 | the store unreachable | sync sovereign, async `UNAVAILABLE` naming the store, background retry, `/readyz` unaffected (§7) | a hard dependency — takes the sync path down for a database it never touches; two processes — doubles the deployment |
 | who may `Fetch` | the invoking account; a foreign `Fetch` is `NOT_FOUND`; one visibility function the authority model replaces; cheap dimensions recorded now (§4) | any caller — an id leaks through logs and tickets; scope by caller name — a grant, which is the authority model's job |
 | does `Fetch` wait | yes, `wait` capped at 30 s on DBOS's blocking reads (§4); **push is the next slice** | immediate only — a thousand pollers; push now — forces the DBOS-reads-vs-NATS-events choice before its first consumer exists |
@@ -368,11 +410,13 @@ Each proved to fail first.
    `RUNNING` after `MaxFetchWait`.
 10. **`stage` is the run's word.** Before execution `queued`; during the tool call
     `calling:0`; after, `done` — observed through `Fetch`.
-11. **Kill the replica, another finishes it, the tool ran once.** Two in-process
-    `rund`s on one SQLite store; the tool handler blocks on a channel; the replica
-    executing is stopped; the handler is released; the other replica completes the
-    run; the tool's call count is one — or two with the same `run_id:0` key, which
-    the handler's idempotency check collapses — and `Fetch` sees one result.
+11. **Stop the replica mid-step; its successor finishes the run; the tool ran once.**
+    Two DBOS contexts on one SQLite store; the tool handler blocks on a channel;
+    the executing context is shut down; the handler is released; a second context
+    launched with the **same executor id** recovers and completes the run; the
+    tool's requests carried the same `run_id:0` key and message id, and `Fetch`
+    sees one result. A second context with a *different* executor id does not
+    take the run — asserted too, because it is the limit §2 names.
 12. **Sync is sovereign when the store is down.** Store closed: a sync call answers;
     an async `Invoke` is `UNAVAILABLE` naming the store; `/readyz` is 200. Store
     reopened: the next async `Invoke` runs. The counter moved `down` then `up`.
@@ -390,6 +434,9 @@ Each proved to fail first.
     caller's correlation id and, as step 0's causation, the caller's message id;
     in property 11's replay the two requests the tool saw carry the **same**
     message id and the same `run_id:0` key.
+18. **A replay follows the plan recorded at start.** The successor's catalogue
+    has no tools at all; the recovered run still finishes with its answer, because
+    the plan was step 0's checkpoint (`rundbos.TestAReplayFollowsThePlanRecordedAtStart`).
 
 ---
 

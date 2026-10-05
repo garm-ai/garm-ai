@@ -27,7 +27,7 @@ from the module's source and its doc comments, not from memory.
 | time | `Sleep(ctx, d)` durable; `WithTimeout(ctx, d)` durable workflow deadline; `WithDelay`/`WithDelayUntil`; schedules (`CreateSchedule`, cron) | timers survive restarts |
 | our own tables, if ever | `NewDataSource(ctx, pool)` + `RunAsTransaction(ctx, ds, fn)` | one transaction writes our rows and DBOS's completion record — the record lives in **a completion table in our schema**, created by `NewDataSource`; so our bookkeeping is exactly-once relative to the run |
 | a process that hosts no workflows | `NewClient(ctx, ClientConfig{DatabaseURL …})` → `Client`: enqueue, retrieve, list, cancel, resume, fork, send, get-event, read-stream, set-attributes, steps, aggregates, queues, schedules | a `Client` **never creates or migrates** the system database (v1 change); it verifies the schema and refuses if absent |
-| local development and tests | `DatabaseURL: "sqlite::memory:"` or a file, pure-Go driver (`modernc.org/sqlite`, no cgo) via `import _ ".../dbos/driver/sqlite"` | **the test estate needs no Postgres**; `compose.yaml` gets Postgres for the real thing |
+| local development and tests | `DatabaseURL: "sqlite:<file>"`, pure-Go driver (`modernc.org/sqlite`, no cgo) via `import _ ".../dbos/driver/sqlite"` | **the test estate needs no Postgres**; `compose.yaml` gets Postgres for the real thing. **Found while building:** not `sqlite::memory:` — the SDK pools eight connections and each pure-Go connection to `:memory:` is its own empty database ("no such table" at random); a shared-cache memory database locks table-wide under the pool. A file in WAL mode is what works |
 | the schema | `Launch` creates and migrates by default; `Config.SkipMigrations` verifies instead; `MigrationStatements(schema, from)` returns the SQL (some statements `CONCURRENTLY`, so outside a transaction); the `dbos` CLI has `migrate`, `reset`, `workflow list/cancel/resume` | a deployment can own the migration step and hand rund `SkipMigrations: true` |
 | observability | `Config.Logger` is `*slog.Logger`; `DBOS__VMID`/`DBOS__APPVERSION`; the optional Conductor/Console SaaS | our `observe.Handler` on its logger joins its lines to the trace |
 
@@ -112,4 +112,5 @@ reads (what the SDK offers). Named here; decided there.
   protobuf bytes — stored as `[]byte` under JSON that is base64, fine; a
   protobuf-aware serializer is a later nicety, not a need.
 - SQLite as a first-class system database (pure Go). This is the headline for
-  us: the estate runs DBOS in memory, every property proved without a container.
+  us: the estate runs DBOS on a SQLite file, every property proved without a
+  container (in memory does not work under the SDK's pool; see §1).

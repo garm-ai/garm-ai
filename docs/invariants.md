@@ -86,9 +86,9 @@ unenforced, in the same table, deliberately.
 | Correlation spans, causation chains, `traceparent` is carried verbatim | `run.TestCausationChainsAndCorrelationSpans` and the two-hop test. A shared correlation says calls belong together; only causation says what caused what |
 | A missing correlation id is minted, not left empty | `run.TestAMissingCorrelationIsMintedNotLeftEmpty` — a call with none has log lines that join to nothing |
 | An unknown tool is `NOT_FOUND` **naming the catalogue** | `run.TestAnUnknownToolIsNotFoundAndNamesTheCatalogue`. "Unknown tool" is unactionable when the real question is which namespace is loaded |
-| An async tool is refused as `UNAVAILABLE` **saying why** | `run.TestAnAsyncToolIsRefusedWithTheReason`, `rundsvc.TestAnAsyncToolIsRefusedBecauseThereIsNoStore`. Not `NOT_FOUND`: the tool exists, and this build cannot hold its run |
+| Without a store, an async tool is refused as `UNAVAILABLE` **naming the flag**; an agent names the missing decider | `run.TestWithoutAStoreAsyncIsRefusedNamingTheFlag`, `run.TestAnAsyncToolIsRefusedWithTheReason`, `rundsvc.TestAnAsyncToolIsRefusedBecauseThereIsNoStore`. Not `NOT_FOUND`: the tool exists, and this rund cannot hold its run |
 | A tool's error reaches the caller as **its own kind** | `run.TestAToolsErrorReachesTheCallerAsItsOwnKind`, not flattened to INTERNAL |
-| `Fetch` says `NOT_RETAINED` rather than lying | `run.TestFetchSaysNotRetainedRatherThanLying`. The run may well have happened; `NOT_FOUND` would be a lie a caller could act on, and a fabricated result worse |
+| Without a store, `Fetch` says `NOT_RETAINED` rather than lying | `run.TestFetchSaysNotRetainedRatherThanLying`, `run.TestWithoutAStoreFetchIsNotRetained`. The run may well have happened; `NOT_FOUND` would be a lie a caller could act on, and a fabricated result worse. With a store, an unknown id **is** `NOT_FOUND` — the store would have it |
 | `Code` and `KindOf` round-trip over **every** kind | `serve.TestCodeAndKindRoundTripOverEveryKind`, which walks the enum's own descriptor so a new kind is covered without anybody remembering. Two inverse functions in two packages is how a mapping drifts: a tool reporting UNAVAILABLE would reach a caller as UNSPECIFIED, which `Wire` turns into INTERNAL — a transient outage reported as a broken tool |
 | The catalogue is re-verified at boot, and that is the reload path | `catalogue.TestLoadReRunsTodaysRules` |
 | A call takes **one** catalogue snapshot | `catalogue.TestTheHolderPublishesWholeValues`, `TestConcurrentReadersAndASwapRace` |
@@ -99,10 +99,41 @@ unenforced, in the same table, deliberately.
 |---|---|
 | The loop closes: generated client → rund → tool → back | `natscall.TestTheLoopCloses`, against a real server with every piece that exists |
 | A generated client sets the **declared** budget as its deadline | `generate.TestTheGeneratedClientSetsTheDeclaredBudgetAsItsDeadline` and `TestTheGeneratedClientTypeChecksEndToEnd`. `call.Deadline` adds the hops, so a client does not expire at the same instant rund does and see a bare transport timeout instead of the error rund was sending |
-| An **async** tool gets no client method | `generate.TestAnAsyncToolGetsNoClientMethod`. Its caller receives a reference rather than an answer — a different signature, and no store gives it meaning yet. It still gets a *handler*: a service answers it; rund just cannot hold its run |
+| An **async** tool gets two methods — one returning a `call.Ref`, one reading it — never the sync shape | `generate.TestAnAsyncToolGetsAReferenceAndAResultMethod` and the compile-time assignments beside it. Flipping a tool's delivery changes the signature, so every caller fails to compile: that is what declaring delivery is for |
+| An async client refuses a missing idempotency key **before the wire** | `generate.TestTheAsyncClientRefusesAMissingKeyBeforeTheWire`. rund would refuse it too; failing early is kinder |
+| A typed `Result` method waits for an **answer** within its wait, not for the next stage change | `generate.TestTheResultMethodWaitsForAnAnswerNotAStageChange`. A held fetch returns on any change; a stage is not an answer |
+| A `Ref`'s fetch deadline is the wait plus the hops; `Await` stops with the caller | `call.TestARefsFetchDeadlineIsTheWaitPlusTheHops`, `call.TestAwaitStopsWithTheCaller` |
 | A tool's kind survives all four hops | `natscall.TestAToolsRefusalReachesTheCallerWithItsKind`, which also asserts a bare error's words did **not** survive them |
 | No rund at all is `UNAVAILABLE`, not a silent hang | `natscall.TestNoRundAtAllIsUnavailableNotASilentHang`, naming the subject that did not answer |
 | Generated **client** code imports no broker | `mise run no-broker`, extended to `./call` |
+
+### The run store
+
+| invariant | kept true by |
+|---|---|
+| An async invoke is `pending{run_id}` once durable, and the run finishes without the caller | `estate.TestAnAsyncToolIsPendingThenAnswered`, `rundbos.TestARunCompletesWithoutTheCaller`, `natscall.TestAnAsyncInvokeAnswersPendingAndFetchTheResult` |
+| An async invoke **without a key** is `INVALID`; the key is the run id | `run.TestAnAsyncInvokeWithoutAKeyIsInvalid`, `rundbos.TestAStartWithoutAKeyIsRefused`. rund minting one would make a retry a second run |
+| The engine never calls the tool on the invoking path of an async run | `run.TestAnAsyncInvokeStartsARunAndAnswersPending` — `Start` is called with the envelope and the fingerprint, the caller is not |
+| A reused key with a **different request** is `INVALID` before DBOS can answer from the recording; the same request is the same run — completed **or still running** | `rundbos.TestAReusedKeyWithDifferentInputIsRefusedBeforeDBOS`, `TestAReusedKeyWithTheSameInputIsTheSameRun`, `TestAReusedKeyOnARunningRunIsTheSameRun`, and on the wire `estate.TestAReusedKeyWithADifferentRequestIsInvalidOnTheWire` |
+| A run is visible **only to the account that started it**; a foreign fetch is `NOT_FOUND`, not `DENIED` | `run.TestFetchFromAnotherAccountIsNotFound`, `estate.TestARunIsVisibleOnlyToItsInvokingAccount`. The run's existence is not the other account's to learn |
+| The plan is **step 0**, checkpointed; a replay follows it after a catalogue change | `rundbos.TestThePlanIsStepZero`, `rundbos.TestAReplayFollowsThePlanRecordedAtStart` — DBOS's determinism rule applied to our one source of non-determinism |
+| The tool receives the stored envelope and **deterministic** ids: a replayed step re-sends the same message id and the same `run_id:i` key | `run.TestStepHeadersAreDeterministicAndChain`, `rundbos.TestTheToolReceivesTheEnvelope`, and both requests in `rundbos.TestAStoppedReplicasRunIsFinishedByItsSuccessorWithTheSameIdentity` |
+| A tool's refusal is the run's failure **with its kind**, not retried; `UNAVAILABLE` is retried three times, then fails; an oversized reply fails once | `rundbos.TestAToolsRefusalFailsTheRunWithItsKind`, `TestUnavailableIsRetriedThenFailsTheRun`, `TestAnOversizedToolReplyFailsTheRunOnce`, `estate.TestAnAsyncToolsRefusalIsTheRunsFailure` |
+| A call that **timed out** is never retried — the work may be in flight, and retrying multiplies it | `rundbos.TestATimedOutCallIsNotRetried` |
+| The step's checkpoint carries the tool's kind as a **value**, never as a step error (which DBOS flattens to text and a replay would read back as `INTERNAL`) | `rundbos.TestTheStepRecordsTheToolsKindAsAValue` |
+| An async tool declares a **limit** — how long one call to its handler may take — required and positive; it reaches the handler's own deadline and rund's request, as a sync budget does; an agent declares none | `declared.TestAsyncWithoutALimitIsRefused`, `declared.TestBudgetIsTheLimitForAsyncAndZeroForAnAgent`, `generate.TestTheBudgetReachesTheRegistrar`, `rundbos.TestThePlanCarriesTheDeclaredLimit` |
+| Two racing `Start`s with one key and two requests never **both** succeed; the recorded fingerprint decides | `rundbos.TestConcurrentStartsWithOneKeyAndTwoRequestsNeverBothSucceed` |
+| A held `Fetch` leaves no goroutine behind when it returns early | `rundbos.TestAHeldFetchLeavesNoGoroutineBehind` |
+| `--run-store-migrate=false` with no usable schema **refuses to start** naming the flag; only an unreachable database degrades | `rundbos.TestAnAbsentSchemaWithMigrateFalseRefusesToStart` beside `TestAnUnreachableStoreDegradesRatherThanFails` |
+| A run past the replica's **run ceiling** is `CANCELLED` — the clock starts when execution starts, so a queued run does not burn it | `rundbos.TestARunPastTheRunLimitIsCancelled`; `--run-store-run-limit`, 24h by default, DBOS's durable deadline underneath |
+| The step continues the **caller's trace** | `rundbos.TestTheStepContinuesTheRunsTrace`, and `mise run e2e-compose` finds the queued tool span in OpenObserve under the caller's trace id |
+| `Fetch --wait` returns on completion **or a stage change**, within the cap; `stage` is `queued` → `calling:<i>` → `done` | `rundbos.TestFetchWaitReturnsWhenTheRunCompletes`, `TestFetchWaitReturnsOnAStageChange`, `TestFetchWaitIsBounded`, `TestStageIsTheRunsWord`, `TestFetchOnAQueuedRunSaysQueued`; the cap in `run.TestFetchClampsWait`, mirrored by `run.TestTheClientsMaxWaitIsTheEnginesCap` |
+| A stopped replica's run is finished by its successor **with the same executor id**; a different id does not take it | `rundbos.TestAStoppedReplicasRunIsFinishedByItsSuccessorWithTheSameIdentity`. The SDK treats a shutdown as "not a cancellation request", so the row stays `PENDING` on the executor's name |
+| Two live replicas with one identity re-execute each other's runs — the misconfiguration the guide warns about — and the step key still collapses the duplicate | `rundbos.TestTwoLiveReplicasWithOneIdentityIsTheMisconfigurationTheGuideWarnsAbout` |
+| An unreachable store **degrades**, never kills: sync answers, async is `UNAVAILABLE` naming the store, the store reconnects on its own, `garm.run.store{state}` counts it | `rundbos.TestAnUnreachableStoreDegradesRatherThanFails`, `TestTheStoreRecoversWhenTheDatabaseReturns`, `estate.TestSyncIsSovereignWhenTheStoreIsDown`; `run.TestWithoutAStoreAsyncIsRefusedNamingTheFlag` for the sync half |
+| A URL that is not a store is a **configuration error**, not "degraded" | `rundbos.TestABadStoreURLRefusesToStart`, naming `--run-store` |
+| The store's credential never reaches a log line | `rundbos.TestTheStartupLineRedactsTheCredential` |
+| Only `rundbos` imports the DBOS SDK | `mise run no-sdk`, proved to fail with a `rundbos` import in `run` |
 
 ### The commands a person types
 
@@ -200,7 +231,7 @@ for claims the code makes today that nothing checks.
 
 | claim | why nothing checks it |
 |---|---|
-| A **run limit** must be at least the largest budget in an allowlist | Specified, then dropped on implementation: an agent is always async and so has no budget, making the check unfireable. It becomes real when `Async` grows a run limit. Recorded rather than silently removed, because a check that cannot fire reads as a guarantee |
+| A **run limit** must be at least the largest call limit in an allowlist | Specified, then dropped on implementation: an agent is always async and has no call limit of its own, making the check unfireable. `Async.limit` is a CALL limit (built, step 10); a RUN limit arrives with a decider. Recorded rather than silently removed, because a check that cannot fire reads as a guarantee |
 | A tool name should have the *shape* `<package>.<tool>` | Only the **charset** is enforced (see the row above). The shape is a convention in the examples; enforcing it needs a decision about what a package is that nobody has made, and the charset closes the security hole without it |
 | An agent's method name is never read | Closer than it was: the generator emits nothing for an agent, proved by `generate.TestAnAgentProducesNoGoAtAll`. Still unenforced in the direction that matters — no test asserts that *nothing anywhere* resolves an agent by method name, because the decider that would is the next step |
 | The tool option is read in exactly one place | `declared.ToolOf` is that place, and the generator calls it rather than reaching for `proto.GetExtension` itself. Nothing *checks* that a second reader does not appear. A grep test would, and is worth writing once there are three readers rather than two — the old estate's single most expensive structural bug was one idea implemented twice |

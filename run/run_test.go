@@ -87,7 +87,7 @@ func syncTool(name string, d time.Duration) *toolv1.Tool {
 		Sync: &toolv1.Sync{Budget: durationpb.New(d)}}}
 }
 func asyncTool(name string) *toolv1.Tool {
-	return &toolv1.Tool{Name: name, Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}}}
+	return &toolv1.Tool{Name: name, Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(time.Minute)}}}
 }
 func agent(name string, allow ...string) *toolv1.Tool {
 	refs := make([]*toolv1.ToolRef, 0, len(allow))
@@ -269,10 +269,14 @@ func TestAnUnknownToolIsNotFoundAndNamesTheCatalogue(t *testing.T) {
 // TestAnAsyncToolIsRefusedWithTheReason. 9b has no run store, so it cannot hold a
 // run -- and it says that rather than pretending the tool does not exist.
 func TestAnAsyncToolIsRefusedWithTheReason(t *testing.T) {
-	for name, tool := range map[string]*toolv1.Tool{
-		"a plain async tool": asyncTool("probe.v1.freeze"),
-		"an agent":           agent("probe.v1.assistant", "probe.v1.read"),
+	for name, tc := range map[string]struct {
+		tool *toolv1.Tool
+		why  string
+	}{
+		"a plain async tool": {asyncTool("probe.v1.freeze"), "run store"},
+		"an agent":           {agent("probe.v1.assistant", "probe.v1.read"), "decider"},
 	} {
+		tool := tc.tool
 		h := catalogueOf(t, syncTool("probe.v1.read", time.Second), tool)
 		c := &caller{}
 		e := engine(h, c)
@@ -286,7 +290,7 @@ func TestAnAsyncToolIsRefusedWithTheReason(t *testing.T) {
 		if failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_UNAVAILABLE {
 			t.Errorf("%s: kind is %v, want UNAVAILABLE", name, failure.GetKind())
 		}
-		if !strings.Contains(failure.GetMessage(), "run store") {
+		if !strings.Contains(failure.GetMessage(), tc.why) {
 			t.Errorf("%s: the message does not say why: %q", name, failure.GetMessage())
 		}
 		if len(c.calls) != 0 {
@@ -317,7 +321,7 @@ func TestAToolsErrorReachesTheCallerAsItsOwnKind(t *testing.T) {
 // NOT_FOUND would be a lie a caller could act on, and a fabricated result worse.
 func TestFetchSaysNotRetainedRatherThanLying(t *testing.T) {
 	e := engine(catalogueOf(t, syncTool("probe.v1.read", time.Second)), &caller{})
-	resp, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "r1"})
+	resp, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "r1"}, run.Headers{})
 	if failure != nil {
 		t.Fatalf("Fetch failed: %v", failure)
 	}
@@ -331,7 +335,7 @@ func TestFetchSaysNotRetainedRatherThanLying(t *testing.T) {
 
 func TestFetchWithNoRunIDIsInvalid(t *testing.T) {
 	e := engine(catalogueOf(t, syncTool("probe.v1.read", time.Second)), &caller{})
-	_, failure := e.Fetch(context.Background(), &runv1.FetchRequest{})
+	_, failure := e.Fetch(context.Background(), &runv1.FetchRequest{}, run.Headers{})
 	if failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_INVALID {
 		t.Errorf("an empty run id gave %v, want INVALID", failure)
 	}

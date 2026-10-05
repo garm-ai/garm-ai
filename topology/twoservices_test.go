@@ -28,9 +28,9 @@ func TestTwoServicesGetTwoCredentialsWithDisjointSubjects(t *testing.T) {
 		sort.Strings(s)
 		return s
 	}
-	wantA := []string{"$SRV.>", "garm.tool.weather.v1.get_forecast"}
+	wantA := []string{"$SRV.>", "garm.tool.weather.v1.get_forecast", "garm.tool.weather.v1.schedule_report"}
 	wantB := []string{"$SRV.>", "garm.tool." + fixtures.SecondTool}
-	if got := subs(a.Permissions.Sub.Allow); len(got) != 2 || got[0] != wantA[0] || got[1] != wantA[1] {
+	if got := subs(a.Permissions.Sub.Allow); len(got) != 3 || got[0] != wantA[0] || got[1] != wantA[1] || got[2] != wantA[2] {
 		t.Errorf("weather.v1.WeatherService may subscribe %v, want %v", got, wantA)
 	}
 	if got := subs(b.Permissions.Sub.Allow); len(got) != 2 || got[0] != wantB[0] || got[1] != wantB[1] {

@@ -22,6 +22,8 @@ import (
 	"github.com/garm-ai/garm-ai/call"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	"github.com/garm-ai/garm-ai/examples/weatherd"
+	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
 	"github.com/garm-ai/garm-ai/internal/generate"
 	"github.com/garm-ai/garm-ai/serve"
@@ -426,15 +428,77 @@ func TestTheDeclaredBudgetIsEmittedReadably(t *testing.T) {
 func TestAnAsyncToolGetsNoDeadline(t *testing.T) {
 	resp, err := probe(t, toolMethod(t, "Do", &toolv1.Tool{
 		Name:     "probe.v1.freeze",
-		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}},
+		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(time.Minute)}},
 	}, false))
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	got := resp.GetFile()[0].GetContent()
-	if strings.Contains(got, "time.Second") || strings.Contains(got, "time.Duration") {
-		t.Errorf("an async tool was given a deadline:\n%s", got)
+	// No INVENTED deadline on the CLIENT: the start is bounded by the platform's
+	// own cap on a held request (call.MaxWait), never by a number per tool, and
+	// the only other duration is the wait the caller passes to the result
+	// method. (The declared limit reaches the handler's Serve registration, as a
+	// sync budget does -- that is the tool's deadline, not a caller's.)
+	if strings.Count(got, "call.Deadline(") != strings.Count(got, "call.Deadline(call.MaxWait)") {
+		t.Errorf("an async tool was given a deadline of its own:\n%s", got)
 	}
+}
+
+// An async tool gets TWO methods -- one that starts the run and returns a
+// reference, one that reads the reference -- and never the sync shape. Flipping
+// a tool's delivery changes the signature, so every caller fails to compile:
+// that is what declaring delivery is for.
+func TestAnAsyncToolGetsAReferenceAndAResultMethod(t *testing.T) {
+	resp, err := probe(t, toolMethod(t, "Freeze", &toolv1.Tool{
+		Name:     "probe.v1.freeze",
+		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(time.Minute)}},
+	}, false))
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	got := resp.GetFile()[0].GetContent()
+	for _, want := range []string{
+		"func (c ProbeServiceClient) Freeze(ctx context.Context, in *Req, opts ...call.Options) (call.Ref, error)",
+		"func (c ProbeServiceClient) FreezeResult(ctx context.Context, ref call.Ref, wait time.Duration) (*Res, *",
+		"FetchResponse, error) {",
+		"o.Idempotency == \"\"", // refused locally before the wire
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("the async client lacks %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "Freeze(ctx context.Context, in *Req, opts ...call.Options) (*Res, error)") {
+		t.Error("an async tool got the sync shape")
+	}
+}
+
+// The committed example, used as a consumer: the sync method keeps its shape and
+// the async one has the two methods. This file stops compiling otherwise.
+var (
+	_ func(context.Context, *weatherv1.GetForecastRequest, ...call.Options) (*weatherv1.GetForecastResponse, error)   = weatherv1.WeatherServiceClient{}.GetForecast
+	_ func(context.Context, *weatherv1.ScheduleReportRequest, ...call.Options) (call.Ref, error)                      = weatherv1.WeatherServiceClient{}.ScheduleReport
+	_ func(context.Context, call.Ref, time.Duration) (*weatherv1.ScheduleReportResponse, *runv1.FetchResponse, error) = weatherv1.WeatherServiceClient{}.ScheduleReportResult
+)
+
+// Starting an async run without an idempotency key is refused in the client,
+// before the wire: rund would refuse it too, and failing early is kinder.
+func TestTheAsyncClientRefusesAMissingKeyBeforeTheWire(t *testing.T) {
+	c := weatherv1.NewWeatherServiceClient(exploding{})
+	_, err := c.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "x"})
+	var se *serve.Error
+	if !errors.As(err, &se) || se.Kind != invokev1.ErrorKind_ERROR_KIND_INVALID || !strings.Contains(err.Error(), "Idempotency") {
+		t.Fatalf("got %v, want INVALID naming the key", err)
+	}
+}
+
+// exploding fails the test if the wire is touched.
+type exploding struct{}
+
+func (exploding) Invoke(context.Context, string, []byte, call.Options) (*runv1.InvokeResponse, error) {
+	panic("the wire was touched")
+}
+func (exploding) Fetch(context.Context, string, time.Duration) (*runv1.FetchResponse, error) {
+	panic("the wire was touched")
 }
 
 // TestTheBudgetReachesTheRegistrar, through the real generated binding rather than
@@ -444,12 +508,18 @@ func TestTheBudgetReachesTheRegistrar(t *testing.T) {
 	if err := weatherv1.ServeWeatherService(&r, weatherd.Service{}); err != nil {
 		t.Fatalf("Serve: %v", err)
 	}
-	if len(r.mounts) != 1 {
+	if len(r.mounts) != 2 {
 		t.Fatalf("mounted %d", len(r.mounts))
 	}
-	// weather.proto declares sync: { budget: { seconds: 5 } }
-	if r.mounts[0].budget != 5*time.Second {
-		t.Errorf("budget reached the registrar as %v, want 5s", r.mounts[0].budget)
+	// weather.proto declares sync: { budget: { seconds: 5 } } for the forecast
+	// and async: {} -- no budget -- for the report.
+	budgets := map[string]time.Duration{}
+	for _, m := range r.mounts {
+		budgets[m.name] = m.budget
+	}
+	// and async: { limit: { seconds: 60 } } for the report: the handler's own deadline.
+	if budgets["weather.v1.get_forecast"] != 5*time.Second || budgets["weather.v1.schedule_report"] != 60*time.Second {
+		t.Errorf("budgets reached the registrar as %v", budgets)
 	}
 }
 
@@ -470,27 +540,6 @@ func TestTheGeneratedClientSetsTheDeclaredBudgetAsItsDeadline(t *testing.T) {
 	// was in the middle of sending.
 	if !strings.Contains(got, "call.Deadline(7*time.Second)") {
 		t.Errorf("the client does not set the declared budget as its deadline:\n%s", got)
-	}
-}
-
-// TestAnAsyncToolGetsNoClientMethod. Its caller receives a reference, not an
-// answer -- a different signature, and no run store gives it meaning yet. Emitting
-// one would be a method that cannot work.
-func TestAnAsyncToolGetsNoClientMethod(t *testing.T) {
-	resp, err := probe(t, toolMethod(t, "Freeze", &toolv1.Tool{
-		Name:     "probe.v1.freeze",
-		Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}},
-	}, false))
-	if err != nil {
-		t.Fatalf("Run: %v", err)
-	}
-	got := resp.GetFile()[0].GetContent()
-	if strings.Contains(got, "Client") {
-		t.Errorf("an async tool got a client method:\n%s", got)
-	}
-	// but it still gets a HANDLER: a service answers it, rund just cannot hold its run
-	if !strings.Contains(got, "ProbeServiceHandler") {
-		t.Error("an async tool lost its handler interface")
 	}
 }
 
@@ -524,14 +573,55 @@ func TestTheGeneratedClientTypeChecksEndToEnd(t *testing.T) {
 }
 
 type fakeInvoker struct {
-	tool string
-	out  []byte
-	ctx  context.Context
+	tool    string
+	out     []byte
+	ctx     context.Context
+	states  []runv1.RunState
+	fetches int
 }
 
-func (f *fakeInvoker) Invoke(ctx context.Context, tool string, _ []byte, _ call.Options) ([]byte, error) {
+func (f *fakeInvoker) Invoke(ctx context.Context, tool string, _ []byte, _ call.Options) (*runv1.InvokeResponse, error) {
 	f.tool, f.ctx = tool, ctx
-	return f.out, nil
+	return &runv1.InvokeResponse{Outcome: &runv1.InvokeResponse_Result{Result: f.out}}, nil
+}
+
+func (f *fakeInvoker) Fetch(context.Context, string, time.Duration) (*runv1.FetchResponse, error) {
+	f.fetches++
+	if len(f.states) == 0 {
+		return nil, errors.New("not used")
+	}
+	st := f.states[0]
+	if len(f.states) > 1 {
+		f.states = f.states[1:]
+	}
+	resp := &runv1.FetchResponse{State: st}
+	if st == runv1.RunState_RUN_STATE_SUCCEEDED {
+		resp.Outcome = &runv1.FetchResponse_Result{Result: f.out}
+	}
+	return resp, nil
+}
+
+// A typed Result method waits for an ANSWER within its wait: a held Fetch
+// returns on any change (a stage change included), and a stage is not an
+// answer, so the method keeps asking until the run is terminal or the wait is
+// spent. Here rund answers RUNNING twice -- the run moved -- then SUCCEEDED.
+func TestTheResultMethodWaitsForAnAnswerNotAStageChange(t *testing.T) {
+	inv := &fakeInvoker{states: []runv1.RunState{runv1.RunState_RUN_STATE_RUNNING, runv1.RunState_RUN_STATE_RUNNING, runv1.RunState_RUN_STATE_SUCCEEDED}}
+	inv.out, _ = proto.Marshal(&weatherv1.ScheduleReportResponse{ReportId: "r-1"})
+	c := weatherv1.NewWeatherServiceClient(inv)
+	out, resp, err := c.ScheduleReportResult(context.Background(), call.Ref{RunID: "k", Invoker: inv}, 5*time.Second)
+	if err != nil || out.GetReportId() != "r-1" || resp.GetState() != runv1.RunState_RUN_STATE_SUCCEEDED {
+		t.Fatalf("%v %v %v", out, resp, err)
+	}
+	if inv.fetches != 3 {
+		t.Fatalf("%d fetches, want 3", inv.fetches)
+	}
+	// And with no wait at all, one fetch, RUNNING, nil result, nil error.
+	inv = &fakeInvoker{states: []runv1.RunState{runv1.RunState_RUN_STATE_RUNNING}}
+	out, resp, err = weatherv1.NewWeatherServiceClient(inv).ScheduleReportResult(context.Background(), call.Ref{RunID: "k", Invoker: inv}, 0)
+	if err != nil || out != nil || resp.GetState() != runv1.RunState_RUN_STATE_RUNNING || inv.fetches != 1 {
+		t.Fatalf("%v %v %v fetches=%d", out, resp, err, inv.fetches)
+	}
 }
 
 func (f *fakeInvoker) deadline() (time.Duration, bool) {

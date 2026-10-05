@@ -24,18 +24,22 @@ garmctl topology --dev --catalogue file://build/catalogue.binpb --callers foreca
                                                                # a THROWAWAY operator, accounts, one credential per process, a server config -- never for a deployment
 nats-server -c build/topo/nats-server.conf &                   # operator mode, TLS, every account preloaded
 go run ./examples/cmd/weatherd --creds build/topo/creds/weather.v1.WeatherService.creds --tls-ca build/topo/ca.pem --health 127.0.0.1:8081
-go run ./cmd/rund              --creds build/topo/creds/rund.creds --tls-ca build/topo/ca.pem --catalogue file://build/catalogue.binpb --callers build/topo/callers.json --health 127.0.0.1:8080
+go run ./cmd/rund              --creds build/topo/creds/rund.creds --tls-ca build/topo/ca.pem --catalogue file://build/catalogue.binpb --callers build/topo/callers.json --health 127.0.0.1:8080 --run-store sqlite:build/runs.db
 go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds --tls-ca build/topo/ca.pem
 ```
 
-Or all of it in one go, with the answer checked: `mise run e2e`.
+Or all of it in one go, with the answer checked: `mise run e2e`. It also invokes
+the example's **async** tool — `pending <run id>` comes back at once, `garmctl
+fetch <run id> --wait 30s` reads the answer from the run store, which
+`--run-store sqlite:build/runs.db` puts in a file on a laptop and `postgres://…`
+in a deployment.
 
 **With Docker** — the bus and the telemetry backend as containers, from
 [compose.yaml](compose.yaml): after the `topology --dev` line,
 
 ```bash
-docker compose up -d                                           # garm-nats, booted from build/topo's config (operator mode, TLS); OpenObserve on :5080
-mise run e2e-compose                                           # the quick start against both -- and the forecast's trace looked up in OpenObserve
+docker compose up -d                                           # garm-nats, booted from build/topo's config (operator mode, TLS); OpenObserve on :5080; Postgres on :5432
+mise run e2e-compose                                           # the quick start against all three -- rund's run store on Postgres, both traces looked up in OpenObserve
 open http://localhost:5080                                     # root@example.com / Complexpass#123; Traces -> one trace, three spans, three services
 ```
 
@@ -43,7 +47,10 @@ open http://localhost:5080                                     # root@example.co
 then need `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:5080/api/default` and
 `OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic $(printf 'root@example.com:Complexpass#123' | base64)"`
 to ship there. Ports clash with something on your laptop? `NATS_PORT=14222
-O2_PORT=15080 docker compose up -d`, and the same two variables for `e2e-compose`.
+O2_PORT=15080 PG_PORT=15432 docker compose up -d`, and the same three variables for
+`e2e-compose`. Changed the catalogue? Run the `topology --dev` line again and
+`docker compose restart nats`: the service credentials are derived from the
+catalogue, and a stale one cannot answer a new tool.
 
 `forecast` names a tool and nothing else; it reaches `rund`, which reaches
 `weatherd`, and the answer comes back through three accounts the caller cannot
@@ -211,8 +218,9 @@ third fixture shape appears, that is the moment to check whether one can go.
 **Nothing authorizes anything.** A caller's identity is proved — placed in the
 subject by the server, carried on every trace — and then not used: any caller may
 invoke any tool through `rund`. The order the last review set, and the roadmap
-keeps: the run store (async delivery, `Fetch` with a result, audit) → **the
-authority model** → person identity. [docs/roadmap.md](docs/roadmap.md) has every
+keeps: the run store (built — async delivery, `Fetch` with a result, the step log)
+→ push (a subscriber sees a run without polling) → **the authority model** →
+person identity. [docs/roadmap.md](docs/roadmap.md) has every
 unbuilt thing beside what it waits on.
 
 ## What is deliberately absent

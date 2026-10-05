@@ -8,9 +8,12 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	"github.com/garm-ai/garm-ai/declared"
@@ -42,6 +45,12 @@ type Headers struct {
 	// Idempotency, when supplied, becomes the run id so that a retry is the same
 	// run rather than a second one.
 	Idempotency string
+
+	// Caller is the invoking account's public key, placed in the subject by the
+	// server and read by rundsvc; CallerName its label from --callers, if any.
+	// Neither is a header on the wire: they are what the transport PROVED, and
+	// a run is visible only to the account that started it.
+	Caller, CallerName string
 }
 
 // Caller is how the engine reaches a tool. An interface so the engine is testable
@@ -56,6 +65,11 @@ type Engine struct {
 	Catalogue *catalogue.Holder
 	Tools     Caller
 	Log       *slog.Logger
+
+	// Store holds async runs. nil is today's rund: sync only, and an async tool
+	// is refused per call naming the flag that would enable it. A sync call
+	// never touches the store, so the store being down never touches sync.
+	Store Store
 
 	// NewID mints run and message ids. A field so a test can make them
 	// predictable; nil means crypto/rand.
@@ -80,17 +94,18 @@ func (e *Engine) log() *slog.Logger {
 	return slog.Default()
 }
 
-// action is one thing the engine does for an invocation.
+// Action is one thing the engine does for an invocation.
 //
-// A slice of these is what plan returns, and the loop in Invoke executes them in
-// order. Today every plan has exactly one.
-type action struct {
-	tool   string
-	input  []byte
-	budget time.Duration
+// A slice of these is what Plan returns, and the loop in Invoke -- or the run
+// store's workflow, for an async run -- executes them in order. Today every plan
+// has exactly one. Exported fields because the store checkpoints the plan.
+type Action struct {
+	Tool   string
+	Input  []byte
+	Budget time.Duration
 }
 
-// plan says what an invocation does.
+// Plan says what an invocation does.
 //
 // THE SEAM, and deliberately not an interface. A single-step plan exercises none
 // of what a decider interface is for -- no state threading, no events, no
@@ -98,18 +113,17 @@ type action struct {
 // be designed blind. What this establishes is only that the engine EXECUTES A
 // PLAN rather than calling a tool directly, which is the part that would be a
 // rewrite to retrofit. The interface gets extracted from two real deciders.
-func plan(t declared.Tool, input []byte) ([]action, error) {
+//
+// Plan does not decide delivery: a sync plan runs in Invoke, an async plan runs
+// in the store, and both are this one function.
+func Plan(t declared.Tool, input []byte) ([]Action, error) {
 	if t.IsAgent() {
 		// An agent is answered by a decider, and a decider needs a run that
 		// outlives its call. Both decider kinds are durable by definition.
 		return nil, serve.Unavailable(
-			"%s is an agent; this build has no run store, so no decider can run it", t.Name)
+			"%s is an agent; this build has no decider to run it", t.Name)
 	}
-	if !t.IsSync() {
-		return nil, serve.Unavailable(
-			"%s is declared async; this build has no run store, so it cannot be invoked", t.Name)
-	}
-	return []action{{tool: t.Name, input: input, budget: t.Budget()}}, nil
+	return []Action{{Tool: t.Name, Input: input, Budget: t.Budget()}}, nil
 }
 
 // Invoke runs one invocation to an answer.
@@ -137,7 +151,11 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 			"no tool named %q in the catalogue loaded from %s", req.GetTool(), cat.Source))
 	}
 
-	actions, err := plan(tool, req.GetInput())
+	if !tool.IsSync() && !tool.IsAgent() {
+		return e.startAsync(ctx, tool, req, h)
+	}
+
+	actions, err := Plan(tool, req.GetInput())
 	if err != nil {
 		return nil, e.fail(ctx, runID, h, tool.Name, err)
 	}
@@ -154,9 +172,9 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 		// several times, so a key per step is what makes a replay safe.
 		step.Idempotency = fmt.Sprintf("%s:%d", runID, i)
 
-		out, callErr := e.Tools.Call(ctx, a.tool, a.input, a.budget, step)
+		out, callErr := e.Tools.Call(ctx, a.Tool, a.Input, a.Budget, step)
 		if callErr != nil {
-			return nil, e.fail(ctx, runID, h, a.tool, callErr)
+			return nil, e.fail(ctx, runID, h, a.Tool, callErr)
 		}
 		last = out
 	}
@@ -176,6 +194,39 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 	}, nil
 }
 
+// startAsync is the async path: nothing executes here. The run is made durable
+// and the caller gets its id; a replica executes it from the queue (spec §2).
+func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.InvokeRequest, h Headers) (*runv1.InvokeResponse, *invokev1.Error) {
+	if e.Store == nil {
+		// Said before the key check: no key the caller adds would help here.
+		return nil, e.fail(ctx, h.Idempotency, h, tool.Name, serve.Unavailable(
+			"%s is declared async and this rund has no run store; start it with --run-store", tool.Name))
+	}
+	if h.Idempotency == "" {
+		// rund minting the key would make a retry a second run -- the opposite
+		// of idempotent (spec §6). A model never sets one; the decider does.
+		return nil, e.fail(ctx, "", h, tool.Name, serve.Invalid(
+			"%s is async: an idempotency key is required (Garm-Idempotency-Key), and it becomes the run id", tool.Name))
+	}
+	r := Run{
+		ID: h.Idempotency, Tool: tool.Name, Input: req.GetInput(),
+		Fingerprint: Fingerprint(tool.Name, req.GetInput()),
+		Caller:      h.Caller, CallerName: h.CallerName,
+		Correlation: h.Correlation, Message: h.Message, Traceparent: h.Traceparent,
+	}
+	started, err := e.Store.Start(ctx, r)
+	if err != nil {
+		return nil, e.fail(ctx, r.ID, h, tool.Name, err)
+	}
+	e.log().InfoContext(ctx, "run started",
+		"run", started.ID, "tool", tool.Name, "existing", started.Existing,
+		"correlation", r.Correlation, "caller", h.Caller)
+	return &runv1.InvokeResponse{
+		RunId:   started.ID,
+		Outcome: &runv1.InvokeResponse_Pending{Pending: &runv1.Pending{}},
+	}, nil
+}
+
 // fail logs the cause and returns what the caller is told. The cause chain is
 // recorded here and nowhere else; the wire gets a kind, a chosen message and an id.
 func (e *Engine) fail(ctx context.Context, runID string, h Headers, tool string, err error) *invokev1.Error {
@@ -187,12 +238,67 @@ func (e *Engine) fail(ctx context.Context, runID string, h Headers, tool string,
 }
 
 // Fetch says what happened. With no run store it says so, rather than lying.
-func (e *Engine) Fetch(_ context.Context, req *runv1.FetchRequest) (*runv1.FetchResponse, *invokev1.Error) {
+func (e *Engine) Fetch(ctx context.Context, req *runv1.FetchRequest, h Headers) (*runv1.FetchResponse, *invokev1.Error) {
 	if req.GetRunId() == "" {
 		return nil, serve.Wire(serve.Invalid("run_id is required"), "")
 	}
-	// NOT_RETAINED, never NOT_FOUND: the run may well have happened, and claiming
-	// it never existed would be a lie a caller could act on. Nor is a result
-	// fabricated.
-	return &runv1.FetchResponse{State: runv1.RunState_RUN_STATE_NOT_RETAINED}, nil
+	if e.Store == nil {
+		// NOT_RETAINED, never NOT_FOUND: the run may well have happened, and
+		// claiming it never existed would be a lie a caller could act on. Nor
+		// is a result fabricated.
+		return &runv1.FetchResponse{State: runv1.RunState_RUN_STATE_NOT_RETAINED}, nil
+	}
+	wait := req.GetWait().AsDuration()
+	if wait > MaxFetchWait {
+		wait = MaxFetchWait
+	}
+	st, err := e.Store.Fetch(ctx, req.GetRunId(), wait)
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return nil, serve.Wire(serve.NotFound("no run %s", req.GetRunId()), "")
+	case err != nil:
+		return nil, e.fail(ctx, req.GetRunId(), h, "", err)
+	}
+	// Visibility (spec §4): the first body of the function the authority model
+	// will replace. A foreign run is NOT_FOUND, not DENIED -- its existence is
+	// not the caller's to learn, and the answer is the same as for an id that
+	// never existed.
+	if !e.visible(h, st) {
+		return nil, serve.Wire(serve.NotFound("no run %s", req.GetRunId()), "")
+	}
+	resp := &runv1.FetchResponse{State: wireState(st.Status), Stage: st.Stage, Tool: st.Tool}
+	if !st.CreatedAt.IsZero() {
+		resp.CreatedAt = timestamppb.New(st.CreatedAt)
+	}
+	if !st.CompletedAt.IsZero() {
+		resp.CompletedAt = timestamppb.New(st.CompletedAt)
+	}
+	switch {
+	case st.Error != nil:
+		resp.Outcome = &runv1.FetchResponse_Error{Error: st.Error}
+	case st.Status == StatusSucceeded:
+		resp.Outcome = &runv1.FetchResponse_Result{Result: st.Result}
+	}
+	return resp, nil
+}
+
+// visible: may this principal see this run? Today: the invoking account, and
+// nobody else -- an anonymous principal sees nothing. The authority model
+// replaces this body; its callers do not change.
+func (e *Engine) visible(h Headers, st State) bool {
+	return h.Caller != "" && h.Caller == st.Caller
+}
+
+func wireState(s Status) runv1.RunState {
+	switch s {
+	case StatusRunning:
+		return runv1.RunState_RUN_STATE_RUNNING
+	case StatusSucceeded:
+		return runv1.RunState_RUN_STATE_SUCCEEDED
+	case StatusFailed:
+		return runv1.RunState_RUN_STATE_FAILED
+	case StatusCancelled:
+		return runv1.RunState_RUN_STATE_CANCELLED
+	}
+	return runv1.RunState_RUN_STATE_UNSPECIFIED
 }

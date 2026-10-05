@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/nats-io/nats.go"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/observe/otlp"
 	"github.com/garm-ai/garm-ai/run"
+	"github.com/garm-ai/garm-ai/rundbos"
 	"github.com/garm-ai/garm-ai/rundsvc"
 )
 
@@ -37,6 +39,11 @@ func main() {
 		version = flag.String("version", "0.1.0", "this service's version (semver)")
 		callers = flag.String("callers", "", "callers.json as `garmctl topology` wrote it; names callers on spans and metrics")
 		health  = flag.String("health", "", "address for /livez and /readyz, e.g. 127.0.0.1:8080; empty means no listener")
+		store   = flag.String("run-store", "", "the run store: postgres://user:pass@host/db or sqlite:/path/runs.db; empty means sync tools only")
+		storeEx = flag.String("run-store-executor", "", "this replica's STABLE executor id; a run executing when a replica dies is recovered only by a relaunch with the same id (a StatefulSet ordinal, a hostname); empty means the hostname; DBOS__VMID overrides")
+		storeWk = flag.Int("run-store-workers", 4, "runs this replica executes at once")
+		storeMg = flag.Bool("run-store-migrate", true, "create and migrate the store's schema at start; false verifies it and refuses to start if it is absent")
+		storeRL = flag.Duration("run-store-run-limit", 24*time.Hour, "the ceiling on one run, from the moment a replica starts executing it until it is CANCELLED; a tool's own limit bounds one call, this bounds the whole run; 0 means none")
 	)
 	flag.Parse()
 
@@ -55,12 +62,14 @@ func main() {
 	code := func() int {
 		// Every value, defaults included, so nobody has to guess which one is in force.
 		log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
-			"name", *name, "version", *version, "callers", *callers, "health", *health, "run_store", "none")
+			"name", *name, "version", *version, "callers", *callers, "health", *health,
+			"run_store", storeLabel(*store), "run_store_executor", *storeEx, "run_store_workers", *storeWk, "run_store_migrate", *storeMg, "run_store_run_limit", *storeRL)
 		if *catURI == "" {
 			log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
 			return 2
 		}
-		if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, log); err != nil {
+		storeCfg := rundbos.Config{URL: *store, AppName: "garm", Executor: *storeEx, Workers: *storeWk, Migrate: *storeMg, RunLimit: *storeRL, Logger: log}
+		if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, storeCfg, log); err != nil {
 			log.Error("stopped", "error", err)
 			return 1
 		}
@@ -71,7 +80,16 @@ func main() {
 	os.Exit(code)
 }
 
-func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version, callersPath, health string, log *slog.Logger) error {
+// storeLabel is the --run-store value as the startup line shows it: redacted,
+// or "none".
+func storeLabel(url string) string {
+	if url == "" {
+		return "none"
+	}
+	return rundbos.Redact(url)
+}
+
+func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version, callersPath, health string, storeCfg rundbos.Config, log *slog.Logger) error {
 	ctx := context.Background()
 
 	// A broken table refuses to start rather than labelling half the callers.
@@ -108,10 +126,10 @@ func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, na
 	// Named at boot, once, rather than discovered one failed call at a time. They
 	// are refused per call rather than refusing to start, so everything servable
 	// still works.
-	if len(unservable) > 0 {
-		log.Warn("declared tools this build cannot serve",
+	if len(unservable) > 0 && storeCfg.URL == "" {
+		log.Warn("declared tools this rund cannot serve",
 			"count", len(unservable), "tools", unservable,
-			"why", "declared async, and this build has no run store")
+			"why", "declared async, and this rund has no run store (--run-store)")
 	}
 
 	svc, err := natsmicro.New(natsmicro.Config{Name: name, Version: version, Logger: log})
@@ -127,6 +145,17 @@ func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, na
 	defer nc.Close()
 
 	engine := &run.Engine{Catalogue: &holder, Tools: rundsvc.ToolCaller{NC: nc}, Log: log}
+	if storeCfg.URL != "" {
+		// Opened BEFORE anything is mounted: Launch recovers this executor's
+		// in-flight runs, and a run started on a store that is not yet up
+		// would be a run nobody holds.
+		store, err := rundbos.Open(ctx, storeCfg, &holder, engine.Tools)
+		if err != nil {
+			return err
+		}
+		defer store.Close(context.Background())
+		engine.Store = store
+	}
 	if err := rundsvc.Serve(svc, engine, names); err != nil {
 		return err
 	}

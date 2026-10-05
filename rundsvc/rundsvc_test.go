@@ -20,6 +20,7 @@ import (
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
@@ -30,8 +31,8 @@ import (
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
-	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
+	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundsvc"
 	"github.com/garm-ai/garm-ai/serve"
 )
@@ -108,7 +109,7 @@ func theCatalogue(t *testing.T) *catalogue.Holder {
 				{Name: proto.String("Freeze"), InputType: proto.String(".extra.v1.Req"),
 					OutputType: proto.String(".extra.v1.Res"),
 					Options: opts(&toolv1.Tool{Name: "extra.v1.freeze",
-						Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{}}})},
+						Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(time.Minute)}}})},
 				{Name: proto.String("Plan"), InputType: proto.String(".extra.v1.Req"),
 					OutputType: proto.String(".extra.v1.Res"),
 					Options: opts(&toolv1.Tool{Name: "extra.v1.planner",
@@ -326,13 +327,15 @@ func TestAnUnknownToolIsNotFound(t *testing.T) {
 // pretending the tool does not exist, which a caller would act on wrongly.
 func TestAnAsyncToolIsRefusedBecauseThereIsNoStore(t *testing.T) {
 	nc, _ := bareServer(t)
-	for _, tool := range []string{"extra.v1.freeze", "extra.v1.planner"} {
+	// An async tool needs the store; an agent needs a decider, which no build
+	// has yet. Each refusal names its own missing piece.
+	for tool, why := range map[string]string{"extra.v1.freeze": "run store", "extra.v1.planner": "decider"} {
 		reply := invoke(t, nc, tool, &weatherv1.GetForecastRequest{}, nil)
 		code := reply.Header.Get(micro.ErrorCodeHeader)
 		if code != serve.Code(invokev1.ErrorKind_ERROR_KIND_UNAVAILABLE) {
 			t.Errorf("%s: code is %q, want UNAVAILABLE", tool, code)
 		}
-		if msg := reply.Header.Get(micro.ErrorHeader); !strings.Contains(msg, "run store") {
+		if msg := reply.Header.Get(micro.ErrorHeader); !strings.Contains(msg, why) {
 			t.Errorf("%s: the message does not say why: %q", tool, msg)
 		}
 	}
