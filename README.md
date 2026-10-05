@@ -96,6 +96,9 @@ three drawings below.
   decision, each recording what was rejected and why. Each carries a `**Status:**`
   line from `active · parked · superseded by <file>` — grep it before trusting a
   file, because a stale decision reads as current.
+- **[docs/research/](docs/research/)** — dated readings of things outside this
+  repository (a library, a protocol) made before a spec depends on them; they
+  record what was read, with versions, and decide nothing.
 - **[docs/reviews/](docs/reviews/)** — dated gradings of the whole repository
   against a stated bar, with an action list and a progress table that says what
   each finding became.
