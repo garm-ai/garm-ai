@@ -48,6 +48,21 @@ func Generate(in Input) (*Output, error) {
 	if !oc.StrictSigningKeyUsage {
 		return nil, fmt.Errorf("topology: the operator JWT does not set strict signing-key usage; the server would accept a root-signed account")
 	}
+	// Self-signed, and inside its validity window: an operator JWT nsc wrote with
+	// an expiry would otherwise mint a whole generation the server rejects, and
+	// one some other key signed is not the root's word at all.
+	if oc.Issuer != oc.Subject {
+		return nil, fmt.Errorf("topology: the operator JWT is not self-signed (issuer %s, subject %s)", oc.Issuer, oc.Subject)
+	}
+	var vr jwt.ValidationResults
+	oc.Validate(&vr)
+	for _, issue := range vr.Issues {
+		// Expiry is a "time check" in jwt's terms, not a blocking issue; here it
+		// blocks -- the server would refuse everything signed under it.
+		if issue.Blocking || issue.TimeCheck {
+			return nil, fmt.Errorf("topology: the operator JWT is not valid: %s", issue.Description)
+		}
+	}
 
 	// Every credential is a FILE named after it and a manifest entry keyed on it,
 	// so a caller's name must be a safe filename and unique among everything else

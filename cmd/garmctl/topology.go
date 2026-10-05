@@ -57,6 +57,9 @@ func topologyCmd() *cobra.Command {
 			"existing manifest is refused, because it would forget what was issued.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if status {
+				if catURI != "" || out != "" || first || dev || rotate || verifyLive || noVerifyLive || len(rotateSigning) > 0 || len(callers) > 0 {
+					return errors.New("--status takes --keys and --manifest and nothing else; it issues nothing, so an issuance flag beside it would be silently ignored")
+				}
 				return printStatus(cmd, keysDir, manifestPath)
 			}
 			if catURI == "" || out == "" {
@@ -487,7 +490,8 @@ func verifyNothingLiveOnRetiringKeys(retiring map[string]string, natsURL, opsCre
 	if natsURL == "" || opsCreds == "" {
 		return errors.New("--verify-live needs --nats and --ops-creds")
 	}
-	nc, err := natsconn.Connect(natsURL, natsconn.Options{Creds: opsCreds, CA: ca}, nats.Name("garmctl topology --verify-live"))
+	const ownName = "garmctl topology --verify-live"
+	nc, err := natsconn.Connect(natsURL, natsconn.Options{Creds: opsCreds, CA: ca}, nats.Name(ownName))
 	if err != nil {
 		return fmt.Errorf("--verify-live: %w", err)
 	}
@@ -499,6 +503,14 @@ func verifyNothingLiveOnRetiringKeys(retiring map[string]string, natsURL, opsCre
 	for account, key := range retiring {
 		if conns := live[key]; len(conns) > 0 {
 			sort.Strings(conns)
+			for i, c := range conns {
+				if c == ownName {
+					// Rotating SYS: the ops credential this command connected with is
+					// itself signed by the retiring key. Said so, rather than listing a
+					// connection the operator cannot find.
+					conns[i] = c + " (this command's own; reissue the ops credential it was given)"
+				}
+			}
 			return fmt.Errorf("--verify-live: %s's retiring key %s still signs %d live connection(s): %s -- roll them out first",
 				account, key, len(conns), strings.Join(conns, ", "))
 		}

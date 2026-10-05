@@ -242,8 +242,12 @@ asks the cluster which key each live connection was signed by, pages through
 every server's connections, and treats fewer servers answering than `--servers`
 as no evidence. On Kubernetes `kubectl rollout status` is necessary and not
 sufficient — a Deployment can be "rolled out" with one pod still reconnecting on
-an old mount — and this is the check that is. A credential file that went
-missing from `--out` is reissued on the next run, and the run says so.
+an old mount — and this is the check that is. Two things it cannot see: leafnode
+and route connections, which `CONNZ` does not list (nothing in this estate uses
+them today; a leaf node authenticating with an account-signed credential would
+be missed), and a connection made in the window between its answer and the
+push. A credential file that went missing from `--out` is reissued on the next
+run, and the run says so.
 
 ### Seeing it run
 

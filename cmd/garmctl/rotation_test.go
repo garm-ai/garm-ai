@@ -313,3 +313,36 @@ func mustReadDir(t *testing.T, dir string) []string {
 	}
 	return names
 }
+
+// Deferred minor 13: --status beside an issuance flag is refused rather than
+// silently doing the one and not the other.
+func TestStatusRefusesIssuanceFlagsBesideIt(t *testing.T) {
+	e := estate.New(t)
+	keys, manifest, out := keysFromEstate(t, e)
+	_, _, err := runTopology(t, append(catalogueArgs(e), "--status", "--keys", keys, "--manifest", manifest, "--rotate-signing", topology.AccountGARM, "--out", out)...)
+	if err == nil || !strings.Contains(err.Error(), "--status") {
+		t.Fatalf("err = %v, want a refusal naming --status", err)
+	}
+}
+
+// Deferred minor 15: --verify-live's refusal says a listed connection may be the
+// command's own, which is named so it can be told apart.
+func TestVerifyLiveRefusalNamesItsOwnConnection(t *testing.T) {
+	e := estate.New(t)
+	keys, manifest, out := keysFromEstate(t, e)
+	ops := e.CredsFile(t, estate.RoleOps)
+	ca := e.CAFile(t)
+	// Rotate SYS: the command's own ops connection is in SYS, signed by the OLD
+	// key (the creds file was written before the rotation), so the refusal must
+	// name it and say what it is.
+	if _, _, err := runTopology(t, append(catalogueArgs(e), "--keys", keys, "--manifest", manifest, "--callers", estateCallers,
+		"--rotate-signing", topology.AccountSYS, "--out", out)...); err != nil {
+		t.Fatal(err)
+	}
+	e.PushAccount(t, mustRead(t, filepath.Join(out, "accounts", "SYS.jwt")))
+	_, _, err := runTopology(t, append(catalogueArgs(e), "--keys", keys, "--manifest", manifest, "--callers", estateCallers,
+		"--verify-live", "--nats", e.URL, "--ops-creds", ops, "--tls-ca", ca, "--out", out)...)
+	if err == nil || !strings.Contains(err.Error(), "garmctl topology --verify-live") || !strings.Contains(err.Error(), "this command") {
+		t.Fatalf("err = %v, want a refusal naming the command's own connection and saying so", err)
+	}
+}

@@ -82,6 +82,12 @@ declaration and enforced by nothing is worse than none — it reads as a guarant
 They return one at a time, each with its enforcer, each with a row above naming
 what it waited on.
 
+## Found, not yet fixed
+
+| | why it stands, for now |
+|---|---|
+| **Revocations are not cumulative across generations.** An account JWT is rebuilt on every issuance, so a `RevokeAt` from generation N is absent at N+1; a revoked credential still held somewhere is accepted again once its entry ages out of the JWT. | Pre-existing in `delta`/encode, surfaced by the signing-keys review. The fix is a revocation record in the manifest carried forward into every account JWT until the credential's own expiry has passed — one slice, with the identity spec's §5 revocation properties re-proved. Waits on nothing; next after the run store unless a deployment needs it first. |
+
 ## Deliberately undecided
 
 | | |
