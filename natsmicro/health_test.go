@@ -10,6 +10,7 @@ import (
 	"github.com/nats-io/nats.go/micro"
 
 	"github.com/garm-ai/garm-ai/observe"
+	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 )
 
 func get(t *testing.T, url string) int {
@@ -32,6 +33,7 @@ func pingAnswers(nc *nats.Conn, name string) bool {
 // is 200 throughout. A readiness flag that disagreed with the bus would be the
 // vacuous check this repository exists to catch.
 func TestReadyAgreesWithPingThroughTheLifecycle(t *testing.T) {
+	rec := otlptest.Install(t)
 	url := serverURL(t)
 	nc := connect(t, url)
 	probe := connect(t, url)
@@ -59,6 +61,11 @@ func TestReadyAgreesWithPingThroughTheLifecycle(t *testing.T) {
 	if get(t, live) != 200 || get(t, ready) != 503 || pingAnswers(probe, "probed") {
 		t.Fatal("after drain: want livez 200, readyz 503, no PING")
 	}
+	// A clean drain counts once, with queued=false -- a BOOL, so the series is
+	// bounded: the question is whether anything was waiting, not how many.
+	if n := rec.Counter(context.Background(), "garm.service.drain", observe.KeyService.String("probed"), observe.KeyQueued.Bool(false)); n != 1 {
+		t.Errorf("garm.service.drain{probed,queued=false} = %d, want 1", n)
+	}
 }
 
 // Readiness goes false the moment the drain BEGINS, not when it ends: a scheduler
@@ -66,6 +73,7 @@ func TestReadyAgreesWithPingThroughTheLifecycle(t *testing.T) {
 // to a process that is about to refuse. A blocked handler holds the drain open
 // while Ready is read.
 func TestReadyGoesFalseBeforeTheLastCallIsAnswered(t *testing.T) {
+	rec := otlptest.Install(t)
 	url := serverURL(t)
 	nc := connect(t, url)
 	caller := connect(t, url)
@@ -99,6 +107,9 @@ func TestReadyGoesFalseBeforeTheLastCallIsAnswered(t *testing.T) {
 	<-served
 	if stillReady {
 		t.Fatal("Ready stayed true while the drain was waiting on a call")
+	}
+	if n := rec.Counter(context.Background(), "garm.service.drain", observe.KeyService.String("probed"), observe.KeyQueued.Bool(true)); n != 1 {
+		t.Errorf("garm.service.drain{probed,queued=true} = %d, want 1", n)
 	}
 }
 

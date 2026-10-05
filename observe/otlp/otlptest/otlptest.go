@@ -10,7 +10,6 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
@@ -28,19 +27,23 @@ type Recorder struct {
 	logs   *logSink
 }
 
-// Install replaces the globals for the duration of t, with the W3C propagator so
-// context crosses hops exactly as it does under otlp.Start.
+// Install replaces the globals for the duration of t, with the same propagator
+// otlp.Start installs, so context crosses hops exactly as it does in production.
+//
+// The globals are one per process, so a test using this cannot run in parallel
+// with another; t.Setenv makes that a panic rather than a comment.
 func Install(t testing.TB) *Recorder {
 	t.Helper()
+	t.Setenv("GARM_OTLPTEST", "1")
 	r := &Recorder{spans: tracetest.NewInMemoryExporter(), reader: sdkmetric.NewManualReader(), logs: &logSink{}}
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSyncer(r.spans))
 	mp := sdkmetric.NewMeterProvider(sdkmetric.WithReader(r.reader))
 	lp := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewSimpleProcessor(r.logs)))
-	prevTP, prevMP, prevLP, prevProp := otel.GetTracerProvider(), otel.GetMeterProvider(), global.GetLoggerProvider(), otel.GetTextMapPropagator()
+	prevTP, prevMP, prevLP, prevProp := otel.GetTracerProvider(), otel.GetMeterProvider(), otel.GetLoggerProvider(), otel.GetTextMapPropagator()
 	otel.SetTracerProvider(tp)
 	otel.SetMeterProvider(mp)
-	global.SetLoggerProvider(lp)
-	otel.SetTextMapPropagator(propagation.TraceContext{})
+	otel.SetLoggerProvider(lp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	// The instruments are bound to the meter that was global when first asked
 	// for; an earlier test in this binary may have bound them to the previous one.
 	observe.ResetInstrumentsForTest()
@@ -50,7 +53,7 @@ func Install(t testing.TB) *Recorder {
 		_ = lp.Shutdown(context.Background())
 		otel.SetTracerProvider(prevTP)
 		otel.SetMeterProvider(prevMP)
-		global.SetLoggerProvider(prevLP)
+		otel.SetLoggerProvider(prevLP)
 		otel.SetTextMapPropagator(prevProp)
 		observe.ResetInstrumentsForTest()
 	})

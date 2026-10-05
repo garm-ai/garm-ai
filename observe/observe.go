@@ -37,7 +37,7 @@ const (
 	KeyRequestBytes   = attribute.Key("garm.request_bytes")
 	KeyResponseBytes  = attribute.Key("garm.response_bytes")
 	KeyService        = attribute.Key("garm.service")
-	KeyQueued         = attribute.Key("garm.queued")
+	KeyQueued         = attribute.Key("garm.queued") // bool: was anything waiting at the drain
 )
 
 // Tracer is the module's tracer, from whatever provider is global.

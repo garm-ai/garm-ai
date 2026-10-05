@@ -8,6 +8,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/proto"
 
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
@@ -17,6 +18,31 @@ import (
 	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 	"github.com/garm-ai/garm-ai/rundsvc"
 )
+
+// A failed fetch is marked as one: the span carries the kind and an error
+// status, as invoke's does. Found in review as an inconsistency.
+func TestAFailedFetchIsMarkedOnItsSpan(t *testing.T) {
+	rec := otlptest.Install(t)
+	caller, _ := bareServer(t)
+	m := nats.NewMsg(asRewritten(rundsvc.SubjectFetch))
+	m.Data = mustMarshal(t, &runv1.FetchRequest{}) // no run id: INVALID
+	if _, err := caller.RequestMsg(m, 2*time.Second); err != nil {
+		t.Fatal(err)
+	}
+	span, ok := rec.SpanNamed("garm.run.fetch")
+	if !ok {
+		t.Fatal("no garm.run.fetch span")
+	}
+	var kind string
+	for _, a := range span.Attributes() {
+		if a.Key == observe.KeyKind {
+			kind = a.Value.AsString()
+		}
+	}
+	if kind != "INVALID" || span.Status().Code != codes.Error {
+		t.Fatalf("kind=%q status=%v; want INVALID and an error status", kind, span.Status().Code)
+	}
+}
 
 func mustMarshal(t *testing.T, m proto.Message) []byte {
 	t.Helper()

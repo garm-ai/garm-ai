@@ -24,10 +24,11 @@ import (
 )
 
 func main() {
-	err := root().Execute()
+	cmd, stop := root()
+	err := cmd.Execute()
 	// Flush before deciding the exit code: a `garmctl call` that failed is exactly
 	// the span somebody wants to see.
-	_ = stopTelemetry(context.Background())
+	_ = stop(context.Background())
 	if err != nil {
 		// SilenceErrors is set on the root, so cobra prints NOTHING and this is
 		// the only place an error reaches the user. An earlier revision of this
