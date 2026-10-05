@@ -143,10 +143,16 @@ at operator level is specified, not built, and the status says so.
 not blocked: `topology` needs *an* operator JWT listing *a* signing key it holds,
 and `nsc` can produce exactly that. We test and document our own ceremony only.
 
-**`--dev`** runs the ceremony and the issuance in one go and writes the root seed
-into `build/topo/keys/root.nk` beside everything else, saying — as it already
-does for every other key it writes — that this is a toy a deployment must never
-do. The guide's quick start stays one command.
+**`--dev`** runs the ceremony and the issuance in one go and **discards the
+root** — nothing uses it, and a root beside a topology is the one thing
+`topology` refuses — saying, as it already does for every key it writes, that
+this is a toy a deployment must never do. The guide's quick start stays one
+command.
+
+**The operator JWT names no system account.** `operator init` runs before any
+account exists. The server configuration names it (`system_account:` in the
+dev conf; `Options.SystemAccount` in the estate), which is where NATS reads it
+from anyway when both are set.
 
 ---
 

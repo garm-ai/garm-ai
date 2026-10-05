@@ -20,7 +20,17 @@ type Manifest struct {
 	Generation      int       `json:"generation"`
 	CatalogueSHA256 string    `json:"catalogue_sha256"`
 	IssuedAt        time.Time `json:"issued_at"`
-	Entries         []Entry   `json:"entries"`
+	// Accounts records every account's public keys -- identity, signing, and a
+	// retiring signing key between the two steps of a rotation (spec §4, §5).
+	Accounts map[string]AccountRecord `json:"accounts"`
+	Entries  []Entry                  `json:"entries"`
+}
+
+// AccountRecord is one account's keys as the manifest knows them. All public.
+type AccountRecord struct {
+	Identity string `json:"identity"`
+	Signing  string `json:"signing"`
+	Retiring string `json:"retiring,omitempty"`
 }
 
 // Entry is one issued credential, without its seed -- the manifest is a record of
@@ -37,11 +47,18 @@ type Entry struct {
 	// at or before its timestamp -- and in.Now is the caller's clock, not the
 	// encoder's.
 	IssuedAt int64 `json:"issued_at"`
+	// SigningKey is the public key that signed this credential, so a rotation
+	// can say what it reissued and a retirement can check nothing still names
+	// the old key.
+	SigningKey string `json:"signing_key"`
+	// Reason is why this entry was issued: "new", "catalogue", "rotation";
+	// empty for a carry-forward.
+	Reason string `json:"reason,omitempty"`
 }
 
 // Empty is the explicit first manifest. Explicit, because a generator that treated
 // "no manifest" as "nothing was issued before" would never revoke anything.
-func Empty() *Manifest { return &Manifest{} }
+func Empty() *Manifest { return &Manifest{Accounts: map[string]AccountRecord{}} }
 
 type signed struct {
 	Manifest  Manifest `json:"manifest"`
@@ -106,6 +123,9 @@ func Load(path, operatorPublic string) (*Manifest, error) {
 	}
 	if err := pub.Verify(body, sig); err != nil {
 		return nil, fmt.Errorf("topology: %s: signature does not verify", path)
+	}
+	if s.Manifest.Accounts == nil {
+		return nil, fmt.Errorf("topology: %s predates signing keys and cannot be continued; start again with --first under the new key layout", path)
 	}
 	return &s.Manifest, nil
 }

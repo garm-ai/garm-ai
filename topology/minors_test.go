@@ -86,8 +86,10 @@ func TestGARMExportsPrivatelyAndEachCallerHoldsItsOwnActivation(t *testing.T) {
 		if act.Subject != ac.Subject {
 			t.Errorf("%s holds an activation issued to %s, not to itself (%s)", caller, act.Subject, ac.Subject)
 		}
-		if act.Issuer != garm.Subject {
-			t.Errorf("%s's activation was issued by %s, not GARM", caller, act.Issuer)
+		// Signed by GARM's SIGNING key, on behalf of GARM (IssuerAccount): the
+		// identity key signs nothing after creation (signing-keys spec §2).
+		if act.IssuerAccount != garm.Subject || !garm.SigningKeys.Contains(act.Issuer) {
+			t.Errorf("%s's activation was issued by %s for %s, not by GARM's signing key for GARM", caller, act.Issuer, act.IssuerAccount)
 		}
 		if string(act.ImportSubject) != string(ac.Imports[0].Subject) {
 			t.Errorf("%s's activation is for %s, its import is %s", caller, act.ImportSubject, ac.Imports[0].Subject)

@@ -130,10 +130,10 @@ func TestTheManifestIsSignedAndATamperedOneIsRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(t.TempDir(), "manifest.json")
-	if err := out.Manifest.Save(path, keys.Operator); err != nil {
+	if err := out.Manifest.Save(path, keys.OperatorSigning); err != nil {
 		t.Fatal(err)
 	}
-	opPub, _ := keys.Operator.PublicKey()
+	opPub, _ := keys.OperatorSigning.PublicKey()
 	back, err := topology.Load(path, opPub)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
@@ -142,7 +142,7 @@ func TestTheManifestIsSignedAndATamperedOneIsRefused(t *testing.T) {
 		t.Fatal("the manifest did not round-trip")
 	}
 	other := topology.FreshKeys(nil)
-	otherPub, _ := other.Operator.PublicKey()
+	otherPub, _ := other.OperatorSigning.PublicKey()
 	if _, err := topology.Load(path, otherPub); err == nil {
 		t.Fatal("a manifest signed by one key verified under another")
 	}

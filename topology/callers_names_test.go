@@ -24,7 +24,7 @@ func TestCallerNamesIsEveryCallerAndNothingElse(t *testing.T) {
 	if len(names) != 2 {
 		t.Fatalf("want 2 callers, got %v", names)
 	}
-	want, _ := keys.Accounts[topology.CallerPrefix+"studio"].PublicKey()
+	want := keys.Accounts[topology.CallerPrefix+"studio"].Identity
 	if names["studio"] != want {
 		t.Errorf("studio -> %q, want %s", names["studio"], want)
 	}
