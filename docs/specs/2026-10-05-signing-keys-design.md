@@ -3,8 +3,8 @@
 **Date:** 2026-10-05
 **Status:** built as step 9f, per `docs/plans/2026-10-05-signing-keys.md`; §10 says what it leaves out
 
-**Spec for:** the key shape the identity spec's §5.1 describes and the generator does
-not yet produce — a root that signs nothing day to day, an operator signing key
+**Spec for:** the key shape the identity spec's §5.1 describes — a root that signs
+nothing day to day, an operator signing key
 that signs accounts, an account signing key that signs every credential — and the
 one operation that shape exists for: rotating a key without touching anything that
 trusts the root.
@@ -165,8 +165,9 @@ manifest carries the state between them.
 **Step one** — `garmctl topology --rotate-signing GARM …`:
 
 1. a new signing keypair for GARM is minted (an account key: born in the
-   issuance environment, written to `--keys` like any other, the old seed left in
-   place but no longer used);
+   issuance environment, written to `--keys-out` atomically like any other, the
+   old seed **archived** first as `archive/GARM.signing.<pub>.nk` — it is still
+   listed on the live account, and step one must stay recoverable);
 2. GARM's account JWT lists **both** keys, new first;
 3. **every** credential in GARM is reissued under the new key — carry-forward is
    suspended for the rotating account, the one reason an unchanged credential is
@@ -187,8 +188,14 @@ its new credential.*
 
 **Step two** — the next ordinary issuance:
 
-7. sees `retiring` on GARM, drops the old key from the account JWT, records the
-   retirement with its generation, and clears `retiring`;
+7. sees `retiring` on GARM, drops the old key from the account JWT, **records
+   the retirement** (`accounts.GARM.retired[<key>] = <generation>`), says so on
+   its output, and clears `retiring`;
+7a. **refuses to retire unless told to decide**: `--verify-live`, or
+   `--no-verify-live` said on purpose. A routine issuance — a catalogue bump, a
+   rotation of some other account — would otherwise drop the key as a side
+   effect, which is an outage for every process that has not rolled out (found
+   in review);
 8. refuses to do so if any manifest entry still names the retiring key as its
    signer — which cannot happen after a complete step one, and is exactly what
    happens if someone hand-edits the manifest or re-runs step one with a
@@ -200,7 +207,10 @@ finished: it knows every credential was *issued*, not that every process
 names the key that signed it, and the system account's `CONNZ` request lists
 them. So step two takes **`--verify-live`**: with the ops credential it asks
 the cluster and **refuses to retire a key that any live connection was signed
-by**, naming the connections. Evidence from the bus, not a hope about the
+by**, naming the connections. It fails closed: a server answers `CONNZ` one
+page at a time (1024 by default, and `0` means that cap, not *all*), so every
+server is paged until it has shown its total; and fewer servers answering than
+`--servers` (default 1) is no evidence, not a pass. Evidence from the bus, not a hope about the
 rollout — and it works on a laptop exactly as on a cluster. On Kubernetes
 `kubectl rollout status` is necessary and not sufficient: a Deployment can be
 "rolled out" with one pod still reconnecting on an old mount. (`nats.go`
@@ -210,7 +220,19 @@ and not what step two relies on.)
 
 **Per-credential revocation is unchanged.** `RevokeAt` in the account JWT, dated
 at or after the credential's `iat`, pushed over `$SYS`. Rotation is for a key;
-revocation is for a credential; neither is the other's job.
+revocation is for a credential; neither is the other's job — which is why
+`--rotate` (reissue and revoke everything now) together with `--rotate-signing`
+(keep the account's old credentials alive until the key retires) is refused:
+they say opposite things about the same credentials.
+
+**Three guards the review added.** A `--keys` signing key that disagrees with
+the manifest's record is refused like a disagreeing identity — a swapped seed
+would list only the new key and leave every carried-forward credential signed
+by one no longer listed, dead on the push with no reissue and no warning. A
+credential file missing from `--out` (an output that failed after the manifest
+was saved) is reissued on the next run, by name, and said so. A manifest signed
+by a previous operator signing key loads while the operator JWT still lists it,
+so replacing the operator signing key does not strand the manifest.
 
 ---
 

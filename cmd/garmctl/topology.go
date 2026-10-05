@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/nats-io/jwt/v2"
+	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nkeys"
 	"github.com/spf13/cobra"
 
@@ -34,6 +35,8 @@ func topologyCmd() *cobra.Command {
 		out                    string
 		rotateSigning          []string
 		status, verifyLive     bool
+		noVerifyLive           bool
+		servers                int
 		natsURL, opsCreds, ca  string
 	)
 	cmd := &cobra.Command{
@@ -81,10 +84,14 @@ func topologyCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				opPub, err := keys.OperatorSigning.PublicKey()
+				// The manifest may be signed by any key the operator JWT lists -- so a
+				// manifest signed before the operator signing key was replaced still
+				// loads while the old key is listed (review finding 6).
+				opClaims, err := jwt.DecodeOperatorClaims(keys.OperatorJWT)
 				if err != nil {
-					return err
+					return fmt.Errorf("the operator JWT: %w", err)
 				}
+				signers := []string(opClaims.SigningKeys)
 				_, statErr := os.Stat(manifestPath)
 				switch {
 				case statErr != nil && !errors.Is(statErr, fs.ErrNotExist):
@@ -95,7 +102,7 @@ func topologyCmd() *cobra.Command {
 				case statErr == nil && first:
 					return fmt.Errorf("%s exists; --first would forget every credential it records", manifestPath)
 				case statErr == nil:
-					if previous, err = topology.Load(manifestPath, opPub); err != nil {
+					if previous, err = topology.Load(manifestPath, signers...); err != nil {
 						return err
 					}
 				case first:
@@ -106,24 +113,60 @@ func topologyCmd() *cobra.Command {
 				}
 			}
 
-			// Step two of a rotation retires a key. --verify-live asks the bus first:
-			// a key any live connection was signed by is not retired, by name
-			// (spec §4). With nothing retiring, nothing is asked.
-			if verifyLive {
-				if err := verifyNothingLiveOnRetiringKeys(previous, rotateSigning, natsURL, opsCreds, ca); err != nil {
+			// Step two of a rotation retires a key, and that is a DECISION, not a
+			// side effect of the next catalogue bump: it needs --verify-live, which
+			// asks the bus (spec §4), or --no-verify-live said on purpose. Found in
+			// review: a routine issuance aimed at another account retired the key.
+			wouldRetire := retiringKeys(previous, rotateSigning)
+			switch {
+			case len(wouldRetire) == 0:
+				// nothing to decide
+			case verifyLive && noVerifyLive:
+				return errors.New("--verify-live and --no-verify-live together make no sense")
+			case verifyLive:
+				if err := verifyNothingLiveOnRetiringKeys(wouldRetire, natsURL, opsCreds, ca, servers); err != nil {
 					return err
+				}
+			case noVerifyLive:
+				// said on purpose; the retirement is announced below
+			default:
+				names := make([]string, 0, len(wouldRetire))
+				for name := range wouldRetire {
+					names = append(names, name)
+				}
+				sort.Strings(names)
+				return fmt.Errorf("this issuance would retire a signing key on %s, which closes every connection still using it; pass --verify-live (asks the cluster first) or --no-verify-live (you have checked the rollout yourself)",
+					strings.Join(names, ", "))
+			}
+			// A credential whose file never landed -- an output that failed after
+			// the manifest was saved -- is reissued, by name, and said so. Only in
+			// an output directory that has credentials at all: a fresh --out is a
+			// new place, not a partial failure, and reissuing everything into it
+			// would restart every process for nothing.
+			var reissue []string
+			if _, statErr := os.Stat(filepath.Join(out, "creds")); !dev && previous != nil && statErr == nil {
+				for _, e := range previous.Entries {
+					if _, statErr := os.Stat(filepath.Join(out, "creds", e.Name+".creds")); errors.Is(statErr, fs.ErrNotExist) {
+						reissue = append(reissue, e.Name)
+					}
 				}
 			}
 			res, err := topology.Generate(topology.Input{
 				Catalogue: cat, Callers: callers, Previous: previous, Keys: keys, Now: time.Now(),
-				Rotate: rotate, RotateSigning: rotateSigning,
+				Rotate: rotate, RotateSigning: rotateSigning, Reissue: reissue,
 			})
 			if err != nil {
 				return err
 			}
+			for _, name := range reissue {
+				fmt.Fprintf(cmd.OutOrStdout(), "%s: credential file was missing; reissued\n", name)
+			}
+			for _, r := range res.Retired {
+				fmt.Fprintf(cmd.OutOrStdout(), "%s: retired signing key %s; every credential it signed is now refused\n", r.Account, r.Key)
+			}
 			for name, rec := range res.Manifest.Accounts {
 				if rec.Retiring != "" {
-					fmt.Fprintf(cmd.ErrOrStderr(), "%s: signing key retiring; the old key %s is still listed -- roll the new credentials out, then run an issuance (with --verify-live) to retire it\n", name, rec.Retiring)
+					fmt.Fprintf(cmd.ErrOrStderr(), "%s: signing key retiring; the old key %s is still listed -- roll the new credentials out, then run an issuance with --verify-live to retire it\n", name, rec.Retiring)
 				}
 			}
 			// New account keys FIRST, then the manifest, then the output. A key that
@@ -135,7 +178,7 @@ func topologyCmd() *cobra.Command {
 				if keysOut == "" {
 					keysOut = keysDir
 				}
-				if err := writeNewKeys(keysOut, res.NewKeys); err != nil {
+				if err := writeNewKeys(keysOut, keysDir, res.NewKeys, res.Manifest.Accounts); err != nil {
 					return err
 				}
 				if err := res.Manifest.Save(manifestPath, keys.OperatorSigning); err != nil {
@@ -172,6 +215,8 @@ func topologyCmd() *cobra.Command {
 	cmd.Flags().StringSliceVar(&rotateSigning, "rotate-signing", nil, "accounts whose SIGNING KEY is replaced: the new key is listed beside the old and every credential of the account reissued; the next issuance retires the old key")
 	cmd.Flags().BoolVar(&status, "status", false, "print the manifest's state -- generation, accounts, any retiring key -- and issue nothing")
 	cmd.Flags().BoolVar(&verifyLive, "verify-live", false, "before retiring a signing key, ask the cluster (with --ops-creds) and refuse if any live connection still uses it")
+	cmd.Flags().BoolVar(&noVerifyLive, "no-verify-live", false, "retire a signing key WITHOUT asking the cluster; you have checked the rollout yourself")
+	cmd.Flags().IntVar(&servers, "servers", 1, "how many servers must answer --verify-live; fewer is refused")
 	cmd.Flags().StringVar(&natsURL, "nats", "", "NATS URL, for --verify-live")
 	cmd.Flags().StringVar(&opsCreds, "ops-creds", "", "the ops credential, for --verify-live")
 	cmd.Flags().StringVar(&ca, "tls-ca", "", "PEM the server's certificate chains to, for --verify-live")
@@ -220,9 +265,12 @@ func readKeys(dir string, callers []string) (topology.Keys, error) {
 
 // writeNewKeys keeps what Generate minted: a new account's public identity and
 // signing seed beside the others, its identity seed under archive/ where nothing
-// reads it; a rotation's new signing seed over the old. Written BEFORE the
-// manifest, and fails -- naming the directory -- before anything else is written.
-func writeNewKeys(dir string, nk map[string]topology.NewAccountKeys) error {
+// reads it; a rotation's new signing seed in place of the old -- after the old
+// one is ARCHIVED as archive/<ACCOUNT>.signing.<pub>.nk, because the old key is
+// still listed on the live account and step one must stay recoverable. Written
+// BEFORE the manifest, atomically, and fails -- naming the directory -- before
+// anything else is written.
+func writeNewKeys(dir, keysDir string, nk map[string]topology.NewAccountKeys, accounts map[string]topology.AccountRecord) error {
 	if len(nk) == 0 {
 		return nil
 	}
@@ -230,6 +278,16 @@ func writeNewKeys(dir string, nk map[string]topology.NewAccountKeys) error {
 		return fmt.Errorf("writing new account keys to %s: %w", dir, err)
 	}
 	for name, k := range nk {
+		if k.Identity == nil {
+			// A rotation: the superseded seed first, intact, under its public key.
+			old, err := os.ReadFile(filepath.Join(keysDir, name+".signing.nk"))
+			if err != nil {
+				return fmt.Errorf("archiving %s's superseded signing seed: %w", name, err)
+			}
+			if err := writeFileAtomic(filepath.Join(dir, "archive", name+".signing."+accounts[name].Retiring+".nk"), old, 0o600); err != nil {
+				return fmt.Errorf("writing new account keys to %s: %w", dir, err)
+			}
+		}
 		if err := writeSeed(filepath.Join(dir, name+".signing.nk"), k.Signing); err != nil {
 			return fmt.Errorf("writing new account keys to %s: %w", dir, err)
 		}
@@ -240,7 +298,7 @@ func writeNewKeys(dir string, nk map[string]topology.NewAccountKeys) error {
 		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(filepath.Join(dir, name+".pub"), []byte(pub+"\n"), 0o644); err != nil {
+		if err := writeFileAtomic(filepath.Join(dir, name+".pub"), []byte(pub+"\n"), 0o644); err != nil {
 			return fmt.Errorf("writing new account keys to %s: %w", dir, err)
 		}
 		if err := writeSeed(filepath.Join(dir, "archive", name+".identity.nk"), k.Identity); err != nil {
@@ -308,7 +366,7 @@ func writeOutput(dir string, res *topology.Output, signer nkeys.KeyPair) error {
 	// here, by the name the revocation carries. A superseded one is overwritten
 	// above under the same name; a carried-forward one is untouched.
 	for _, r := range res.Revoke {
-		if strings.HasPrefix(r.Why, "retired") {
+		if r.Kind == topology.Retired {
 			if err := os.Remove(filepath.Join(dir, "creds", r.Name+".creds")); err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return fmt.Errorf("removing the retired credential %s: %w", r.Name, err)
 			}
@@ -391,36 +449,41 @@ tls {
 	return os.WriteFile(filepath.Join(dir, "nats-server.conf"), []byte(conf), 0o600)
 }
 
-// verifyNothingLiveOnRetiringKeys is --verify-live: for every account retiring a
-// key that this issuance would drop, ask the cluster which keys its live
-// connections were signed by, and refuse to retire one still in use.
-func verifyNothingLiveOnRetiringKeys(previous *topology.Manifest, rotating []string, natsURL, opsCreds, ca string) error {
+// retiringKeys is every signing key this issuance would drop: account -> key,
+// for accounts retiring from a previous step one and not rotating again now.
+func retiringKeys(previous *topology.Manifest, rotating []string) map[string]string {
 	skip := map[string]bool{}
 	for _, name := range rotating {
 		skip[name] = true
 	}
-	retiring := map[string]string{} // retiring key -> account
+	by := map[string]string{}
+	if previous == nil {
+		return by
+	}
 	for name, rec := range previous.Accounts {
 		if rec.Retiring != "" && !skip[name] {
-			retiring[rec.Retiring] = name
+			by[name] = rec.Retiring
 		}
 	}
-	if len(retiring) == 0 {
-		return nil // nothing to retire; nothing to ask
-	}
+	return by
+}
+
+// verifyNothingLiveOnRetiringKeys is --verify-live: ask the cluster which keys
+// its live connections were signed by, and refuse to retire one still in use.
+func verifyNothingLiveOnRetiringKeys(retiring map[string]string, natsURL, opsCreds, ca string, servers int) error {
 	if natsURL == "" || opsCreds == "" {
 		return errors.New("--verify-live needs --nats and --ops-creds")
 	}
-	nc, err := natsconn.Connect(natsURL, natsconn.Options{Creds: opsCreds, CA: ca})
+	nc, err := natsconn.Connect(natsURL, natsconn.Options{Creds: opsCreds, CA: ca}, nats.Name("garmctl topology --verify-live"))
 	if err != nil {
 		return fmt.Errorf("--verify-live: %w", err)
 	}
 	defer nc.Close()
-	live, err := liveSigners(nc, 2*time.Second)
+	live, err := liveSigners(nc, 2*time.Second, servers)
 	if err != nil {
 		return fmt.Errorf("--verify-live: %w", err)
 	}
-	for key, account := range retiring {
+	for account, key := range retiring {
 		if conns := live[key]; len(conns) > 0 {
 			sort.Strings(conns)
 			return fmt.Errorf("--verify-live: %s's retiring key %s still signs %d live connection(s): %s -- roll them out first",
@@ -439,11 +502,11 @@ func printStatus(cmd *cobra.Command, keysDir, manifestPath string) error {
 	if err != nil {
 		return err
 	}
-	opPub, err := keys.OperatorSigning.PublicKey()
+	opClaims, err := jwt.DecodeOperatorClaims(keys.OperatorJWT)
 	if err != nil {
 		return err
 	}
-	m, err := topology.Load(manifestPath, opPub)
+	m, err := topology.Load(manifestPath, []string(opClaims.SigningKeys)...)
 	if err != nil {
 		return err
 	}

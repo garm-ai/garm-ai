@@ -25,8 +25,10 @@ type Options struct {
 	CA string
 }
 
-// Connect dials with the credential and trust the options name.
-func Connect(url string, o Options) (*nats.Conn, error) {
+// Connect dials with the credential and trust the options name. extra is for the
+// one or two things a command wants beyond those -- a connection name, so that
+// a tool asking the cluster about connections can see its own.
+func Connect(url string, o Options, extra ...nats.Option) (*nats.Conn, error) {
 	var opts []nats.Option
 	if o.Creds != "" {
 		opts = append(opts, nats.UserCredentials(o.Creds))
@@ -34,6 +36,7 @@ func Connect(url string, o Options) (*nats.Conn, error) {
 	if o.CA != "" {
 		opts = append(opts, nats.RootCAs(o.CA))
 	}
+	opts = append(opts, extra...)
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
 		if o.Creds == "" && errors.Is(err, nats.ErrAuthorization) {

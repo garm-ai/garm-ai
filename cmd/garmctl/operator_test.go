@@ -73,3 +73,28 @@ func TestReplaceSigningKeyListsBothKeys(t *testing.T) {
 		t.Fatalf("replaced operator lists %v (was %v)", now.SigningKeys, was.SigningKeys)
 	}
 }
+
+// Review finding 6: replace-signing-key refuses an existing --out (as init does)
+// and prints the sequence that makes the new key safe to adopt -- the server's
+// operator JWT first, then the keys directory.
+func TestReplaceSigningKeyRefusesAnExistingOutAndPrintsTheSequence(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "ceremony")
+	if _, _, err := runOperator(t, "init", "--out", dir); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := runOperator(t, "replace-signing-key", "--root", filepath.Join(dir, "root", "root.nk"),
+		"--operator", filepath.Join(dir, "keys", "operator.jwt"), "--out", filepath.Join(dir, "keys")); err == nil {
+		t.Fatal("replace-signing-key wrote over the live keys directory")
+	}
+	out := filepath.Join(t.TempDir(), "replaced")
+	stdout, _, err := runOperator(t, "replace-signing-key", "--root", filepath.Join(dir, "root", "root.nk"),
+		"--operator", filepath.Join(dir, "keys", "operator.jwt"), "--out", out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"operator.jwt", "server", "operator-signing.nk"} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("the sequence does not mention %q:\n%s", want, stdout)
+		}
+	}
+}

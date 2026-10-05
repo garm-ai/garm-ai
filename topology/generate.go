@@ -3,6 +3,7 @@ package topology
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -103,9 +104,22 @@ func Generate(in Input) (*Output, error) {
 			newKeys[name] = NewAccountKeys{Identity: id, Signing: sign}
 		}
 		// A key that disagrees with the manifest is a key swapped under a running
-		// estate -- the attack, not a typo.
-		if rec, known := in.Previous.Accounts[name]; known && rec.Identity != k.Identity {
-			return nil, fmt.Errorf("topology: %s's identity key %s disagrees with the manifest's %s", name, k.Identity, rec.Identity)
+		// estate -- the attack, not a typo. BOTH keys: a swapped signing seed would
+		// list only the new key on the account and leave every carried-forward
+		// credential signed by one no longer listed -- dead on the push, with no
+		// reissue, no revocation and no warning (found in review). A rotation is
+		// the one time the signing key is meant to differ, and it is declared.
+		if rec, known := in.Previous.Accounts[name]; known {
+			if rec.Identity != k.Identity {
+				return nil, fmt.Errorf("topology: %s's identity key %s disagrees with the manifest's %s", name, k.Identity, rec.Identity)
+			}
+			sp, err := k.Signing.PublicKey()
+			if err != nil {
+				return nil, err
+			}
+			if rec.Signing != sp && !slices.Contains(in.RotateSigning, name) {
+				return nil, fmt.Errorf("topology: %s's signing key %s disagrees with the manifest's %s; a rotation is --rotate-signing, not a swapped seed", name, sp, rec.Signing)
+			}
 		}
 		keys[name] = k
 	}
@@ -115,6 +129,9 @@ func Generate(in Input) (*Output, error) {
 	// one; every credential of the account is reissued under it below.
 	retiring := map[string]string{}
 	rotating := map[string]bool{}
+	if in.Rotate && len(in.RotateSigning) > 0 {
+		return nil, fmt.Errorf("topology: --rotate and --rotate-signing together are refused: --rotate revokes every previous credential now, --rotate-signing keeps the account's alive until the old key is retired")
+	}
 	for _, name := range in.RotateSigning {
 		if _, ok := keys[name]; !ok {
 			return nil, fmt.Errorf("topology: --rotate-signing %s: no such account in this topology", name)
@@ -139,7 +156,9 @@ func Generate(in Input) (*Output, error) {
 	}
 	// ---- rotation, step two: a key retiring from a previous step one is dropped
 	// now -- unless something still names it, which only a hand-edited manifest
-	// can arrange. Dropped means: simply not listed, and not recorded.
+	// can arrange. Dropped means: not listed, and RECORDED as retired by this
+	// generation, so a reviewer of the manifest sees it happened.
+	var retired []Retirement
 	for name, rec := range in.Previous.Accounts {
 		if rec.Retiring == "" || rotating[name] {
 			continue
@@ -149,6 +168,12 @@ func Generate(in Input) (*Output, error) {
 				return nil, fmt.Errorf("topology: %s's retiring key %s still signs %s; it cannot be retired", name, rec.Retiring, e.Name)
 			}
 		}
+		retired = append(retired, Retirement{Account: name, Key: rec.Retiring})
+	}
+	sort.Slice(retired, func(i, j int) bool { return retired[i].Account < retired[j].Account })
+	forced := map[string]bool{}
+	for _, n := range in.Reissue {
+		forced[n] = true
 	}
 
 	sysPub := keys[AccountSYS].Identity
@@ -308,7 +333,7 @@ func Generate(in Input) (*Output, error) {
 	for _, w := range wants {
 		hash := permissionsHash(w.account, w.perms)
 		p, had := previous[w.name]
-		if had && !in.Rotate && !rotating[w.account] && p.Account == w.account && p.PermissionsHash == hash {
+		if had && !in.Rotate && !rotating[w.account] && !forced[w.name] && p.Account == w.account && p.PermissionsHash == hash {
 			p.Reason = ""
 			entries = append(entries, p)
 			continue
@@ -321,6 +346,8 @@ func Generate(in Input) (*Output, error) {
 		switch {
 		case rotating[w.account]:
 			reason = "rotation"
+		case had && forced[w.name]:
+			reason = "reissued"
 		case had:
 			reason = "catalogue"
 		}
@@ -339,7 +366,23 @@ func Generate(in Input) (*Output, error) {
 		if err != nil {
 			return nil, err
 		}
-		records[name] = AccountRecord{Identity: k.Identity, Signing: sp, Retiring: retiring[name]}
+		rec := AccountRecord{Identity: k.Identity, Signing: sp, Retiring: retiring[name]}
+		// Retirements are history: carried forward, plus any this issuance did.
+		for key, g := range in.Previous.Accounts[name].Retired {
+			if rec.Retired == nil {
+				rec.Retired = map[string]int{}
+			}
+			rec.Retired[key] = g
+		}
+		for _, r := range retired {
+			if r.Account == name {
+				if rec.Retired == nil {
+					rec.Retired = map[string]int{}
+				}
+				rec.Retired[r.Key] = gen
+			}
+		}
+		records[name] = rec
 	}
 	manifest := Manifest{Generation: gen, CatalogueSHA256: in.Catalogue.SHA256, IssuedAt: in.Now, Accounts: records, Entries: entries}
 
@@ -353,7 +396,7 @@ func Generate(in Input) (*Output, error) {
 	revoke := delta(in.Previous, manifest, in.Now)
 	kept := revoke[:0]
 	for _, r := range revoke {
-		if rotating[r.Account] && strings.HasPrefix(r.Why, "superseded") {
+		if rotating[r.Account] && r.Kind == Superseded {
 			continue
 		}
 		kept = append(kept, r)
@@ -395,7 +438,7 @@ func Generate(in Input) (*Output, error) {
 	// ---- encode: every account by the operator SIGNING key; the operator JWT
 	// is passed through, never re-encoded -- only the root could.
 	out := &Output{OperatorJWT: in.Keys.OperatorJWT, Accounts: map[string]string{},
-		Credentials: creds, Manifest: manifest, Revoke: revoke, NewKeys: newKeys}
+		Credentials: creds, Manifest: manifest, Revoke: revoke, NewKeys: newKeys, Retired: retired}
 	for name, ac := range accounts {
 		s, err := ac.Encode(in.Keys.OperatorSigning)
 		if err != nil {

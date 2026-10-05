@@ -157,9 +157,10 @@ The last line is what makes this an example rather than a claim: it is compiled 
 The bus runs in **operator mode**: every process connects with a credential whose
 permissions were derived from the catalogue, over TLS. Locally, `garmctl topology
 --dev` mints a throwaway set — keys, credentials, a self-signed certificate, and a
-`nats-server.conf` that uses them — and says so. A deployment's keys are an input
-the generator never produces, its certificate comes from its own CA, and it runs
-the full resolver rather than the preloaded memory one `--dev` writes; the
+`nats-server.conf` that uses them — and says so. A deployment's root and operator
+signing key come from a ceremony the generator never runs (below), its
+certificate comes from its own CA, and it runs the full resolver rather than the
+preloaded memory one `--dev` writes; the
 [identity spec](specs/2026-10-04-identity-and-transport-security-design.md) §5–§7
 says what each of those is.
 
@@ -176,40 +177,6 @@ Every line above is what `cmd/garmctl`'s `TestDevEmitsAServerConfigThatBootsAndA
 does: it starts a server from the emitted file and connects with an emitted
 credential. The test estate (`internal/estate`) is the same topology stood up in
 process, which is how every test runs against it.
-
-### A deployment's keys
-
-`--dev` mints a throwaway operator and discards its root. A deployment runs the
-root ceremony **once, offline**, and hands `topology` only what it needs:
-
-```bash
-garmctl operator init --out ceremony            # OFFLINE, once; then move ceremony/root to custody
-garmctl topology --keys ceremony/keys --manifest manifest.json --first \
-  --catalogue file://build/catalogue.binpb --callers studio -o topo
-```
-
-Three keys, three places: the **root** signs the operator JWT and nothing else,
-and lives in custody — `topology` refuses a `--keys` that holds it; the
-**operator signing key** signs every account and lives where issuance runs; each
-**account's signing key** signs its credentials. A new caller's keys are born at
-issuance and written to `--keys-out` (default `--keys`; a scratch path where
-`--keys` is a read-only mount), its identity seed under `archive/` where nothing
-reads it. The server enforces the shape: with `StrictSigningKeyUsage` on, an
-account signed by the root or a user signed by an identity key is refused.
-
-Rotating an account's signing key is two issuances, so nothing goes down:
-
-```bash
-garmctl topology --keys … --manifest … --rotate-signing GARM …   # new key listed beside the old; GARM's credentials reissued
-# roll the new credential files out
-garmctl topology --keys … --manifest … --verify-live --nats … --ops-creds … …   # retires the old key -- refusing, by name, if any live connection still uses it
-garmctl topology --status --keys … --manifest …                  # what is retiring, in between
-```
-
-`--verify-live` asks the cluster which key each live connection was signed by.
-On Kubernetes `kubectl rollout status` is necessary and not sufficient — a
-Deployment can be "rolled out" with one pod still reconnecting on an old mount —
-and this is the check that is.
 
 ```
 level=INFO msg=observability exporter=none endpoint="" headers=[] disabled=false service=weatherd
@@ -239,6 +206,44 @@ return svc.Serve(ctx)        // until SIGTERM, then drains
 that was queued behind a slow one. That is why `main` closes the connection with
 `defer` *after* `Run`, and not before: closing early turns a deploy into a handful
 of caller timeouts.
+
+### A deployment's keys
+
+`--dev` mints a throwaway operator and discards its root. A deployment runs the
+root ceremony **once, offline**, and hands `topology` only what it needs:
+
+```bash
+garmctl operator init --out ceremony            # OFFLINE, once; then move ceremony/root to custody
+garmctl topology --keys ceremony/keys --manifest manifest.json --first \
+  --catalogue file://build/catalogue.binpb --callers studio -o topo
+```
+
+Three keys, three places: the **root** signs the operator JWT and nothing else,
+and lives in custody — `topology` refuses a `--keys` that holds it; the
+**operator signing key** signs every account and lives where issuance runs; each
+**account's signing key** signs its credentials. A new caller's keys are born at
+issuance and written to `--keys-out` (default `--keys`; a scratch path where
+`--keys` is a read-only mount), its identity seed under `archive/` where nothing
+reads it. The server enforces the shape: with `StrictSigningKeyUsage` on, an
+account signed by the root or a user signed by an identity key is refused.
+
+Rotating an account's signing key is two issuances, so nothing goes down:
+
+```bash
+garmctl topology --keys … --manifest … --rotate-signing GARM …   # new key listed beside the old; GARM's credentials reissued; the old seed archived
+# roll the new credential files out
+garmctl topology --keys … --manifest … --verify-live --nats … --ops-creds … --servers 3 …   # retires the old key -- refusing, by name, if any live connection still uses it
+garmctl topology --status --keys … --manifest …                  # what is retiring, in between
+```
+
+Retiring a key is a decision, not a side effect: an issuance that would drop one
+refuses unless it is told `--verify-live` or `--no-verify-live`. `--verify-live`
+asks the cluster which key each live connection was signed by, pages through
+every server's connections, and treats fewer servers answering than `--servers`
+as no evidence. On Kubernetes `kubectl rollout status` is necessary and not
+sufficient — a Deployment can be "rolled out" with one pod still reconnecting on
+an old mount — and this is the check that is. A credential file that went
+missing from `--out` is reissued on the next run, and the run says so.
 
 ### Seeing it run
 

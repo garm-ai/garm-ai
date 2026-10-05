@@ -72,8 +72,13 @@ type Input struct {
 	// RotateSigning names accounts whose signing key is replaced: a new key is
 	// minted and listed beside the old, and every credential of the account is
 	// reissued under it (spec §4 step one). The old key is dropped at the next
-	// issuance that finds it retiring.
+	// issuance that finds it retiring. Refused together with Rotate: the two
+	// say opposite things about the old credentials.
 	RotateSigning []string
+	// Reissue names credentials to reissue regardless of carry-forward -- the
+	// repair for a credential file that never landed after the manifest was
+	// saved. The entry's reason says "reissued".
+	Reissue []string
 }
 
 // DefaultExpiry: long enough never to cause a reconnect storm, short enough that
@@ -111,6 +116,16 @@ type Credential struct {
 	SigningKey string
 }
 
+// RevocationKind is WHY a credential is revoked, typed so that code matches on
+// it -- a sentence a human reads is not something a filter should grep.
+type RevocationKind string
+
+const (
+	Retired    RevocationKind = "retired"    // its name left the catalogue or the caller list
+	Moved      RevocationKind = "moved"      // reissued in another account
+	Superseded RevocationKind = "superseded" // reissued in the same account
+)
+
 // Revocation is an instruction to the deployment: this user, in this account,
 // is revoked for every credential issued before At. Name is the credential's,
 // so a deployment can find the file it must stop deploying.
@@ -119,7 +134,15 @@ type Revocation struct {
 	Account string
 	Public  string
 	At      time.Time
+	Kind    RevocationKind
 	Why     string
+}
+
+// Retirement is a signing key an issuance dropped from an account -- step two
+// of a rotation -- so the command can say so and the manifest records it.
+type Retirement struct {
+	Account string
+	Key     string
 }
 
 // Output is what a consumer applies.
@@ -133,4 +156,6 @@ type Output struct {
 	// NewKeys is every account key Generate minted: a new account's pair, or a
 	// rotation's new signing key. The caller writes them where --keys-out says.
 	NewKeys map[string]NewAccountKeys
+	// Retired is every signing key this issuance dropped (spec §4 step two).
+	Retired []Retirement
 }

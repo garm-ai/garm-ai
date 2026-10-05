@@ -125,3 +125,49 @@ func TestRotatingAnAlreadyRetiringAccountIsRefused(t *testing.T) {
 		t.Fatalf("err = %v, want a refusal because GARM is already retiring a key", err)
 	}
 }
+
+// Review finding 2: --rotate and --rotate-signing mean opposite things about the
+// old credentials (revoke now / keep alive until step two); together they are
+// refused rather than silently dropping the revocations --rotate promises.
+func TestRotateAndRotateSigningTogetherAreRefused(t *testing.T) {
+	keys := topology.FreshKeys([]string{"studio"})
+	first := issueWith(t, keys, topology.Empty(), "studio")
+	_, err := topology.Generate(topology.Input{Catalogue: fixtures.Weather(t).Catalogue, Callers: []string{"studio"},
+		Previous: &first.Manifest, Keys: keys, Now: time.Now(), Rotate: true, RotateSigning: []string{topology.AccountGARM}})
+	if err == nil || !strings.Contains(err.Error(), "--rotate") {
+		t.Fatalf("err = %v, want a refusal naming the two flags", err)
+	}
+}
+
+// Review finding 2, the typed half: a revocation carries a KIND the code matches
+// on, not a sentence it greps.
+func TestRevocationsCarryATypedKind(t *testing.T) {
+	keys := topology.FreshKeys([]string{"studio"})
+	first := issueWith(t, keys, topology.Empty(), "studio")
+	second := issueWith(t, keys, &first.Manifest) // studio has left: retired
+	var kinds []topology.RevocationKind
+	for _, r := range second.Revoke {
+		kinds = append(kinds, r.Kind)
+	}
+	if len(kinds) != 1 || kinds[0] != topology.Retired {
+		t.Fatalf("kinds = %v, want [retired]", kinds)
+	}
+}
+
+// Review finding 3: a retirement is RECORDED -- the key and the generation that
+// dropped it -- so a reviewer of the manifest can see it happened.
+func TestStepTwoRecordsTheRetirement(t *testing.T) {
+	keys := topology.FreshKeys([]string{"studio"})
+	first := issueWith(t, keys, topology.Empty(), "studio")
+	oldPub, _ := keys.Accounts[topology.AccountGARM].Signing.PublicKey()
+	stepOne := rotate(t, keys, &first.Manifest, topology.AccountGARM)
+	keys = apply(keys, stepOne)
+	stepTwo := issueWith(t, keys, &stepOne.Manifest, "studio")
+	rec := stepTwo.Manifest.Accounts[topology.AccountGARM]
+	if gen, ok := rec.Retired[oldPub]; !ok || gen != stepTwo.Manifest.Generation {
+		t.Fatalf("retirement not recorded: %+v", rec)
+	}
+	if len(stepTwo.Retired) != 1 || stepTwo.Retired[0].Account != topology.AccountGARM || stepTwo.Retired[0].Key != oldPub {
+		t.Fatalf("Output.Retired = %+v", stepTwo.Retired)
+	}
+}

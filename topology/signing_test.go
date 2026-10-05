@@ -166,3 +166,68 @@ func TestTheManifestRecordsAccountsAndSigners(t *testing.T) {
 		}
 	}
 }
+
+// Review finding 1 (critical): a SIGNING key that disagrees with the manifest is
+// refused too. The first build checked only the identity: a swapped signing seed
+// was accepted, the account JWT listed only the new key, and every carried-forward
+// credential -- still signed by the old one -- died on the push with no reissue,
+// no revocation and no warning.
+func TestAKeysSigningKeyThatDisagreesWithTheManifestIsRefused(t *testing.T) {
+	keys := topology.FreshKeys([]string{"studio"})
+	first := issueWith(t, keys, topology.Empty(), "studio")
+	swapped, _ := nkeys.CreateAccount()
+	k := keys.Accounts[topology.AccountGARM]
+	k.Signing = swapped
+	keys.Accounts[topology.AccountGARM] = k
+	_, err := topology.Generate(topology.Input{Catalogue: fixtures.Weather(t).Catalogue, Callers: []string{"studio"},
+		Previous: &first.Manifest, Keys: keys, Now: time.Now()})
+	if err == nil || !strings.Contains(err.Error(), "GARM") || !strings.Contains(err.Error(), "signing") {
+		t.Fatalf("err = %v, want a refusal naming GARM's signing key", err)
+	}
+}
+
+// Review finding 7: a credential whose file never landed is reissued when asked
+// by name, with a reason that says so -- the repair for an output that failed
+// after the manifest was saved.
+func TestANamedCredentialIsReissuedOnRequest(t *testing.T) {
+	keys := topology.FreshKeys([]string{"studio"})
+	first := issueWith(t, keys, topology.Empty(), "studio")
+	second, err := topology.Generate(topology.Input{Catalogue: fixtures.Weather(t).Catalogue, Callers: []string{"studio"},
+		Previous: &first.Manifest, Keys: keys, Now: time.Now(), Reissue: []string{"rund"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var reissued bool
+	for _, e := range second.Manifest.Entries {
+		if e.Name == "rund" && e.Reason == "reissued" && e.Generation == second.Manifest.Generation {
+			reissued = true
+		}
+		if e.Name != "rund" && e.Generation != first.Manifest.Generation {
+			t.Errorf("%s was reissued although only rund was asked for", e.Name)
+		}
+	}
+	if !reissued {
+		t.Fatal("rund was not reissued")
+	}
+}
+
+// Review finding 6: a manifest signed by a previous operator signing key still
+// loads while the operator JWT lists that key -- so replacing the operator
+// signing key does not strand the manifest.
+func TestLoadAcceptsAnySignerTheOperatorLists(t *testing.T) {
+	keys := topology.FreshKeys(nil)
+	out := issueWith(t, keys, topology.Empty())
+	path := t.TempDir() + "/manifest.json"
+	if err := out.Manifest.Save(path, keys.OperatorSigning); err != nil {
+		t.Fatal(err)
+	}
+	oldPub, _ := keys.OperatorSigning.PublicKey()
+	newKey, _ := nkeys.CreateOperator()
+	newPub, _ := newKey.PublicKey()
+	if _, err := topology.Load(path, newPub, oldPub); err != nil {
+		t.Fatalf("a manifest signed by a still-listed key did not load: %v", err)
+	}
+	if _, err := topology.Load(path, newPub); err == nil {
+		t.Fatal("a manifest signed by an unlisted key loaded")
+	}
+}

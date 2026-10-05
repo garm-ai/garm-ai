@@ -31,6 +31,9 @@ type AccountRecord struct {
 	Identity string `json:"identity"`
 	Signing  string `json:"signing"`
 	Retiring string `json:"retiring,omitempty"`
+	// Retired is every signing key ever dropped from this account, by the
+	// generation that dropped it -- a retirement is recorded, not just done.
+	Retired map[string]int `json:"retired,omitempty"`
 }
 
 // Entry is one issued credential, without its seed -- the manifest is a record of
@@ -94,10 +97,12 @@ func (m *Manifest) Save(path string, signer nkeys.KeyPair) error {
 	return os.WriteFile(path, raw, 0o600)
 }
 
-// Load reads a manifest and verifies it was signed by operatorPublic. A manifest
-// signed by anything else is refused: the generator trusts its previous state
-// only because it was the generator that wrote it.
-func Load(path, operatorPublic string) (*Manifest, error) {
+// Load reads a manifest and verifies it was signed by one of signers -- the
+// operator signing keys the operator JWT lists, so a manifest signed by a key
+// that has since been replaced (and is still listed) loads. A manifest signed by
+// anything else is refused: the generator trusts its previous state only because
+// it was the generator that wrote it.
+func Load(path string, signers ...string) (*Manifest, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -106,9 +111,14 @@ func Load(path, operatorPublic string) (*Manifest, error) {
 	if err := json.Unmarshal(raw, &s); err != nil {
 		return nil, fmt.Errorf("topology: %s is not a manifest: %w", path, err)
 	}
-	if s.Signer != operatorPublic {
-		return nil, fmt.Errorf("topology: %s was signed by %s, not the operator", path, s.Signer)
+	var listed bool
+	for _, k := range signers {
+		listed = listed || s.Signer == k
 	}
+	if !listed {
+		return nil, fmt.Errorf("topology: %s was signed by %s, not an operator signing key the operator lists", path, s.Signer)
+	}
+	operatorPublic := s.Signer
 	body, err := canonical(s.Manifest)
 	if err != nil {
 		return nil, err
@@ -169,15 +179,15 @@ func delta(prev *Manifest, cur Manifest, now time.Time) []Revocation {
 		switch {
 		case !still:
 			rev = append(rev, Revocation{Name: p.Name, Account: p.Account, Public: p.Public, At: at,
-				Why: "retired: no longer in the catalogue"})
+				Kind: Retired, Why: "retired: no longer in the catalogue"})
 		case c.Public == p.Public:
 			// carried forward, untouched
 		case c.Account != p.Account:
 			rev = append(rev, Revocation{Name: p.Name, Account: p.Account, Public: p.Public, At: at,
-				Why: "moved accounts"})
+				Kind: Moved, Why: "moved accounts"})
 		default:
 			rev = append(rev, Revocation{Name: p.Name, Account: p.Account, Public: p.Public, At: at,
-				Why: fmt.Sprintf("superseded by generation %d", cur.Generation)})
+				Kind: Superseded, Why: fmt.Sprintf("superseded by generation %d", cur.Generation)})
 		}
 	}
 	sort.Slice(rev, func(i, j int) bool { return rev[i].Public < rev[j].Public })
