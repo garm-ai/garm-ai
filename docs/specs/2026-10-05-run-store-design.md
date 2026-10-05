@@ -106,27 +106,42 @@ kind fails the run with that kind.
 
 ## 2. Every run goes through one queue
 
-`Start` enqueues on a DBOS queue named **`runs`** (`WithQueue`, `WithWorkflowID(key)`),
-and returns when the enqueue is durable. Any `rund` replica listening on `runs`
-dequeues and executes; a replica that dies mid-run leaves a `PENDING` workflow that
-the next dequeue picks up and resumes from its last completed step.
+`Start` enqueues on a DBOS queue named **`runs`** (`WithWorkflowID(key)`), and
+returns when the enqueue is durable. Any `rund` replica listening on `runs`
+dequeues an **`ENQUEUED`** run and executes it: that is what makes replicas
+interchangeable for *new* work, gives concurrency and rate limits per queue, and
+makes `WithDeduplicationID` native. The cost is one dequeue hop, milliseconds.
 
-Why a queue rather than running the workflow in the replica that received the
-`Invoke`: DBOS recovers an interrupted workflow when a process with the **same
-executor id** launches again, and a restarted pod in a Deployment has a new one. A
-queue makes replicas interchangeable — a Deployment is the right shape — gives
-concurrency and rate limits per queue for free, and makes `WithDeduplicationID`
-native. The cost is one dequeue hop between `Invoke` and execution, milliseconds,
-and "which replica" stops being a fact about a run.
+**What the queue does not do — read from the SDK, not assumed.** Once dequeued a
+run is `PENDING` and owned by the executor that claimed it. If that replica dies
+mid-run, the queue runner does **not** take the run over: it claims `ENQUEUED`
+rows only. DBOS re-enqueues a dead executor's `PENDING` runs in exactly two
+places — at `Launch`, for **the launching process's own executor id**, and on a
+request from its paid Conductor. (`dbos/recovery.go`, `queue.go`'s claim,
+`sysdb.ReenqueueForRecovery`, v1.5.0.) The first draft of this section said "the
+next dequeue picks it up"; it does not.
 
-`--run-store-workers N` is each replica's worker concurrency on `runs`; the
-queue's global concurrency is a deployment's DBOS configuration, not a flag.
+So recovery of in-flight work rests on one thing: **a replica's executor id is
+stable across restarts.** `rund --run-store-executor <id>` names it; it defaults
+to the hostname, which is stable on a laptop and in a StatefulSet, and is *not*
+stable for a Deployment's pods. The guide says which to use. Everything in flight
+on `rund-2` when it dies is finished by `rund-2` when it returns, from its last
+completed step; everything still `ENQUEUED` is taken by whoever is up. That is the
+honest split: **distribution is the queue's, recovery is the identity's.**
 
-**The resilience property this buys:** *start a run, kill the replica executing it
-after the tool has been called and before the step is recorded, and another replica
-finishes it; the tool was requested twice and executed once (the step key), and
-`Fetch` sees one result.* The throwaway spike proved the primitives; this is the
-same property on the real path, in the estate, with two in-process `rund`s.
+Cross-executor recovery without the Conductor — a lease, a heartbeat, a reaper
+that re-enqueues what a provably dead replica held — is a later slice, listed on
+the roadmap beside what it waits on (a liveness signal DBOS does not keep).
+Building it now would be guessing whether an executor is dead, and a guess here
+is a run executed twice.
+
+**The resilience property this buys:** *start a run, stop the replica executing it
+after the tool has been called and before the step is recorded, relaunch a replica
+with the same executor id, and it finishes the run; the tool was requested twice
+and executed once (the step key), and `Fetch` sees one result.* The throwaway
+spike proved the primitives; this is the same property on the real path, in the
+estate — two DBOS contexts on one SQLite file, the second launched with the
+first's executor id after the first is shut down mid-step.
 
 ---
 
@@ -328,7 +343,7 @@ tool is refused per call with the message it carries today, now naming the flag.
 |---|---|---|
 | scope | async `Invoke` + `Fetch`, the port, the fingerprint, the store-down behaviour; **not** `Cancel`/`Approve`/deciders | each of those is a command on a run somebody else started, better designed once the authority model exists than built as "anyone may" |
 | the shape of run state | not ours to choose: DBOS's status is authoritative, `RunState` is a projection (rund spec §7.3.2) — the question was withdrawn | a history table of our own — two state machines |
-| who executes a run | every async run through one DBOS queue, `runs`; replicas interchangeable (§2) | direct execution pinned to a StatefulSet identity — a replica's runs wait out its restart; a reaper of our own — queues already are one |
+| who executes a run | every async run through one DBOS queue, `runs`, so new work is distributed; **recovery of in-flight work needs a stable executor id** (`--run-store-executor`), because DBOS re-enqueues a dead executor's `PENDING` runs only at that executor's own relaunch — corrected after reading the SDK (§2) | interchangeable replicas with automatic takeover — not what the OSS SDK does; a reaper of our own — a guess about liveness that executes a run twice |
 | the store unreachable | sync sovereign, async `UNAVAILABLE` naming the store, background retry, `/readyz` unaffected (§7) | a hard dependency — takes the sync path down for a database it never touches; two processes — doubles the deployment |
 | who may `Fetch` | the invoking account; a foreign `Fetch` is `NOT_FOUND`; one visibility function the authority model replaces; cheap dimensions recorded now (§4) | any caller — an id leaks through logs and tickets; scope by caller name — a grant, which is the authority model's job |
 | does `Fetch` wait | yes, `wait` capped at 30 s on DBOS's blocking reads (§4); **push is the next slice** | immediate only — a thousand pollers; push now — forces the DBOS-reads-vs-NATS-events choice before its first consumer exists |
@@ -368,11 +383,13 @@ Each proved to fail first.
    `RUNNING` after `MaxFetchWait`.
 10. **`stage` is the run's word.** Before execution `queued`; during the tool call
     `calling:0`; after, `done` — observed through `Fetch`.
-11. **Kill the replica, another finishes it, the tool ran once.** Two in-process
-    `rund`s on one SQLite store; the tool handler blocks on a channel; the replica
-    executing is stopped; the handler is released; the other replica completes the
-    run; the tool's call count is one — or two with the same `run_id:0` key, which
-    the handler's idempotency check collapses — and `Fetch` sees one result.
+11. **Stop the replica mid-step; its successor finishes the run; the tool ran once.**
+    Two DBOS contexts on one SQLite store; the tool handler blocks on a channel;
+    the executing context is shut down; the handler is released; a second context
+    launched with the **same executor id** recovers and completes the run; the
+    tool's requests carried the same `run_id:0` key and message id, and `Fetch`
+    sees one result. A second context with a *different* executor id does not
+    take the run — asserted too, because it is the limit §2 names.
 12. **Sync is sovereign when the store is down.** Store closed: a sync call answers;
     an async `Invoke` is `UNAVAILABLE` naming the store; `/readyz` is 200. Store
     reopened: the next async `Invoke` runs. The counter moved `down` then `up`.

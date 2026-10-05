@@ -89,6 +89,7 @@ what it waited on.
 | **The run store** — async `Invoke` → `pending{run_id}`, durable execution on a DBOS queue by any replica, `Fetch` with `wait`, ownership by invoking account, sync sovereign when the store is down | nothing — [spec](specs/2026-10-05-run-store-design.md) written, plan next |
 | **Push** — a subscriber sees a run's events without polling; decides DBOS reads from a `Client` vs NATS events on `garm.run.v1.<ACCOUNT>.events` | the run store |
 | The authority model, then `Cancel` / `Approve` / deciders on it | the run store |
+| **Cross-executor recovery** — a dead replica's in-flight runs taken over by a live one without DBOS's Conductor; a lease and a heartbeat, because DBOS re-enqueues a dead executor's runs only at that executor's own relaunch | the run store; a liveness signal DBOS does not keep |
 
 ## Found, not yet fixed
 
