@@ -17,6 +17,8 @@ import (
 	v1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -37,9 +39,13 @@ const (
 	// call in a build with no store: NOT a lie that it never existed, and not a
 	// fabricated result.
 	RunState_RUN_STATE_NOT_RETAINED RunState = 1
-	RunState_RUN_STATE_RUNNING      RunState = 2
-	RunState_RUN_STATE_SUCCEEDED    RunState = 3
-	RunState_RUN_STATE_FAILED       RunState = 4
+	// Durable and not yet finished: queued for a replica, or executing. One
+	// state for both, because the caller's question is "is there an answer yet".
+	RunState_RUN_STATE_RUNNING   RunState = 2
+	RunState_RUN_STATE_SUCCEEDED RunState = 3
+	RunState_RUN_STATE_FAILED    RunState = 4
+	// Cancelled by an operator (the store's own command) before it finished.
+	RunState_RUN_STATE_CANCELLED RunState = 5
 )
 
 // Enum value maps for RunState.
@@ -50,6 +56,7 @@ var (
 		2: "RUN_STATE_RUNNING",
 		3: "RUN_STATE_SUCCEEDED",
 		4: "RUN_STATE_FAILED",
+		5: "RUN_STATE_CANCELLED",
 	}
 	RunState_value = map[string]int32{
 		"RUN_STATE_UNSPECIFIED":  0,
@@ -57,6 +64,7 @@ var (
 		"RUN_STATE_RUNNING":      2,
 		"RUN_STATE_SUCCEEDED":    3,
 		"RUN_STATE_FAILED":       4,
+		"RUN_STATE_CANCELLED":    5,
 	}
 )
 
@@ -161,13 +169,13 @@ type InvokeResponse struct {
 	// Distinct from the correlation id: a correlation spans one caller's flow,
 	// which may start several runs.
 	RunId string `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	// A ONEOF WITH ONE ARM TODAY, on purpose. `Pending` joins it when a run store
-	// exists, which is purely additive -- where adding a oneof around an existing
-	// field later would not be.
+	// The second arm joined when the run store did, additively -- which is why
+	// the oneof was there with one arm from the start.
 	//
 	// Types that are valid to be assigned to Outcome:
 	//
 	//	*InvokeResponse_Result
+	//	*InvokeResponse_Pending
 	Outcome       isInvokeResponse_Outcome `protobuf_oneof:"outcome"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -226,6 +234,15 @@ func (x *InvokeResponse) GetResult() []byte {
 	return nil
 }
 
+func (x *InvokeResponse) GetPending() *Pending {
+	if x != nil {
+		if x, ok := x.Outcome.(*InvokeResponse_Pending); ok {
+			return x.Pending
+		}
+	}
+	return nil
+}
+
 type isInvokeResponse_Outcome interface {
 	isInvokeResponse_Outcome()
 }
@@ -236,18 +253,71 @@ type InvokeResponse_Result struct {
 	Result []byte `protobuf:"bytes,2,opt,name=result,proto3,oneof"`
 }
 
+type InvokeResponse_Pending struct {
+	// The run is durable and will execute without the caller. Only possible
+	// for a tool whose delivery is Async, and only when the caller supplied an
+	// idempotency key: that key is the run id, so a retry of Invoke is the same
+	// run and never a second one.
+	Pending *Pending `protobuf:"bytes,3,opt,name=pending,proto3,oneof"`
+}
+
 func (*InvokeResponse_Result) isInvokeResponse_Outcome() {}
 
-type FetchRequest struct {
+func (*InvokeResponse_Pending) isInvokeResponse_Outcome() {}
+
+// Pending carries nothing today. A message rather than a bool so that what a
+// pending run can say about itself (a queue position, an estimate) is additive.
+type Pending struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Pending) Reset() {
+	*x = Pending{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Pending) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Pending) ProtoMessage() {}
+
+func (x *Pending) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Pending.ProtoReflect.Descriptor instead.
+func (*Pending) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{2}
+}
+
+type FetchRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	RunId string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// How long rund may hold the request before answering, when the run is still
+	// RUNNING. Zero answers at once. rund caps this (30s): a request must never
+	// outlive the bus's own timeouts. A blocking Fetch is how a caller waits for
+	// an answer without polling -- one request in flight, not one per second.
+	Wait          *durationpb.Duration `protobuf:"bytes,2,opt,name=wait,proto3" json:"wait,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FetchRequest) Reset() {
 	*x = FetchRequest{}
-	mi := &file_garm_run_v1_run_proto_msgTypes[2]
+	mi := &file_garm_run_v1_run_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -259,7 +329,7 @@ func (x *FetchRequest) String() string {
 func (*FetchRequest) ProtoMessage() {}
 
 func (x *FetchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_garm_run_v1_run_proto_msgTypes[2]
+	mi := &file_garm_run_v1_run_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -272,7 +342,7 @@ func (x *FetchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FetchRequest.ProtoReflect.Descriptor instead.
 func (*FetchRequest) Descriptor() ([]byte, []int) {
-	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{2}
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *FetchRequest) GetRunId() string {
@@ -282,21 +352,39 @@ func (x *FetchRequest) GetRunId() string {
 	return ""
 }
 
+func (x *FetchRequest) GetWait() *durationpb.Duration {
+	if x != nil {
+		return x.Wait
+	}
+	return nil
+}
+
 type FetchResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	State RunState               `protobuf:"varint,1,opt,name=state,proto3,enum=garm.run.v1.RunState" json:"state,omitempty"`
+	// Set when the run reached a terminal state. A FAILED run's error is the
+	// tool's own, with its kind, as a sync caller would have received it.
+	//
 	// Types that are valid to be assigned to Outcome:
 	//
 	//	*FetchResponse_Result
 	//	*FetchResponse_Error
-	Outcome       isFetchResponse_Outcome `protobuf_oneof:"outcome"`
+	Outcome isFetchResponse_Outcome `protobuf_oneof:"outcome"`
+	// Where the run is, in the run's own words: `queued`, `calling:<i>`, `done`.
+	// A word and a reference, never a payload. Empty for a run that has no store.
+	Stage       string                 `protobuf:"bytes,4,opt,name=stage,proto3" json:"stage,omitempty"`
+	CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CompletedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
+	// The tool the run invoked, so a caller holding only a run id can decode the
+	// result against the catalogue.
+	Tool          string `protobuf:"bytes,7,opt,name=tool,proto3" json:"tool,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FetchResponse) Reset() {
 	*x = FetchResponse{}
-	mi := &file_garm_run_v1_run_proto_msgTypes[3]
+	mi := &file_garm_run_v1_run_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +396,7 @@ func (x *FetchResponse) String() string {
 func (*FetchResponse) ProtoMessage() {}
 
 func (x *FetchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_garm_run_v1_run_proto_msgTypes[3]
+	mi := &file_garm_run_v1_run_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +409,7 @@ func (x *FetchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FetchResponse.ProtoReflect.Descriptor instead.
 func (*FetchResponse) Descriptor() ([]byte, []int) {
-	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{3}
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *FetchResponse) GetState() RunState {
@@ -356,6 +444,34 @@ func (x *FetchResponse) GetError() *v1.Error {
 	return nil
 }
 
+func (x *FetchResponse) GetStage() string {
+	if x != nil {
+		return x.Stage
+	}
+	return ""
+}
+
+func (x *FetchResponse) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *FetchResponse) GetCompletedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CompletedAt
+	}
+	return nil
+}
+
+func (x *FetchResponse) GetTool() string {
+	if x != nil {
+		return x.Tool
+	}
+	return ""
+}
+
 type isFetchResponse_Outcome interface {
 	isFetchResponse_Outcome()
 }
@@ -376,27 +492,36 @@ var File_garm_run_v1_run_proto protoreflect.FileDescriptor
 
 const file_garm_run_v1_run_proto_rawDesc = "" +
 	"\n" +
-	"\x15garm/run/v1/run.proto\x12\vgarm.run.v1\x1a\x1agarm/invoke/v1/error.proto\"9\n" +
+	"\x15garm/run/v1/run.proto\x12\vgarm.run.v1\x1a\x1agarm/invoke/v1/error.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"9\n" +
 	"\rInvokeRequest\x12\x12\n" +
 	"\x04tool\x18\x01 \x01(\tR\x04tool\x12\x14\n" +
-	"\x05input\x18\x02 \x01(\fR\x05input\"L\n" +
+	"\x05input\x18\x02 \x01(\fR\x05input\"~\n" +
 	"\x0eInvokeResponse\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12\x18\n" +
-	"\x06result\x18\x02 \x01(\fH\x00R\x06resultB\t\n" +
-	"\aoutcome\"%\n" +
+	"\x06result\x18\x02 \x01(\fH\x00R\x06result\x120\n" +
+	"\apending\x18\x03 \x01(\v2\x14.garm.run.v1.PendingH\x00R\apendingB\t\n" +
+	"\aoutcome\"\t\n" +
+	"\aPending\"T\n" +
 	"\fFetchRequest\x12\x15\n" +
-	"\x06run_id\x18\x01 \x01(\tR\x05runId\"\x90\x01\n" +
+	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12-\n" +
+	"\x04wait\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x04wait\"\xb4\x02\n" +
 	"\rFetchResponse\x12+\n" +
 	"\x05state\x18\x01 \x01(\x0e2\x15.garm.run.v1.RunStateR\x05state\x12\x18\n" +
 	"\x06result\x18\x02 \x01(\fH\x00R\x06result\x12-\n" +
-	"\x05error\x18\x03 \x01(\v2\x15.garm.invoke.v1.ErrorH\x00R\x05errorB\t\n" +
-	"\aoutcome*\x87\x01\n" +
+	"\x05error\x18\x03 \x01(\v2\x15.garm.invoke.v1.ErrorH\x00R\x05error\x12\x14\n" +
+	"\x05stage\x18\x04 \x01(\tR\x05stage\x129\n" +
+	"\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12=\n" +
+	"\fcompleted_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12\x12\n" +
+	"\x04tool\x18\a \x01(\tR\x04toolB\t\n" +
+	"\aoutcome*\xa0\x01\n" +
 	"\bRunState\x12\x19\n" +
 	"\x15RUN_STATE_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16RUN_STATE_NOT_RETAINED\x10\x01\x12\x15\n" +
 	"\x11RUN_STATE_RUNNING\x10\x02\x12\x17\n" +
 	"\x13RUN_STATE_SUCCEEDED\x10\x03\x12\x14\n" +
-	"\x10RUN_STATE_FAILED\x10\x042\x8f\x01\n" +
+	"\x10RUN_STATE_FAILED\x10\x04\x12\x17\n" +
+	"\x13RUN_STATE_CANCELLED\x10\x052\x8f\x01\n" +
 	"\n" +
 	"RunService\x12A\n" +
 	"\x06Invoke\x12\x1a.garm.run.v1.InvokeRequest\x1a\x1b.garm.run.v1.InvokeResponse\x12>\n" +
@@ -415,27 +540,34 @@ func file_garm_run_v1_run_proto_rawDescGZIP() []byte {
 }
 
 var file_garm_run_v1_run_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_garm_run_v1_run_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_garm_run_v1_run_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_garm_run_v1_run_proto_goTypes = []any{
-	(RunState)(0),          // 0: garm.run.v1.RunState
-	(*InvokeRequest)(nil),  // 1: garm.run.v1.InvokeRequest
-	(*InvokeResponse)(nil), // 2: garm.run.v1.InvokeResponse
-	(*FetchRequest)(nil),   // 3: garm.run.v1.FetchRequest
-	(*FetchResponse)(nil),  // 4: garm.run.v1.FetchResponse
-	(*v1.Error)(nil),       // 5: garm.invoke.v1.Error
+	(RunState)(0),                 // 0: garm.run.v1.RunState
+	(*InvokeRequest)(nil),         // 1: garm.run.v1.InvokeRequest
+	(*InvokeResponse)(nil),        // 2: garm.run.v1.InvokeResponse
+	(*Pending)(nil),               // 3: garm.run.v1.Pending
+	(*FetchRequest)(nil),          // 4: garm.run.v1.FetchRequest
+	(*FetchResponse)(nil),         // 5: garm.run.v1.FetchResponse
+	(*durationpb.Duration)(nil),   // 6: google.protobuf.Duration
+	(*v1.Error)(nil),              // 7: garm.invoke.v1.Error
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 }
 var file_garm_run_v1_run_proto_depIdxs = []int32{
-	0, // 0: garm.run.v1.FetchResponse.state:type_name -> garm.run.v1.RunState
-	5, // 1: garm.run.v1.FetchResponse.error:type_name -> garm.invoke.v1.Error
-	1, // 2: garm.run.v1.RunService.Invoke:input_type -> garm.run.v1.InvokeRequest
-	3, // 3: garm.run.v1.RunService.Fetch:input_type -> garm.run.v1.FetchRequest
-	2, // 4: garm.run.v1.RunService.Invoke:output_type -> garm.run.v1.InvokeResponse
-	4, // 5: garm.run.v1.RunService.Fetch:output_type -> garm.run.v1.FetchResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 0: garm.run.v1.InvokeResponse.pending:type_name -> garm.run.v1.Pending
+	6, // 1: garm.run.v1.FetchRequest.wait:type_name -> google.protobuf.Duration
+	0, // 2: garm.run.v1.FetchResponse.state:type_name -> garm.run.v1.RunState
+	7, // 3: garm.run.v1.FetchResponse.error:type_name -> garm.invoke.v1.Error
+	8, // 4: garm.run.v1.FetchResponse.created_at:type_name -> google.protobuf.Timestamp
+	8, // 5: garm.run.v1.FetchResponse.completed_at:type_name -> google.protobuf.Timestamp
+	1, // 6: garm.run.v1.RunService.Invoke:input_type -> garm.run.v1.InvokeRequest
+	4, // 7: garm.run.v1.RunService.Fetch:input_type -> garm.run.v1.FetchRequest
+	2, // 8: garm.run.v1.RunService.Invoke:output_type -> garm.run.v1.InvokeResponse
+	5, // 9: garm.run.v1.RunService.Fetch:output_type -> garm.run.v1.FetchResponse
+	8, // [8:10] is the sub-list for method output_type
+	6, // [6:8] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_garm_run_v1_run_proto_init() }
@@ -445,8 +577,9 @@ func file_garm_run_v1_run_proto_init() {
 	}
 	file_garm_run_v1_run_proto_msgTypes[1].OneofWrappers = []any{
 		(*InvokeResponse_Result)(nil),
+		(*InvokeResponse_Pending)(nil),
 	}
-	file_garm_run_v1_run_proto_msgTypes[3].OneofWrappers = []any{
+	file_garm_run_v1_run_proto_msgTypes[4].OneofWrappers = []any{
 		(*FetchResponse_Result)(nil),
 		(*FetchResponse_Error)(nil),
 	}
@@ -456,7 +589,7 @@ func file_garm_run_v1_run_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_garm_run_v1_run_proto_rawDesc), len(file_garm_run_v1_run_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

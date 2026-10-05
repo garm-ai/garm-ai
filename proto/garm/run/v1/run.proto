@@ -9,6 +9,8 @@ syntax = "proto3";
 package garm.run.v1;
 
 import "garm/invoke/v1/error.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/garm-ai/garm-ai/garm/run/v1;runv1";
 
@@ -54,27 +56,54 @@ message InvokeResponse {
   // which may start several runs.
   string run_id = 1;
 
-  // A ONEOF WITH ONE ARM TODAY, on purpose. `Pending` joins it when a run store
-  // exists, which is purely additive -- where adding a oneof around an existing
-  // field later would not be.
+  // The second arm joined when the run store did, additively -- which is why
+  // the oneof was there with one arm from the start.
   oneof outcome {
     // The tool answered within its declared budget. Only possible for a tool
     // whose delivery is Sync.
     bytes result = 2;
+    // The run is durable and will execute without the caller. Only possible
+    // for a tool whose delivery is Async, and only when the caller supplied an
+    // idempotency key: that key is the run id, so a retry of Invoke is the same
+    // run and never a second one.
+    Pending pending = 3;
   }
 }
 
+// Pending carries nothing today. A message rather than a bool so that what a
+// pending run can say about itself (a queue position, an estimate) is additive.
+message Pending {}
+
 message FetchRequest {
   string run_id = 1;
+
+  // How long rund may hold the request before answering, when the run is still
+  // RUNNING. Zero answers at once. rund caps this (30s): a request must never
+  // outlive the bus's own timeouts. A blocking Fetch is how a caller waits for
+  // an answer without polling -- one request in flight, not one per second.
+  google.protobuf.Duration wait = 2;
 }
 
 message FetchResponse {
   RunState state = 1;
 
+  // Set when the run reached a terminal state. A FAILED run's error is the
+  // tool's own, with its kind, as a sync caller would have received it.
   oneof outcome {
     bytes result = 2;
     garm.invoke.v1.Error error = 3;
   }
+
+  // Where the run is, in the run's own words: `queued`, `calling:<i>`, `done`.
+  // A word and a reference, never a payload. Empty for a run that has no store.
+  string stage = 4;
+
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp completed_at = 6;
+
+  // The tool the run invoked, so a caller holding only a run id can decode the
+  // result against the catalogue.
+  string tool = 7;
 }
 
 enum RunState {
@@ -85,10 +114,14 @@ enum RunState {
   // fabricated result.
   RUN_STATE_NOT_RETAINED = 1;
 
+  // Durable and not yet finished: queued for a replica, or executing. One
+  // state for both, because the caller's question is "is there an answer yet".
   RUN_STATE_RUNNING = 2;
   RUN_STATE_SUCCEEDED = 3;
   RUN_STATE_FAILED = 4;
+  // Cancelled by an operator (the store's own command) before it finished.
+  RUN_STATE_CANCELLED = 5;
 
-  // WAITING_FOR_APPROVAL, WAITING_FOR_INFO, CANCELLING, CANCELLED and TIMED_OUT
-  // arrive with the run store that can hold them. See docs/roadmap.md.
+  // WAITING_FOR_APPROVAL, WAITING_FOR_INFO, CANCELLING and TIMED_OUT arrive
+  // with the slices that produce them. See docs/roadmap.md.
 }

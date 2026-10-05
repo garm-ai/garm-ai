@@ -139,7 +139,7 @@ done
 """
 
 [tasks."no-sdk"]
-description = "Refuse an OTel SDK or exporter import anywhere but observe/otlp"
+description = "Refuse an OTel SDK import anywhere but observe/otlp, and a DBOS import anywhere but rundbos"
 # observe/otlp.Start configures the SDK, once, at the top of every main. Every
 # other package uses the API, which is a no-op until then -- so a tool author
 # with their own OTel setup is not fought, and a library here never installs
@@ -152,6 +152,18 @@ for pkg in ./natsserve ./rundsvc ./natscall ./natsmicro ./observe ./topology; do
     echo "$pkg reaches the OTel SDK:" >&2
     go list -deps "$pkg" | grep -E 'go.opentelemetry.io/otel/(sdk|exporters)' >&2
     echo "only observe/otlp configures the SDK; everything else uses the API" >&2
+    exit 1
+  fi
+done
+# The run store is DBOS, and ONLY rundbos imports it (run-store spec §1): the
+# engine, the transport, the client and the generated code see run.Store, never
+# the SDK -- so the store can be replaced without touching a caller. Proved to
+# fail: with `import _ "github.com/garm-ai/garm-ai/rundbos"` in run.
+for pkg in ./run ./rundsvc ./natscall ./call ./serve ./internal/generate ./examples/gen/...; do
+  if go list -deps "$pkg" 2>/dev/null | grep -q 'dbos-inc'; then
+    echo "$pkg reaches the DBOS SDK:" >&2
+    go list -deps "$pkg" | grep 'dbos-inc' >&2
+    echo "only rundbos imports DBOS; everything else uses run.Store" >&2
     exit 1
   fi
 done

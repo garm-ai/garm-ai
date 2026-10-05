@@ -159,7 +159,7 @@ func invoke(e *run.Engine, names observe.CallerNames, r micro.Request) {
 		record(ctx, span, "", unreadable)
 		return
 	}
-	h := headersOf(r)
+	h := headersOf(ctx, r)
 	span.SetAttributes(observe.KeyTool.String(req.GetTool()), observe.KeyIdempotencyKey.String(h.Idempotency))
 	resp, failure := e.Invoke(ctx, &req, h)
 	if failure != nil {
@@ -185,7 +185,7 @@ func fetch(e *run.Engine, names observe.CallerNames, r micro.Request) {
 		return
 	}
 	span.SetAttributes(observe.KeyRunID.String(req.GetRunId()))
-	resp, failure := e.Fetch(ctx, &req)
+	resp, failure := e.Fetch(ctx, &req, headersOf(ctx, r))
 	if failure != nil {
 		reply(r, failure)
 		mark(span, &serve.Error{Kind: failure.GetKind()})
@@ -206,15 +206,24 @@ func mark(span trace.Span, err error) {
 	}
 }
 
-func headersOf(r micro.Request) run.Headers {
+// headersOf is the envelope the request carried plus what the transport proved:
+// the calling account from the subject (withCaller put it in ctx), and its label.
+func headersOf(ctx context.Context, r micro.Request) run.Headers {
 	h := r.Headers()
-	return run.Headers{
+	out := run.Headers{
 		Correlation: h.Get(HeaderCorrelation),
 		Causation:   h.Get(HeaderCausation),
 		Message:     h.Get(HeaderMessage),
 		Idempotency: h.Get(HeaderIdempotency),
 		Traceparent: h.Get(HeaderTraceparent),
 	}
+	if acc, ok := ctx.Value(CallerKey{}).(string); ok {
+		out.Caller = acc
+	}
+	if name, ok := ctx.Value(callerNameKey{}).(string); ok {
+		out.CallerName = name
+	}
+	return out
 }
 
 func respond(r micro.Request, m proto.Message) {
