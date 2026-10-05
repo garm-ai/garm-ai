@@ -309,3 +309,70 @@ func TestFetchWaitIsBounded(t *testing.T) {
 		t.Fatalf("Fetch held for %v, want about 300ms", took)
 	}
 }
+
+// Property 5: a reused key with a different request is refused BEFORE DBOS --
+// which would otherwise answer from the recording and ignore the new input.
+func TestAReusedKeyWithDifferentInputIsRefusedBeforeDBOS(t *testing.T) {
+	tools := &fakeTools{reply: []byte("a")}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-fp")
+	awaitTerminal(t, s, "k-fp", 5*time.Second)
+	_, err := s.Start(context.Background(), run.Run{ID: "k-fp", Tool: asyncTool, Input: []byte("other"),
+		Fingerprint: run.Fingerprint(asyncTool, []byte("other")), Caller: "ACX", Message: "m0"})
+	var se *serve.Error
+	if !errors.As(err, &se) || se.Kind != invokev1.ErrorKind_ERROR_KIND_INVALID || !strings.Contains(err.Error(), "k-fp") {
+		t.Fatalf("got %v, want INVALID naming the key", err)
+	}
+	if tools.n() != 1 {
+		t.Fatalf("a second run was started: %d calls", tools.n())
+	}
+	st, _ := s.Fetch(context.Background(), "k-fp", 0)
+	if string(st.Result) != "a" {
+		t.Fatalf("the first run's answer changed: %+v", st)
+	}
+}
+
+// Property 4: the same key with the same request is the same run.
+func TestAReusedKeyWithTheSameInputIsTheSameRun(t *testing.T) {
+	tools := &fakeTools{reply: []byte("a")}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-same")
+	awaitTerminal(t, s, "k-same", 5*time.Second)
+	started, err := s.Start(context.Background(), run.Run{ID: "k-same", Tool: asyncTool, Input: []byte("in"),
+		Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m-retry"})
+	if err != nil || !started.Existing || started.ID != "k-same" {
+		t.Fatalf("%+v %v", started, err)
+	}
+	time.Sleep(200 * time.Millisecond)
+	if tools.n() != 1 {
+		t.Fatalf("the retry started a second run: %d calls", tools.n())
+	}
+}
+
+// Review focus 1: a reused key while the first run is still RUNNING is the
+// same run -- the fingerprint check must not depend on completion.
+func TestAReusedKeyOnARunningRunIsTheSameRun(t *testing.T) {
+	tools := &fakeTools{reply: []byte("a"), block: make(chan struct{})}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-live")
+	deadline := time.Now().Add(5 * time.Second)
+	for tools.n() == 0 && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
+	started, err := s.Start(context.Background(), run.Run{ID: "k-live", Tool: asyncTool, Input: []byte("in"),
+		Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m-retry"})
+	if err != nil || !started.Existing {
+		t.Fatalf("%+v %v", started, err)
+	}
+	_, err = s.Start(context.Background(), run.Run{ID: "k-live", Tool: asyncTool, Input: []byte("else"),
+		Fingerprint: run.Fingerprint(asyncTool, []byte("else")), Caller: "ACX", Message: "m-retry"})
+	var se *serve.Error
+	if !errors.As(err, &se) || se.Kind != invokev1.ErrorKind_ERROR_KIND_INVALID {
+		t.Fatalf("a different request on a live key: %v", err)
+	}
+	close(tools.block)
+	awaitTerminal(t, s, "k-live", 5*time.Second)
+	if tools.n() != 1 {
+		t.Fatalf("%d calls", tools.n())
+	}
+}

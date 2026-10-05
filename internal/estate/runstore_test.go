@@ -3,6 +3,7 @@ package estate_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -64,5 +65,41 @@ func TestAStorelessRundIsSyncOnly(t *testing.T) {
 	}
 	if _, err := client.GetForecast(context.Background(), &weatherv1.GetForecastRequest{Place: "Ghent"}); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Property 7 on the wire: a run is visible only to the account that started
+// it. batch's Fetch of studio's run is NOT_FOUND -- not DENIED: the run's
+// existence is not batch's to learn.
+func TestARunIsVisibleOnlyToItsInvokingAccount(t *testing.T) {
+	e := estate.New(t)
+	studio := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
+	ref, err := studio.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-owned"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	batch := natscall.Client{NC: e.Connect(t, estate.RoleCaller2)}
+	_, err = batch.Fetch(context.Background(), ref.RunID, 0)
+	var se *serve.Error
+	if !errors.As(err, &se) || se.Kind != invokev1.ErrorKind_ERROR_KIND_NOT_FOUND {
+		t.Fatalf("batch's fetch: %v, want NOT_FOUND", err)
+	}
+	if _, _, err := studio.ScheduleReportResult(context.Background(), ref, 10*time.Second); err != nil {
+		t.Fatalf("the owner's fetch: %v", err)
+	}
+}
+
+// Property 5 on the wire: the same key with a different request is INVALID
+// and names the key.
+func TestAReusedKeyWithADifferentRequestIsInvalidOnTheWire(t *testing.T) {
+	e := estate.New(t)
+	studio := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
+	if _, err := studio.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-dup"}); err != nil {
+		t.Fatal(err)
+	}
+	_, err := studio.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Bruges"}, call.Options{Idempotency: "k-dup"})
+	var se *serve.Error
+	if !errors.As(err, &se) || se.Kind != invokev1.ErrorKind_ERROR_KIND_INVALID || !strings.Contains(err.Error(), "k-dup") {
+		t.Fatalf("got %v, want INVALID naming k-dup", err)
 	}
 }
