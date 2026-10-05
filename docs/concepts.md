@@ -78,3 +78,47 @@ teams is found.
 between repositories, so two teams can each declare `weather.v1.get_forecast` and
 neither will know. In CI that is a failure with somebody to tell. At boot it is a
 plane that will not start.
+
+## An account is a boundary the bus enforces. A credential is one process's proof of who it is
+
+The bus runs in NATS operator mode. `GARM` holds `rund`; `TOOLS` holds every tool
+service; each caller has an account of its own, `CALLER-<name>`. A tool service's
+credential may subscribe to exactly the tools it declares and publish nothing but
+a reply; a caller's may publish `garm.run.v1.>` and nothing else; nothing in the
+data path holds the system account. The permissions are **derived from the
+catalogue** by one generator, and a service whose credential does not cover a
+mount refuses to start rather than start and never answer.
+
+A caller's identity is not something it sends. It publishes `garm.run.v1.invoke`,
+and the **server** rewrites that to `garm.run.v1.<ACCOUNT>.invoke` on the way in,
+because the caller's account imported the run service at its own key. `rund`
+reads the caller off the subject; nothing a caller writes can put another key
+there.
+
+## Three keys sign everything, and the root is not one of them day to day
+
+The **operator root** signs the operator JWT once and lives offline; the
+generator refuses a directory that holds it. The **operator signing key** signs
+every account JWT and the issuance manifest. Each **account's signing key** signs
+that account's credentials and activations; its *identity* key signs nothing
+after creation — it is the account's name, and the generator holds only its
+public half. The server enforces this (`StrictSigningKeyUsage`): an account
+signed by the root, or a user signed by an identity key, is refused.
+
+Rotating an account's signing key is two issuances: the new key is listed beside
+the old and the account's credentials reissued; the deployment rolls them out;
+the next issuance retires the old key — only when told to, and `--verify-live`
+first asks the cluster which key each live connection was signed by and refuses
+while any still uses the old one.
+
+## A call is one trace, and the id a caller quotes opens it
+
+`natscall` opens `garm.call`; `rund` continues it into `garm.run.invoke`, carrying
+the caller's account (and its name, given `--callers`); the tool continues it into
+`garm.tool`, which the handler finds on its `ctx`. The `traceparent` a caller sends
+is **correlation** — continued, never trusted for attribution; the account on
+`rund`'s span comes from the server. A tool's `INTERNAL` error carries the trace
+id; `rund`'s carries the run id, which is on the same trace. Logs are stamped with
+the trace id and shipped beside spans and counters over OTLP to whatever
+`OTEL_EXPORTER_OTLP_ENDPOINT` names — and nowhere, when it names nothing. Never a
+payload in a span, a metric or a log attribute: the envelope only.

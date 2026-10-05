@@ -82,18 +82,23 @@ go run ./cmd/garmctl compose examples/images.yaml
 """
 
 [tasks."guide-files"]
-description = "Fail if docs/guide.md names a file the repository does not have"
+description = "Fail if docs/guide.md, README.md or docs/concepts.md names a file the repository does not have"
 # The guide's first line promises every file it names is in the repository. That
 # promise is worth exactly as much as something checking it -- and the first draft
-# of step 9c's section named examples/cmd/trip, which did not exist.
-run = """
+# of step 9c's section named examples/cmd/trip, which did not exist. The README
+# and the concepts page are held to the same promise: they are the front door, and
+# a front door naming a package that moved is the stale-docs failure in its purest
+# form. Paths in code fences count too (`./cmd/rund` in the quick start).
+run = '''
 set -e
 missing=0
-for f in $(grep -oE '`(examples|docs|proto|cmd)/[a-zA-Z0-9_./-]+`' docs/guide.md | tr -d '`' | sort -u); do
-  if [ ! -e "$f" ]; then echo "docs/guide.md names $f, which does not exist" >&2; missing=1; fi
+for doc in docs/guide.md README.md docs/concepts.md; do
+  for f in $(grep -oE '(`|\./)(examples|docs|proto|cmd|observe|topology|natsserve|natsmicro|natsconn|natscall|rundsvc|run|serve|call|catalogue|declared|fetch|images|internal)/[a-zA-Z0-9_./-]+' "$doc" | sed 's/^[`.]*\/*//; s/`$//' | sort -u); do
+    if [ ! -e "$f" ]; then echo "$doc names $f, which does not exist" >&2; missing=1; fi
+  done
 done
 exit $missing
-"""
+'''
 
 [tasks.lint]
 description = "buf lint and go vet"
