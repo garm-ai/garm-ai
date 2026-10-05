@@ -168,6 +168,13 @@ description = "The quick start, end to end, on this laptop: a server, weatherd, 
 # cmd/garmctl is the in-process version and IS in CI.
 run = "bash scripts/e2e.sh"
 
+[tasks."e2e-compose"]
+description = "The quick start against compose.yaml's nats and OpenObserve, with the forecast's trace looked up in OpenObserve"
+# docker compose up -d first (after garmctl topology --dev -o build/topo). This
+# is the proof that the OTLP path reaches a real backend, not only the fake
+# receiver the unit tests use. NATS_PORT and O2_PORT follow compose.yaml's.
+run = "bash scripts/e2e.sh compose"
+
 [tasks.bench]
 description = "The per-call cost of the whole chain; not in CI, by design"
 # A benchmark that gates a build is a flaky build. Run it when something on the

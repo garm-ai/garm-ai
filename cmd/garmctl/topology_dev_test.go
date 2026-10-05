@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -32,7 +35,7 @@ func TestDevEmitsAServerConfigThatBootsAndAcceptsItsOwnCredentials(t *testing.T)
 	if err != nil {
 		t.Fatalf("the emitted nats-server.conf does not parse: %v", err)
 	}
-	opts.Port, opts.NoLog, opts.NoSigs = -1, true, true
+	opts.Port, opts.HTTPPort, opts.NoLog, opts.NoSigs = -1, 0, true, true
 	srv, err := natsserver.NewServer(opts)
 	if err != nil {
 		t.Fatalf("a server would not start from the emitted config: %v", err)
@@ -80,4 +83,50 @@ func TestTheManifestIsSavedBeforeAnyCredentialIsWritten(t *testing.T) {
 	if _, statErr := os.Stat(manifest); statErr != nil {
 		t.Fatal("the run failed before the manifest was saved; credentials it may have written are now unrevocable")
 	}
+}
+
+// --dev also writes a config for a CONTAINER: paths relative to the config's
+// directory and a listen on every interface, because nats-server resolves file
+// paths against its working directory and a container's is /topo. The test
+// boots a server from it with that working directory, exactly as compose does.
+func TestDevEmitsAContainerConfigThatBootsFromItsOwnDirectory(t *testing.T) {
+	e := estate.New(t)
+	out := t.TempDir()
+	if _, _, err := runTopology(t, append(catalogueArgs(e), "--dev", "--callers", "studio", "--out", out)...); err != nil {
+		t.Fatal(err)
+	}
+	conf := mustRead(t, filepath.Join(out, "nats-server.docker.conf"))
+	for _, abs := range []string{out, "127.0.0.1:4222"} {
+		if strings.Contains(conf, abs) {
+			t.Fatalf("the container config carries %q; it must be relative and listen on every interface:\n%s", abs, conf)
+		}
+	}
+	t.Chdir(out)
+	opts, err := natsserver.ProcessConfigFile("nats-server.docker.conf")
+	if err != nil {
+		t.Fatalf("the container config does not parse from its own directory: %v", err)
+	}
+	// Random client port, monitoring off: the config's 0.0.0.0:8222 is for the
+	// container's health check and collides with whatever a laptop runs there.
+	opts.Port, opts.HTTPPort, opts.NoLog, opts.NoSigs = -1, 0, true, true
+	srv, err := natsserver.NewServer(opts)
+	if err != nil {
+		t.Fatalf("a server would not start from the container config: %v", err)
+	}
+	go srv.Start()
+	defer srv.Shutdown()
+	if !srv.ReadyForConnections(10 * time.Second) {
+		t.Fatal("the server never became ready")
+	}
+	// Through 127.0.0.1, as a client reaches the container's mapped port: the
+	// certificate is for 127.0.0.1 and localhost, and 0.0.0.0 is a listen
+	// address, not a name a client dials.
+	url := fmt.Sprintf("nats://127.0.0.1:%d", srv.Addr().(*net.TCPAddr).Port)
+	nc, err := natsconn.Connect(url, natsconn.Options{
+		Creds: filepath.Join(out, "creds", "studio.creds"), CA: filepath.Join(out, "ca.pem"),
+	})
+	if err != nil {
+		t.Fatalf("a --dev credential could not connect to the server booted from the container config: %v", err)
+	}
+	nc.Close()
 }
