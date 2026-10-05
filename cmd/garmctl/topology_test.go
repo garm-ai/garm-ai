@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -55,11 +57,23 @@ func TestDevEmitsAThrowawayTopologyAndSaysSo(t *testing.T) {
 		"operator.jwt", "manifest.json", "revocations.json", "callers.json",
 		"accounts/SYS.jwt", "accounts/GARM.jwt", "accounts/TOOLS.jwt", "accounts/CALLER-studio.jwt",
 		"creds/ops.creds", "creds/rund.creds", "creds/studio.creds", "creds/weather.v1.WeatherService.creds",
-		"keys/operator.nk", "keys/SYS.nk", "keys/GARM.nk", "keys/TOOLS.nk", "keys/CALLER-studio.nk",
+		"keys/operator.jwt", "keys/operator-signing.nk",
+		"keys/SYS.pub", "keys/SYS.signing.nk", "keys/GARM.pub", "keys/GARM.signing.nk", "keys/TOOLS.pub", "keys/TOOLS.signing.nk",
+		"keys/CALLER-studio.pub", "keys/CALLER-studio.signing.nk",
 	} {
 		if _, err := os.Stat(filepath.Join(out, f)); err != nil {
 			t.Errorf("--dev did not write %s", f)
 		}
+	}
+	// --dev discards the root: nothing uses it, and a root beside a topology is
+	// the one thing topology refuses.
+	for _, f := range []string{"keys/root.nk", "keys/operator.nk"} {
+		if _, err := os.Stat(filepath.Join(out, f)); err == nil {
+			t.Errorf("--dev wrote %s; the root must not be here", f)
+		}
+	}
+	if !strings.Contains(strings.ToLower(stderr), "root") || !strings.Contains(strings.ToLower(stderr), "discard") {
+		t.Errorf("--dev did not say the root was discarded: %q", stderr)
 	}
 	// callers.json is the public name -> account table rund takes as --callers:
 	// exactly the --callers names, each mapped to its account's public key.
@@ -121,13 +135,21 @@ func TestTheManifestCarriesTheCatalogueDigestAndVerifies(t *testing.T) {
 	if _, _, err := runTopology(t, append(catalogueArgs(e), "--dev", "--callers", "studio", "--out", out)...); err != nil {
 		t.Fatal(err)
 	}
+	// Signed by the operator SIGNING key -- the one the operator JWT lists --
+	// never by the root, which the generator does not hold.
 	op, err := jwt.DecodeOperatorClaims(mustRead(t, filepath.Join(out, "operator.jwt")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	m, err := topology.Load(filepath.Join(out, "manifest.json"), op.Subject)
+	if len(op.SigningKeys) != 1 {
+		t.Fatalf("the operator lists %d signing keys", len(op.SigningKeys))
+	}
+	if _, err := topology.Load(filepath.Join(out, "manifest.json"), op.Subject); err == nil {
+		t.Fatal("the manifest verifies under the ROOT; it must be signed by the operator signing key")
+	}
+	m, err := topology.Load(filepath.Join(out, "manifest.json"), op.SigningKeys[0])
 	if err != nil {
-		t.Fatalf("the manifest does not verify under its own operator: %v", err)
+		t.Fatalf("the manifest does not verify under the operator signing key: %v", err)
 	}
 	if len(m.Entries) == 0 {
 		t.Fatal("the manifest is empty")
@@ -218,4 +240,102 @@ func TestTheSecondIssuanceIssuesOnlyWhatChangedUnlessRotated(t *testing.T) {
 		"--callers", "studio", "--keys", keys, "--manifest", manifest, "--first", "--out", t.TempDir())...); err == nil {
 		t.Fatal("--first overwrote an existing manifest's history")
 	}
+}
+
+// ceremonyKeys runs operator init and returns the --keys directory a deployment
+// would hand topology, with the root elsewhere.
+func ceremonyKeys(t *testing.T) (keys string) {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "ceremony")
+	if _, _, err := runOperator(t, "init", "--out", dir); err != nil {
+		t.Fatal(err)
+	}
+	return filepath.Join(dir, "keys")
+}
+
+// Property 5: a --keys directory holding the root is refused before anything is
+// read, naming the file.
+func TestTopologyRefusesAKeysDirectoryHoldingTheRoot(t *testing.T) {
+	e := estate.New(t)
+	dir := filepath.Join(t.TempDir(), "ceremony")
+	if _, _, err := runOperator(t, "init", "--out", dir); err != nil {
+		t.Fatal(err)
+	}
+	// The mistake: copying the whole ceremony directory into place.
+	keys := filepath.Join(dir, "keys")
+	if err := os.Rename(filepath.Join(dir, "root", "root.nk"), filepath.Join(keys, "root.nk")); err != nil {
+		t.Fatal(err)
+	}
+	_, _, err := runTopology(t, append(catalogueArgs(e), "--keys", keys, "--manifest", filepath.Join(t.TempDir(), "m.json"), "--first", "--out", t.TempDir())...)
+	if err == nil || !strings.Contains(err.Error(), "root.nk") {
+		t.Fatalf("err = %v, want a refusal naming root.nk", err)
+	}
+}
+
+// Properties 6 and 7: a first issuance births a new caller's keys into
+// --keys-out (identity seed under archive/), a second issuance given them mints
+// nothing and never writes --keys, and the archive can be deleted -- nothing
+// reads it -- while the issuance still succeeds.
+func TestAccountKeysAreBornOnceAndTheArchiveIsNeverRead(t *testing.T) {
+	e := estate.New(t)
+	keys := ceremonyKeys(t)
+	manifest := filepath.Join(t.TempDir(), "manifest.json")
+	out := t.TempDir()
+	if _, _, err := runTopology(t, append(catalogueArgs(e), "--keys", keys, "--manifest", manifest, "--first", "--callers", "studio", "--out", out)...); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{"CALLER-studio.pub", "CALLER-studio.signing.nk", "archive/CALLER-studio.identity.nk", "GARM.pub", "GARM.signing.nk"} {
+		if _, err := os.Stat(filepath.Join(keys, f)); err != nil {
+			t.Errorf("the first issuance did not write %s", f)
+		}
+	}
+	if err := os.RemoveAll(filepath.Join(keys, "archive")); err != nil {
+		t.Fatal(err)
+	}
+	snapshot := dirDigest(t, keys)
+	if _, _, err := runTopology(t, append(catalogueArgs(e), "--keys", keys, "--manifest", manifest, "--callers", "studio", "--out", out)...); err != nil {
+		t.Fatalf("second issuance without the archive: %v", err)
+	}
+	if dirDigest(t, keys) != snapshot {
+		t.Fatal("the second issuance wrote into --keys")
+	}
+}
+
+// Review focus 3: an unwritable --keys-out fails BEFORE the manifest is saved or
+// a credential written -- the cluster mistake of pointing it at the read-only
+// mount must not leave half an issuance behind.
+func TestAnUnwritableKeysOutFailsBeforeAnythingIsWritten(t *testing.T) {
+	e := estate.New(t)
+	keys := ceremonyKeys(t)
+	keysOut := filepath.Join(t.TempDir(), "ro")
+	if err := os.MkdirAll(keysOut, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	manifest := filepath.Join(t.TempDir(), "manifest.json")
+	out := filepath.Join(t.TempDir(), "out")
+	_, _, err := runTopology(t, append(catalogueArgs(e), "--keys", keys, "--keys-out", keysOut, "--manifest", manifest, "--first", "--callers", "studio", "--out", out)...)
+	if err == nil || !strings.Contains(err.Error(), keysOut) {
+		t.Fatalf("err = %v, want a failure naming %s", err, keysOut)
+	}
+	if _, statErr := os.Stat(manifest); statErr == nil {
+		t.Error("the manifest was saved although the keys could not be")
+	}
+	if _, statErr := os.Stat(filepath.Join(out, "creds")); statErr == nil {
+		t.Error("credentials were written although the keys could not be")
+	}
+}
+
+// dirDigest is a stable fingerprint of a directory's files and contents.
+func dirDigest(t *testing.T, dir string) string {
+	t.Helper()
+	h := sha256.New()
+	_ = filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		h.Write([]byte(path))
+		h.Write([]byte(mustRead(t, path)))
+		return nil
+	})
+	return hex.EncodeToString(h.Sum(nil))
 }
