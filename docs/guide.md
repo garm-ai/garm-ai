@@ -258,7 +258,9 @@ defer stop(ctx)
 
 With no endpoint the startup line says `observability exporter=none` and nothing
 leaves the process. To ship everything to OpenObserve, two variables and nothing
-else — the code knows no backend's name, only OTLP:
+else — the code knows no backend's name, only OTLP. (`docker compose up -d`
+starts one beside the bus; `mise run e2e-compose` runs the quick start against
+both and looks the forecast's trace up in it.)
 
 ```bash
 export OTEL_EXPORTER_OTLP_ENDPOINT=https://o2.example.com/api/garm

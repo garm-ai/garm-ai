@@ -30,6 +30,21 @@ go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds --tls-ca 
 
 Or all of it in one go, with the answer checked: `mise run e2e`.
 
+**With Docker** — the bus and the telemetry backend as containers, from
+[compose.yaml](compose.yaml): after the `topology --dev` line,
+
+```bash
+docker compose up -d                                           # garm-nats, booted from build/topo's config (operator mode, TLS); OpenObserve on :5080
+mise run e2e-compose                                           # the quick start against both -- and the forecast's trace looked up in OpenObserve
+open http://localhost:5080                                     # root@example.com / Complexpass#123; Traces -> one trace, three spans, three services
+```
+
+`docker compose up` replaces the `nats-server` line; the three `go run` lines
+then need `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:5080/api/default` and
+`OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic $(printf 'root@example.com:Complexpass#123' | base64)"`
+to ship there. Ports clash with something on your laptop? `NATS_PORT=14222
+O2_PORT=15080 docker compose up -d`, and the same two variables for `e2e-compose`.
+
 `forecast` names a tool and nothing else; it reaches `rund`, which reaches
 `weatherd`, and the answer comes back through three accounts the caller cannot
 cross by itself. Set `OTEL_EXPORTER_OTLP_ENDPOINT` (and `_HEADERS`) and every one

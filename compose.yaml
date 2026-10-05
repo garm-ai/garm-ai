@@ -1,0 +1,52 @@
+# The local stack around the binaries: the bus and the telemetry backend. Two
+# containers, nothing a deployment would copy.
+#
+#   garmctl topology --dev … -o build/topo     (writes the server config this mounts)
+#   docker compose up -d
+#   mise run e2e-compose                       (the quick start against these two, with the trace checked in OpenObserve)
+#
+# nats runs from the config `garmctl topology --dev` writes -- operator mode,
+# TLS, every account of THIS checkout preloaded -- not a generic open NATS, which
+# would be a different bus. The container's copy of the config uses paths
+# relative to /topo and listens on every interface, because nats-server resolves
+# file paths against its working directory; the native copy beside it uses
+# absolute paths. Both serve the same operator and the same accounts.
+#
+# OpenObserve is where OTLP goes. The credentials are the local defaults it
+# documents; a deployment's come from its secret store (observability spec §6).
+#
+# Host ports are overridable because laptops have other stacks on them:
+#   NATS_PORT=14222 O2_PORT=15080 docker compose up -d
+services:
+  nats:
+    image: nats:2.15.0-alpine
+    container_name: garm-nats
+    working_dir: /topo
+    command: ["-c", "nats-server.docker.conf"]
+    volumes:
+      - ./build/topo:/topo:ro
+    ports:
+      - "127.0.0.1:${NATS_PORT:-4222}:4222"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:8222/healthz"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
+
+  openobserve:
+    image: public.ecr.aws/zinclabs/openobserve:latest
+    container_name: garm-openobserve
+    ports:
+      - "127.0.0.1:${O2_PORT:-5080}:5080"
+    environment:
+      ZO_ROOT_USER_EMAIL: root@example.com
+      ZO_ROOT_USER_PASSWORD: Complexpass#123
+      ZO_DATA_DIR: /data
+    volumes:
+      - openobserve-data:/data
+    # No healthcheck: the image is one static binary with no shell, no curl and
+    # no wget, so a CMD healthcheck has nothing to run. From the host:
+    #   curl -s http://127.0.0.1:${O2_PORT:-5080}/healthz
+
+volumes:
+  openobserve-data:

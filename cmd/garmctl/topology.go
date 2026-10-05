@@ -431,10 +431,17 @@ func writeDevServer(dir string, res *topology.Output) error {
 		}
 		fmt.Fprintf(&preload, "  %s: %q\n", ac.Subject, res.Accounts[name])
 	}
-	conf := fmt.Sprintf(`# Written by garmctl topology --dev: a LOCAL server for the topology beside it.
+	// Two copies of one config. nats-server resolves file paths against its
+	// WORKING DIRECTORY, not the config's: the native copy carries absolute paths
+	// so `nats-server -c build/topo/nats-server.conf` works from anywhere; the
+	// container copy carries bare names and listens on every interface, for a
+	// container whose working directory is the mounted topology (compose.yaml).
+	render := func(listen, http, operator, cert, key string) string {
+		return fmt.Sprintf(`# Written by garmctl topology --dev: a LOCAL server for the topology beside it.
 # A deployment runs the full resolver and a certificate from its own CA; this is
 # the memory resolver with every account preloaded, and a self-signed cert.
-listen: 127.0.0.1:4222
+listen: %s
+http: %s
 operator: %q
 system_account: %s
 resolver: MEMORY
@@ -444,9 +451,15 @@ tls {
   cert_file: %q
   key_file: %q
 }
-`, filepath.Join(abs, "operator.jwt"), sysPub, preload.String(),
-		filepath.Join(abs, "server.pem"), filepath.Join(abs, "server-key.pem"))
-	return os.WriteFile(filepath.Join(dir, "nats-server.conf"), []byte(conf), 0o600)
+`, listen, http, operator, sysPub, preload.String(), cert, key)
+	}
+	native := render("127.0.0.1:4222", "127.0.0.1:8222",
+		filepath.Join(abs, "operator.jwt"), filepath.Join(abs, "server.pem"), filepath.Join(abs, "server-key.pem"))
+	if err := os.WriteFile(filepath.Join(dir, "nats-server.conf"), []byte(native), 0o600); err != nil {
+		return err
+	}
+	container := render("0.0.0.0:4222", "0.0.0.0:8222", "operator.jwt", "server.pem", "server-key.pem")
+	return os.WriteFile(filepath.Join(dir, "nats-server.docker.conf"), []byte(container), 0o600)
 }
 
 // retiringKeys is every signing key this issuance would drop: account -> key,
