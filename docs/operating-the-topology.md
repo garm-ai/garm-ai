@@ -34,7 +34,7 @@ Under `--out`:
 | `operator.jwt` | the server (`operator:` in its configuration) | no, but 0600 |
 | `accounts/<ACCOUNT>.jwt` | the server's resolver. Each carries the account's permissions, its signing keys, and its **revocations** | no |
 | `creds/<name>.creds` | one process each: `rund.creds`, `ops.creds`, `<proto service>.creds` per tool service, `<caller>.creds` per caller. A user JWT and its seed | **yes** |
-| `manifest.json` | the next issuance. Generation, catalogue digest, every credential issued with its account, public key, generation, permission hash and signing key; signed by the operator signing key | no, and it belongs in git |
+| `manifest.json` | the next issuance. Generation, catalogue digest, every credential issued with its account, public key, generation, permission hash, expiry and signing key; and the **cumulative revocation record**, every credential revoked and not yet expired, carried into every account JWT on every issuance; signed by the operator signing key | no, and it belongs in git |
 | `revocations.json` | you, to review. The credentials this issuance revoked, each with its kind (`Retired`, `Moved`, `Superseded`) and why. `[]` when nothing was | no |
 | `callers.json` | `rund --callers`, to label spans and counters with a caller's name | no, 0644 |
 
@@ -95,7 +95,10 @@ account, roll out the credential, then deploy the service.
 resolves, which stops routing at once; but a user JWT is a bearer document in a
 process's hands, and editing a catalogue reaches nothing a process already holds.
 So the generator **revokes** the retired service's credential in its account JWT
-and lists it in `revocations.json`. Order: the service stops **before** the
+and lists it in `revocations.json`. The revocation is permanent: the manifest
+remembers it and every later issuance writes it into the account JWT again,
+until the credential's own expiry has passed and the server would refuse it
+anyway. A caller that left keeps a tombstone account JWT for the same reason. Order: the service stops **before** the
 account carrying the revocation is pushed, or it loses its connection mid-call.
 Both orders are one rule: the permission set is briefly a superset of what is
 running, never a subset.
@@ -224,7 +227,4 @@ days. An operator reading the log on a Tuesday should not learn on Friday.
 ## What this does not cover
 
 Leafnode and route connections, which `--verify-live` cannot see in `CONNZ`;
-nothing in this estate uses them. Revocations across generations: an account JWT
-is rebuilt on every issuance, so a revocation from generation N is absent at N+1
-once its entry ages out; the fix is a revocation record carried forward in the
-manifest, on the roadmap under "Found, not yet fixed". A `garmctl` push verb.
+nothing in this estate uses them. A `garmctl` push verb.

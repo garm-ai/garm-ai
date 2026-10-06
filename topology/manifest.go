@@ -24,6 +24,15 @@ type Manifest struct {
 	// retiring signing key between the two steps of a rotation (spec §4, §5).
 	Accounts map[string]AccountRecord `json:"accounts"`
 	Entries  []Entry                  `json:"entries"`
+	// Revocations is the CUMULATIVE record of every credential revoked and not
+	// yet expired. An account JWT is rebuilt on every issuance, so a revocation
+	// written only by the issuance that made it would be gone from the next
+	// JWT, and a credential somebody still held would be accepted again. Every
+	// issuance carries this whole list into each account's JWT, and drops an
+	// entry only once the credential's own expiry has passed -- the server
+	// refuses it then regardless. Output.Revoke stays what THIS issuance
+	// revoked, so a reviewer's diff is small; this is the memory.
+	Revocations []RevocationRecord `json:"revocations,omitempty"`
 }
 
 // AccountRecord is one account's keys as the manifest knows them. All public.
@@ -61,6 +70,17 @@ type Entry struct {
 	// Reason is why this entry was issued: "new", "catalogue", "rotation";
 	// empty for a carry-forward.
 	Reason string `json:"reason,omitempty"`
+}
+
+// RevocationRecord is one revoked credential, remembered until it expires.
+type RevocationRecord struct {
+	Name       string `json:"name"`
+	Account    string `json:"account"`
+	Public     string `json:"public"`
+	At         int64  `json:"at"`         // the revocation's timestamp, unix seconds (RevokeAt)
+	Generation int    `json:"generation"` // the issuance that revoked it
+	ExpiresAt  int64  `json:"expires_at"` // the credential's own exp; 0 = unknown, never pruned
+	Kind       string `json:"kind"`
 }
 
 // Empty is the explicit first manifest. Explicit, because a generator that treated

@@ -160,6 +160,14 @@ func TestTopologyWalk(t *testing.T) {
 		"garmctl topology --keys ceremony/keys --manifest manifest.json --catalogue file://weather.binpb --callers studio -o topo",
 		stdout, stderr, err, w.bus(true, []held{zombie}))
 
+	// 4b. Nothing changes -- and the zombie is STILL refused: the revocation
+	// is carried by the manifest into every later account JWT.
+	stdout, stderr, err = issue(weather, "studio")
+	w.record("revoked-stays-revoked", "Nothing changes; revoked stays revoked",
+		"The same catalogue again: this issuance revokes nothing new, and every account JWT is rebuilt. The manifest's cumulative record carries generation 3's revocation into generation 4's `TOOLS` JWT, so the zombie's copy is refused again. It stays refused until the credential's own expiry, when the record prunes it.",
+		"garmctl topology --keys ceremony/keys --manifest manifest.json --catalogue file://weather.binpb --callers studio -o topo",
+		stdout, stderr, err, w.bus(true, []held{zombie}))
+
 	// 5. A caller is added.
 	stdout, stderr, err = issue(weather, "studio,batch")
 	w.record("caller-added", "A caller is added",

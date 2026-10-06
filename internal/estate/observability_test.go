@@ -33,6 +33,17 @@ func forecast(t *testing.T, e *estate.Estate, as estate.Role, place string) erro
 func spans(t *testing.T, e *estate.Estate) (call, run, tool sdktrace.ReadOnlySpan) {
 	t.Helper()
 	rec := e.Recorder()
+	// rund's and the tool's spans end in defers after their replies have gone
+	// out, so a caller can hold its answer a moment before they are recorded:
+	// settle, briefly. A missing span stays missing.
+	for deadline := time.Now().Add(2 * time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
+		_, a := rec.SpanNamed("garm.call")
+		_, b := rec.SpanNamed("garm.run.invoke")
+		_, c := rec.SpanNamed("garm.tool")
+		if a && b && c {
+			break
+		}
+	}
 	var ok bool
 	if call, ok = rec.SpanNamed("garm.call"); !ok {
 		t.Fatal("no garm.call span")
@@ -44,6 +55,21 @@ func spans(t *testing.T, e *estate.Estate) (call, run, tool sdktrace.ReadOnlySpa
 		t.Fatal("no garm.tool span")
 	}
 	return
+}
+
+// awaitSpan is SpanNamed with a brief settle: a span that ends in a defer after
+// its reply has gone out can be a moment behind the caller's answer.
+func awaitSpan(rec interface {
+	SpanNamed(string) (sdktrace.ReadOnlySpan, bool)
+}, name string) (sdktrace.ReadOnlySpan, bool) {
+	for deadline := time.Now().Add(2 * time.Second); ; time.Sleep(10 * time.Millisecond) {
+		if s, ok := rec.SpanNamed(name); ok {
+			return s, true
+		}
+		if time.Now().After(deadline) {
+			return rec.SpanNamed(name)
+		}
+	}
 }
 
 func attr(s sdktrace.ReadOnlySpan, key string) (string, bool) {
@@ -153,11 +179,7 @@ func TestNoSpanAttributeCarriesThePayload(t *testing.T) {
 	e := estate.New(t)
 	const sentinel = "PAYLOAD-SENTINEL-7f3a"
 	_ = forecast(t, e, estate.RoleCaller, sentinel)
-	// The tool's span ends in a defer after its reply has gone out: wait,
-	// briefly, for the three spans the call produces before checking them.
-	for deadline := time.Now().Add(2 * time.Second); len(e.Recorder().Spans()) < 3 && time.Now().Before(deadline); {
-		time.Sleep(10 * time.Millisecond)
-	}
+	spans(t, e) // settles until the three spans the call produces are recorded
 	if len(e.Recorder().Spans()) < 3 {
 		t.Fatal("the call produced fewer than three spans; the check would be vacuous")
 	}
@@ -190,11 +212,11 @@ func TestAMalformedTraceparentStillYieldsAnAttributedTrace(t *testing.T) {
 	e := estate.New(t)
 	rawInvoke(t, e, map[string]string{"traceparent": "00-not-a-trace-at-all"})
 	rec := e.Recorder()
-	run, ok := rec.SpanNamed("garm.run.invoke")
+	run, ok := awaitSpan(rec, "garm.run.invoke")
 	if !ok {
 		t.Fatal("no rund span")
 	}
-	tool, ok := rec.SpanNamed("garm.tool")
+	tool, ok := awaitSpan(rec, "garm.tool")
 	if !ok {
 		t.Fatal("no tool span")
 	}
