@@ -48,7 +48,8 @@ then need `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:5080/api/default` and
 `OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic $(printf 'root@example.com:Complexpass#123' | base64)"`
 to ship there. Ports clash with something on your laptop? `NATS_PORT=14222
 O2_PORT=15080 PG_PORT=15432 docker compose up -d`, and the same three variables for
-`e2e-compose`. Changed the catalogue? Run the `topology --dev` line again and
+`e2e-compose`; `RUND_HEALTH_PORT=18080 WEATHERD_HEALTH_PORT=18081` moves the two
+health listeners when 8080 or 8081 is taken. Changed the catalogue? Run the `topology --dev` line again and
 `docker compose restart nats`: the service credentials are derived from the
 catalogue, and a stale one cannot answer a new tool.
 

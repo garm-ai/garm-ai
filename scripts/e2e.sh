@@ -15,6 +15,8 @@ mode="${1:-native}"
 nats_port="${NATS_PORT:-4222}"
 o2_port="${O2_PORT:-5080}"
 pg_port="${PG_PORT:-5432}"
+hp_rund="${RUND_HEALTH_PORT:-8080}"
+hp_tool="${WEATHERD_HEALTH_PORT:-8081}"
 o2_user="root@example.com"; o2_pass="Complexpass#123"   # compose.yaml's local defaults
 if [ "$mode" = compose ]; then
   out=build/topo
@@ -68,20 +70,20 @@ fi
 nats_url="nats://127.0.0.1:$nats_port"
 
 say "weatherd and rund, each with a health listener"
-for port in 8080 8081; do
+for port in "$hp_rund" "$hp_tool"; do
   if lsof -nP -iTCP:$port -sTCP:LISTEN 2>/dev/null | grep -q LISTEN; then
     fail "something already listens on 127.0.0.1:$port (a previous run's process?); stop it first: lsof -nP -iTCP:$port"
   fi
 done
-"$bin/weatherd" --nats "$nats_url" --creds "$topo/creds/weather.v1.WeatherService.creds" --tls-ca "$topo/ca.pem" --health 127.0.0.1:8081 > "$out/weatherd.log" 2>&1 &
+"$bin/weatherd" --nats "$nats_url" --creds "$topo/creds/weather.v1.WeatherService.creds" --tls-ca "$topo/ca.pem" --health "127.0.0.1:$hp_tool" > "$out/weatherd.log" 2>&1 &
 pids+=($!)
-"$bin/rund" --nats "$nats_url" --creds "$topo/creds/rund.creds" --tls-ca "$topo/ca.pem" --catalogue "file://$out/catalogue.binpb" --callers "$topo/callers.json" --health 127.0.0.1:8080 --run-store "$run_store" > "$out/rund.log" 2>&1 &
+"$bin/rund" --nats "$nats_url" --creds "$topo/creds/rund.creds" --tls-ca "$topo/ca.pem" --catalogue "file://$out/catalogue.binpb" --callers "$topo/callers.json" --health "127.0.0.1:$hp_rund" --run-store "$run_store" > "$out/rund.log" 2>&1 &
 pids+=($!)
 
 ready() { [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$1/readyz")" = "200" ]; }
-for _ in $(seq 1 200); do ready 8081 && ready 8080 && break; sleep 0.1; done
-ready 8081 || fail "weatherd never became ready: $(tail -5 "$out/weatherd.log")"
-ready 8080 || fail "rund never became ready: $(tail -5 "$out/rund.log")"
+for _ in $(seq 1 200); do ready "$hp_tool" && ready "$hp_rund" && break; sleep 0.1; done
+ready "$hp_tool" || fail "weatherd never became ready: $(tail -5 "$out/weatherd.log")"
+ready "$hp_rund" || fail "rund never became ready: $(tail -5 "$out/rund.log")"
 echo "readyz: weatherd 200, rund 200"
 
 say "forecast: a caller that names a tool and nothing else"
@@ -156,7 +158,7 @@ fi
 say "drain: SIGTERM, readyz goes 503, the processes exit cleanly"
 if [ "$mode" = compose ]; then w="${pids[0]}"; r="${pids[1]}"; else w="${pids[1]}"; r="${pids[2]}"; fi
 kill -TERM "$w" "$r"
-for _ in $(seq 1 50); do ready 8080 || break; sleep 0.1; done
+for _ in $(seq 1 50); do ready "$hp_rund" || break; sleep 0.1; done
 wait "$w" "$r" 2>/dev/null || true
 grep -q "stopped cleanly" "$out/weatherd.log" || fail "weatherd did not stop cleanly: $(tail -3 "$out/weatherd.log")"
 grep -q "stopped cleanly" "$out/rund.log" || fail "rund did not stop cleanly: $(tail -3 "$out/rund.log")"
