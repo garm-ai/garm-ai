@@ -106,6 +106,9 @@ echo "$fetched" | sed 's/^/  /'
 grep -q "msg=\"run started\"" "$out/rund.log" || fail "rund logged no run start"
 
 say "what each process said at startup"
+grep -q 'msg=credential expires=' "$out/weatherd.log" || fail "weatherd did not say when its credential expires"
+grep -q 'msg=credential expires=' "$out/rund.log" || fail "rund did not say when its credential expires"
+grep -h 'msg=credential ' "$out/weatherd.log" "$out/rund.log" | sed 's/^/  /'
 grep -h "msg=observability" "$out/weatherd.log" "$out/rund.log" "$out/forecast.log" | sed 's/^/  /'
 if [ "$mode" = compose ]; then
   grep -q "exporter=otlp" "$out/rund.log" || fail "rund did not say exporter=otlp with the endpoint set"

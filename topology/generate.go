@@ -341,7 +341,7 @@ func Generate(in Input) (*Output, error) {
 			return Credential{}, err
 		}
 		return Credential{Name: name, Account: account, Public: upub, JWT: tok, Seed: string(seed),
-			IssuedAt: uc.IssuedAt, SigningKey: sp}, nil
+			IssuedAt: uc.IssuedAt, ExpiresAt: exp, SigningKey: sp}, nil
 	}
 	var creds []Credential
 	var entries []Entry
@@ -370,7 +370,7 @@ func Generate(in Input) (*Output, error) {
 		entries = append(entries, Entry{
 			Name: c.Name, Account: c.Account, Public: c.Public,
 			CatalogueSHA256: in.Catalogue.SHA256, Generation: gen, PermissionsHash: hash,
-			IssuedAt: c.IssuedAt, SigningKey: c.SigningKey, Reason: reason,
+			IssuedAt: c.IssuedAt, ExpiresAt: c.ExpiresAt, SigningKey: c.SigningKey, Reason: reason,
 		})
 	}
 	sort.Slice(creds, func(i, j int) bool { return creds[i].Name < creds[j].Name })

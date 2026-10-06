@@ -9,6 +9,9 @@ package natsconn
 import (
 	"errors"
 	"fmt"
+	"github.com/nats-io/jwt/v2"
+	"os"
+	"time"
 
 	"github.com/nats-io/nats.go"
 )
@@ -45,4 +48,26 @@ func Connect(url string, o Options, extra ...nats.Option) (*nats.Conn, error) {
 		return nil, err
 	}
 	return nc, nil
+}
+
+// CredentialExpiry reads the expiry of the user JWT in a credentials file, so a
+// process can say at startup when its own credential dies. Nothing renews a
+// credential; the date in the log is the notice. Zero when the JWT carries none.
+func CredentialExpiry(path string) (time.Time, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return time.Time{}, err
+	}
+	token, err := jwt.ParseDecoratedJWT(raw)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("%s: %w", path, err)
+	}
+	uc, err := jwt.DecodeUserClaims(token)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("%s: %w", path, err)
+	}
+	if uc.Expires == 0 {
+		return time.Time{}, nil
+	}
+	return time.Unix(uc.Expires, 0).UTC(), nil
 }

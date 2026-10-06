@@ -35,6 +35,8 @@ func topologyCmd() *cobra.Command {
 		out                    string
 		rotateSigning          []string
 		status, verifyLive     bool
+		warnAccount            int
+		warnExpiryDays         int
 		noVerifyLive           bool
 		servers                int
 		natsURL, opsCreds, ca  string
@@ -60,7 +62,7 @@ func topologyCmd() *cobra.Command {
 				if catURI != "" || out != "" || first || dev || rotate || verifyLive || noVerifyLive || len(rotateSigning) > 0 || len(callers) > 0 {
 					return errors.New("--status takes --keys and --manifest and nothing else; it issues nothing, so an issuance flag beside it would be silently ignored")
 				}
-				return printStatus(cmd, keysDir, manifestPath)
+				return printStatus(cmd, keysDir, manifestPath, warnAccount, warnExpiryDays)
 			}
 			if catURI == "" || out == "" {
 				return errors.New("--catalogue and --out are required")
@@ -202,6 +204,7 @@ func topologyCmd() *cobra.Command {
 			fmt.Fprintf(cmd.OutOrStdout(),
 				"ok: generation %d from catalogue %s -- %d accounts, %d credentials, %d revocations, written to %s\n",
 				res.Manifest.Generation, cat.SHA256[:12], len(res.Accounts), len(res.Credentials), len(res.Revoke), out)
+			printWarnings(cmd, res.Manifest, warnAccount, warnExpiryDays)
 			return nil
 		},
 	}
@@ -217,6 +220,8 @@ func topologyCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&rotate, "rotate", false, "reissue EVERY credential and revoke every previous one; otherwise only what changed is issued")
 	cmd.Flags().StringSliceVar(&rotateSigning, "rotate-signing", nil, "accounts whose SIGNING KEY is replaced: the new key is listed beside the old and every credential of the account reissued; the next issuance retires the old key")
 	cmd.Flags().BoolVar(&status, "status", false, "print the manifest's state -- generation, accounts, any retiring key -- and issue nothing")
+	cmd.Flags().IntVar(&warnAccount, "warn-account-credentials", 200, "warn when an account holds more credentials than this: rotating its signing key reissues all of them; 0 disables")
+	cmd.Flags().IntVar(&warnExpiryDays, "warn-expiry-days", 90, "warn about credentials expiring within this many days, naming the earliest; nothing renews a credential; 0 disables")
 	cmd.Flags().BoolVar(&verifyLive, "verify-live", false, "before retiring a signing key, ask the cluster (with --ops-creds) and refuse if any live connection still uses it")
 	cmd.Flags().BoolVar(&noVerifyLive, "no-verify-live", false, "retire a signing key WITHOUT asking the cluster; you have checked the rollout yourself")
 	cmd.Flags().IntVar(&servers, "servers", 1, "how many servers must answer --verify-live; fewer is refused")
@@ -519,7 +524,7 @@ func verifyNothingLiveOnRetiringKeys(retiring map[string]string, natsURL, opsCre
 }
 
 // printStatus is --status: the manifest's state, and nothing issued.
-func printStatus(cmd *cobra.Command, keysDir, manifestPath string) error {
+func printStatus(cmd *cobra.Command, keysDir, manifestPath string, warnAccount, warnExpiryDays int) error {
 	if keysDir == "" || manifestPath == "" {
 		return errors.New("--status needs --keys and --manifest")
 	}
@@ -556,5 +561,15 @@ func printStatus(cmd *cobra.Command, keysDir, manifestPath string) error {
 			fmt.Fprintf(w, "    RETIRING %s (%d credentials still name it): roll the new credentials out, then run an issuance with --verify-live to retire it\n", rec.Retiring, still)
 		}
 	}
+	printWarnings(cmd, *m, warnAccount, warnExpiryDays)
 	return nil
+}
+
+// printWarnings: what the manifest says about where the estate is heading --
+// an account too large to rotate comfortably, credentials about to expire --
+// one line each on stderr, after the facts. The thresholds are the flags.
+func printWarnings(cmd *cobra.Command, m topology.Manifest, warnAccount, warnExpiryDays int) {
+	for _, line := range topology.Warnings(m, time.Now(), warnAccount, time.Duration(warnExpiryDays)*24*time.Hour) {
+		fmt.Fprintf(cmd.ErrOrStderr(), "warning: %s\n", line)
+	}
 }

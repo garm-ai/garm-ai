@@ -133,6 +133,15 @@ unenforced, in the same table, deliberately.
 | An unreachable store **degrades**, never kills: sync answers, async is `UNAVAILABLE` naming the store, the store reconnects on its own, `garm.run.store{state}` counts it | `rundbos.TestAnUnreachableStoreDegradesRatherThanFails`, `TestTheStoreRecoversWhenTheDatabaseReturns`, `estate.TestSyncIsSovereignWhenTheStoreIsDown`; `run.TestWithoutAStoreAsyncIsRefusedNamingTheFlag` for the sync half |
 | A URL that is not a store is a **configuration error**, not "degraded" | `rundbos.TestABadStoreURLRefusesToStart`, naming `--run-store` |
 | The store's credential never reaches a log line | `rundbos.TestTheStartupLineRedactsTheCredential` |
+
+### Operating the topology at scale
+
+| invariant | kept true by |
+|---|---|
+| An issuance and `--status` warn when an account holds more credentials than the threshold, naming it; silent at or under | `topology.TestAnAccountPastTheCredentialThresholdIsWarned`, `garmctl.TestAnIssuanceWarnsPastTheAccountThreshold` |
+| They warn about credentials expiring inside the window, naming the earliest with its date; an expired one is said plainly; one with no recorded expiry is named, never treated as living forever | `topology.TestCredentialsExpiringInsideTheWindowAreWarnedNamingTheEarliest`, `TestAnExpiredCredentialIsSaidPlainly`, `TestAnEntryWithoutARecordedExpiryIsNamed`, `garmctl.TestStatusWarnsOnExpiryInsideTheWindow` |
+| The manifest records each credential's expiry | `topology.TestTheManifestRecordsEachCredentialsExpiry` |
+| A process says at startup when its own credential dies | `natsconn.TestCredentialExpiryIsReadFromTheFile`; `scripts/e2e.sh` asserts the line in `rund`'s and `weatherd`'s logs |
 | Only `rundbos` imports the DBOS SDK | `mise run no-sdk`, proved to fail with a `rundbos` import in `run` |
 
 ### The commands a person types

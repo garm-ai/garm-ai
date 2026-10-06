@@ -3,6 +3,7 @@ package natsconn_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/garm-ai/garm-ai/internal/estate"
 	"github.com/garm-ai/garm-ai/natsconn"
@@ -34,5 +35,21 @@ func TestWithoutACredentialTheErrorNamesTheFlag(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "--creds") {
 		t.Errorf("the error does not name --creds: %v", err)
+	}
+}
+
+// A process can read its own credential's expiry at startup: the estate issues
+// one-year credentials, and the date comes back from the file, not from a guess.
+func TestCredentialExpiryIsReadFromTheFile(t *testing.T) {
+	e := estate.New(t)
+	exp, err := natsconn.CredentialExpiry(e.CredsFile(t, estate.RoleCaller))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if left := time.Until(exp); left < 364*24*time.Hour || left > 366*24*time.Hour {
+		t.Fatalf("expiry %v is %v away, want about a year", exp, left)
+	}
+	if _, err := natsconn.CredentialExpiry("/nonexistent.creds"); err == nil {
+		t.Fatal("a missing file read as a date")
 	}
 }

@@ -50,6 +50,10 @@ type Entry struct {
 	// at or before its timestamp -- and in.Now is the caller's clock, not the
 	// encoder's.
 	IssuedAt int64 `json:"issued_at"`
+	// ExpiresAt is the credential's exp, unix seconds. Recorded because the
+	// expiry warning needs the date, and the duration in force at issuance is
+	// not knowable later. Zero in a manifest from before the field.
+	ExpiresAt int64 `json:"expires_at,omitempty"`
 	// SigningKey is the public key that signed this credential, so a rotation
 	// can say what it reissued and a retirement can check nothing still names
 	// the old key.

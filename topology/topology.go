@@ -112,6 +112,8 @@ type Credential struct {
 	// IssuedAt is the JWT's own iat, unix seconds -- the wall clock at encoding,
 	// which is what the server compares a revocation against.
 	IssuedAt int64
+	// ExpiresAt is the JWT's exp, unix seconds.
+	ExpiresAt int64
 	// SigningKey is the public key that signed the JWT.
 	SigningKey string
 }

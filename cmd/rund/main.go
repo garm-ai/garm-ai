@@ -68,6 +68,7 @@ func main() {
 			log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
 			return 2
 		}
+		logCredentialExpiry(log, *creds)
 		storeCfg := rundbos.Config{URL: *store, AppName: "garm", Executor: *storeEx, Workers: *storeWk, Migrate: *storeMg, RunLimit: *storeRL, Logger: log}
 		if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, storeCfg, log); err != nil {
 			log.Error("stopped", "error", err)
@@ -78,6 +79,25 @@ func main() {
 	}()
 	_ = stop(context.Background())
 	os.Exit(code)
+}
+
+// logCredentialExpiry says when this process's credential dies. Nothing renews
+// a credential, so the date in the log is the notice; inside thirty days it is
+// a warning, because that is a reissue somebody has to schedule.
+func logCredentialExpiry(log *slog.Logger, creds string) {
+	if creds == "" {
+		return
+	}
+	exp, err := natsconn.CredentialExpiry(creds)
+	if err != nil || exp.IsZero() {
+		return // Connect says what is wrong with the file, once, naming the flag
+	}
+	left := time.Until(exp).Round(time.Hour)
+	if left < 30*24*time.Hour {
+		log.Warn("credential", "expires", exp.Format(time.RFC3339), "in", left, "hint", "reissue with garmctl topology and roll it out before then")
+		return
+	}
+	log.Info("credential", "expires", exp.Format(time.RFC3339), "in", left)
 }
 
 // storeLabel is the --run-store value as the startup line shows it: redacted,

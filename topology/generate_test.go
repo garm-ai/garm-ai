@@ -229,3 +229,23 @@ func TestTOOLSExportsPrivatelyAndOnlyGARMImportsIt(t *testing.T) {
 		}
 	}
 }
+
+// The manifest records when each credential EXPIRES, not only when it was
+// issued: the expiry warning needs the date, and the duration in force at
+// issuance is not knowable later.
+func TestTheManifestRecordsEachCredentialsExpiry(t *testing.T) {
+	now := time.Date(2026, 10, 6, 12, 0, 0, 0, time.UTC)
+	fx := fixtures.Weather(t)
+	out, err := topology.Generate(topology.Input{
+		Catalogue: fx.Catalogue, Callers: []string{"studio"}, Previous: topology.Empty(),
+		Keys: topology.FreshKeys([]string{"studio"}), Now: now, Expiry: 30 * 24 * time.Hour,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range out.Manifest.Entries {
+		if e.ExpiresAt != now.Add(30*24*time.Hour).Unix() {
+			t.Fatalf("%s expires_at = %d, want issuance + 30d (%d)", e.Name, e.ExpiresAt, now.Add(30*24*time.Hour).Unix())
+		}
+	}
+}
