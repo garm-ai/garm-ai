@@ -134,6 +134,14 @@ unenforced, in the same table, deliberately.
 | A URL that is not a store is a **configuration error**, not "degraded" | `rundbos.TestABadStoreURLRefusesToStart`, naming `--run-store` |
 | The store's credential never reaches a log line | `rundbos.TestTheStartupLineRedactsTheCredential` |
 
+### Revocation is permanent
+
+| invariant | kept true by |
+|---|---|
+| A revocation made at generation N is in every account JWT at N+1, N+2, … | `topology.TestARevocationIsCarriedAcrossGenerations`; the walk's "revoked stays revoked" step shows the zombie refused an issuance later |
+| A revocation leaves the record only once its credential has expired, when the server refuses it regardless | `topology.TestARevocationIsPrunedOnceTheCredentialHasExpired` |
+| A caller that left keeps a tombstone account JWT, re-emitted while its revocation lives | `topology.TestATombstoneIsReemittedWhileItsRevocationLives` |
+
 ### Operating the topology at scale
 
 | invariant | kept true by |

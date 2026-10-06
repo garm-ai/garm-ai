@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
@@ -417,7 +418,38 @@ func Generate(in Input) (*Output, error) {
 		kept = append(kept, r)
 	}
 	revoke = kept
+
+	// ---- the cumulative record: everything revoked before and not yet expired,
+	// plus this issuance's. Every entry reaches the account JWT, every time.
+	prevExpiry := map[string]int64{}
+	for _, p := range in.Previous.Entries {
+		prevExpiry[p.Name] = p.ExpiresAt
+	}
+	var record []RevocationRecord
+	for _, old := range in.Previous.Revocations {
+		if old.ExpiresAt != 0 && !in.Now.Before(time.Unix(old.ExpiresAt, 0)) {
+			continue // the credential expired: the server refuses it with or without us
+		}
+		record = append(record, old)
+	}
 	for _, r := range revoke {
+		record = append(record, RevocationRecord{Name: r.Name, Account: r.Account, Public: r.Public,
+			At: r.At.Unix(), Generation: gen, ExpiresAt: prevExpiry[r.Name], Kind: string(r.Kind)})
+	}
+	sort.Slice(record, func(i, j int) bool { return record[i].Public < record[j].Public })
+	manifest.Revocations = record
+	// An account with a live revocation and no keys any more -- a caller that
+	// left -- keeps its record in the manifest, so the tombstone below can be
+	// built on the NEXT issuance too, not only on the one that saw it leave.
+	for _, r := range record {
+		if _, current := records[r.Account]; !current {
+			if rec, had := in.Previous.Accounts[r.Account]; had {
+				records[r.Account] = rec
+			}
+		}
+	}
+
+	for _, r := range record {
 		ac, ok := accounts[r.Account]
 		if !ok {
 			// The account is gone from this topology -- a caller that has left --
@@ -426,7 +458,7 @@ func Generate(in Input) (*Output, error) {
 			// imports and the revocation. Built from the manifest's record of the
 			// account's keys; no seed is needed, because the operator signing key
 			// signs it like any other account.
-			rec, has := in.Previous.Accounts[r.Account]
+			rec, has := records[r.Account]
 			if !has {
 				return nil, fmt.Errorf("topology: retiring %s needs its account record to revoke %s, and the manifest has none",
 					r.Account, r.Public)
@@ -436,7 +468,7 @@ func Generate(in Input) (*Output, error) {
 			ac.SigningKeys.Add(rec.Signing)
 			accounts[r.Account] = ac
 		}
-		ac.RevokeAt(r.Public, r.At)
+		ac.RevokeAt(r.Public, time.Unix(r.At, 0))
 	}
 
 	// ---- limits, on every account, in the JWT (review finding: there were none)

@@ -284,7 +284,11 @@ credential of an account before `t`, which is the blunt generation cut-off for a
 compromise or a wholesale rotation.
 
 A removal that produces no revocation is a bug in the generator, not a decision an
-operator gets to make.
+operator gets to make. **Built, after review:** a revocation is also *permanent*
+until the credential's own expiry — the manifest keeps a cumulative record and
+every issuance writes it into each account JWT again, since the JWT is rebuilt
+each time and would otherwise forget it; a caller that left keeps a tombstone
+account JWT while its revocation lives.
 
 #### Ordering: grant before use, revoke after disuse
 

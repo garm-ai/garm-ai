@@ -28,6 +28,7 @@ one component in more detail. They link here rather than repeating it.
 | A caller's identity arrives in the subject, placed by the server | `rundsvc.TestTheCallerIsTokenFourAndMustBeAnAccountKey` · `TestRundLogsTheCallingAccount` |
 | Every test runs against operator mode, TLS, the full resolver | `internal/estate` |
 | One trace per call; the quoted id opens it; counters by tool and caller; `/readyz` agrees with `$SRV.PING`; OTLP to OpenObserve | `estate.TestOneCallIsOneTraceWithRundBetweenCallerAndTool` · `natsmicro.TestReadyAgreesWithPingThroughTheLifecycle` — step **9e** |
+| **Revoked stays revoked**: the manifest's cumulative record carries every revocation into every later account JWT until the credential expires; a leaving caller's tombstone is re-emitted while its revocation lives | `topology.TestARevocationIsCarriedAcrossGenerations` · `TestARevocationIsPrunedOnceTheCredentialHasExpired` · `TestATombstoneIsReemittedWhileItsRevocationLives` |
 | The root offline; accounts signed by an operator signing key, credentials by account signing keys, enforced by the server; two-step rotation with `--verify-live` | `estate.TestTheServerRefusesAnAccountSignedByTheRoot` · `estate.TestRotationKeepsTheOldCredentialAliveUntilStepTwo` · `garmctl.TestVerifyLiveRefusesWhileTheOldKeyIsStillOnTheWire` — step **9f** |
 | **The run store**: an async tool is `pending{run_id}` once durable, executed from a DBOS queue by a replica, read back with `Fetch --wait`; the plan is step 0 and a replay follows it; the key is fingerprinted; a run is visible to its invoking account only; sync is sovereign when the store is down; only `rundbos` imports DBOS | `estate.TestAnAsyncToolIsPendingThenAnswered` · `rundbos.TestAStoppedReplicasRunIsFinishedByItsSuccessorWithTheSameIdentity` · `rundbos.TestAReplayFollowsThePlanRecordedAtStart` · `estate.TestSyncIsSovereignWhenTheStoreIsDown` · `mise run no-sdk` — step **10** |
 
@@ -93,9 +94,8 @@ what it waited on.
 
 ## Found, not yet fixed
 
-| | why it stands, for now |
-|---|---|
-| **Revocations are not cumulative across generations.** An account JWT is rebuilt on every issuance, so a `RevokeAt` from generation N is absent at N+1; a revoked credential still held somewhere is accepted again once its entry ages out of the JWT. | Pre-existing in `delta`/encode, surfaced by the signing-keys review. The fix is a revocation record in the manifest carried forward into every account JWT until the credential's own expiry has passed — one slice, with the identity spec's §5 revocation properties re-proved. Waits on nothing; next after the run store unless a deployment needs it first. |
+Nothing at the moment. The last entry, revocations not carried across
+generations, was closed by the manifest's cumulative revocation record.
 
 ## Deliberately undecided
 
