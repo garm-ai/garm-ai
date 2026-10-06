@@ -186,6 +186,23 @@ is what makes that possible.
 Deployment can be "rolled out" with one pod still reconnecting on an old mount.
 `--verify-live` is the check that is.
 
+## Warnings, and when to act
+
+An issuance and `--status` end with warnings on stderr when the manifest says
+the estate is heading somewhere an operator should know about before arriving.
+None is an error; the issuance was correct. Each threshold is a flag.
+
+| warning | why | what to do |
+|---|---|---|
+| `TOOLS holds 240 credentials (threshold 200): rotating its signing key reissues all of them …` | rotating an account's signing key reissues every credential under it, and every one must be rolled out before the old key can be retired. Past the threshold that is a long night. `--warn-account-credentials`, default 200 | shard the tool accounts by domain before the rotation you will one day need; moving a service is an ordinary issuance, recorded as a `Moved` revocation |
+| `14 credentials expire within 90 days; the earliest is rund on 2027-10-05 …` | every credential expires a year after issue and nothing renews it: an estate issued in one week dies in one week a year later unless reissued. `--warn-expiry-days`, default 90 | schedule the reissue (`--rotate`, or a reissue of the named ones) and roll it out inside the window |
+| `1 credential has EXPIRED and cannot reconnect: …` | a process on that credential is cut off at its next reconnect, or already is | reissue now |
+| `2 credentials have no recorded expiry (issued before the manifest kept it) …` | a manifest from before the `expires_at` field; the date is not known, so the warning above cannot fire for them | reissue them once so the manifest knows |
+
+Every process says the same at startup, from its own credential file:
+`msg=credential expires=2027-10-05T… in=8759h0m0s`, a warning inside thirty
+days. An operator reading the log on a Tuesday should not learn on Friday.
+
 ## Refusals, and what each means
 
 | message | meaning |

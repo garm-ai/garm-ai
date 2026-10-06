@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/nats-io/nats.go"
 
@@ -46,6 +47,10 @@ func main() {
 	code := func() int {
 		// Every value, defaults included, so nobody has to guess which one is in force.
 		log.Info("starting", "nats", *url, "creds", *creds, "tls_ca", *ca, "name", *name, "version", *version, "health", *health)
+		// When this credential dies: nothing renews one, and the date is the notice.
+		if exp, err := natsconn.CredentialExpiry(*creds); err == nil && !exp.IsZero() {
+			log.Info("credential", "expires", exp.Format(time.RFC3339), "in", time.Until(exp).Round(time.Hour))
+		}
 		if err := run(*url, natsconn.Options{Creds: *creds, CA: *ca}, *name, *version, *health, log); err != nil {
 			log.Error("stopped", "error", err)
 			return 1

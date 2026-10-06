@@ -184,8 +184,13 @@ process, which is how every test runs against it.
 ```
 level=INFO msg=observability exporter=none endpoint="" headers=[] disabled=false service=weatherd
 level=INFO msg=starting nats=nats://127.0.0.1:4222 creds=build/topo/creds/weather.v1.WeatherService.creds name=weatherd version=0.1.0 health=""
+level=INFO msg=credential expires=2027-10-06T12:00:00Z in=8760h0m0s
 level=INFO msg=mounted service=weatherd endpoint=weather_v1_get_forecast subject=garm.tool.weather.v1.get_forecast
 ```
+
+The `credential` line is when this process's credential dies. Nothing renews a
+credential; inside thirty days the line is a warning, and `garmctl topology
+--status` says the same for the whole estate, naming the earliest.
 
 **The subject comes from the tool's name, not from the proto path.** Re-home
 `GetForecast` to another package, service or method and the subject does not move,
