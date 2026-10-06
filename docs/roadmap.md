@@ -89,6 +89,8 @@ what it waited on.
 | The authority model, then `Cancel` / `Approve` / deciders on it | push, so an approver can be told |
 | **Cross-executor recovery** — a dead replica's in-flight runs taken over by a live one without DBOS's Conductor; a lease and a heartbeat, because DBOS re-enqueues a dead executor's runs only at that executor's own relaunch | the run store; a liveness signal DBOS does not keep |
 
+| A `garmctl topology --push` that sends every changed account JWT to the cluster over `$SYS` with the ops credential | nothing — today it is one `nats request` per changed account ([operating the topology](operating-the-topology.md)) |
+
 ## Found, not yet fixed
 
 | | why it stands, for now |

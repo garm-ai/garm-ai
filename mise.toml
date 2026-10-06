@@ -87,7 +87,7 @@ go run ./cmd/garmctl compose examples/images.yaml
 """
 
 [tasks."guide-files"]
-description = "Fail if docs/guide.md, README.md or docs/concepts.md names a file the repository does not have"
+description = "Fail if docs/guide.md, README.md, docs/concepts.md or docs/operating-the-topology.md names a file the repository does not have"
 # The guide's first line promises every file it names is in the repository. That
 # promise is worth exactly as much as something checking it -- and the first draft
 # of step 9c's section named examples/cmd/trip, which did not exist. The README
@@ -97,7 +97,7 @@ description = "Fail if docs/guide.md, README.md or docs/concepts.md names a file
 run = '''
 set -e
 missing=0
-for doc in docs/guide.md README.md docs/concepts.md; do
+for doc in docs/guide.md README.md docs/concepts.md docs/operating-the-topology.md; do
   for f in $(grep -oE '(`|\./)(examples|docs|proto|cmd|observe|topology|natsserve|natsmicro|natsconn|natscall|rundsvc|run|serve|call|catalogue|declared|fetch|images|internal)/[a-zA-Z0-9_./-]+' "$doc" | sed 's/^[`.]*\/*//; s/`$//' | sort -u); do
     if [ ! -e "$f" ]; then echo "$doc names $f, which does not exist" >&2; missing=1; fi
   done

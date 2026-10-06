@@ -77,6 +77,10 @@ three drawings below.
 - **[docs/guide.md](docs/guide.md)** — building a tool and an agent, walking through
   `examples/`, which `mise run ci` composes and compiles. Rename a field and the
   guide breaks in CI rather than misleading somebody next month.
+- **[docs/operating-the-topology.md](docs/operating-the-topology.md)** — running
+  `garmctl topology` for real: what it reads and writes file by file, the
+  lifecycle event by event, applying a change to a live cluster, the Kubernetes
+  layout, and every refusal with what it means.
 - **[docs/invariants.md](docs/invariants.md)** — every invariant with the test that
   keeps it true, and a second table for the ones nothing checks yet.
 - **[docs/roadmap.md](docs/roadmap.md)** — the single list of what is built, what is
