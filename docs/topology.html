@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<title>Topology Walk</title>
+<style>
+  :root {
+    --bg: #F5F6F8; --surface: #FFFFFF; --surface-2: #EDEFF3;
+    --ink: #1C232E; --muted: #5A6472; --line: #DDE2E9;
+    --accent: #C25E2E; --accent-soft: #F3E2D6; --accent-ink: #8F4520;
+    --good: #2E7D5B; --good-soft: #E4EFE9;
+    --warn: #A8442F; --warn-soft: #F6E3DE;
+    --new: #2E5E9E; --new-soft: #E2EAF5;
+    --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+    --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10141A; --surface: #161C24; --surface-2: #1C232E;
+      --ink: #E8EAEE; --muted: #98A2B0; --line: #2A323D;
+      --accent: #E07938; --accent-soft: #33241A; --accent-ink: #EE9A63;
+      --good: #5BB48C; --good-soft: #172A22; --warn: #E8886B; --warn-soft: #34201A;
+      --new: #7FA7DD; --new-soft: #1A2535;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10141A; --surface: #161C24; --surface-2: #1C232E;
+    --ink: #E8EAEE; --muted: #98A2B0; --line: #2A323D;
+    --accent: #E07938; --accent-soft: #33241A; --accent-ink: #EE9A63;
+    --good: #5BB48C; --good-soft: #172A22; --warn: #E8886B; --warn-soft: #34201A;
+    --new: #7FA7DD; --new-soft: #1A2535;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body);
+         font-size: 15.5px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-block: 40px 70px; padding-left: 20px; padding-right: 20px; }
+  h1 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 4.6vw, 46px);
+       line-height: 1.04; letter-spacing: -.02em; margin: 0 0 12px; text-wrap: balance; }
+  h2 { font-family: var(--display); font-weight: 700; font-size: 21px; line-height: 1.2; margin: 0 0 8px; text-wrap: balance; }
+  h3 { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; font-weight: 500; }
+  p { margin: 0 0 12px; max-width: 66ch; }
+  a { color: var(--accent-ink); }
+  code { font-family: var(--mono); font-size: .9em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 10px; }
+  .tagline { font-size: 18px; color: var(--muted); max-width: 72ch; margin: 0 0 6px; }
+  .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+
+  /* the rail: a real sequence, so the numbers carry information */
+  .rail { margin: 30px 0 0; padding: 0; list-style: none; display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 6px; }
+  .rail button { width: 100%; text-align: left; font: inherit; color: var(--ink); background: var(--surface);
+                 border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px 8px; cursor: pointer; min-height: 70px; }
+  .rail button:hover { border-color: var(--accent); }
+  .rail button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .rail button[aria-current="step"] { background: var(--accent-soft); border-color: var(--accent); }
+  .rail .n { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; }
+  .rail button[aria-current="step"] .n { color: var(--accent-ink); }
+  .rail .t { display: block; font-family: var(--display); font-weight: 700; font-size: 13.5px; line-height: 1.2; margin-top: 3px; }
+  .rail .refused .t::after { content: " ✕"; color: var(--warn); }
+
+  .nav { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .nav button { font: inherit; font-family: var(--mono); color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+                border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+  .nav button:hover { border-color: var(--accent); color: var(--accent-ink); }
+  .nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .stage { display: grid; grid-template-columns: minmax(300px, 2fr) minmax(0, 3fr); gap: 18px; margin-top: 22px; align-items: start; }
+  @media (max-width: 860px) { .stage { grid-template-columns: 1fr; } }
+  .pane { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 16px; min-width: 0; }
+  .pane + .pane { margin-top: 18px; }
+
+  pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; margin: 0; white-space: pre-wrap; word-break: break-word;
+        background: var(--surface-2); border-radius: 8px; padding: 12px 14px; overflow-x: auto; }
+  pre.cmd { color: var(--ink); border-left: 3px solid var(--accent); }
+  pre.err { border-left: 3px solid var(--warn); background: var(--warn-soft); }
+  pre.out { border-left: 3px solid var(--good); }
+  .outlbl { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 12px 0 5px; }
+
+  /* files */
+  .tree { font-family: var(--mono); font-size: 12.5px; line-height: 1.6; }
+  .dir { color: var(--muted); margin-top: 6px; }
+  .f { display: flex; gap: 8px; align-items: baseline; padding: 1px 6px; border-radius: 5px; cursor: pointer; border: 0; background: none;
+       font: inherit; color: var(--ink); width: 100%; text-align: left; }
+  .f:hover { background: var(--surface-2); }
+  .f:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .f[aria-pressed="true"] { background: var(--accent-soft); }
+  .f .name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .f.same .name { color: var(--muted); }
+  .f.removed .name { text-decoration: line-through; color: var(--muted); }
+  .chip { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .chip.new { background: var(--new-soft); color: var(--new); }
+  .chip.changed { background: var(--accent-soft); color: var(--accent-ink); }
+  .chip.removed { background: var(--warn-soft); color: var(--warn); }
+  .chip.secret { background: var(--surface-2); color: var(--muted); }
+  .chip.ok { background: var(--good-soft); color: var(--good); }
+  .chip.no { background: var(--warn-soft); color: var(--warn); }
+  .chip.pushed { background: var(--new-soft); color: var(--new); }
+  .toggle { font: inherit; font-family: var(--mono); font-size: 11.5px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 0; text-decoration: underline dotted; }
+  .viewer { margin-top: 12px; }
+  .viewer .vh { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-family: var(--mono); font-size: 12px; margin-bottom: 6px; }
+  .viewer .vh b { font-weight: 600; }
+
+  /* the bus */
+  .accounts { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  .acct { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-family: var(--mono); font-size: 12px; min-width: 0; }
+  .acct b { display: block; font-family: var(--display); font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .acct .k { color: var(--muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .acct .chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+  table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+  th { text-align: left; font-weight: 500; color: var(--muted); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.wrap, .tscroll { overflow-x: auto; }
+  tr.held td { background: var(--surface-2); }
+  .reason { color: var(--muted); }
+  .probe { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: baseline; font-family: var(--mono); font-size: 12px; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+  .probe:last-child { border-bottom: 0; }
+  .probe .who { color: var(--muted); }
+  .empty { color: var(--muted); font-size: 14px; }
+  .foot { margin-top: 40px; font-size: 13.5px; color: var(--muted); max-width: 76ch; }
+  @media (prefers-reduced-motion: no-preference) { .pane { transition: border-color .15s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">garm · operating the topology</p>
+  <h1>Topology Walk</h1>
+  <p class="tagline">The lifecycle of <code>garmctl topology</code>, run for real and recorded: every command, every file it wrote, and what a live bus with the full resolver did with each credential afterwards.</p>
+  <p class="meta" id="meta"></p>
+
+  <ol class="rail" id="rail" aria-label="steps"></ol>
+  <div class="nav">
+    <button type="button" id="prev">← previous</button>
+    <button type="button" id="next">next →</button>
+    <span>or the arrow keys</span>
+  </div>
+
+  <div class="stage">
+    <div>
+      <section class="pane" id="what">
+        <h3>What happened</h3>
+        <h2 id="title"></h2>
+        <div id="prose"></div>
+        <div class="outlbl">the command</div>
+        <pre class="cmd" id="cmd"></pre>
+        <div id="output"></div>
+      </section>
+      <section class="pane" id="buspane">
+        <h3>The bus</h3>
+        <div id="bus"></div>
+      </section>
+    </div>
+    <div>
+      <section class="pane">
+        <h3>The files <button type="button" class="toggle" id="toggleSame" aria-pressed="false">show unchanged</button></h3>
+        <div class="tree" id="tree"></div>
+        <div class="viewer" id="viewer" hidden>
+          <div class="vh"><b id="vname"></b><span id="vkind"></span></div>
+          <pre id="vcontent"></pre>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">Produced by <code>mise run topology-walk</code>, which runs <code>cmd/garmctl/walk_test.go</code>: the actual <code>operator init</code> and <code>topology</code> commands against two catalogues, a nats-server started from the emitted operator with the full resolver, every account pushed over <code>$SYS</code> with the ops credential, every credential tried. Seeds are never recorded. The prose for each step is in <a href="operating-the-topology.md">operating-the-topology.md</a>.</p>
+</div>
+<script src="topology-walk.js"></script>
+<script>
+(function () {
+  var walk = window.TOPOLOGY_WALK;
+  if (!walk) { document.getElementById('meta').textContent = 'topology-walk.js is missing: run mise run topology-walk'; return; }
+  var steps = walk.steps, i = 0, showSame = false, picked = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+  $('meta').textContent = 'recorded ' + walk.generated_at + ' · ' + steps.length + ' steps';
+
+  // prose: a tiny inline-code renderer for `…`, nothing else
+  function prose(s) {
+    var p = el('p'); var parts = s.split('`');
+    parts.forEach(function (t, k) { if (k % 2) { p.appendChild(el('code', null, t)); } else { p.appendChild(document.createTextNode(t)); } });
+    return p;
+  }
+  function short(k) { return k && k.length > 14 ? k.slice(0, 6) + '…' + k.slice(-4) : (k || ''); }
+
+  var rail = $('rail');
+  steps.forEach(function (s, k) {
+    var li = el('li'); var b = el('button', s.error ? 'refused' : '');
+    b.type = 'button'; b.setAttribute('aria-label', 'step ' + (k + 1) + ': ' + s.title);
+    b.appendChild(el('span', 'n', String(k + 1).padStart(2, '0')));
+    b.appendChild(el('span', 't', s.title));
+    b.addEventListener('click', function () { go(k); });
+    li.appendChild(b); rail.appendChild(li);
+  });
+
+  function go(k) {
+    i = Math.max(0, Math.min(steps.length - 1, k)); picked = null;
+    Array.prototype.forEach.call(rail.querySelectorAll('button'), function (b, j) {
+      if (j === i) { b.setAttribute('aria-current', 'step'); } else { b.removeAttribute('aria-current'); }
+    });
+    render();
+    try { history.replaceState(null, '', '#' + steps[i].id); } catch (e) {}
+  }
+
+  function render() {
+    var s = steps[i];
+    $('title').textContent = (i + 1) + '. ' + s.title;
+    var pr = $('prose'); pr.innerHTML = ''; pr.appendChild(prose(s.prose));
+    $('cmd').textContent = s.command;
+    var out = $('output'); out.innerHTML = '';
+    if (s.error) { out.appendChild(el('div', 'outlbl', 'refused')); out.appendChild(el('pre', 'err', s.error)); }
+    if (s.stdout && s.stdout.trim()) { out.appendChild(el('div', 'outlbl', 'stdout')); out.appendChild(el('pre', 'out', s.stdout.trim())); }
+    if (s.stderr && s.stderr.trim()) { out.appendChild(el('div', 'outlbl', 'stderr')); out.appendChild(el('pre', null, s.stderr.trim())); }
+    renderFiles(s); renderBus(s);
+  }
+
+  function renderFiles(s) {
+    var tree = $('tree'); tree.innerHTML = ''; $('viewer').hidden = true;
+    var files = s.files.filter(function (f) { return showSame || f.change !== 'same'; });
+    if (!files.length) { tree.appendChild(el('div', 'empty', 'Nothing was written: this step issued nothing.')); return; }
+    var byDir = {};
+    files.forEach(function (f) { var d = f.path.indexOf('/') >= 0 ? f.path.slice(0, f.path.lastIndexOf('/')) : '.'; (byDir[d] = byDir[d] || []).push(f); });
+    Object.keys(byDir).sort().forEach(function (d) {
+      tree.appendChild(el('div', 'dir', d + '/'));
+      byDir[d].forEach(function (f) {
+        var b = el('button', 'f ' + f.change); b.type = 'button'; b.setAttribute('aria-pressed', 'false');
+        b.appendChild(el('span', 'name', '  ' + f.path.slice(f.path.lastIndexOf('/') + 1)));
+        if (f.secret) b.appendChild(el('span', 'chip secret', 'secret'));
+        if (f.change !== 'same') b.appendChild(el('span', 'chip ' + f.change, f.change));
+        b.addEventListener('click', function () { show(f, b); });
+        tree.appendChild(b);
+      });
+    });
+  }
+  function show(f, b) {
+    Array.prototype.forEach.call($('tree').querySelectorAll('.f'), function (x) { x.setAttribute('aria-pressed', 'false'); });
+    b.setAttribute('aria-pressed', 'true'); picked = f.path;
+    $('vname').textContent = f.path;
+    $('vkind').textContent = f.change === 'removed' ? 'removed this step' : (f.kind + ' · ' + f.size + ' bytes');
+    $('vcontent').textContent = f.change === 'removed' ? '(the file is gone; its credential was revoked in the account JWT)' : f.content;
+    $('viewer').hidden = false;
+  }
+
+  function renderBus(s) {
+    var bus = $('bus'); bus.innerHTML = '';
+    if (!s.bus) { bus.appendChild(el('div', 'empty', 'No server yet: nothing to try a credential against.')); return; }
+    var acc = el('div', 'accounts');
+    s.bus.accounts.forEach(function (a) {
+      var c = el('div', 'acct'); c.appendChild(el('b', null, a.name));
+      c.appendChild(el('span', 'k', short(a.public)));
+      var chips = el('div', 'chips');
+      chips.appendChild(el('span', 'chip ' + (a.signing_keys.length > 1 ? 'changed' : 'secret'), a.signing_keys.length + (a.signing_keys.length === 1 ? ' signing key' : ' signing keys')));
+      if (a.revocations) chips.appendChild(el('span', 'chip no', a.revocations + ' revoked'));
+      if (a.pushed) chips.appendChild(el('span', 'chip pushed', 'pushed over $SYS'));
+      c.appendChild(chips); acc.appendChild(c);
+    });
+    bus.appendChild(acc);
+    var lbl = el('div', 'outlbl', 'every credential, tried against the server'); bus.appendChild(lbl);
+    var wrap = el('div', 'tscroll'); var t = el('table');
+    var thead = el('thead'); var hr = el('tr');
+    ['credential', 'account', 'signed by', 'result'].forEach(function (h) { hr.appendChild(el('th', null, h)); });
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = el('tbody');
+    s.bus.creds.forEach(function (c) {
+      var tr = el('tr', c.from_before ? 'held' : '');
+      tr.appendChild(el('td', null, c.file));
+      tr.appendChild(el('td', null, short(c.account)));
+      tr.appendChild(el('td', null, short(c.issuer)));
+      var td = el('td'); td.appendChild(el('span', 'chip ' + (c.accepted ? 'ok' : 'no'), c.accepted ? 'accepted' : 'refused'));
+      if (c.reason) { td.appendChild(document.createTextNode(' ')); td.appendChild(el('span', 'reason', c.reason)); }
+      tr.appendChild(td); tb.appendChild(tr);
+    });
+    t.appendChild(tb); wrap.appendChild(t); bus.appendChild(wrap);
+    if (s.bus.probes && s.bus.probes.length) {
+      bus.appendChild(el('div', 'outlbl', 'what a credential may do'));
+      s.bus.probes.forEach(function (p) {
+        var row = el('div', 'probe');
+        row.appendChild(el('span', 'who', p.cred + ' ' + p.action));
+        row.appendChild(el('span', null, p.subject));
+        var ok = p.outcome === 'allowed';
+        row.appendChild(el('span', 'chip ' + (ok ? 'ok' : 'no'), ok ? 'allowed' : 'refused'));
+        row.title = p.outcome; bus.appendChild(row);
+      });
+    }
+  }
+
+  $('prev').addEventListener('click', function () { go(i - 1); });
+  $('next').addEventListener('click', function () { go(i + 1); });
+  document.addEventListener('keydown', function (e) {
+    if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight') go(i + 1); else if (e.key === 'ArrowLeft') go(i - 1);
+  });
+  $('toggleSame').addEventListener('click', function () {
+    showSame = !showSame; this.setAttribute('aria-pressed', String(showSame));
+    this.textContent = showSame ? 'hide unchanged' : 'show unchanged'; renderFiles(steps[i]);
+  });
+  var start = 0;
+  if (location.hash) { steps.forEach(function (s, k) { if ('#' + s.id === location.hash) start = k; }); }
+  go(start);
+})();
+</script>
+</body>
+</html>

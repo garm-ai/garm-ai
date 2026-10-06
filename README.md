@@ -80,7 +80,10 @@ three drawings below.
 - **[docs/operating-the-topology.md](docs/operating-the-topology.md)** — running
   `garmctl topology` for real: what it reads and writes file by file, the
   lifecycle event by event, applying a change to a live cluster, the Kubernetes
-  layout, and every refusal with what it means.
+  layout, and every refusal with what it means. **[docs/topology.html](docs/topology.html)**
+  is the same lifecycle run and recorded, step by step: open it in a browser and
+  click through what each command wrote and what the bus then did with every
+  credential (`mise run topology-walk` regenerates it).
 - **[docs/invariants.md](docs/invariants.md)** — every invariant with the test that
   keeps it true, and a second table for the ones nothing checks yet.
 - **[docs/roadmap.md](docs/roadmap.md)** — the single list of what is built, what is
