@@ -291,7 +291,8 @@ a Deployment's in-flight runs wait for a later slice (`docs/roadmap.md`,
 root ceremony **once, offline**, and hands `topology` only what it needs. This
 section is the ceremony and a rotation; the rest of operating it — every file
 the command writes, a tool added or removed on a live cluster, the Kubernetes
-layout, every refusal — is [docs/operating-the-topology.md](operating-the-topology.md).
+layout, every refusal — is [docs/operating-the-topology.md](operating-the-topology.md),
+and [docs/topology.html](topology.html) is that lifecycle run and recorded, to click through.
 
 ```bash
 garmctl operator init --out ceremony            # OFFLINE, once; then move ceremony/root to custody

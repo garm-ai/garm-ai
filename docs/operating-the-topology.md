@@ -9,7 +9,8 @@ command reads and writes, file by file; the events of a running deployment and
 the command each one is; where the files go on Kubernetes; and every refusal
 you can meet, with what it means. Every claim here is kept true by a test named
 in [docs/invariants.md](invariants.md), under "The transport, under operator
-mode" and "Signing keys".
+mode" and "Signing keys". [topology.html](topology.html) is this page's
+lifecycle run for real and recorded, step by step, to click through.
 
 ## What it reads
 
