@@ -26,6 +26,7 @@ import (
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/serve"
@@ -505,3 +506,9 @@ func (s *Store) storeErr(sess *session, err error) error {
 
 // wireOf turns a tool's error into what the wire carries, with the run id.
 func wireOf(err error, id string) *invokev1.Error { return serve.Wire(err, id) }
+
+// Events is the run's record after a cursor. The record arrives with the next
+// step of the push plan; until then the store has none to read.
+func (s *Store) Events(ctx context.Context, id string, after uint64, wait time.Duration) ([]*runv1.Event, bool, error) {
+	return nil, false, errors.New("rundbos: the event record is not recorded yet")
+}

@@ -282,6 +282,39 @@ func (e *Engine) Fetch(ctx context.Context, req *runv1.FetchRequest, h Headers) 
 	return resp, nil
 }
 
+// Events is the run's record after a cursor. The same ownership as Fetch: the
+// run's state is read first, and a foreign or unknown run is NOT_FOUND, so the
+// stream of a run the caller may not see is never read.
+func (e *Engine) Events(ctx context.Context, req *runv1.EventsRequest, h Headers) (*runv1.EventsResponse, *invokev1.Error) {
+	if req.GetRunId() == "" {
+		return nil, serve.Wire(serve.Invalid("run_id is required"), "")
+	}
+	if e.Store == nil {
+		// No record was kept. Empty and closed: not an error, and not a claim
+		// that the run never existed.
+		return &runv1.EventsResponse{Closed: true}, nil
+	}
+	st, err := e.Store.Fetch(ctx, req.GetRunId(), 0)
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return nil, serve.Wire(serve.NotFound("no run %s", req.GetRunId()), "")
+	case err != nil:
+		return nil, e.fail(ctx, req.GetRunId(), h, "", err)
+	}
+	if !e.visible(h, st) {
+		return nil, serve.Wire(serve.NotFound("no run %s", req.GetRunId()), "")
+	}
+	wait := req.GetWait().AsDuration()
+	if wait > MaxFetchWait {
+		wait = MaxFetchWait
+	}
+	events, closed, err := e.Store.Events(ctx, req.GetRunId(), req.GetAfter(), wait)
+	if err != nil {
+		return nil, e.fail(ctx, req.GetRunId(), h, "", err)
+	}
+	return &runv1.EventsResponse{Events: events, Closed: closed}, nil
+}
+
 // visible: may this principal see this run? Today: the invoking account, and
 // nobody else -- an anonymous principal sees nothing. The authority model
 // replaces this body; its callers do not change.

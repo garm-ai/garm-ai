@@ -488,6 +488,604 @@ func (*FetchResponse_Result) isFetchResponse_Outcome() {}
 
 func (*FetchResponse_Error) isFetchResponse_Outcome() {}
 
+type EventsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	RunId string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// Return events with seq > after. 0 is the start.
+	After uint64 `protobuf:"varint,2,opt,name=after,proto3" json:"after,omitempty"`
+	// How long rund may hold the request when no event is past the cursor yet.
+	// Zero answers at once. Capped at 30s, as Fetch's wait is.
+	Wait          *durationpb.Duration `protobuf:"bytes,3,opt,name=wait,proto3" json:"wait,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EventsRequest) Reset() {
+	*x = EventsRequest{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventsRequest) ProtoMessage() {}
+
+func (x *EventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventsRequest.ProtoReflect.Descriptor instead.
+func (*EventsRequest) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *EventsRequest) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *EventsRequest) GetAfter() uint64 {
+	if x != nil {
+		return x.After
+	}
+	return 0
+}
+
+func (x *EventsRequest) GetWait() *durationpb.Duration {
+	if x != nil {
+		return x.Wait
+	}
+	return nil
+}
+
+type EventsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// In sequence order, at most 256; a caller a long way behind pages.
+	Events []*Event `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	// True once the run's stream is closed and every event is at or before this
+	// reply: there will be no more.
+	Closed        bool `protobuf:"varint,2,opt,name=closed,proto3" json:"closed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EventsResponse) Reset() {
+	*x = EventsResponse{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EventsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventsResponse) ProtoMessage() {}
+
+func (x *EventsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventsResponse.ProtoReflect.Descriptor instead.
+func (*EventsResponse) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *EventsResponse) GetEvents() []*Event {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
+func (x *EventsResponse) GetClosed() bool {
+	if x != nil {
+		return x.Closed
+	}
+	return false
+}
+
+// One thing that happened in a run. A WORD AND A REFERENCE, NEVER A PAYLOAD --
+// with one bounded exception, chunk, whose text is capped at 4 KB. done carries
+// no result: a result can be large, is already in the run, and is fetched with
+// the ownership check and the typed decoding Fetch has.
+//
+// The same bytes are what the run writes to its durable stream and what rund
+// publishes live on garm.run.v1.<OWNER>.out.<run_id>.<seq>, so a late
+// subscriber's catch-up and the live feed are the same thing from two places.
+type Event struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	RunId string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	// The stream position, from 1, assigned once at write. What a cursor names,
+	// and what lets a subscriber stitch catch-up to live without a duplicate.
+	Seq uint64                 `protobuf:"varint,2,opt,name=seq,proto3" json:"seq,omitempty"`
+	At  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=at,proto3" json:"at,omitempty"`
+	// Types that are valid to be assigned to Kind:
+	//
+	//	*Event_Stage
+	//	*Event_Step
+	//	*Event_Progress
+	//	*Event_Question
+	//	*Event_Chunk
+	//	*Event_Done
+	Kind          isEvent_Kind `protobuf_oneof:"kind"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Event) Reset() {
+	*x = Event{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Event) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Event) ProtoMessage() {}
+
+func (x *Event) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Event.ProtoReflect.Descriptor instead.
+func (*Event) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *Event) GetRunId() string {
+	if x != nil {
+		return x.RunId
+	}
+	return ""
+}
+
+func (x *Event) GetSeq() uint64 {
+	if x != nil {
+		return x.Seq
+	}
+	return 0
+}
+
+func (x *Event) GetAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.At
+	}
+	return nil
+}
+
+func (x *Event) GetKind() isEvent_Kind {
+	if x != nil {
+		return x.Kind
+	}
+	return nil
+}
+
+func (x *Event) GetStage() *Stage {
+	if x != nil {
+		if x, ok := x.Kind.(*Event_Stage); ok {
+			return x.Stage
+		}
+	}
+	return nil
+}
+
+func (x *Event) GetStep() *Step {
+	if x != nil {
+		if x, ok := x.Kind.(*Event_Step); ok {
+			return x.Step
+		}
+	}
+	return nil
+}
+
+func (x *Event) GetProgress() *Progress {
+	if x != nil {
+		if x, ok := x.Kind.(*Event_Progress); ok {
+			return x.Progress
+		}
+	}
+	return nil
+}
+
+func (x *Event) GetQuestion() *Question {
+	if x != nil {
+		if x, ok := x.Kind.(*Event_Question); ok {
+			return x.Question
+		}
+	}
+	return nil
+}
+
+func (x *Event) GetChunk() *Chunk {
+	if x != nil {
+		if x, ok := x.Kind.(*Event_Chunk); ok {
+			return x.Chunk
+		}
+	}
+	return nil
+}
+
+func (x *Event) GetDone() *Done {
+	if x != nil {
+		if x, ok := x.Kind.(*Event_Done); ok {
+			return x.Done
+		}
+	}
+	return nil
+}
+
+type isEvent_Kind interface {
+	isEvent_Kind()
+}
+
+type Event_Stage struct {
+	Stage *Stage `protobuf:"bytes,10,opt,name=stage,proto3,oneof"` // the stage word, as Fetch shows it: calling:<i>, done
+}
+
+type Event_Step struct {
+	Step *Step `protobuf:"bytes,11,opt,name=step,proto3,oneof"` // a tool-call step's key and outcome kind; no bytes
+}
+
+type Event_Progress struct {
+	Progress *Progress `protobuf:"bytes,12,opt,name=progress,proto3,oneof"` // a decider's short text and optional fraction
+}
+
+type Event_Question struct {
+	Question *Question `protobuf:"bytes,13,opt,name=question,proto3,oneof"` // a question's id and text, for a decider that needs input
+}
+
+type Event_Chunk struct {
+	Chunk *Chunk `protobuf:"bytes,14,opt,name=chunk,proto3,oneof"` // a piece of a streamed answer, in order, at most 4 KB of text
+}
+
+type Event_Done struct {
+	Done *Done `protobuf:"bytes,15,opt,name=done,proto3,oneof"` // the terminal state; the result is fetched, not pushed
+}
+
+func (*Event_Stage) isEvent_Kind() {}
+
+func (*Event_Step) isEvent_Kind() {}
+
+func (*Event_Progress) isEvent_Kind() {}
+
+func (*Event_Question) isEvent_Kind() {}
+
+func (*Event_Chunk) isEvent_Kind() {}
+
+func (*Event_Done) isEvent_Kind() {}
+
+type Stage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Stage         string                 `protobuf:"bytes,1,opt,name=stage,proto3" json:"stage,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Stage) Reset() {
+	*x = Stage{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Stage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Stage) ProtoMessage() {}
+
+func (x *Stage) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Stage.ProtoReflect.Descriptor instead.
+func (*Stage) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *Stage) GetStage() string {
+	if x != nil {
+		return x.Stage
+	}
+	return ""
+}
+
+type Step struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Key   string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"` // the step's idempotency key, <run_id>:<i>
+	// The step's outcome: UNSPECIFIED means it succeeded; otherwise the tool's
+	// own kind, as a sync caller would have received it.
+	Kind          v1.ErrorKind `protobuf:"varint,2,opt,name=kind,proto3,enum=garm.invoke.v1.ErrorKind" json:"kind,omitempty"`
+	Tool          string       `protobuf:"bytes,3,opt,name=tool,proto3" json:"tool,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Step) Reset() {
+	*x = Step{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Step) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Step) ProtoMessage() {}
+
+func (x *Step) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Step.ProtoReflect.Descriptor instead.
+func (*Step) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Step) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *Step) GetKind() v1.ErrorKind {
+	if x != nil {
+		return x.Kind
+	}
+	return v1.ErrorKind(0)
+}
+
+func (x *Step) GetTool() string {
+	if x != nil {
+		return x.Tool
+	}
+	return ""
+}
+
+type Progress struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	Fraction      *float32               `protobuf:"fixed32,2,opt,name=fraction,proto3,oneof" json:"fraction,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Progress) Reset() {
+	*x = Progress{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Progress) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Progress) ProtoMessage() {}
+
+func (x *Progress) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Progress.ProtoReflect.Descriptor instead.
+func (*Progress) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *Progress) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *Progress) GetFraction() float32 {
+	if x != nil && x.Fraction != nil {
+		return *x.Fraction
+	}
+	return 0
+}
+
+type Question struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Question) Reset() {
+	*x = Question{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Question) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Question) ProtoMessage() {}
+
+func (x *Question) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Question.ProtoReflect.Descriptor instead.
+func (*Question) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *Question) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Question) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type Chunk struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// At most 4 KB; a write over it is refused. Larger content is an artefact
+	// reference in a Progress or Question, never bytes on the bus.
+	Text          string `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Chunk) Reset() {
+	*x = Chunk{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Chunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Chunk) ProtoMessage() {}
+
+func (x *Chunk) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Chunk.ProtoReflect.Descriptor instead.
+func (*Chunk) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *Chunk) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type Done struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	State         RunState               `protobuf:"varint,1,opt,name=state,proto3,enum=garm.run.v1.RunState" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Done) Reset() {
+	*x = Done{}
+	mi := &file_garm_run_v1_run_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Done) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Done) ProtoMessage() {}
+
+func (x *Done) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_run_v1_run_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Done.ProtoReflect.Descriptor instead.
+func (*Done) Descriptor() ([]byte, []int) {
+	return file_garm_run_v1_run_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *Done) GetState() RunState {
+	if x != nil {
+		return x.State
+	}
+	return RunState_RUN_STATE_UNSPECIFIED
+}
+
 var File_garm_run_v1_run_proto protoreflect.FileDescriptor
 
 const file_garm_run_v1_run_proto_rawDesc = "" +
@@ -514,18 +1112,55 @@ const file_garm_run_v1_run_proto_rawDesc = "" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12=\n" +
 	"\fcompleted_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12\x12\n" +
 	"\x04tool\x18\a \x01(\tR\x04toolB\t\n" +
-	"\aoutcome*\xa0\x01\n" +
+	"\aoutcome\"k\n" +
+	"\rEventsRequest\x12\x15\n" +
+	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12\x14\n" +
+	"\x05after\x18\x02 \x01(\x04R\x05after\x12-\n" +
+	"\x04wait\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x04wait\"T\n" +
+	"\x0eEventsResponse\x12*\n" +
+	"\x06events\x18\x01 \x03(\v2\x12.garm.run.v1.EventR\x06events\x12\x16\n" +
+	"\x06closed\x18\x02 \x01(\bR\x06closed\"\xf8\x02\n" +
+	"\x05Event\x12\x15\n" +
+	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12\x10\n" +
+	"\x03seq\x18\x02 \x01(\x04R\x03seq\x12*\n" +
+	"\x02at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x02at\x12*\n" +
+	"\x05stage\x18\n" +
+	" \x01(\v2\x12.garm.run.v1.StageH\x00R\x05stage\x12'\n" +
+	"\x04step\x18\v \x01(\v2\x11.garm.run.v1.StepH\x00R\x04step\x123\n" +
+	"\bprogress\x18\f \x01(\v2\x15.garm.run.v1.ProgressH\x00R\bprogress\x123\n" +
+	"\bquestion\x18\r \x01(\v2\x15.garm.run.v1.QuestionH\x00R\bquestion\x12*\n" +
+	"\x05chunk\x18\x0e \x01(\v2\x12.garm.run.v1.ChunkH\x00R\x05chunk\x12'\n" +
+	"\x04done\x18\x0f \x01(\v2\x11.garm.run.v1.DoneH\x00R\x04doneB\x06\n" +
+	"\x04kind\"\x1d\n" +
+	"\x05Stage\x12\x14\n" +
+	"\x05stage\x18\x01 \x01(\tR\x05stage\"[\n" +
+	"\x04Step\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12-\n" +
+	"\x04kind\x18\x02 \x01(\x0e2\x19.garm.invoke.v1.ErrorKindR\x04kind\x12\x12\n" +
+	"\x04tool\x18\x03 \x01(\tR\x04tool\"L\n" +
+	"\bProgress\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\x12\x1f\n" +
+	"\bfraction\x18\x02 \x01(\x02H\x00R\bfraction\x88\x01\x01B\v\n" +
+	"\t_fraction\".\n" +
+	"\bQuestion\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\"\x1b\n" +
+	"\x05Chunk\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"3\n" +
+	"\x04Done\x12+\n" +
+	"\x05state\x18\x01 \x01(\x0e2\x15.garm.run.v1.RunStateR\x05state*\xa0\x01\n" +
 	"\bRunState\x12\x19\n" +
 	"\x15RUN_STATE_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16RUN_STATE_NOT_RETAINED\x10\x01\x12\x15\n" +
 	"\x11RUN_STATE_RUNNING\x10\x02\x12\x17\n" +
 	"\x13RUN_STATE_SUCCEEDED\x10\x03\x12\x14\n" +
 	"\x10RUN_STATE_FAILED\x10\x04\x12\x17\n" +
-	"\x13RUN_STATE_CANCELLED\x10\x052\x8f\x01\n" +
+	"\x13RUN_STATE_CANCELLED\x10\x052\xd2\x01\n" +
 	"\n" +
 	"RunService\x12A\n" +
 	"\x06Invoke\x12\x1a.garm.run.v1.InvokeRequest\x1a\x1b.garm.run.v1.InvokeResponse\x12>\n" +
-	"\x05Fetch\x12\x19.garm.run.v1.FetchRequest\x1a\x1a.garm.run.v1.FetchResponseB.Z,github.com/garm-ai/garm-ai/garm/run/v1;runv1b\x06proto3"
+	"\x05Fetch\x12\x19.garm.run.v1.FetchRequest\x1a\x1a.garm.run.v1.FetchResponse\x12A\n" +
+	"\x06Events\x12\x1a.garm.run.v1.EventsRequest\x1a\x1b.garm.run.v1.EventsResponseB.Z,github.com/garm-ai/garm-ai/garm/run/v1;runv1b\x06proto3"
 
 var (
 	file_garm_run_v1_run_proto_rawDescOnce sync.Once
@@ -540,7 +1175,7 @@ func file_garm_run_v1_run_proto_rawDescGZIP() []byte {
 }
 
 var file_garm_run_v1_run_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_garm_run_v1_run_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_garm_run_v1_run_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_garm_run_v1_run_proto_goTypes = []any{
 	(RunState)(0),                 // 0: garm.run.v1.RunState
 	(*InvokeRequest)(nil),         // 1: garm.run.v1.InvokeRequest
@@ -548,26 +1183,49 @@ var file_garm_run_v1_run_proto_goTypes = []any{
 	(*Pending)(nil),               // 3: garm.run.v1.Pending
 	(*FetchRequest)(nil),          // 4: garm.run.v1.FetchRequest
 	(*FetchResponse)(nil),         // 5: garm.run.v1.FetchResponse
-	(*durationpb.Duration)(nil),   // 6: google.protobuf.Duration
-	(*v1.Error)(nil),              // 7: garm.invoke.v1.Error
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(*EventsRequest)(nil),         // 6: garm.run.v1.EventsRequest
+	(*EventsResponse)(nil),        // 7: garm.run.v1.EventsResponse
+	(*Event)(nil),                 // 8: garm.run.v1.Event
+	(*Stage)(nil),                 // 9: garm.run.v1.Stage
+	(*Step)(nil),                  // 10: garm.run.v1.Step
+	(*Progress)(nil),              // 11: garm.run.v1.Progress
+	(*Question)(nil),              // 12: garm.run.v1.Question
+	(*Chunk)(nil),                 // 13: garm.run.v1.Chunk
+	(*Done)(nil),                  // 14: garm.run.v1.Done
+	(*durationpb.Duration)(nil),   // 15: google.protobuf.Duration
+	(*v1.Error)(nil),              // 16: garm.invoke.v1.Error
+	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
+	(v1.ErrorKind)(0),             // 18: garm.invoke.v1.ErrorKind
 }
 var file_garm_run_v1_run_proto_depIdxs = []int32{
-	3, // 0: garm.run.v1.InvokeResponse.pending:type_name -> garm.run.v1.Pending
-	6, // 1: garm.run.v1.FetchRequest.wait:type_name -> google.protobuf.Duration
-	0, // 2: garm.run.v1.FetchResponse.state:type_name -> garm.run.v1.RunState
-	7, // 3: garm.run.v1.FetchResponse.error:type_name -> garm.invoke.v1.Error
-	8, // 4: garm.run.v1.FetchResponse.created_at:type_name -> google.protobuf.Timestamp
-	8, // 5: garm.run.v1.FetchResponse.completed_at:type_name -> google.protobuf.Timestamp
-	1, // 6: garm.run.v1.RunService.Invoke:input_type -> garm.run.v1.InvokeRequest
-	4, // 7: garm.run.v1.RunService.Fetch:input_type -> garm.run.v1.FetchRequest
-	2, // 8: garm.run.v1.RunService.Invoke:output_type -> garm.run.v1.InvokeResponse
-	5, // 9: garm.run.v1.RunService.Fetch:output_type -> garm.run.v1.FetchResponse
-	8, // [8:10] is the sub-list for method output_type
-	6, // [6:8] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	3,  // 0: garm.run.v1.InvokeResponse.pending:type_name -> garm.run.v1.Pending
+	15, // 1: garm.run.v1.FetchRequest.wait:type_name -> google.protobuf.Duration
+	0,  // 2: garm.run.v1.FetchResponse.state:type_name -> garm.run.v1.RunState
+	16, // 3: garm.run.v1.FetchResponse.error:type_name -> garm.invoke.v1.Error
+	17, // 4: garm.run.v1.FetchResponse.created_at:type_name -> google.protobuf.Timestamp
+	17, // 5: garm.run.v1.FetchResponse.completed_at:type_name -> google.protobuf.Timestamp
+	15, // 6: garm.run.v1.EventsRequest.wait:type_name -> google.protobuf.Duration
+	8,  // 7: garm.run.v1.EventsResponse.events:type_name -> garm.run.v1.Event
+	17, // 8: garm.run.v1.Event.at:type_name -> google.protobuf.Timestamp
+	9,  // 9: garm.run.v1.Event.stage:type_name -> garm.run.v1.Stage
+	10, // 10: garm.run.v1.Event.step:type_name -> garm.run.v1.Step
+	11, // 11: garm.run.v1.Event.progress:type_name -> garm.run.v1.Progress
+	12, // 12: garm.run.v1.Event.question:type_name -> garm.run.v1.Question
+	13, // 13: garm.run.v1.Event.chunk:type_name -> garm.run.v1.Chunk
+	14, // 14: garm.run.v1.Event.done:type_name -> garm.run.v1.Done
+	18, // 15: garm.run.v1.Step.kind:type_name -> garm.invoke.v1.ErrorKind
+	0,  // 16: garm.run.v1.Done.state:type_name -> garm.run.v1.RunState
+	1,  // 17: garm.run.v1.RunService.Invoke:input_type -> garm.run.v1.InvokeRequest
+	4,  // 18: garm.run.v1.RunService.Fetch:input_type -> garm.run.v1.FetchRequest
+	6,  // 19: garm.run.v1.RunService.Events:input_type -> garm.run.v1.EventsRequest
+	2,  // 20: garm.run.v1.RunService.Invoke:output_type -> garm.run.v1.InvokeResponse
+	5,  // 21: garm.run.v1.RunService.Fetch:output_type -> garm.run.v1.FetchResponse
+	7,  // 22: garm.run.v1.RunService.Events:output_type -> garm.run.v1.EventsResponse
+	20, // [20:23] is the sub-list for method output_type
+	17, // [17:20] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_garm_run_v1_run_proto_init() }
@@ -583,13 +1241,22 @@ func file_garm_run_v1_run_proto_init() {
 		(*FetchResponse_Result)(nil),
 		(*FetchResponse_Error)(nil),
 	}
+	file_garm_run_v1_run_proto_msgTypes[7].OneofWrappers = []any{
+		(*Event_Stage)(nil),
+		(*Event_Step)(nil),
+		(*Event_Progress)(nil),
+		(*Event_Question)(nil),
+		(*Event_Chunk)(nil),
+		(*Event_Done)(nil),
+	}
+	file_garm_run_v1_run_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_garm_run_v1_run_proto_rawDesc), len(file_garm_run_v1_run_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

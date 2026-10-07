@@ -43,12 +43,14 @@ import (
 const (
 	SubjectInvoke = "garm.run.v1.invoke"
 	SubjectFetch  = "garm.run.v1.fetch"
+	SubjectEvents = "garm.run.v1.events"
 )
 
 // Patterns rund ANSWERS on. Token 4 is the caller's account, placed by the server.
 const (
 	PatternInvoke = "garm.run.v1.*.invoke"
 	PatternFetch  = "garm.run.v1.*.fetch"
+	PatternEvents = "garm.run.v1.*.events"
 )
 
 // CallerKey is the context key under which a handler finds the calling account.
@@ -144,9 +146,35 @@ func Serve(svc *natsmicro.Service, e *run.Engine, names observe.CallerNames) err
 	})); err != nil {
 		return err
 	}
-	return svc.Mount("fetch", PatternFetch, micro.HandlerFunc(func(r micro.Request) {
+	if err := svc.Mount("fetch", PatternFetch, micro.HandlerFunc(func(r micro.Request) {
 		svc.Track(func() { fetch(e, names, r) })
+	})); err != nil {
+		return err
+	}
+	return svc.Mount("events", PatternEvents, micro.HandlerFunc(func(r micro.Request) {
+		svc.Track(func() { events(e, names, r) })
 	}))
+}
+
+func events(e *run.Engine, names observe.CallerNames, r micro.Request) {
+	ctx, span := withCaller(e, names, r, "events")
+	defer span.End()
+	var req runv1.EventsRequest
+	if err := proto.Unmarshal(r.Data(), &req); err != nil {
+		unreadable := serve.Invalid("the request could not be read as garm.run.v1.EventsRequest")
+		reply(r, serve.Wire(unreadable, ""))
+		mark(span, unreadable)
+		return
+	}
+	span.SetAttributes(observe.KeyRunID.String(req.GetRunId()))
+	resp, failure := e.Events(ctx, &req, headersOf(ctx, r))
+	if failure != nil {
+		reply(r, failure)
+		mark(span, &serve.Error{Kind: failure.GetKind()})
+		return
+	}
+	mark(span, nil)
+	respond(r, resp)
 }
 
 func invoke(e *run.Engine, names observe.CallerNames, r micro.Request) {

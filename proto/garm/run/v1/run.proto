@@ -26,6 +26,11 @@ service RunService {
   // Fetch is what happened. Today it answers honestly that a synchronous run is
   // not retained; it returns a result when there is a store to hold one.
   rpc Fetch(FetchRequest) returns (FetchResponse);
+
+  // Events is the run's record after a cursor: its events in order, and a hold
+  // until there is one when none is past the cursor yet. The run's owner only;
+  // a foreign or unknown run is NOT_FOUND, as for Fetch. Push spec §4.
+  rpc Events(EventsRequest) returns (EventsResponse);
 }
 
 message InvokeRequest {
@@ -104,6 +109,79 @@ message FetchResponse {
   // The tool the run invoked, so a caller holding only a run id can decode the
   // result against the catalogue.
   string tool = 7;
+}
+
+message EventsRequest {
+  string run_id = 1;
+  // Return events with seq > after. 0 is the start.
+  uint64 after = 2;
+  // How long rund may hold the request when no event is past the cursor yet.
+  // Zero answers at once. Capped at 30s, as Fetch's wait is.
+  google.protobuf.Duration wait = 3;
+}
+
+message EventsResponse {
+  // In sequence order, at most 256; a caller a long way behind pages.
+  repeated Event events = 1;
+  // True once the run's stream is closed and every event is at or before this
+  // reply: there will be no more.
+  bool closed = 2;
+}
+
+// One thing that happened in a run. A WORD AND A REFERENCE, NEVER A PAYLOAD --
+// with one bounded exception, chunk, whose text is capped at 4 KB. done carries
+// no result: a result can be large, is already in the run, and is fetched with
+// the ownership check and the typed decoding Fetch has.
+//
+// The same bytes are what the run writes to its durable stream and what rund
+// publishes live on garm.run.v1.<OWNER>.out.<run_id>.<seq>, so a late
+// subscriber's catch-up and the live feed are the same thing from two places.
+message Event {
+  string run_id = 1;
+  // The stream position, from 1, assigned once at write. What a cursor names,
+  // and what lets a subscriber stitch catch-up to live without a duplicate.
+  uint64 seq = 2;
+  google.protobuf.Timestamp at = 3;
+  oneof kind {
+    Stage stage = 10;        // the stage word, as Fetch shows it: calling:<i>, done
+    Step step = 11;          // a tool-call step's key and outcome kind; no bytes
+    Progress progress = 12;  // a decider's short text and optional fraction
+    Question question = 13;  // a question's id and text, for a decider that needs input
+    Chunk chunk = 14;        // a piece of a streamed answer, in order, at most 4 KB of text
+    Done done = 15;          // the terminal state; the result is fetched, not pushed
+  }
+}
+
+message Stage {
+  string stage = 1;
+}
+
+message Step {
+  string key = 1;  // the step's idempotency key, <run_id>:<i>
+  // The step's outcome: UNSPECIFIED means it succeeded; otherwise the tool's
+  // own kind, as a sync caller would have received it.
+  garm.invoke.v1.ErrorKind kind = 2;
+  string tool = 3;
+}
+
+message Progress {
+  string text = 1;
+  optional float fraction = 2;
+}
+
+message Question {
+  string id = 1;
+  string text = 2;
+}
+
+message Chunk {
+  // At most 4 KB; a write over it is refused. Larger content is an artefact
+  // reference in a Progress or Question, never bytes on the bus.
+  string text = 1;
+}
+
+message Done {
+  RunState state = 1;
 }
 
 enum RunState {

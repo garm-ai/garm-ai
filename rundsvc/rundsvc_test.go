@@ -373,3 +373,26 @@ func TestFetchSaysNotRetained(t *testing.T) {
 // property. What would enforce it is NATS account permissions -- only rund's
 // credential allowed to publish on garm.tool.> -- which is recorded in
 // docs/invariants.md's unenforced table rather than asserted here.
+
+// Events is mounted beside invoke and fetch, under the same caller-rewritten
+// subject; without a store it answers empty and closed.
+func TestEventsIsMountedAndAnswersEmptyClosedWithoutAStore(t *testing.T) {
+	nc, _ := bareServer(t)
+	body, _ := proto.Marshal(&runv1.EventsRequest{RunId: "r1"})
+	m := nats.NewMsg(asRewritten(rundsvc.SubjectEvents))
+	m.Data = body
+	reply, err := nc.RequestMsg(m, 5*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
+		t.Fatalf("events answered an error: %s %s", code, reply.Header.Get(micro.ErrorHeader))
+	}
+	var resp runv1.EventsResponse
+	if err := proto.Unmarshal(reply.Data, &resp); err != nil {
+		t.Fatal(err)
+	}
+	if len(resp.GetEvents()) != 0 || !resp.GetClosed() {
+		t.Fatalf("got %v", &resp)
+	}
+}
