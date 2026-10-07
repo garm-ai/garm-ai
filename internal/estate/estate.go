@@ -30,10 +30,12 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nkeys"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	"github.com/garm-ai/garm-ai/examples/weatherd"
+	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/internal/fixtures"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
@@ -110,6 +112,29 @@ func WithStoreDown() Option { return func(o *options) { o.store, o.storeDown = t
 
 // Store is the estate's run store, nil without WithStore.
 func (e *Estate) Store() *rundbos.Store { return e.store }
+
+// SubscribeEvents subscribes as a role to a run's live events, under the local
+// prefix the role's account imports, and delivers them decoded. What the bus
+// delivers to that account -- and only that -- is what arrives.
+func (e *Estate) SubscribeEvents(t testing.TB, as Role, runID string) <-chan *runv1.Event {
+	t.Helper()
+	nc := e.Connect(t, as)
+	out := make(chan *runv1.Event, 64)
+	sub, err := nc.Subscribe(rundsvc.SubjectOut+"."+runID+".>", func(m *nats.Msg) {
+		ev := &runv1.Event{}
+		if err := proto.Unmarshal(m.Data, ev); err == nil {
+			out <- ev
+		}
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := nc.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sub.Unsubscribe() })
+	return out
+}
 
 // StoreUp makes a WithStoreDown estate's database reachable and waits for the
 // store to reconnect.
@@ -428,7 +453,7 @@ func New(t testing.TB, opts ...Option) *Estate {
 		store, err := rundbos.Open(context.Background(), rundbos.Config{
 			URL: rundbos.FileURL(filepath.Join(e.storeDir, "runs.db")), AppName: "estate",
 			Executor: "estate-rund", Workers: 2, Migrate: true, Logger: rundLog, Retry: 100 * time.Millisecond,
-		}, e.Catalogue, engine.Tools, nil)
+		}, e.Catalogue, engine.Tools, rundsvc.LivePublisher{NC: rundNC})
 		if err != nil {
 			t.Fatal(err)
 		}

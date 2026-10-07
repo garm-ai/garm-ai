@@ -166,6 +166,45 @@ func (c Client) Fetch(ctx context.Context, runID string, wait time.Duration) (re
 	return &out, nil
 }
 
+// Events asks for a run's record after a cursor. wait rides in the body and
+// sets the request's deadline, as Fetch's does.
+func (c Client) Events(ctx context.Context, runID string, after uint64, wait time.Duration) (resp *runv1.EventsResponse, err error) {
+	ctx, span := observe.Tracer().Start(ctx, "garm.events", trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(observe.KeyRunID.String(runID)))
+	defer func() { finish(span, err, 0) }()
+
+	req := &runv1.EventsRequest{RunId: runID, After: after}
+	if wait > 0 {
+		req.Wait = durationpb.New(wait)
+		if _, has := ctx.Deadline(); !has {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, call.Deadline(wait))
+			defer cancel()
+		}
+	}
+	body, err := proto.Marshal(req)
+	if err != nil {
+		return nil, serve.Internal(err)
+	}
+	m := nats.NewMsg(rundsvc.SubjectEvents)
+	m.Data = body
+	set(m, rundsvc.HeaderMessage, newID())
+	otel.GetTextMapPropagator().Inject(ctx, observe.HeaderCarrier(m.Header))
+
+	reply, err := c.request(ctx, m, rundsvc.PatternEvents)
+	if err != nil {
+		return nil, err
+	}
+	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
+		return nil, wireError(code, reply)
+	}
+	resp = &runv1.EventsResponse{}
+	if err := proto.Unmarshal(reply.Data, resp); err != nil {
+		return nil, serve.Internal(err)
+	}
+	return resp, nil
+}
+
 // finish records the outcome on the span: the kind as an attribute always, an
 // error status only when there was one.
 func finish(span trace.Span, err error, responseBytes int) {

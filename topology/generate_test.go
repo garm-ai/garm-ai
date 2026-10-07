@@ -1,7 +1,9 @@
 package topology_test
 
 import (
+	"reflect"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -171,8 +173,9 @@ func TestRundMayPublishEveryToolAndAnswerEveryCaller(t *testing.T) {
 	for _, s := range uc.Permissions.Sub.Allow {
 		sub[s] = true
 	}
-	if len(uc.Permissions.Pub.Allow) != 1 || !pub["garm.tool.>"] {
-		t.Errorf("rund publishes %v; want exactly garm.tool.> -- callers are answered as replies", uc.Permissions.Pub.Allow)
+	// Every tool, and every run's event feed; callers are answered as replies.
+	if len(uc.Permissions.Pub.Allow) != 2 || !pub["garm.tool.>"] || !pub[topology.OutExport] {
+		t.Errorf("rund publishes %v; want exactly garm.tool.> and %s", uc.Permissions.Pub.Allow, topology.OutExport)
 	}
 	if uc.Permissions.Resp == nil {
 		t.Error("rund has no allow-responses permission; it could answer no caller")
@@ -247,5 +250,100 @@ func TestTheManifestRecordsEachCredentialsExpiry(t *testing.T) {
 		if e.ExpiresAt != now.Add(30*24*time.Hour).Unix() {
 			t.Fatalf("%s expires_at = %d, want issuance + 30d (%d)", e.Name, e.ExpiresAt, now.Add(30*24*time.Hour).Unix())
 		}
+	}
+}
+
+// Push spec §2, §7: GARM exports the event STREAM with the owner's account at
+// position four; every caller imports it, privately, under the flat local
+// prefix it subscribes to; the caller may subscribe there and may publish
+// nothing but the run service's three verbs.
+func TestTheRunAccountExportsTheEventStreamAndEveryCallerImportsIt(t *testing.T) {
+	out := generate(t, "studio", "batch")
+	garm, err := jwt.DecodeAccountClaims(out.Accounts[topology.AccountGARM])
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stream *jwt.Export
+	for _, ex := range garm.Exports {
+		if ex.Type == jwt.Stream {
+			stream = ex
+		}
+	}
+	if stream == nil || string(stream.Subject) != topology.OutExport || stream.AccountTokenPosition != 4 || !stream.TokenReq {
+		t.Fatalf("GARM's event export: %+v", stream)
+	}
+	for _, caller := range []string{"studio", "batch"} {
+		ac, err := jwt.DecodeAccountClaims(out.Accounts[topology.CallerPrefix+caller])
+		if err != nil {
+			t.Fatal(err)
+		}
+		var imp *jwt.Import
+		for _, im := range ac.Imports {
+			if im.Type == jwt.Stream {
+				imp = im
+			}
+		}
+		want := "garm.run.v1." + ac.Subject + ".out.>"
+		if imp == nil || string(imp.Subject) != want || string(imp.LocalSubject) != topology.OutLocal || imp.Account != garm.Subject || imp.Token == "" {
+			t.Fatalf("%s's event import: %+v, want %s -> %s with an activation", caller, imp, want, topology.OutLocal)
+		}
+		act, err := jwt.DecodeActivationClaims(imp.Token)
+		if err != nil || act.Subject != ac.Subject || string(act.ImportSubject) != want || act.ImportType != jwt.Stream {
+			t.Fatalf("%s's event activation: %+v %v", caller, act, err)
+		}
+		uc := credential(t, out, caller)
+		sub := map[string]bool{}
+		for _, s := range uc.Permissions.Sub.Allow {
+			sub[s] = true
+		}
+		if !sub[topology.OutLocal] {
+			t.Errorf("%s may not subscribe to %s: %v", caller, topology.OutLocal, uc.Permissions.Sub.Allow)
+		}
+		pub := append([]string(nil), uc.Permissions.Pub.Allow...)
+		sort.Strings(pub)
+		if !reflect.DeepEqual(pub, []string{"garm.run.v1.events", "garm.run.v1.fetch", "garm.run.v1.invoke"}) {
+			t.Errorf("%s may publish %v, want exactly the three verbs", caller, pub)
+		}
+	}
+}
+
+// Property 18: the generator change reissues every caller credential once --
+// its permission set changed -- and nothing else; the issuance after that
+// reissues nothing.
+func TestTheEventImportReissuesEveryCallerOnceAndNothingElse(t *testing.T) {
+	keys := topology.FreshKeys([]string{"studio", "batch"})
+	before, err := topology.Generate(topology.Input{Catalogue: weatherCatalogue(t), Callers: []string{"studio", "batch"},
+		Previous: topology.Empty(), Keys: keys, Now: time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A manifest from BEFORE the event feed: the callers' permission hashes as
+	// the old generator computed them -- any other hash will do, since a
+	// different hash is what "the permission set changed" means.
+	prev := before.Manifest
+	for i := range prev.Entries {
+		if strings.HasPrefix(prev.Entries[i].Account, topology.CallerPrefix) {
+			prev.Entries[i].PermissionsHash = "before-the-event-feed"
+		}
+	}
+	after, err := topology.Generate(topology.Input{Catalogue: weatherCatalogue(t), Callers: []string{"studio", "batch"},
+		Previous: &prev, Keys: keys, Now: time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reissued := map[string]bool{}
+	for _, c := range after.Credentials {
+		reissued[c.Name] = true
+	}
+	if len(reissued) != 2 || !reissued["studio"] || !reissued["batch"] {
+		t.Fatalf("reissued %v, want exactly the two callers", reissued)
+	}
+	again, err := topology.Generate(topology.Input{Catalogue: weatherCatalogue(t), Callers: []string{"studio", "batch"},
+		Previous: &after.Manifest, Keys: keys, Now: time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(again.Credentials) != 0 {
+		t.Fatalf("the issuance after reissued %d credentials", len(again.Credentials))
 	}
 }

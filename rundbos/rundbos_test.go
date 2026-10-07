@@ -22,6 +22,7 @@ import (
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/internal/fixtures"
+	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundbos"
@@ -914,5 +915,127 @@ func TestAnEventRoundTripsThroughTheStream(t *testing.T) {
 	}
 	if step == nil || step.GetKind() != invokev1.ErrorKind_ERROR_KIND_UNAVAILABLE || step.GetTool() != asyncTool || step.GetKey() != "k-rt:0" {
 		t.Fatalf("the step came back as %v", step)
+	}
+}
+
+// ---- the live copy ----
+
+// recordingLive remembers every publish; failingLive refuses every one.
+type recordingLive struct {
+	mu   sync.Mutex
+	pubs []string // "<run>:<seq>:<kind>"
+}
+
+func (l *recordingLive) Publish(owner, runID string, seq uint64, event []byte) error {
+	ev := &runv1.Event{}
+	_ = proto.Unmarshal(event, ev)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.pubs = append(l.pubs, fmt.Sprintf("%s:%s:%d:%s", owner, runID, seq, describeEvents([]*runv1.Event{ev})[0]))
+	return nil
+}
+
+func (l *recordingLive) list() []string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return append([]string(nil), l.pubs...)
+}
+
+type failingLive struct{}
+
+func (failingLive) Publish(string, string, uint64, []byte) error { return errors.New("no bus") }
+
+func openLive(t *testing.T, url string, tools run.Caller, live rundbos.Live) *rundbos.Store {
+	t.Helper()
+	s, err := rundbos.Open(context.Background(), rundbos.Config{
+		URL: url, AppName: "garm-test", Executor: "test-a", Workers: 2, Migrate: true,
+		Logger: slog.New(slog.DiscardHandler),
+	}, holder(t), tools, live)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close(context.Background()) })
+	return s
+}
+
+// Property 11: a bus that cannot be published to drops the live copy, counts
+// it, and the run finishes with its record complete.
+func TestAnUnreachableBusDropsTheLiveCopyAndTheRunFinishes(t *testing.T) {
+	rec := otlptest.Install(t)
+	tools := &fakeTools{reply: []byte("ok")}
+	s := openLive(t, memory(t), tools, failingLive{})
+	mustStart(t, s, "k-nobus")
+	if st := awaitTerminal(t, s, "k-nobus", 5*time.Second); st.Status != run.StatusSucceeded {
+		t.Fatalf("%+v", st)
+	}
+	evs, closed, _ := s.Events(context.Background(), "k-nobus", 0, 0)
+	if len(evs) != 4 || !closed {
+		t.Fatalf("the record: %v closed=%v", describeEvents(evs), closed)
+	}
+	if n := rec.Counter(context.Background(), "garm.run.events", observe.KeyOutcome.String("dropped")); n != 4 {
+		t.Fatalf("dropped = %d, want 4", n)
+	}
+}
+
+// Every event of a run is published once, to its owner, with its sequence.
+func TestEveryEventIsPublishedOnceToItsOwner(t *testing.T) {
+	live := &recordingLive{}
+	tools := &fakeTools{reply: []byte("ok")}
+	s := openLive(t, memory(t), tools, live)
+	mustStart(t, s, "k-pub")
+	awaitTerminal(t, s, "k-pub", 5*time.Second)
+	want := []string{"ACX:k-pub:1:stage:calling:0", "ACX:k-pub:2:step:k-pub:0:OK", "ACX:k-pub:3:stage:done", "ACX:k-pub:4:done:SUCCEEDED"}
+	if got := live.list(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("published %v, want %v", got, want)
+	}
+}
+
+// Property 12: a replayed run does not publish twice -- the successor after a
+// death mid-step republishes nothing the first replica already published.
+func TestAReplayDoesNotRepublish(t *testing.T) {
+	file := memory(t)
+	live := &recordingLive{}
+	tools := &fakeTools{reply: []byte("done"), block: make(chan struct{})}
+	a := openLive(t, file, tools, live)
+	mustStart(t, a, "k-rep")
+	waitUntil(t, "the step to be in flight", func() bool { return tools.n() == 1 })
+	die(t, a)
+	close(tools.block)
+	successor := openLive(t, file, tools, live)
+	if st := awaitTerminal(t, successor, "k-rep", 15*time.Second); st.Status != run.StatusSucceeded {
+		t.Fatalf("%+v", st)
+	}
+	got := live.list()
+	counts := map[string]int{}
+	for _, p := range got {
+		counts[p]++
+	}
+	for p, n := range counts {
+		if n != 1 {
+			t.Fatalf("%s published %d times: %v", p, n, got)
+		}
+	}
+	if len(got) != 4 {
+		t.Fatalf("published %v, want the four events once each", got)
+	}
+}
+
+// Review focus 4: a run with no owner is recorded, published to nobody, and
+// completes.
+func TestARunWithNoOwnerIsPublishedToNobody(t *testing.T) {
+	live := &recordingLive{}
+	tools := &fakeTools{reply: []byte("ok")}
+	s := openLive(t, memory(t), tools, live)
+	if _, err := s.Start(context.Background(), run.Run{ID: "k-noone", Tool: asyncTool, Fingerprint: run.Fingerprint(asyncTool, nil), Message: "m0"}); err != nil {
+		t.Fatal(err)
+	}
+	if st := awaitTerminal(t, s, "k-noone", 5*time.Second); st.Status != run.StatusSucceeded {
+		t.Fatalf("%+v", st)
+	}
+	if got := live.list(); len(got) != 0 {
+		t.Fatalf("published %v for a run with no owner", got)
+	}
+	if evs, _, _ := s.Events(context.Background(), "k-noone", 0, 0); len(evs) != 4 {
+		t.Fatalf("the record: %v", describeEvents(evs))
 	}
 }

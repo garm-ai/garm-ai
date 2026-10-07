@@ -238,6 +238,13 @@ func Generate(in Input) (*Output, error) {
 		Name: "run", Subject: "garm.run.v1.*.>", Type: jwt.Service,
 		AccountTokenPosition: 4,    // the caller's account key, placed by the server (§3)
 		TokenReq:             true, // private, like TOOLS: an importer holds an activation GARM signed (§2.2)
+	}, {
+		// The event feed (push spec §2): rund publishes a run's events on
+		// garm.run.v1.<OWNER>.out.<run>.<seq>, and only the account whose key is
+		// at position four may import them -- ownership on the bus by structure.
+		Name: "out", Subject: OutExport, Type: jwt.Stream,
+		AccountTokenPosition: 4,
+		TokenReq:             true,
 	}}
 	// Activations are signed by the exporter's SIGNING key, with IssuerAccount
 	// naming the exporter, so the identity seed is never needed.
@@ -273,12 +280,29 @@ func Generate(in Input) (*Output, error) {
 		if err != nil {
 			return nil, fmt.Errorf("topology: signing %s's run activation: %w", name, err)
 		}
+		outSubject := jwt.Subject(fmt.Sprintf("garm.run.v1.%s.out.>", p))
+		outAct := jwt.NewActivationClaims(p)
+		outAct.ImportSubject = outSubject
+		outAct.ImportType = jwt.Stream
+		outAct.IssuerAccount = garmPub
+		outToken, err := outAct.Encode(keys[AccountGARM].Signing)
+		if err != nil {
+			return nil, fmt.Errorf("topology: signing %s's event activation: %w", name, err)
+		}
 		ac.Imports = jwt.Imports{{
 			Name:    "run",
 			Subject: runSubject,
 			Account: garmPub, Type: jwt.Service,
 			LocalSubject: "garm.run.v1.>", // what the caller publishes today, unchanged
 			Token:        runToken,
+		}, {
+			// The caller's own runs' events, under the flat local prefix it
+			// subscribes to; the server maps them from the owner-keyed subject.
+			Name:    "out",
+			Subject: outSubject,
+			Account: garmPub, Type: jwt.Stream,
+			LocalSubject: jwt.RenamingSubject(OutLocal),
+			Token:        outToken,
 		}}
 		accounts[name] = ac
 	}

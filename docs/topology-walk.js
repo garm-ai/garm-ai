@@ -1,14 +1,14 @@
 // Written by `mise run topology-walk` (cmd/garmctl/walk_test.go): the lifecycle of
 // docs/operating-the-topology.md run for real and recorded. Regenerate, do not edit.
 window.TOPOLOGY_WALK = {
- "generated_at": "2026-10-06T09:02:06Z",
+ "generated_at": "2026-10-07T05:12:40Z",
  "steps": [
   {
    "id": "ceremony",
    "title": "The root ceremony, once, offline",
    "prose": "`garmctl operator init` mints the operator root and the operator signing key, writes the root-signed operator JWT, and puts the root under `root/` for custody. Everything `topology` will ever need is under `keys/`; the root is not.",
    "command": "garmctl operator init --out ceremony",
-   "stdout": "ok: operator OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP; keys for topology in ceremony/keys\nMOVE ceremony/root TO CUSTODY NOW: the root signs nothing day to day and must never be where topology runs\n",
+   "stdout": "ok: operator ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF; keys for topology in ceremony/keys\nMOVE ceremony/root TO CUSTODY NOW: the root signs nothing day to day and must never be where topology runs\n",
    "stderr": "",
    "files": [
     {
@@ -25,7 +25,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -59,7 +59,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -75,7 +75,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -91,7 +91,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -107,7 +107,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -163,7 +163,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -178,24 +178,24 @@ window.TOPOLOGY_WALK = {
      "kind": "json",
      "change": "new",
      "secret": false,
-     "size": 3182,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 1,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:49.657419+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n        \"reason\": \"new\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"bfbab10dde269fbf0255f9647793db868c3ca4a0911802c7440c998a9598de26acfae195597e33c6ab9b5d55482e8b6fc563414d761c9244ded5a71964346f08\"\n}"
+     "size": 3181,
+     "content": "{\n  \"manifest\": {\n    \"generation\": 1,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:15.47545+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n        \"reason\": \"new\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"1136b127fb5ddcff595ca31c021aa06a3682f09155b07d13543808d484a4545f5d8097620bd2ca2d8e619318bed61809734b3ceaec8a5562d12d9874d5de2204\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "new",
      "secret": false,
-     "size": 2134,
-     "content": "{\n  \"jti\": \"Z24D6WLM4ASDM75PV3TXFJJCSQHTJARAEKYKHSI4USF6LP7ZKALQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJRNUs0NEJOUk9YN1VPQk1TMlhNVk1USFNERUlFS1NMUzdaVU9IWklLVldPSkMzQTI1RkNBIiwiaWF0IjoxNzkxMjc3MzA5LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.v5B-kJNlDkV48jXYXYayemENVSivcbry1zVzxneacsALIjeQTcgN0qRJD6G0X73mwdlpW-hGlLyMvfvGlV6LDg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3410,
+     "content": "{\n  \"jti\": \"2ZK64RE6I64CJOLX2QSVEQSHN2H4MGDHZTGF237EJ7UXF6OQQY5Q\",\n  \"iat\": 1791349935,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJKVU1JVFhQTUVXU0E2SFVZS01FU1VLVTRGNFZGSFlXVlVBNFhVVEFXSFFCRTRJSlZZRVdBIiwiaWF0IjoxNzkxMzQ5OTM1LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.l1ZxG72yuZyC9bdBwk-K8_SEOwfDNjT9CkEYRt98iuJUokF2M9vhI_aAVJjRWA8oVOFheXvxpJswYxkrOAHZCA\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJKVU1JVFhQTUVXU0E2SFVZS01FU1VLVTRGNFZGSFlXVlVBNFhVVEFXSFFCRTRJSlZZRVdBIiwiaWF0IjoxNzkxMzQ5OTM1LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.35KwKfX-gBzDIe9YkEm-viFzNqj6lb6-Mq0Ce4Ds9OphSafSm1bOM3tzzAeMSUmq0dXZMTe6gXlsGh6q4MMyBQ\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "new",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"PLU5OAHFNURWOH5QMRQEAQBRGMASZUQFUOH7NTLY46WTRZUDC42Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJRVTZVSlZaNTdMUzU1S0pGRUkyTEZQUzZJU1dGN0NFS08zWFRQSlFOVkpWSE5HNjJBWENBIiwiaWF0IjoxNzkxMjc3MzA5LCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.yBDPNUPVmqfuGj-3ZdeXKy-f3ouXR3QGdrTPWIOoWt-_Q3qZePy9qEUUvEvlUoSdNkVnXbBmvShBNiQiK7zjCw\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"C6ICMG2E7LTZY7OWH7YRRMWDNYQIKYXCHP45XYR5EQZZI24JX2UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJSR09MTDRKRTNHUEROTzZaUzI1V0xEWjZVWEQyWktSS0dZWEpETjJUTUJXVFJUWTdVRUhRIiwiaWF0IjoxNzkxMzQ5OTM1LCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.HzqzhepI3VqaZ_0j5ov9WmDbDN37AzKqTeeGJh7n5gteE3SSfPXR6ICYMwjbY3r1922C1oolrg1TimL1GdL2AQ\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -203,7 +203,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"OH745CBHFT3YU4S5NOMMK6L3SUKLFOJZ2ADNDYNZYTTQKE7Z2VGQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"IP5TFPZ2EP3D3BPSOR6WKHL4BJCF5NPLUXTFWVDPGBGKFFY2QZYA\",\n  \"iat\": 1791349935,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -211,7 +211,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 969,
-     "content": "{\n  \"jti\": \"NEETNRPSRZ6AF3MTQT5TC6IE6XHTOD25B7XOQ3MORLBZYHHRKQFQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"UVPBQJYHHDNQWPIOYUTFFRDR7ZQRQSYJL3CHIVXHJB54IJPWDWJQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -219,7 +219,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 74,
-     "content": "{\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -227,23 +227,23 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "new",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "new",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"X375EUNMP6BSC6U6653INJL55FYOP3HYL2MB2RXZKNIF6OMO33YA\",\n  \"iat\": 1791277309,\n  \"iss\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\",\n  \"name\": \"studio\",\n  \"sub\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"XNYSIJOVP5S2WEFRPDJEEQH5OPEJPO3VLLDWP6LIO5JK57ILY4XQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\",\n  \"name\": \"studio\",\n  \"sub\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -251,15 +251,15 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/manifest.json",
      "kind": "json",
      "change": "new",
      "secret": false,
-     "size": 3182,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 1,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:49.657419+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n        \"reason\": \"new\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"bfbab10dde269fbf0255f9647793db868c3ca4a0911802c7440c998a9598de26acfae195597e33c6ab9b5d55482e8b6fc563414d761c9244ded5a71964346f08\"\n}"
+     "size": 3181,
+     "content": "{\n  \"manifest\": {\n    \"generation\": 1,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:15.47545+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n        \"reason\": \"new\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"1136b127fb5ddcff595ca31c021aa06a3682f09155b07d13543808d484a4545f5d8097620bd2ca2d8e619318bed61809734b3ceaec8a5562d12d9874d5de2204\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -267,7 +267,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
@@ -279,40 +279,40 @@ window.TOPOLOGY_WALK = {
     }
    ],
    "bus": {
-    "server": "tls://127.0.0.1:62849",
+    "server": "tls://127.0.0.1:62504",
     "accounts": [
      {
       "name": "CALLER-studio",
-      "public": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
+      "public": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
       "signing_keys": [
-       "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM"
+       "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL"
       ],
       "revocations": 0,
       "pushed": false
      },
      {
       "name": "GARM",
-      "public": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
+      "public": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
       "signing_keys": [
-       "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G"
+       "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A"
       ],
       "revocations": 0,
       "pushed": false
      },
      {
       "name": "SYS",
-      "public": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
+      "public": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
       "signing_keys": [
-       "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB"
+       "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR"
       ],
       "revocations": 0,
       "pushed": false
      },
      {
       "name": "TOOLS",
-      "public": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
+      "public": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
       "signing_keys": [
-       "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U"
+       "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT"
       ],
       "revocations": 0,
       "pushed": false
@@ -322,14 +322,14 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/ops.creds",
       "name": "ops",
-      "account": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
-      "public": "UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA",
-      "issuer": "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB",
+      "account": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
+      "public": "UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA",
+      "issuer": "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": null,
       "accepted": true
@@ -337,16 +337,17 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/rund.creds",
       "name": "rund",
-      "account": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
-      "public": "UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF",
-      "issuer": "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G",
+      "account": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
+      "public": "UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O",
+      "issuer": "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.tool.>"
+       "garm.tool.>",
+       "garm.run.v1.*.out.>"
       ],
       "sub_allow": [
        "garm.run.v1.*.>",
@@ -358,33 +359,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/studio.creds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4",
-      "issuer": "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT",
+      "issuer": "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/weather.v1.WeatherService.creds",
       "name": "weather.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -423,6 +427,24 @@ window.TOPOLOGY_WALK = {
       "cred": "rund",
       "action": "subscribe",
       "subject": "garm.run.v1.*.invoke",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "subscribe",
+      "subject": "garm.run.v1.out.>",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "publish",
+      "subject": "garm.run.v1.out.forged.1",
+      "outcome": "refused by the server: nats: permissions violation: Permissions Violation for Publish to \"garm.run.v1.out.forged.1\""
+     },
+     {
+      "cred": "rund",
+      "action": "publish",
+      "subject": "garm.run.v1.ACX.out.r.1",
       "outcome": "allowed"
      }
     ]
@@ -450,7 +472,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -466,7 +488,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -482,7 +504,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -498,7 +520,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -554,7 +576,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -570,23 +592,23 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 3594,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 2,\n    \"catalogue_sha256\": \"f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n    \"issued_at\": \"2026-10-06T13:01:50.926007+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      },\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"catalogue_sha256\": \"f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n        \"generation\": 2,\n        \"permissions_hash\": \"19ef9109d050959e\",\n        \"issued_at\": 1791277310,\n        \"expires_at\": 1822813310,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n        \"reason\": \"new\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"b1fd655563dd3f994a0a96a3813e75088db4600e29342ed6fbaa9c23cef911c95a18f0a6f5eaa7632fdcaccd2324fe5b68d78c0626251f73b2c9216aa0bb290a\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 2,\n    \"catalogue_sha256\": \"f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n    \"issued_at\": \"2026-10-07T09:12:17.557232+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      },\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"catalogue_sha256\": \"f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n        \"generation\": 2,\n        \"permissions_hash\": \"19ef9109d050959e\",\n        \"issued_at\": 1791349937,\n        \"expires_at\": 1822885937,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n        \"reason\": \"new\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"2bbbad94ca9d5df9888d439b4cb8bc46c93a06a0bb0a3ef047f247c42a8360d30004b25384caecdf55e53aeb5ed24dd0c4f196ad5fdd8a65c1a858887c089b0d\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2134,
-     "content": "{\n  \"jti\": \"2BQLFE3MZFOCBFTFRJUSH5RLPQ7AW5XJV3KOJOARUJRMWYUCUYBQ\",\n  \"iat\": 1791277310,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJHRFVTR0RBT01PSEdBWk1RSkJSWlBGR1I3TjVKWjc0VFgyTDdJU002T1hDMk03VkZURTNBIiwiaWF0IjoxNzkxMjc3MzEwLCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.ofjdf6dxvhVpNYI8SSoxfdreKzWkUjB82-BvCNsXKTb98g_vWQzdkA_mDbADmTCJfoF2zxPM_91qvCiMKjA6CA\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3410,
+     "content": "{\n  \"jti\": \"7ASIXUO6WHEZQNFAICOICTZOCWE7RA5KOHEMJLAP3NVZ7CAJRHHA\",\n  \"iat\": 1791349937,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJZWFlQUUtYM01BWEhYUEFGVFVJU0NVQ05UVlhFM1pSV1BVQ08zVFBEQllDRlBDNE5BSUxRIiwiaWF0IjoxNzkxMzQ5OTM3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.HLZ54LRX_1DG4ppfXA87T8xsdgFEsLPANTerKkfsQRSuYEFPGZ6ow2JKRPxf0TRxCfjwpqqMLdXsVJEAHdOoCA\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJZWFlQUUtYM01BWEhYUEFGVFVJU0NVQ05UVlhFM1pSV1BVQ08zVFBEQllDRlBDNE5BSUxRIiwiaWF0IjoxNzkxMzQ5OTM3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.PCQG1rmGRQIItPGPKLILdZ9drp0eXYAi258Kg0mvFzHWvUKnSA9WxfNFjMyFxvhHNb4pWA4XRUE45BU_Kr-9CA\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"WQIPWXDMCOUGEW3WZGAVWRWYHZMZ7VSSJZYURPWDOK46WKY7NKPQ\",\n  \"iat\": 1791277310,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJQWFNXWFk0Q0dNUDRLRDRJSlAzRDdHRjRNSEVMRFZMSlQyV1lPNlpHU0czM0hRQUMzWFFRIiwiaWF0IjoxNzkxMjc3MzEwLCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.eu_j21JZJErs0gNG7IyOuJHPCIdTEr6K074dQLLnC9qgHOHf1RuJwgX96t22lGTtukB0sp8ueSz0DL8IipH3Ag\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"VFFBUXENLYFRUSHNV6SORWWHZI3DGGROUK7MIX6KR5Z2TG2LBBXA\",\n  \"iat\": 1791349937,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJQWjRURkRMNFRaNzZCS1VLMlVXRktFN0RNWFBWTlE0MlJMV1RUQVRTSzJQV1FZWFdHT1VBIiwiaWF0IjoxNzkxMzQ5OTM3LCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.4GyaYrSmHNUgKxNAOir8ZmAKUDcmP39S55_unn6Y6Ho_6dVF2gCNVcaKyyu8UawzuhopgK71q73GPMQF16txDg\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -594,7 +616,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"L4LW6CBVHZEMFXAPQWZXLB352OAKFIKXUN3PQPJOAYJ65SGQ3AVQ\",\n  \"iat\": 1791277310,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"P57JIO6632NKIVJSACYNKG6ZZ6JOZMWFDPRLWSCUIYRXEURMRH6A\",\n  \"iat\": 1791349937,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -602,7 +624,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 969,
-     "content": "{\n  \"jti\": \"OQBT6LG475DIEK3YZU2PUYAYXTDFCFT6L5YWFZG5UW4J7ZW6ORCQ\",\n  \"iat\": 1791277310,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"EUVVB5KYUW6TGWWXVR65BA7FGY3OTNCROILJPQXNQYHBM23QUK6A\",\n  \"iat\": 1791349937,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -610,7 +632,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 74,
-     "content": "{\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -618,23 +640,23 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"X375EUNMP6BSC6U6653INJL55FYOP3HYL2MB2RXZKNIF6OMO33YA\",\n  \"iat\": 1791277309,\n  \"iss\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\",\n  \"name\": \"studio\",\n  \"sub\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"XNYSIJOVP5S2WEFRPDJEEQH5OPEJPO3VLLDWP6LIO5JK57ILY4XQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\",\n  \"name\": \"studio\",\n  \"sub\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -642,7 +664,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather2.v1.WeatherService.creds",
@@ -650,7 +672,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": true,
      "size": 1399,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813310,\n  \"jti\": \"SYSJP3FXKKZPR7SOPFBD7V263ZIHESQ2VIFUOVDWGXRYQS76PN3A\",\n  \"iat\": 1791277310,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather2.v1.WeatherService\",\n  \"sub\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather-2.v1.get_forecast\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n      \"generation:2\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885937,\n  \"jti\": \"6GTQQ3OCJFRACTJPKGOWXF7S2V6VB5246D5676JGOV5VICBUDE4Q\",\n  \"iat\": 1791349937,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather2.v1.WeatherService\",\n  \"sub\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather-2.v1.get_forecast\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n      \"generation:2\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/manifest.json",
@@ -658,7 +680,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 3594,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 2,\n    \"catalogue_sha256\": \"f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n    \"issued_at\": \"2026-10-06T13:01:50.926007+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      },\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"catalogue_sha256\": \"f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n        \"generation\": 2,\n        \"permissions_hash\": \"19ef9109d050959e\",\n        \"issued_at\": 1791277310,\n        \"expires_at\": 1822813310,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n        \"reason\": \"new\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"b1fd655563dd3f994a0a96a3813e75088db4600e29342ed6fbaa9c23cef911c95a18f0a6f5eaa7632fdcaccd2324fe5b68d78c0626251f73b2c9216aa0bb290a\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 2,\n    \"catalogue_sha256\": \"f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n    \"issued_at\": \"2026-10-07T09:12:17.557232+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      },\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"catalogue_sha256\": \"f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a\",\n        \"generation\": 2,\n        \"permissions_hash\": \"19ef9109d050959e\",\n        \"issued_at\": 1791349937,\n        \"expires_at\": 1822885937,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n        \"reason\": \"new\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"2bbbad94ca9d5df9888d439b4cb8bc46c93a06a0bb0a3ef047f247c42a8360d30004b25384caecdf55e53aeb5ed24dd0c4f196ad5fdd8a65c1a858887c089b0d\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -666,7 +688,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
@@ -678,40 +700,40 @@ window.TOPOLOGY_WALK = {
     }
    ],
    "bus": {
-    "server": "tls://127.0.0.1:62849",
+    "server": "tls://127.0.0.1:62504",
     "accounts": [
      {
       "name": "CALLER-studio",
-      "public": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
+      "public": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
       "signing_keys": [
-       "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM"
+       "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "GARM",
-      "public": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
+      "public": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
       "signing_keys": [
-       "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G"
+       "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "SYS",
-      "public": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
+      "public": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
       "signing_keys": [
-       "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB"
+       "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "TOOLS",
-      "public": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
+      "public": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
       "signing_keys": [
-       "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U"
+       "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT"
       ],
       "revocations": 0,
       "pushed": true
@@ -721,14 +743,14 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/ops.creds",
       "name": "ops",
-      "account": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
-      "public": "UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA",
-      "issuer": "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB",
+      "account": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
+      "public": "UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA",
+      "issuer": "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": null,
       "accepted": true
@@ -736,16 +758,17 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/rund.creds",
       "name": "rund",
-      "account": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
-      "public": "UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF",
-      "issuer": "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G",
+      "account": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
+      "public": "UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O",
+      "issuer": "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.tool.>"
+       "garm.tool.>",
+       "garm.run.v1.*.out.>"
       ],
       "sub_allow": [
        "garm.run.v1.*.>",
@@ -757,33 +780,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/studio.creds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4",
-      "issuer": "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT",
+      "issuer": "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/weather.v1.WeatherService.creds",
       "name": "weather.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -795,14 +821,14 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/weather2.v1.WeatherService.creds",
       "name": "weather2.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a",
        "generation:2"
       ],
-      "expires": "2027-10-06T09:01:50Z",
+      "expires": "2027-10-07T05:12:17Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -840,6 +866,24 @@ window.TOPOLOGY_WALK = {
       "cred": "rund",
       "action": "subscribe",
       "subject": "garm.run.v1.*.invoke",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "subscribe",
+      "subject": "garm.run.v1.out.>",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "publish",
+      "subject": "garm.run.v1.out.forged.1",
+      "outcome": "refused by the server: nats: permissions violation: Permissions Violation for Publish to \"garm.run.v1.out.forged.1\""
+     },
+     {
+      "cred": "rund",
+      "action": "publish",
+      "subject": "garm.run.v1.ACX.out.r.1",
       "outcome": "allowed"
      }
     ]
@@ -867,7 +911,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -883,7 +927,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -899,7 +943,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -915,7 +959,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -971,7 +1015,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -986,24 +1030,24 @@ window.TOPOLOGY_WALK = {
      "kind": "json",
      "change": "changed",
      "secret": false,
-     "size": 3389,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 3,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:52.160564+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"12f8b4a7647c27a81aba6367bda5c4bb856abde30b504ba6e2132bcf1ac1c96be21e5eb6d8cdc5f3424eb55d72d88b322efffe1da4c54a42863e2dd7966acd02\"\n}"
+     "size": 3388,
+     "content": "{\n  \"manifest\": {\n    \"generation\": 3,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:19.61669+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"960136276bf2fb99d00393e42e5e118bdd2ed5096c575237975386560c8e0615191024b62c1cefbd48d103b10b01f5856e8cac136bea0e13fd75339ec4a7a501\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2134,
-     "content": "{\n  \"jti\": \"S4QEUC3PCXSCWX44H5D35VS7ZU4BZ5U2MWNP7RAIGTBROWMCRL3A\",\n  \"iat\": 1791277312,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJIWkY3WkY0NFBIVTRUWUhWRjdRNTZRSDZaMkg2M01QRVpNSjdMWkxSV0pGRjJGVlE0QVBBIiwiaWF0IjoxNzkxMjc3MzEyLCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.ertnsnGXhQ4vqnkm7xYkDwrcxVZid0BAJ7r_G8Wye8Gt4RQ5T1pZVwtEbcwU_6bD5OIhjHgFN2B4xbJjwNvgAA\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3410,
+     "content": "{\n  \"jti\": \"AS7TP4Q3CPRD7GL7Q5D333CS76QWJMKPA6J3PMLTFL3FXCTBRQKA\",\n  \"iat\": 1791349939,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJRN1hEWElVQk5YSENRSEFVR0dRQ0hBNUFXQkZXVlJDWlA3SVJLUkE1WUU2QkE1WU1CNzRRIiwiaWF0IjoxNzkxMzQ5OTM5LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.QnqJfGWR4ZQ3jeiu80cQbva75gKgSJp96LrKC3ca752vIO_G7BXsefTmby-Zk_y_swflor1kiJm6sQXadZZvCw\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJRN1hEWElVQk5YSENRSEFVR0dRQ0hBNUFXQkZXVlJDWlA3SVJLUkE1WUU2QkE1WU1CNzRRIiwiaWF0IjoxNzkxMzQ5OTM5LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.rVgW5Kb1MrE_2A8fr6xuwbPvQc2g7LNjrb-WAkVI5qIS29v6S_lHXChvh9cKRY1wyBewp8ne5F9sVsz4TPzPAw\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"IOWZ7RYJSXUU5HLOU2O2VIWJ4VMA2SA3VDBSJMQ6YIT4O6T7QLNQ\",\n  \"iat\": 1791277312,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiIzNUc3UzU3Qko0RkFNN1FTU1JWRVRTQVk3M0pZN09YWkJJSDdCMktRUjdUWFVZM0U0NDZRIiwiaWF0IjoxNzkxMjc3MzEyLCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.Y-gFIGIPBNehbl7Tm4qoRrSa8sFOGjBsLSNW4dxl_xRat4trHqFB-ZtlKFGNNUbaNVU9Q_hn75gm2kSz2W-3Bg\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"HUEFZ4QIK5G5GOIXOVMADJT5QIVBVZHUQNWG64SYE53TEIGUT5KA\",\n  \"iat\": 1791349939,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJTMktLNlRTWklKVVFJT0pIT1NMRFJFNEg3VEdDRFc3QkhLWkROM0dITVJXNlFBSVZXV1dBIiwiaWF0IjoxNzkxMzQ5OTM5LCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.KxevGK71fYqm_ykicwfkgN9hErjEDZE7eo4zfTfBNAjPFooCFPeEDhmdcyrefITjmGba8FKrNnkylfubeBlyAA\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -1011,7 +1055,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"WBHDFRFAJFDLWPG66YGFOG5FND4FWIB4TY5HVEOMISGKMSKRVDSQ\",\n  \"iat\": 1791277312,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"JYAGSJ75I3CKPYYG35HXUSIUTDRIUMQXDRE6EIGGWHQNRL5A2VEA\",\n  \"iat\": 1791349939,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -1019,7 +1063,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 1084,
-     "content": "{\n  \"jti\": \"3QJSJMF5OTD3JYWZTLAMH6RFS777YAXRM5YV3SX5YCIBAZWQZRHQ\",\n  \"iat\": 1791277312,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"revocations\": {\n      \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\": 1791277312\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"HAMMQAQJUHJMEPYAJSODJHBKAWHLTKSWNZH6UFV3VFWONXCC6VWA\",\n  \"iat\": 1791349939,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"revocations\": {\n      \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\": 1791349939\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -1027,7 +1071,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 74,
-     "content": "{\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -1035,23 +1079,23 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"X375EUNMP6BSC6U6653INJL55FYOP3HYL2MB2RXZKNIF6OMO33YA\",\n  \"iat\": 1791277309,\n  \"iss\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\",\n  \"name\": \"studio\",\n  \"sub\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"XNYSIJOVP5S2WEFRPDJEEQH5OPEJPO3VLLDWP6LIO5JK57ILY4XQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\",\n  \"name\": \"studio\",\n  \"sub\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -1059,7 +1103,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather2.v1.WeatherService.creds",
@@ -1074,8 +1118,8 @@ window.TOPOLOGY_WALK = {
      "kind": "json",
      "change": "changed",
      "secret": false,
-     "size": 3389,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 3,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:52.160564+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"12f8b4a7647c27a81aba6367bda5c4bb856abde30b504ba6e2132bcf1ac1c96be21e5eb6d8cdc5f3424eb55d72d88b322efffe1da4c54a42863e2dd7966acd02\"\n}"
+     "size": 3388,
+     "content": "{\n  \"manifest\": {\n    \"generation\": 3,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:19.61669+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"960136276bf2fb99d00393e42e5e118bdd2ed5096c575237975386560c8e0615191024b62c1cefbd48d103b10b01f5856e8cac136bea0e13fd75339ec4a7a501\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -1083,52 +1127,52 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
      "kind": "json",
      "change": "changed",
      "secret": false,
-     "size": 269,
-     "content": "[\n  {\n    \"Name\": \"weather2.v1.WeatherService\",\n    \"Account\": \"TOOLS\",\n    \"Public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n    \"At\": \"2026-10-06T13:01:52.160564+04:00\",\n    \"Kind\": \"retired\",\n    \"Why\": \"retired: no longer in the catalogue\"\n  }\n]"
+     "size": 268,
+     "content": "[\n  {\n    \"Name\": \"weather2.v1.WeatherService\",\n    \"Account\": \"TOOLS\",\n    \"Public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n    \"At\": \"2026-10-07T09:12:19.61669+04:00\",\n    \"Kind\": \"retired\",\n    \"Why\": \"retired: no longer in the catalogue\"\n  }\n]"
     }
    ],
    "bus": {
-    "server": "tls://127.0.0.1:62849",
+    "server": "tls://127.0.0.1:62504",
     "accounts": [
      {
       "name": "CALLER-studio",
-      "public": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
+      "public": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
       "signing_keys": [
-       "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM"
+       "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "GARM",
-      "public": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
+      "public": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
       "signing_keys": [
-       "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G"
+       "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "SYS",
-      "public": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
+      "public": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
       "signing_keys": [
-       "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB"
+       "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "TOOLS",
-      "public": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
+      "public": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
       "signing_keys": [
-       "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U"
+       "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT"
       ],
       "revocations": 1,
       "pushed": true
@@ -1138,14 +1182,14 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/ops.creds",
       "name": "ops",
-      "account": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
-      "public": "UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA",
-      "issuer": "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB",
+      "account": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
+      "public": "UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA",
+      "issuer": "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": null,
       "accepted": true
@@ -1153,16 +1197,17 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/rund.creds",
       "name": "rund",
-      "account": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
-      "public": "UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF",
-      "issuer": "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G",
+      "account": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
+      "public": "UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O",
+      "issuer": "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.tool.>"
+       "garm.tool.>",
+       "garm.run.v1.*.out.>"
       ],
       "sub_allow": [
        "garm.run.v1.*.>",
@@ -1174,33 +1219,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/studio.creds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4",
-      "issuer": "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT",
+      "issuer": "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/weather.v1.WeatherService.creds",
       "name": "weather.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -1212,14 +1260,14 @@ window.TOPOLOGY_WALK = {
      {
       "file": "a copy of weather2.v1.WeatherService.creds a process still holds",
       "name": "weather2.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a",
        "generation:2"
       ],
-      "expires": "2027-10-06T09:01:50Z",
+      "expires": "2027-10-07T05:12:17Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -1259,6 +1307,24 @@ window.TOPOLOGY_WALK = {
       "cred": "rund",
       "action": "subscribe",
       "subject": "garm.run.v1.*.invoke",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "subscribe",
+      "subject": "garm.run.v1.out.>",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "publish",
+      "subject": "garm.run.v1.out.forged.1",
+      "outcome": "refused by the server: nats: permissions violation: Permissions Violation for Publish to \"garm.run.v1.out.forged.1\""
+     },
+     {
+      "cred": "rund",
+      "action": "publish",
+      "subject": "garm.run.v1.ACX.out.r.1",
       "outcome": "allowed"
      }
     ]
@@ -1286,7 +1352,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -1302,7 +1368,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -1318,7 +1384,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -1334,7 +1400,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -1390,7 +1456,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -1406,23 +1472,23 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 3389,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 4,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:53.398633+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"e375eff2f21ea39670935df335566857407473a316472b59516cace428113e1beb045354f54ae326cd10cabc21d96a92647977081eb009a2c15dd5d0a8348a0a\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 4,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:21.666681+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"6a86eb7ba30c1d622ed929d6b6294514ef5ebc990d7cda3262712eb543adf04b6efe5377c02783d1c763ee689ea99015d1ce490294c9483e45bb80ec6a5b1b0a\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2134,
-     "content": "{\n  \"jti\": \"BGPAX7N7WYZ5LCQQXCQXMTCBQAYGMJS4T34O2B6REQA3N5TFQXRA\",\n  \"iat\": 1791277313,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJNWU9YUVZJTTNXNlNQVUxNVDROUlVFUU9PS0s3WVBDMlQyVTVZSFFLQUtOMlVEWFhUR0xBIiwiaWF0IjoxNzkxMjc3MzEzLCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.c9eOqJpt5XHApGtaJeRlLZhvp-iTgaaYcdwVcsJ4KIB0GY3KUkWaMUHwSNJKuSVpk8mqBvngjcpNHFmYz3vbBg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3410,
+     "content": "{\n  \"jti\": \"5MLWQRNUECD7BLPH4ONIRO7LI2RBMVEG2PFDV6HGMZAQBHDOA7TQ\",\n  \"iat\": 1791349941,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJKUktGWFpRNlk1REZMQ09RWllLU001SFFNWTdGWlJHVExDRkdYRlRZQ0gzRUw1V0ZMNlpBIiwiaWF0IjoxNzkxMzQ5OTQxLCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.kJ38ceaQyPMtBV6O5YQP8IRnlpivwgV7_Ag4wvZhd5f8nWoAUXbyR-nAs5sK0CfzQcJ-uGlS9anFIudY_G3tBQ\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJKUktGWFpRNlk1REZMQ09RWllLU001SFFNWTdGWlJHVExDRkdYRlRZQ0gzRUw1V0ZMNlpBIiwiaWF0IjoxNzkxMzQ5OTQxLCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.ImCkn07nbUElO8FTgnXgDB4UKZrSCDzXvx9TjFUZlaVBemwPyN6baYwWuP_ShqgzZVC-NvWVo-gipNLU9t_hBg\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"RSQCUZC5NQVIEIVSINBGJM5WAT5UR2H4JMPKZ6GLIGMZT7IRC4NA\",\n  \"iat\": 1791277313,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJOTDIzV0dZWTVPQ0FDRlBGWUI2SVZBM09HUFVLTzJFTTVWVUQ0WEtPRUZONFZSQVlCN1ZBIiwiaWF0IjoxNzkxMjc3MzEzLCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.Xa7k0bQRWmdNmf5erO8FbXab8Rqh06rEiQ3qwmROPbjjUEpmwGEp3gVrmpFiQzwzG9_gQX4-gsykdvFe2jY0Bg\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"N27BKBL5MNS3I2PVXXY45EMNAOV3E62CZ5E6OKVBIUWQZQX5MU2A\",\n  \"iat\": 1791349941,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJUTU1DM1lHU0xZRlJEVUJFQ1BKSFgyRE82TUNLNjVFWDZWMlNSMkFaVU4yTlhQSlFHNERBIiwiaWF0IjoxNzkxMzQ5OTQxLCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.TWmgDr4UemgezUh2MEt1H-hsfAyDrCDlhWwSlRbJgOmJyd0rPjLS9mWex4cMutxfrRWoDvmMdn1u3HSFTqhBDA\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -1430,7 +1496,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"6YULA56ICO3MJNNX765L7RCUTINS6ARTNSEDYK4YSSRQS7R5GIBA\",\n  \"iat\": 1791277313,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"B3P5RR2BKRZRW5YZKDDHZBWPG2EOA2ZWBWYME5JFOKAWUNKKAZJQ\",\n  \"iat\": 1791349941,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -1438,7 +1504,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 1084,
-     "content": "{\n  \"jti\": \"7CW7AMEFOPJYLPKFP4W3BP4KKFX22XDEH7OISLT6VGBDQ3BFDKNQ\",\n  \"iat\": 1791277313,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"revocations\": {\n      \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\": 1791277312\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"AC62JOMZKWQ64DZ7MOWZKZP4FI4BIFLIT4V65V6MWPUWTZGUBNMA\",\n  \"iat\": 1791349941,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"revocations\": {\n      \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\": 1791349939\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -1446,7 +1512,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 74,
-     "content": "{\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -1454,23 +1520,23 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"X375EUNMP6BSC6U6653INJL55FYOP3HYL2MB2RXZKNIF6OMO33YA\",\n  \"iat\": 1791277309,\n  \"iss\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\",\n  \"name\": \"studio\",\n  \"sub\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"XNYSIJOVP5S2WEFRPDJEEQH5OPEJPO3VLLDWP6LIO5JK57ILY4XQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\",\n  \"name\": \"studio\",\n  \"sub\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -1478,7 +1544,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/manifest.json",
@@ -1486,7 +1552,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 3389,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 4,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:53.398633+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"e375eff2f21ea39670935df335566857407473a316472b59516cace428113e1beb045354f54ae326cd10cabc21d96a92647977081eb009a2c15dd5d0a8348a0a\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 4,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:21.666681+04:00\",\n    \"accounts\": {\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"6a86eb7ba30c1d622ed929d6b6294514ef5ebc990d7cda3262712eb543adf04b6efe5377c02783d1c763ee689ea99015d1ce490294c9483e45bb80ec6a5b1b0a\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -1494,7 +1560,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
@@ -1506,40 +1572,40 @@ window.TOPOLOGY_WALK = {
     }
    ],
    "bus": {
-    "server": "tls://127.0.0.1:62849",
+    "server": "tls://127.0.0.1:62504",
     "accounts": [
      {
       "name": "CALLER-studio",
-      "public": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
+      "public": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
       "signing_keys": [
-       "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM"
+       "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "GARM",
-      "public": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
+      "public": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
       "signing_keys": [
-       "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G"
+       "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "SYS",
-      "public": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
+      "public": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
       "signing_keys": [
-       "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB"
+       "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "TOOLS",
-      "public": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
+      "public": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
       "signing_keys": [
-       "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U"
+       "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT"
       ],
       "revocations": 1,
       "pushed": true
@@ -1549,14 +1615,14 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/ops.creds",
       "name": "ops",
-      "account": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
-      "public": "UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA",
-      "issuer": "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB",
+      "account": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
+      "public": "UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA",
+      "issuer": "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": null,
       "accepted": true
@@ -1564,16 +1630,17 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/rund.creds",
       "name": "rund",
-      "account": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
-      "public": "UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF",
-      "issuer": "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G",
+      "account": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
+      "public": "UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O",
+      "issuer": "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.tool.>"
+       "garm.tool.>",
+       "garm.run.v1.*.out.>"
       ],
       "sub_allow": [
        "garm.run.v1.*.>",
@@ -1585,33 +1652,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/studio.creds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4",
-      "issuer": "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT",
+      "issuer": "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/weather.v1.WeatherService.creds",
       "name": "weather.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -1623,14 +1693,14 @@ window.TOPOLOGY_WALK = {
      {
       "file": "a copy of weather2.v1.WeatherService.creds a process still holds",
       "name": "weather2.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:f37e484e035f6ca0769e3d334fa69aaeb3e85baf792f1c722f24645ebd3e474a",
        "generation:2"
       ],
-      "expires": "2027-10-06T09:01:50Z",
+      "expires": "2027-10-07T05:12:17Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -1671,6 +1741,24 @@ window.TOPOLOGY_WALK = {
       "action": "subscribe",
       "subject": "garm.run.v1.*.invoke",
       "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "subscribe",
+      "subject": "garm.run.v1.out.>",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "publish",
+      "subject": "garm.run.v1.out.forged.1",
+      "outcome": "refused by the server: nats: permissions violation: Permissions Violation for Publish to \"garm.run.v1.out.forged.1\""
+     },
+     {
+      "cred": "rund",
+      "action": "publish",
+      "subject": "garm.run.v1.ACX.out.r.1",
+      "outcome": "allowed"
      }
     ]
    }
@@ -1697,7 +1785,7 @@ window.TOPOLOGY_WALK = {
      "change": "new",
      "secret": false,
      "size": 57,
-     "content": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F"
+     "content": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB"
     },
     {
      "path": "ceremony/keys/CALLER-batch.signing.nk",
@@ -1713,7 +1801,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -1729,7 +1817,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -1745,7 +1833,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -1761,7 +1849,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -1825,7 +1913,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -1841,31 +1929,31 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 4078,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 5,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:54.651862+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277314,\n        \"expires_at\": 1822813314,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"b9ab4dd230e1d6c3bbc52590484c3a2f93721cd95fa668efbd03e1e93b96800e133da8f16d88282f2136f34cc541a7d36c49fb0d43da57a968b60584dcd6560b\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 5,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:23.740422+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349943,\n        \"expires_at\": 1822885943,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"d166703761615ff7064db5444e004bbdae52a5aac2c324042c32c7ab4e51854ea89158c652075ca2a6f5e26cb15cc59dbb8339d3292f7f66cc09d80d18746209\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-batch.jwt",
      "kind": "jwt",
      "change": "new",
      "secret": false,
-     "size": 2133,
-     "content": "{\n  \"jti\": \"JZ674LXKS5OKNSEWDR3TM4Y46AVWD63GJMSBO4S357BQRYSKWYKA\",\n  \"iat\": 1791277314,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJQWlJRNFlEM1JLQTRFUlk2V0VYTkVWWUhZM1FVUVRaUUhWVzRTTUpZTUVPWDVEWUoyQ0RRIiwiaWF0IjoxNzkxMjc3MzE0LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFESlY3QUY1TEJUTVNDTlZGWTJCN0tFRlNIWTRGT0YzNlhFQU1TNkxIM1dYN0lDV0JGVEQzNDZGIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURKVjdBRjVMQlRNU0NOVkZZMkI3S0VGU0hZNEZPRjM2WEVBTVM2TEgzV1g3SUNXQkZURDM0NkYuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.NZRl-K7mOz0gp68PcdvG_2DGsgX0_X3h3iQjpUETgLDikju40CBOlqkkNObyvmRamO9KSf6FLS8i3wNLZphQDQ\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3409,
+     "content": "{\n  \"jti\": \"3IOJTE4CSHRRWH2HDRFUJB43Z2VWD2WVWL3G6WWPSZNW2VBTCD4A\",\n  \"iat\": 1791349943,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJJMjU2R1NDNkxNRDY3WUs1UkRWQzdQU0FMVTZMNU9QRE9KQUk3UVdaWTJYN1U2TjRNSE9BIiwiaWF0IjoxNzkxMzQ5OTQzLCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.BeEHu5e6OFU12tKP7w9V1Js5CyF_sRT1qF67Npj58uaNGC3NHZI6UG77A1FBhHqK3ZcpNOcV5zZi6InDivV8Dg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJJMjU2R1NDNkxNRDY3WUs1UkRWQzdQU0FMVTZMNU9QRE9KQUk3UVdaWTJYN1U2TjRNSE9BIiwiaWF0IjoxNzkxMzQ5OTQzLCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.4mR8uBrn0k24R8VlV-h1sc-nmzpgQqjMguL7_ecfOQ-8pXNnRXOg3Y8ogS7QRTa5vI4j1jHhP5e5f2AnhemADg\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2134,
-     "content": "{\n  \"jti\": \"KFGPYAA7RHZJOVS64YDD6QB5L5FTYAKQ62A3K6IHHMMFWVP3MMUA\",\n  \"iat\": 1791277314,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJJTlRRWU4zNVJFM1pFMlhUVkdTQUFTSUo2M0NXSEZXR05JSFdKWkQySEZIVkFRMkRPRUhBIiwiaWF0IjoxNzkxMjc3MzE0LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.Dj1VVhG0JI-BzWL6x-PVpe3uwzPx7M62oytT2GPgB84-YCqS1Ey_I42Yap95L_OZDToW7bC3khl-BsyXdStbBA\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3410,
+     "content": "{\n  \"jti\": \"XVILMPCQBLN3I4J3F32CMDDFUZI4HUURXNHNGSH3OMFSVJTY42CA\",\n  \"iat\": 1791349943,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJPMlFFWERLUUUyNFJSVEFMVENSNVlFT01DSUhLM1lENlAyRldFUUtUUlVSWEw1VjNKNUdBIiwiaWF0IjoxNzkxMzQ5OTQzLCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.yoWxTadRRJWTXGvaG3BqY86Oy0vWrhyFBtsPcgAmAF5DvAKGPHAHsDGqDDZfHT4QLHJ85zGFyGDPKJFjo7OGCg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJPMlFFWERLUUUyNFJSVEFMVENSNVlFT01DSUhLM1lENlAyRldFUUtUUlVSWEw1VjNKNUdBIiwiaWF0IjoxNzkxMzQ5OTQzLCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.rm93FGyNSfUNKequkXKQdktM9e_b7nxpMRlOzEhiskJReaZgeUmFYZwlKneAEKAgAM9TzFnN9p0yv661_Ks9BQ\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"QPRTYNXYBSQA5VILYD76GHFZNUNK6GKQYI6YKBRJDIC7WOCJ2BRQ\",\n  \"iat\": 1791277314,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJXQVdFREhLTllWRDdZVFVPRUVWSDZIVENRN0NZTkJVSURDTlg0T1JVNlhGRlRGRUxLMlBRIiwiaWF0IjoxNzkxMjc3MzE0LCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.poaX64DTkYufmSilBhp-gr4-cq9_SdeFtg0ls1KOXGk_NvlN4yjgQNxryq32lD8T-O5nTIGas1N4Qv27Kov_Dg\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"KJ67BF7TIH6MWUUAJ774QMYMQBERVQMNVGKULXYM7HBF5AU53URA\",\n  \"iat\": 1791349943,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJKRkZVRkpMSllPSlVXRElIWjRMWE5QS0FSSlFVRUNCNEpaSU1JMlpQUUVJUDdaQUVMR1NRIiwiaWF0IjoxNzkxMzQ5OTQzLCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.5LbBhOo6JE9Uz8GsPp29_FAw2nF-ShQn_40J18tWWiTHvcCbhTicl0cXegSiBGovyKQEcvs6UeTazNfaYLLYAg\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -1873,7 +1961,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"C6FCG54TB4BU754NAW7U55IDDMIVMKRTYD67NMIDISEAASTVKPLQ\",\n  \"iat\": 1791277314,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"XTTUWHRNHVZESUAFTV2EE3KSWMOQX2VFUFWMTFPX7QXBG4H6Z5LA\",\n  \"iat\": 1791349943,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -1881,7 +1969,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 1084,
-     "content": "{\n  \"jti\": \"UZ45ZZEQZYAM4TLHPOMOZ4BLDHJEUTLPSPJZ7LQY7ZIQKSYOW2RQ\",\n  \"iat\": 1791277314,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"revocations\": {\n      \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\": 1791277312\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"FGWJFSD7MWUSZEKVKRCLSWUIRQAWI5HV2BGDHNJ7HI42GZCSQLDQ\",\n  \"iat\": 1791349943,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"revocations\": {\n      \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\": 1791349939\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -1889,15 +1977,15 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 145,
-     "content": "{\n  \"batch\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"batch\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/batch.creds",
      "kind": "creds",
      "change": "new",
      "secret": true,
-     "size": 1307,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813314,\n  \"jti\": \"NBG6XBXJWRN5FY2T4XF4P7R4AULXGYLJ5VPJ5SH52VD3FE3ESKAQ\",\n  \"iat\": 1791277314,\n  \"iss\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n  \"name\": \"batch\",\n  \"sub\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:5\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1395,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885943,\n  \"jti\": \"QI7V2Z5PCTD2OI5QEJRATNTGUYISKAQQGPHTYMXNNKGPPTJRZTKA\",\n  \"iat\": 1791349943,\n  \"iss\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n  \"name\": \"batch\",\n  \"sub\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:5\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -1905,23 +1993,23 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"X375EUNMP6BSC6U6653INJL55FYOP3HYL2MB2RXZKNIF6OMO33YA\",\n  \"iat\": 1791277309,\n  \"iss\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\",\n  \"name\": \"studio\",\n  \"sub\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"XNYSIJOVP5S2WEFRPDJEEQH5OPEJPO3VLLDWP6LIO5JK57ILY4XQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\",\n  \"name\": \"studio\",\n  \"sub\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -1929,7 +2017,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/manifest.json",
@@ -1937,7 +2025,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 4078,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 5,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:54.651862+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277314,\n        \"expires_at\": 1822813314,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"b9ab4dd230e1d6c3bbc52590484c3a2f93721cd95fa668efbd03e1e93b96800e133da8f16d88282f2136f34cc541a7d36c49fb0d43da57a968b60584dcd6560b\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 5,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:23.740422+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349943,\n        \"expires_at\": 1822885943,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n        \"reason\": \"new\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"d166703761615ff7064db5444e004bbdae52a5aac2c324042c32c7ab4e51854ea89158c652075ca2a6f5e26cb15cc59dbb8339d3292f7f66cc09d80d18746209\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -1945,7 +2033,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
@@ -1957,49 +2045,49 @@ window.TOPOLOGY_WALK = {
     }
    ],
    "bus": {
-    "server": "tls://127.0.0.1:62849",
+    "server": "tls://127.0.0.1:62504",
     "accounts": [
      {
       "name": "CALLER-batch",
-      "public": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
+      "public": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
       "signing_keys": [
-       "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP"
+       "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "CALLER-studio",
-      "public": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
+      "public": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
       "signing_keys": [
-       "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM"
+       "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "GARM",
-      "public": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
+      "public": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
       "signing_keys": [
-       "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G"
+       "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "SYS",
-      "public": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
+      "public": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
       "signing_keys": [
-       "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB"
+       "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "TOOLS",
-      "public": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
+      "public": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
       "signing_keys": [
-       "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U"
+       "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT"
       ],
       "revocations": 1,
       "pushed": true
@@ -2009,33 +2097,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/batch.creds",
       "name": "batch",
-      "account": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
-      "public": "UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG",
-      "issuer": "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP",
+      "account": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
+      "public": "UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY",
+      "issuer": "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:5"
       ],
-      "expires": "2027-10-06T09:01:54Z",
+      "expires": "2027-10-07T05:12:23Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/ops.creds",
       "name": "ops",
-      "account": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
-      "public": "UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA",
-      "issuer": "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB",
+      "account": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
+      "public": "UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA",
+      "issuer": "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": null,
       "accepted": true
@@ -2043,16 +2134,17 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/rund.creds",
       "name": "rund",
-      "account": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
-      "public": "UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF",
-      "issuer": "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G",
+      "account": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
+      "public": "UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O",
+      "issuer": "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.tool.>"
+       "garm.tool.>",
+       "garm.run.v1.*.out.>"
       ],
       "sub_allow": [
        "garm.run.v1.*.>",
@@ -2064,33 +2156,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/studio.creds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4",
-      "issuer": "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT",
+      "issuer": "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/weather.v1.WeatherService.creds",
       "name": "weather.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -2130,6 +2225,24 @@ window.TOPOLOGY_WALK = {
       "action": "subscribe",
       "subject": "garm.run.v1.*.invoke",
       "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "subscribe",
+      "subject": "garm.run.v1.out.>",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "publish",
+      "subject": "garm.run.v1.out.forged.1",
+      "outcome": "refused by the server: nats: permissions violation: Permissions Violation for Publish to \"garm.run.v1.out.forged.1\""
+     },
+     {
+      "cred": "rund",
+      "action": "publish",
+      "subject": "garm.run.v1.ACX.out.r.1",
+      "outcome": "allowed"
      }
     ]
    }
@@ -2140,7 +2253,7 @@ window.TOPOLOGY_WALK = {
    "prose": "`CALLER-studio`'s signing key is replaced: the new key is listed beside the old in the account JWT, every credential of the account is reissued under it, the old seed goes to `archive/`. Nothing is revoked: a process named `studio-old` is still connected on the old credential, and stays connected.",
    "command": "garmctl topology --keys ceremony/keys --manifest manifest.json --catalogue file://weather.binpb --callers studio,batch --rotate-signing CALLER-studio -o topo",
    "stdout": "ok: generation 6 from catalogue 24164e3e783d -- 5 accounts, 1 credentials, 0 revocations, written to topo\n",
-   "stderr": "CALLER-studio: signing key retiring; the old key ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM is still listed -- roll the new credentials out, then run an issuance with --verify-live to retire it\n",
+   "stderr": "CALLER-studio: signing key retiring; the old key AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL is still listed -- roll the new credentials out, then run an issuance with --verify-live to retire it\n",
    "files": [
     {
      "path": "ca.pem",
@@ -2156,7 +2269,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F"
+     "content": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB"
     },
     {
      "path": "ceremony/keys/CALLER-batch.signing.nk",
@@ -2172,7 +2285,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -2188,7 +2301,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -2204,7 +2317,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -2220,7 +2333,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -2247,7 +2360,7 @@ window.TOPOLOGY_WALK = {
      "content": "(a private seed, 0600 -- never shown, never leaves the issuance environment)"
     },
     {
-     "path": "ceremony/keys/archive/CALLER-studio.signing.ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM.nk",
+     "path": "ceremony/keys/archive/CALLER-studio.signing.AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL.nk",
      "kind": "seed",
      "change": "new",
      "secret": true,
@@ -2292,7 +2405,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -2308,31 +2421,31 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 4163,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 6,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:57.799374+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retiring\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277314,\n        \"expires_at\": 1822813314,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"reason\": \"rotation\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"a1c5eecf0933fbeb6fdb27edf9e7b85f73b21679fb290a2d0d84f51291f82369354e489cad59bb310e4a47ee62f46226a2579bc0c53239fb56acf0a3dab80703\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 6,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:27.707591+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retiring\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349943,\n        \"expires_at\": 1822885943,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"reason\": \"rotation\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"793736c36ef9bd187022fe573cb94c98b9449893093168a27c8f79d75767cee2b6913260a20e2aef655ce8fba7043a56d07d878f6a6e4be80ef9a62008019602\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-batch.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2133,
-     "content": "{\n  \"jti\": \"EJUJOU34Z4SAKUZH54O6O7SBCUTOA6PJOP54IN3J2CYNDY5INTFA\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJUM0Q2N1dHSlZMTTRTUllYNUpIWVRUVEQzM0w0NUtPRllKU1U3T0tNSVlZUVA0TUdJSDdRIiwiaWF0IjoxNzkxMjc3MzE3LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFESlY3QUY1TEJUTVNDTlZGWTJCN0tFRlNIWTRGT0YzNlhFQU1TNkxIM1dYN0lDV0JGVEQzNDZGIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURKVjdBRjVMQlRNU0NOVkZZMkI3S0VGU0hZNEZPRjM2WEVBTVM2TEgzV1g3SUNXQkZURDM0NkYuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.E0olvq759s6GuDbgeAYE7-islJjAtLo5y17-tXiFQjPAuia7gCuphkl-_SpzShdMuJ2lvq9kUnmyjrLNYiw2CQ\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3409,
+     "content": "{\n  \"jti\": \"URK4LFF2LQJG7C3DOSIZCEZZERPM6456KCQGVU5A2IISWHWTKF7Q\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiI2VVVYS0tCVkVIWDJRT0tKT0gyVElDTzZWRkZCRllSM01BWk83QkxHVkVTVUxJNTNQRlBRIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.bN71XnEpOsArNmicvvW5qMh5gLdPMn8aoXARUsxOJrDL1mxv64uo-HFMQKNKHD4VqMJK3-UlhORzLyPF4xpNDw\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiI2VVVYS0tCVkVIWDJRT0tKT0gyVElDTzZWRkZCRllSM01BWk83QkxHVkVTVUxJNTNQRlBRIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.S-bdxDOUJWqz26MGR0PHLLXPWvnbE9Yh3x_ROv7CitNO1RC4FWaY7mH90ifgO3GsMXIsRI01EP0rbXTYa5xbAw\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2213,
-     "content": "{\n  \"jti\": \"2ZLQPM6GS4NCSBLNQEDH3PGEWUOBZLM337ALDVCUYJRGCLBOZLAQ\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJDVlAzTVZGMjRVNUU2UFA3WkdLVEk3TVQ2TUpWSVU0VVZXRFNVWDNYR0JINDdSUDUzN1pBIiwiaWF0IjoxNzkxMjc3MzE3LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.Z_9xIf0186gLOue72fnE1FG1fzTrXVqIJRe5VlsrwxwNR3eEOKF1RaIO2KZ6ZSgi2P8gsd7lcBeBplV0C_2lAg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n      \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3489,
+     "content": "{\n  \"jti\": \"JGD673CMNF3P7O6V56JWJVA6JQCX4ETYHMWYD2W4AXRXQPUZ4GUQ\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJHR0FRSlJNTE1QT0k3WDZTM1NFM09USDJJMk40UVpIWk1FSjZVNzZHVlhIWUdKTVRBNlpRIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.K91Ojo_0p_J0jW8vmEOv56F5D6xJyr698QuHEHBNo6KT-xWrm_NV8JIjyYLS73h7qoZK4UjLCXIO2nIvv3EmBg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJHR0FRSlJNTE1QT0k3WDZTM1NFM09USDJJMk40UVpIWk1FSjZVNzZHVlhIWUdKTVRBNlpRIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.pSDaz-9NRXH0oz22Ti_ikh2ggK1_BBEdY9vxCnx8mXgwzqjgJFmV1-4vnjY2EPjDxQWq5tRcGXci1N-77AuEAA\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\",\n      \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"X2X6R7IBEQAUVMDIC5ZMKL7EPCPZL2CFPLUM5LIBJCZJFKORCMRA\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJIU0RNVlhGWVIyRTJCTUFWUUE3UkkyNkhOMk9VUjVORURXVlVSNlVESTZQM1paSk1NRUNBIiwiaWF0IjoxNzkxMjc3MzE3LCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.KZ0UgCjefeNm1CaNkh_CrmlzHEal1nvG0yjaSUl4qx8e73lE4DiXhuUzbgPWGDPkCld8d1oPlwgnra8yZft8BQ\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"5U6GQLJLDU2JPEEAVU6DABHFXC2ZGMHMVT6QQNNDNMHMCEGNWFIQ\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJMSDNHTkJGNUlPRlNWUFVYRFhBMjNETUM3S0NVWlZLWUJJREVEVzRLRDNFVTVUTzVGS1JBIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.v-1g2k7CBBl3qTVUJe9CzwJIk4Y7Gcdp6lbiWPvlSZ1-VqdjjnXWP191_yRb1j9Pq155QHaFyQNNJk1v9PdaCg\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -2340,7 +2453,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"AKOMIAD62BOY2U4U6VKWHXLYZORXFUASHGTM5HPORZOIKHLZ2LPA\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"SHGTDSJ7A2QPG4ESXPAAKYXVUZ6ZCUSMPEFLVMXBAXYZ3Q6KQ5LQ\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -2348,7 +2461,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 1084,
-     "content": "{\n  \"jti\": \"2LTABW4T7Z5DXHPX5USPRLT3ZRFNMNVQJC34MEV62AY4JYQNASPA\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"revocations\": {\n      \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\": 1791277312\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"J54XOL774QINA3NPNLXFGNPHLBOUVX5N2EIPHH37VLS6XCKUKY2Q\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"revocations\": {\n      \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\": 1791349939\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -2356,15 +2469,15 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 145,
-     "content": "{\n  \"batch\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"batch\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/batch.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1307,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813314,\n  \"jti\": \"NBG6XBXJWRN5FY2T4XF4P7R4AULXGYLJ5VPJ5SH52VD3FE3ESKAQ\",\n  \"iat\": 1791277314,\n  \"iss\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n  \"name\": \"batch\",\n  \"sub\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:5\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1395,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885943,\n  \"jti\": \"QI7V2Z5PCTD2OI5QEJRATNTGUYISKAQQGPHTYMXNNKGPPTJRZTKA\",\n  \"iat\": 1791349943,\n  \"iss\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n  \"name\": \"batch\",\n  \"sub\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:5\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -2372,23 +2485,23 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "changed",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813317,\n  \"jti\": \"BJLA6MOSSIBSMVAOJ4A6C3ZLT7WYUDYKRFHTYJEPZ4VMEGOVVCVQ\",\n  \"iat\": 1791277317,\n  \"iss\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n  \"name\": \"studio\",\n  \"sub\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885947,\n  \"jti\": \"NELSX35IFXHGVBPSXKEPFLJEP2RMRTAOMBLJ6WTPBD3I2C3ZYRBA\",\n  \"iat\": 1791349947,\n  \"iss\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n  \"name\": \"studio\",\n  \"sub\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -2396,7 +2509,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/manifest.json",
@@ -2404,7 +2517,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 4163,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 6,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:57.799374+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retiring\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277314,\n        \"expires_at\": 1822813314,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"reason\": \"rotation\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"a1c5eecf0933fbeb6fdb27edf9e7b85f73b21679fb290a2d0d84f51291f82369354e489cad59bb310e4a47ee62f46226a2579bc0c53239fb56acf0a3dab80703\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 6,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:27.707591+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retiring\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349943,\n        \"expires_at\": 1822885943,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"reason\": \"rotation\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"793736c36ef9bd187022fe573cb94c98b9449893093168a27c8f79d75767cee2b6913260a20e2aef655ce8fba7043a56d07d878f6a6e4be80ef9a62008019602\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -2412,7 +2525,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
@@ -2424,50 +2537,50 @@ window.TOPOLOGY_WALK = {
     }
    ],
    "bus": {
-    "server": "tls://127.0.0.1:62849",
+    "server": "tls://127.0.0.1:62504",
     "accounts": [
      {
       "name": "CALLER-batch",
-      "public": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
+      "public": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
       "signing_keys": [
-       "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP"
+       "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "CALLER-studio",
-      "public": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
+      "public": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
       "signing_keys": [
-       "AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF",
-       "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM"
+       "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
+       "AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "GARM",
-      "public": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
+      "public": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
       "signing_keys": [
-       "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G"
+       "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "SYS",
-      "public": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
+      "public": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
       "signing_keys": [
-       "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB"
+       "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "TOOLS",
-      "public": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
+      "public": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
       "signing_keys": [
-       "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U"
+       "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT"
       ],
       "revocations": 1,
       "pushed": true
@@ -2477,33 +2590,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/batch.creds",
       "name": "batch",
-      "account": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
-      "public": "UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG",
-      "issuer": "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP",
+      "account": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
+      "public": "UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY",
+      "issuer": "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:5"
       ],
-      "expires": "2027-10-06T09:01:54Z",
+      "expires": "2027-10-07T05:12:23Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/ops.creds",
       "name": "ops",
-      "account": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
-      "public": "UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA",
-      "issuer": "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB",
+      "account": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
+      "public": "UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA",
+      "issuer": "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": null,
       "accepted": true
@@ -2511,16 +2627,17 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/rund.creds",
       "name": "rund",
-      "account": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
-      "public": "UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF",
-      "issuer": "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G",
+      "account": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
+      "public": "UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O",
+      "issuer": "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.tool.>"
+       "garm.tool.>",
+       "garm.run.v1.*.out.>"
       ],
       "sub_allow": [
        "garm.run.v1.*.>",
@@ -2532,33 +2649,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/studio.creds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI",
-      "issuer": "AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH",
+      "issuer": "AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:6"
       ],
-      "expires": "2027-10-06T09:01:57Z",
+      "expires": "2027-10-07T05:12:27Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/weather.v1.WeatherService.creds",
       "name": "weather.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -2570,19 +2690,22 @@ window.TOPOLOGY_WALK = {
      {
       "file": "a copy of studio.creds a process still holds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4",
-      "issuer": "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT",
+      "issuer": "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true,
       "from_before": true
@@ -2617,6 +2740,24 @@ window.TOPOLOGY_WALK = {
       "cred": "rund",
       "action": "subscribe",
       "subject": "garm.run.v1.*.invoke",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "subscribe",
+      "subject": "garm.run.v1.out.>",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "publish",
+      "subject": "garm.run.v1.out.forged.1",
+      "outcome": "refused by the server: nats: permissions violation: Permissions Violation for Publish to \"garm.run.v1.out.forged.1\""
+     },
+     {
+      "cred": "rund",
+      "action": "publish",
+      "subject": "garm.run.v1.ACX.out.r.1",
       "outcome": "allowed"
      }
     ]
@@ -2629,7 +2770,7 @@ window.TOPOLOGY_WALK = {
    "command": "garmctl topology … --verify-live --nats nats://127.0.0.1:… --ops-creds topo/creds/ops.creds --tls-ca ca.pem -o topo",
    "stdout": "",
    "stderr": "",
-   "error": "--verify-live: CALLER-studio's retiring key ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM still signs 1 live connection(s): studio-old -- roll them out first",
+   "error": "--verify-live: CALLER-studio's retiring key AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL still signs 1 live connection(s): studio-old -- roll them out first",
    "files": [
     {
      "path": "ca.pem",
@@ -2645,7 +2786,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F"
+     "content": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB"
     },
     {
      "path": "ceremony/keys/CALLER-batch.signing.nk",
@@ -2661,7 +2802,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -2677,7 +2818,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -2693,7 +2834,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -2709,7 +2850,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -2736,7 +2877,7 @@ window.TOPOLOGY_WALK = {
      "content": "(a private seed, 0600 -- never shown, never leaves the issuance environment)"
     },
     {
-     "path": "ceremony/keys/archive/CALLER-studio.signing.ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM.nk",
+     "path": "ceremony/keys/archive/CALLER-studio.signing.AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL.nk",
      "kind": "seed",
      "change": "same",
      "secret": true,
@@ -2781,7 +2922,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -2797,31 +2938,31 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 4163,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 6,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:57.799374+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retiring\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277314,\n        \"expires_at\": 1822813314,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"reason\": \"rotation\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"a1c5eecf0933fbeb6fdb27edf9e7b85f73b21679fb290a2d0d84f51291f82369354e489cad59bb310e4a47ee62f46226a2579bc0c53239fb56acf0a3dab80703\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 6,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:27.707591+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retiring\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349943,\n        \"expires_at\": 1822885943,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"reason\": \"rotation\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"793736c36ef9bd187022fe573cb94c98b9449893093168a27c8f79d75767cee2b6913260a20e2aef655ce8fba7043a56d07d878f6a6e4be80ef9a62008019602\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-batch.jwt",
      "kind": "jwt",
      "change": "same",
      "secret": false,
-     "size": 2133,
-     "content": "{\n  \"jti\": \"EJUJOU34Z4SAKUZH54O6O7SBCUTOA6PJOP54IN3J2CYNDY5INTFA\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJUM0Q2N1dHSlZMTTRTUllYNUpIWVRUVEQzM0w0NUtPRllKU1U3T0tNSVlZUVA0TUdJSDdRIiwiaWF0IjoxNzkxMjc3MzE3LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFESlY3QUY1TEJUTVNDTlZGWTJCN0tFRlNIWTRGT0YzNlhFQU1TNkxIM1dYN0lDV0JGVEQzNDZGIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURKVjdBRjVMQlRNU0NOVkZZMkI3S0VGU0hZNEZPRjM2WEVBTVM2TEgzV1g3SUNXQkZURDM0NkYuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.E0olvq759s6GuDbgeAYE7-islJjAtLo5y17-tXiFQjPAuia7gCuphkl-_SpzShdMuJ2lvq9kUnmyjrLNYiw2CQ\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3409,
+     "content": "{\n  \"jti\": \"URK4LFF2LQJG7C3DOSIZCEZZERPM6456KCQGVU5A2IISWHWTKF7Q\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiI2VVVYS0tCVkVIWDJRT0tKT0gyVElDTzZWRkZCRllSM01BWk83QkxHVkVTVUxJNTNQRlBRIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.bN71XnEpOsArNmicvvW5qMh5gLdPMn8aoXARUsxOJrDL1mxv64uo-HFMQKNKHD4VqMJK3-UlhORzLyPF4xpNDw\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiI2VVVYS0tCVkVIWDJRT0tKT0gyVElDTzZWRkZCRllSM01BWk83QkxHVkVTVUxJNTNQRlBRIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.S-bdxDOUJWqz26MGR0PHLLXPWvnbE9Yh3x_ROv7CitNO1RC4FWaY7mH90ifgO3GsMXIsRI01EP0rbXTYa5xbAw\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "same",
      "secret": false,
-     "size": 2213,
-     "content": "{\n  \"jti\": \"2ZLQPM6GS4NCSBLNQEDH3PGEWUOBZLM337ALDVCUYJRGCLBOZLAQ\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJDVlAzTVZGMjRVNUU2UFA3WkdLVEk3TVQ2TUpWSVU0VVZXRFNVWDNYR0JINDdSUDUzN1pBIiwiaWF0IjoxNzkxMjc3MzE3LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.Z_9xIf0186gLOue72fnE1FG1fzTrXVqIJRe5VlsrwxwNR3eEOKF1RaIO2KZ6ZSgi2P8gsd7lcBeBplV0C_2lAg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n      \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3489,
+     "content": "{\n  \"jti\": \"JGD673CMNF3P7O6V56JWJVA6JQCX4ETYHMWYD2W4AXRXQPUZ4GUQ\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJHR0FRSlJNTE1QT0k3WDZTM1NFM09USDJJMk40UVpIWk1FSjZVNzZHVlhIWUdKTVRBNlpRIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.K91Ojo_0p_J0jW8vmEOv56F5D6xJyr698QuHEHBNo6KT-xWrm_NV8JIjyYLS73h7qoZK4UjLCXIO2nIvv3EmBg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJHR0FRSlJNTE1QT0k3WDZTM1NFM09USDJJMk40UVpIWk1FSjZVNzZHVlhIWUdKTVRBNlpRIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.pSDaz-9NRXH0oz22Ti_ikh2ggK1_BBEdY9vxCnx8mXgwzqjgJFmV1-4vnjY2EPjDxQWq5tRcGXci1N-77AuEAA\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\",\n      \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "same",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"X2X6R7IBEQAUVMDIC5ZMKL7EPCPZL2CFPLUM5LIBJCZJFKORCMRA\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJIU0RNVlhGWVIyRTJCTUFWUUE3UkkyNkhOMk9VUjVORURXVlVSNlVESTZQM1paSk1NRUNBIiwiaWF0IjoxNzkxMjc3MzE3LCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.KZ0UgCjefeNm1CaNkh_CrmlzHEal1nvG0yjaSUl4qx8e73lE4DiXhuUzbgPWGDPkCld8d1oPlwgnra8yZft8BQ\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"5U6GQLJLDU2JPEEAVU6DABHFXC2ZGMHMVT6QQNNDNMHMCEGNWFIQ\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJMSDNHTkJGNUlPRlNWUFVYRFhBMjNETUM3S0NVWlZLWUJJREVEVzRLRDNFVTVUTzVGS1JBIiwiaWF0IjoxNzkxMzQ5OTQ3LCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.v-1g2k7CBBl3qTVUJe9CzwJIk4Y7Gcdp6lbiWPvlSZ1-VqdjjnXWP191_yRb1j9Pq155QHaFyQNNJk1v9PdaCg\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -2829,7 +2970,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"AKOMIAD62BOY2U4U6VKWHXLYZORXFUASHGTM5HPORZOIKHLZ2LPA\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"SHGTDSJ7A2QPG4ESXPAAKYXVUZ6ZCUSMPEFLVMXBAXYZ3Q6KQ5LQ\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -2837,7 +2978,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 1084,
-     "content": "{\n  \"jti\": \"2LTABW4T7Z5DXHPX5USPRLT3ZRFNMNVQJC34MEV62AY4JYQNASPA\",\n  \"iat\": 1791277317,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"revocations\": {\n      \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\": 1791277312\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"J54XOL774QINA3NPNLXFGNPHLBOUVX5N2EIPHH37VLS6XCKUKY2Q\",\n  \"iat\": 1791349947,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"revocations\": {\n      \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\": 1791349939\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -2845,15 +2986,15 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 145,
-     "content": "{\n  \"batch\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"batch\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/batch.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1307,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813314,\n  \"jti\": \"NBG6XBXJWRN5FY2T4XF4P7R4AULXGYLJ5VPJ5SH52VD3FE3ESKAQ\",\n  \"iat\": 1791277314,\n  \"iss\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n  \"name\": \"batch\",\n  \"sub\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:5\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1395,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885943,\n  \"jti\": \"QI7V2Z5PCTD2OI5QEJRATNTGUYISKAQQGPHTYMXNNKGPPTJRZTKA\",\n  \"iat\": 1791349943,\n  \"iss\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n  \"name\": \"batch\",\n  \"sub\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:5\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -2861,23 +3002,23 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813317,\n  \"jti\": \"BJLA6MOSSIBSMVAOJ4A6C3ZLT7WYUDYKRFHTYJEPZ4VMEGOVVCVQ\",\n  \"iat\": 1791277317,\n  \"iss\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n  \"name\": \"studio\",\n  \"sub\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885947,\n  \"jti\": \"NELSX35IFXHGVBPSXKEPFLJEP2RMRTAOMBLJ6WTPBD3I2C3ZYRBA\",\n  \"iat\": 1791349947,\n  \"iss\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n  \"name\": \"studio\",\n  \"sub\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -2885,7 +3026,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/manifest.json",
@@ -2893,7 +3034,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 4163,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 6,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:01:57.799374+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retiring\": \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277314,\n        \"expires_at\": 1822813314,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"reason\": \"rotation\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"a1c5eecf0933fbeb6fdb27edf9e7b85f73b21679fb290a2d0d84f51291f82369354e489cad59bb310e4a47ee62f46226a2579bc0c53239fb56acf0a3dab80703\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 6,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:27.707591+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retiring\": \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\"\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349943,\n        \"expires_at\": 1822885943,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"reason\": \"rotation\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"793736c36ef9bd187022fe573cb94c98b9449893093168a27c8f79d75767cee2b6913260a20e2aef655ce8fba7043a56d07d878f6a6e4be80ef9a62008019602\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -2901,7 +3042,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
@@ -2913,50 +3054,50 @@ window.TOPOLOGY_WALK = {
     }
    ],
    "bus": {
-    "server": "tls://127.0.0.1:62849",
+    "server": "tls://127.0.0.1:62504",
     "accounts": [
      {
       "name": "CALLER-batch",
-      "public": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
+      "public": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
       "signing_keys": [
-       "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP"
+       "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D"
       ],
       "revocations": 0,
       "pushed": false
      },
      {
       "name": "CALLER-studio",
-      "public": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
+      "public": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
       "signing_keys": [
-       "AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF",
-       "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM"
+       "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
+       "AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56"
       ],
       "revocations": 0,
       "pushed": false
      },
      {
       "name": "GARM",
-      "public": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
+      "public": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
       "signing_keys": [
-       "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G"
+       "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A"
       ],
       "revocations": 0,
       "pushed": false
      },
      {
       "name": "SYS",
-      "public": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
+      "public": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
       "signing_keys": [
-       "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB"
+       "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR"
       ],
       "revocations": 0,
       "pushed": false
      },
      {
       "name": "TOOLS",
-      "public": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
+      "public": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
       "signing_keys": [
-       "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U"
+       "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT"
       ],
       "revocations": 1,
       "pushed": false
@@ -2966,33 +3107,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/batch.creds",
       "name": "batch",
-      "account": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
-      "public": "UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG",
-      "issuer": "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP",
+      "account": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
+      "public": "UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY",
+      "issuer": "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:5"
       ],
-      "expires": "2027-10-06T09:01:54Z",
+      "expires": "2027-10-07T05:12:23Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/ops.creds",
       "name": "ops",
-      "account": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
-      "public": "UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA",
-      "issuer": "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB",
+      "account": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
+      "public": "UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA",
+      "issuer": "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": null,
       "accepted": true
@@ -3000,16 +3144,17 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/rund.creds",
       "name": "rund",
-      "account": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
-      "public": "UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF",
-      "issuer": "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G",
+      "account": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
+      "public": "UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O",
+      "issuer": "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.tool.>"
+       "garm.tool.>",
+       "garm.run.v1.*.out.>"
       ],
       "sub_allow": [
        "garm.run.v1.*.>",
@@ -3021,33 +3166,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/studio.creds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI",
-      "issuer": "AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH",
+      "issuer": "AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:6"
       ],
-      "expires": "2027-10-06T09:01:57Z",
+      "expires": "2027-10-07T05:12:27Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/weather.v1.WeatherService.creds",
       "name": "weather.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -3059,19 +3207,22 @@ window.TOPOLOGY_WALK = {
      {
       "file": "a copy of studio.creds a process still holds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4",
-      "issuer": "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT",
+      "issuer": "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true,
       "from_before": true
@@ -3107,6 +3258,24 @@ window.TOPOLOGY_WALK = {
       "action": "subscribe",
       "subject": "garm.run.v1.*.invoke",
       "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "subscribe",
+      "subject": "garm.run.v1.out.>",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "publish",
+      "subject": "garm.run.v1.out.forged.1",
+      "outcome": "refused by the server: nats: permissions violation: Permissions Violation for Publish to \"garm.run.v1.out.forged.1\""
+     },
+     {
+      "cred": "rund",
+      "action": "publish",
+      "subject": "garm.run.v1.ACX.out.r.1",
+      "outcome": "allowed"
      }
     ]
    }
@@ -3116,7 +3285,7 @@ window.TOPOLOGY_WALK = {
    "title": "Step two: the old key is retired",
    "prose": "`studio-old` has rolled out. `--verify-live` finds no connection on the old key, the issuance drops it from the account, and the account is pushed. The copy of the old credential, signed by a key the account no longer lists, is refused.",
    "command": "garmctl topology … --verify-live --nats nats://127.0.0.1:… --ops-creds topo/creds/ops.creds --tls-ca ca.pem -o topo",
-   "stdout": "CALLER-studio: retired signing key ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM; every credential it signed is now refused\nok: generation 7 from catalogue 24164e3e783d -- 5 accounts, 0 credentials, 0 revocations, written to topo\n",
+   "stdout": "CALLER-studio: retired signing key AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL; every credential it signed is now refused\nok: generation 7 from catalogue 24164e3e783d -- 5 accounts, 0 credentials, 0 revocations, written to topo\n",
    "stderr": "",
    "files": [
     {
@@ -3133,7 +3302,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F"
+     "content": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB"
     },
     {
      "path": "ceremony/keys/CALLER-batch.signing.nk",
@@ -3149,7 +3318,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -3165,7 +3334,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -3181,7 +3350,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -3197,7 +3366,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -3224,7 +3393,7 @@ window.TOPOLOGY_WALK = {
      "content": "(a private seed, 0600 -- never shown, never leaves the issuance environment)"
     },
     {
-     "path": "ceremony/keys/archive/CALLER-studio.signing.ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM.nk",
+     "path": "ceremony/keys/archive/CALLER-studio.signing.AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL.nk",
      "kind": "seed",
      "change": "same",
      "secret": true,
@@ -3269,7 +3438,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -3284,32 +3453,32 @@ window.TOPOLOGY_WALK = {
      "kind": "json",
      "change": "changed",
      "secret": false,
-     "size": 4157,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 7,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:02:04.492594+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retired\": {\n          \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277314,\n        \"expires_at\": 1822813314,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"23e7fa84c9fd01a85af84c1c3caaab687fc86dbff481bb5f688eacc7966dba365aec926307abd8bf0419796eb7eafcee8a6c1e3c003a7246ff22dcca43b19209\"\n}"
+     "size": 4155,
+     "content": "{\n  \"manifest\": {\n    \"generation\": 7,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:36.0348+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retired\": {\n          \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349943,\n        \"expires_at\": 1822885943,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"e7a4e545a3ac45dcac08e1f4dccf6629554d28c90fc71724019a44f71f646629acc1752bde65a3da647c93a9776df518d8aacb061bf657fa9c1d4a3bff963303\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-batch.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2133,
-     "content": "{\n  \"jti\": \"BYW2UWABLPAAWYXFMFPIKPVPOFT2U5VZ73QMCPSBA7DBKZZKEKNQ\",\n  \"iat\": 1791277324,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJOV0JYQVI0RUJXT1pZWDdaWk5XTkxTQUtEWUlRRExNQVNON0xWTEVSRVpCRVVERlo2Rk1BIiwiaWF0IjoxNzkxMjc3MzI0LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFESlY3QUY1TEJUTVNDTlZGWTJCN0tFRlNIWTRGT0YzNlhFQU1TNkxIM1dYN0lDV0JGVEQzNDZGIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURKVjdBRjVMQlRNU0NOVkZZMkI3S0VGU0hZNEZPRjM2WEVBTVM2TEgzV1g3SUNXQkZURDM0NkYuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.f6ZibKuJ2N5q0WN7Yu6RU9FYADO3UJmjohMbH7qHICtvwTDgPD75Kwdgla-dIsdE331g6TKn85pQEeAzRhmKAQ\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3409,
+     "content": "{\n  \"jti\": \"X5W3OSLJD2O54DSCAQMCZCZ2OVECXDSF5MNHXEEOBMZF4I37TLHA\",\n  \"iat\": 1791349956,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJLWkcyVFRKWUE2RTRHNU1OUzJPRzQ2U0FJRFBWT05WMzdKS1NZNlQzQjVaNDdJNEE3TFZBIiwiaWF0IjoxNzkxMzQ5OTU2LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.qFvH4oId6J0HyOaT7D28HWDx_aJZyq_3kP1tRBjvx_s9TULbFYAqFKETMbnc2kfxnhSYwC1WA6OC43yFSXLtAQ\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJLWkcyVFRKWUE2RTRHNU1OUzJPRzQ2U0FJRFBWT05WMzdKS1NZNlQzQjVaNDdJNEE3TFZBIiwiaWF0IjoxNzkxMzQ5OTU2LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.MTVeBcUfn8pW9gR5bf496JFW7UT1XYTB2x0dO7IqzLI1QKtDx5w-IbDAmAkO2WL8eS-0Nvzh20EH0uBR9UcjDQ\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2134,
-     "content": "{\n  \"jti\": \"KYJYTMFLAZ4DV7F6YBAV5QL5K4UQJ5QYWHLL2TP32UM4H7GCV7BQ\",\n  \"iat\": 1791277324,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJTQ1FRUjI3UENKT1hUSkZBM0tQQ1NERk1MUjJUMjJRN0NEUUlaRzUyM0VSNTJFQURXU1hRIiwiaWF0IjoxNzkxMjc3MzI0LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.VUU7h2F9_dstxMpXBmKqEIroykyCvr_90-aN8mSh9fwf8DKN-wSz-YwkAlnJ7dBgApM6rmuCfFfWODKgahtuCw\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3410,
+     "content": "{\n  \"jti\": \"NENRPBEDU3UVD43RDCN52N36M35ZBJUQTJPDIXROZDIDYLBSQIMA\",\n  \"iat\": 1791349956,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJRTDVRTkxBS0tUNkY1NEtJVTI2WFQ3TlRQM0tDR0dWNElRWlVHTzNVUVczMjU1TzVLTDdRIiwiaWF0IjoxNzkxMzQ5OTU2LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0._ZS4912whIVFKyvS5qpxBVpf1Zj9oIe9htBl-nzuCnF-fKOM3RqMiFW9T6b0i5HE9H36mEnH70ZP85t12ZENCA\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJRTDVRTkxBS0tUNkY1NEtJVTI2WFQ3TlRQM0tDR0dWNElRWlVHTzNVUVczMjU1TzVLTDdRIiwiaWF0IjoxNzkxMzQ5OTU2LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.7Zq3AlidJZttpTPnPAA8JkXuUmyUEwl8FBvRoEJMH9AUMjqslx4KGv5O69nDA-vvN_vFuRuz8K8fSVjrvZbzDw\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"WDBNI5N364HNPFPXXC5OR75UPXJAJFVSI4LBHII3DQYS6XMV7TMQ\",\n  \"iat\": 1791277324,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJVMzJCSFRMNUhGM0ZKUUkzNVgzNE1CSUM3Mk00RVlXRVZCUkYzSTdWVllaNUVMQUNLNVJBIiwiaWF0IjoxNzkxMjc3MzI0LCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.0lmChb3SFAWRHBjzujVHhUJnW5VuPAO8tmTXSdla2E7SnH3oa8GcYh29kMmMIgAKEMgEWj_PUNK-AK3cg7WyDg\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"VN2S47JVWJHJAXLKECMCM4GX2NG4YV4TEK2AHBF6IT2QU3IAB7PQ\",\n  \"iat\": 1791349956,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJUSkpTTjZCMjdYQUFMNjY3VUtUSTJYTFlXQjZTUTI3TkhFWUJTMkdZVjdBUlJSRU1PNkhBIiwiaWF0IjoxNzkxMzQ5OTU2LCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.--R7pEjRfz8RFowzRpS8-A5JZ9fHSwEiabdagsQaa2GT5XjbWnYWuNams2kxNKZRknsMgs8TFVlBUDdlQnPyAQ\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -3317,7 +3486,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"YJMFH2PAIANPWCR6AE2QASIROHGNIUD6O6W3VJHG7RRWE5MUXBNQ\",\n  \"iat\": 1791277324,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"ALP2NRUWZGDPP6KX4FHOIECWT6YM63KFHXLA5IONY2TPWAUQH6GQ\",\n  \"iat\": 1791349956,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -3325,7 +3494,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 1084,
-     "content": "{\n  \"jti\": \"OKYEOMGXIJF5WJ4B4Q3UZS5R26XDYUKS6YH63F6IHVH7RE3AQE3A\",\n  \"iat\": 1791277324,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"revocations\": {\n      \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\": 1791277312\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"FROQUXKUSKDND4C6N5OKM2VVYQYRUZXTTNFEDH7EE6DHGPI4YS7Q\",\n  \"iat\": 1791349956,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"revocations\": {\n      \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\": 1791349939\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -3333,15 +3502,15 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 145,
-     "content": "{\n  \"batch\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"batch\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/batch.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1307,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813314,\n  \"jti\": \"NBG6XBXJWRN5FY2T4XF4P7R4AULXGYLJ5VPJ5SH52VD3FE3ESKAQ\",\n  \"iat\": 1791277314,\n  \"iss\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n  \"name\": \"batch\",\n  \"sub\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:5\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1395,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885943,\n  \"jti\": \"QI7V2Z5PCTD2OI5QEJRATNTGUYISKAQQGPHTYMXNNKGPPTJRZTKA\",\n  \"iat\": 1791349943,\n  \"iss\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n  \"name\": \"batch\",\n  \"sub\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:5\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -3349,23 +3518,23 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813317,\n  \"jti\": \"BJLA6MOSSIBSMVAOJ4A6C3ZLT7WYUDYKRFHTYJEPZ4VMEGOVVCVQ\",\n  \"iat\": 1791277317,\n  \"iss\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n  \"name\": \"studio\",\n  \"sub\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885947,\n  \"jti\": \"NELSX35IFXHGVBPSXKEPFLJEP2RMRTAOMBLJ6WTPBD3I2C3ZYRBA\",\n  \"iat\": 1791349947,\n  \"iss\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n  \"name\": \"studio\",\n  \"sub\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -3373,15 +3542,15 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/manifest.json",
      "kind": "json",
      "change": "changed",
      "secret": false,
-     "size": 4157,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 7,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:02:04.492594+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retired\": {\n          \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277314,\n        \"expires_at\": 1822813314,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"23e7fa84c9fd01a85af84c1c3caaab687fc86dbff481bb5f688eacc7966dba365aec926307abd8bf0419796eb7eafcee8a6c1e3c003a7246ff22dcca43b19209\"\n}"
+     "size": 4155,
+     "content": "{\n  \"manifest\": {\n    \"generation\": 7,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:36.0348+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retired\": {\n          \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 5,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349943,\n        \"expires_at\": 1822885943,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"e7a4e545a3ac45dcac08e1f4dccf6629554d28c90fc71724019a44f71f646629acc1752bde65a3da647c93a9776df518d8aacb061bf657fa9c1d4a3bff963303\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -3389,7 +3558,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
@@ -3401,49 +3570,49 @@ window.TOPOLOGY_WALK = {
     }
    ],
    "bus": {
-    "server": "tls://127.0.0.1:62849",
+    "server": "tls://127.0.0.1:62504",
     "accounts": [
      {
       "name": "CALLER-batch",
-      "public": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
+      "public": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
       "signing_keys": [
-       "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP"
+       "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "CALLER-studio",
-      "public": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
+      "public": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
       "signing_keys": [
-       "AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF"
+       "AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "GARM",
-      "public": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
+      "public": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
       "signing_keys": [
-       "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G"
+       "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "SYS",
-      "public": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
+      "public": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
       "signing_keys": [
-       "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB"
+       "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "TOOLS",
-      "public": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
+      "public": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
       "signing_keys": [
-       "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U"
+       "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT"
       ],
       "revocations": 1,
       "pushed": true
@@ -3453,33 +3622,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/batch.creds",
       "name": "batch",
-      "account": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
-      "public": "UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG",
-      "issuer": "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP",
+      "account": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
+      "public": "UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY",
+      "issuer": "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:5"
       ],
-      "expires": "2027-10-06T09:01:54Z",
+      "expires": "2027-10-07T05:12:23Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/ops.creds",
       "name": "ops",
-      "account": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
-      "public": "UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA",
-      "issuer": "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB",
+      "account": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
+      "public": "UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA",
+      "issuer": "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": null,
       "accepted": true
@@ -3487,16 +3659,17 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/rund.creds",
       "name": "rund",
-      "account": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
-      "public": "UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF",
-      "issuer": "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G",
+      "account": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
+      "public": "UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O",
+      "issuer": "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.tool.>"
+       "garm.tool.>",
+       "garm.run.v1.*.out.>"
       ],
       "sub_allow": [
        "garm.run.v1.*.>",
@@ -3508,33 +3681,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/studio.creds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI",
-      "issuer": "AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH",
+      "issuer": "AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:6"
       ],
-      "expires": "2027-10-06T09:01:57Z",
+      "expires": "2027-10-07T05:12:27Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/weather.v1.WeatherService.creds",
       "name": "weather.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -3546,19 +3722,22 @@ window.TOPOLOGY_WALK = {
      {
       "file": "a copy of studio.creds a process still holds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UDWDRCCZNPWDWM535WI24LMLIKCUHCY4HVLTEL7G63TLDDHIM4GDO7W4",
-      "issuer": "ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UBTFPN7P5D6AOGNKGT2LVCVEJTEPBP7TYI6QUYAOSVEZEIYPO7WQNFXT",
+      "issuer": "AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": false,
       "reason": "nats: Authorization Violation",
@@ -3595,6 +3774,24 @@ window.TOPOLOGY_WALK = {
       "action": "subscribe",
       "subject": "garm.run.v1.*.invoke",
       "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "subscribe",
+      "subject": "garm.run.v1.out.>",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "publish",
+      "subject": "garm.run.v1.out.forged.1",
+      "outcome": "refused by the server: nats: permissions violation: Permissions Violation for Publish to \"garm.run.v1.out.forged.1\""
+     },
+     {
+      "cred": "rund",
+      "action": "publish",
+      "subject": "garm.run.v1.ACX.out.r.1",
+      "outcome": "allowed"
      }
     ]
    }
@@ -3621,7 +3818,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F"
+     "content": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB"
     },
     {
      "path": "ceremony/keys/CALLER-batch.signing.nk",
@@ -3637,7 +3834,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -3653,7 +3850,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -3669,7 +3866,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -3685,7 +3882,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -3712,7 +3909,7 @@ window.TOPOLOGY_WALK = {
      "content": "(a private seed, 0600 -- never shown, never leaves the issuance environment)"
     },
     {
-     "path": "ceremony/keys/archive/CALLER-studio.signing.ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM.nk",
+     "path": "ceremony/keys/archive/CALLER-studio.signing.AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL.nk",
      "kind": "seed",
      "change": "same",
      "secret": true,
@@ -3757,7 +3954,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -3773,31 +3970,31 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 4456,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 8,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:02:05.742933+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retired\": {\n          \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UAY6SWK64V6IJVS7PKG4JGVV77Q5QOVJCUMPJDJXWGD3OL25MQ2CZC67\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 8,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277325,\n        \"expires_at\": 1822813325,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n        \"reason\": \"reissued\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"at\": 1791277325,\n        \"generation\": 8,\n        \"expires_at\": 1822813314,\n        \"kind\": \"superseded\"\n      },\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"446460d22c2f22585efebc8d19215574d9067ff4dac763d240bf138fbbe0880095057146dbf6e79b09e5afd9e9af8281856f05844a85fe6ac9f0527677ae9907\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 8,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:38.107251+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retired\": {\n          \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UCSTOMOIMPGUBGO62LOQKGBV2WM5W4AAGHFVK7ANOXSVYPOEMR55N3JF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 8,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349958,\n        \"expires_at\": 1822885958,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n        \"reason\": \"reissued\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      },\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"at\": 1791349958,\n        \"generation\": 8,\n        \"expires_at\": 1822885943,\n        \"kind\": \"superseded\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"39f40fb9037919bcb558a6c5b21b2f9ad562d8839c1585fba6c3c9c860c3c5e3900a34b7cdd317a08c2b39e2134fe09544e16223e2fdf677bb0ede0ec825930b\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-batch.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2248,
-     "content": "{\n  \"jti\": \"CKPQC5Y42YZGYDNICLMDL5JFUF623F5R4TKGS6OKMOAUNFDO67IA\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJJRk1ETTVST1ZHUVhEQjZNSUg0VFdKUVhHUVpVR0JBS1lLNlBKUDZYTlZJM1ZHRUZSSzZRIiwiaWF0IjoxNzkxMjc3MzI1LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFESlY3QUY1TEJUTVNDTlZGWTJCN0tFRlNIWTRGT0YzNlhFQU1TNkxIM1dYN0lDV0JGVEQzNDZGIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURKVjdBRjVMQlRNU0NOVkZZMkI3S0VGU0hZNEZPRjM2WEVBTVM2TEgzV1g3SUNXQkZURDM0NkYuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.iwE3pv__sUXHtpQStVzupImDYhYVaVV89usgneleondLXkQgapV9FkNDz0BopJtgUu9riNku6yKUBM4PZQWQAA\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n    ],\n    \"revocations\": {\n      \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\": 1791277325\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3524,
+     "content": "{\n  \"jti\": \"KK6R4ODNCJ6WZYDWKVVEAHDBBONR4VTVXXS6DFPTWC2QGRSPMXUA\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJGVExWUVJCT0NFU0Y2RVBLTVhKMk41U0JCVEJPSkRJTkJNU0RPWklPQU8ySVNaTVhMSjdBIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.WdvY3Re5xZgS1uxBjc43uiOYOrf7RjlkjovHo7Tzwvo6pl30t52Zdlyr9QVLyqW0ch6pgWYsg0it35n0bJnsCg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJGVExWUVJCT0NFU0Y2RVBLTVhKMk41U0JCVEJPSkRJTkJNU0RPWklPQU8ySVNaTVhMSjdBIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.r51o3MOffUiS8b6xBD0OCutII44RIqEPvzq4RiMKbJqQDrFtcQUPagkzpeKouRGza1QKgNUzQx7hGgXDup50Cg\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n    ],\n    \"revocations\": {\n      \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\": 1791349958\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2134,
-     "content": "{\n  \"jti\": \"UWTTQ6OE3P3HEJP76XHN3ZFBN2QI3UTKJACSEZV3C7QX3C47TUVA\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJOV0xQUVpTWUpRNVNEWDNXWldaTDUzSTdMS0FVNkJBUFdHVVFTTjNSTktMUDRUN1JGVldRIiwiaWF0IjoxNzkxMjc3MzI1LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.fDhed53To90TRxvYNNXmtcl0NJOSmBjvNQYijj8FwdnqSAimqGCntbYwb3XuxZwhK9WAil20rqX57uQcBgxLCQ\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3410,
+     "content": "{\n  \"jti\": \"GWKQ3XLQRGAZ23TBKEZZ42CJ3A6SKKCHWCVMJS5MGGQFETR7QY6Q\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJKSzVQWTZUU1VZR0FaUVNPM0pLNURZWUVYTFVURVNLWDY0RjQ3SE5LUlhKV1NRRjVXS05BIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.Ts7CAdROf2F11vHf1FPGYdKljpeleFFDwxauFLQZyEbQHFwcY-ml---odtsNNTuLZqaO6BDMzAKWSqIjz6-xAw\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJKSzVQWTZUU1VZR0FaUVNPM0pLNURZWUVYTFVURVNLWDY0RjQ3SE5LUlhKV1NRRjVXS05BIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.r2gb_wblQkDQrsx7vSmcxrLC3gyxnq0yO5Er1sb2Y8YApLkZLniBZclcGpvkKhyuNNGHTrx0dGe8wJ-47ZeIBA\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "changed",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"WW5OFS6PWKTEESYPLR3SIR2W5IMMEKSYQNSAI47DK46ESXX5E37A\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiI2NEFaRVREWElOTlhZWEdGWkFMRVpXREJPS0ZHQlVLVEZZNVBWNDZBWjNNS1FPTEIyT09RIiwiaWF0IjoxNzkxMjc3MzI1LCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.Mr6XZHx6yCuMaeODSQKsKXXzHxQaRyAe7DI8wGmo7qJj74gRPWK4DxgHVB2ozL04rb9RBWjADqhQbLhmFGIaBA\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"QWKAZ5K5WKNDCKIDQ4HUNRYRR5OKLMQRUZTCXCJHQQYEZZ7ZQ5QA\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJCVFozVUNJSzJHS1FOWFFQSjRFV1lJVVBSNEVaVkpNQzZEUEhIRUlZTVAyNURYTklZVEhBIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.MnwTkNQf-Q7mByOgc1xqrh-Zs555WDiWcR_sDMuhydXtl2WxgKaArs3Qxaq1lqv7FiHJ7HDOON5XzYakZqeQAQ\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -3805,7 +4002,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"44IVEQFPUT44JPONERFMRIGYX56UBAE7FCJIRID7VLJX6LTMAODA\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"EYQ3P6RJ5TFD7ZP55WHKIL2RQG6GEYYAPQ6FHJACAW5Y7K2GZLGQ\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -3813,7 +4010,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 1084,
-     "content": "{\n  \"jti\": \"EZ5OXQAIROS3LFJARBGQJJORNAEZ2GJW26FDG5JYZSHNLDSWCCLA\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"revocations\": {\n      \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\": 1791277312\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"VCOYAEPW2KUK53Y73FAMSM4IUMSPNA6AX4FD5NGV7YBXPPHAK5QA\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"revocations\": {\n      \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\": 1791349939\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -3821,15 +4018,15 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 145,
-     "content": "{\n  \"batch\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"batch\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/batch.creds",
      "kind": "creds",
      "change": "changed",
      "secret": true,
-     "size": 1307,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813325,\n  \"jti\": \"N4ZMBH5OSNN6DD6MKTB42KECZ5SL55KR3WPQ5TRYBTFLTUKH7HKQ\",\n  \"iat\": 1791277325,\n  \"iss\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n  \"name\": \"batch\",\n  \"sub\": \"UAY6SWK64V6IJVS7PKG4JGVV77Q5QOVJCUMPJDJXWGD3OL25MQ2CZC67\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:8\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1395,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885958,\n  \"jti\": \"5ZHSNK3LWRVMR45J5MJJC7JGPH462XLHORAQVD4G32DRDM6UIL3Q\",\n  \"iat\": 1791349958,\n  \"iss\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n  \"name\": \"batch\",\n  \"sub\": \"UCSTOMOIMPGUBGO62LOQKGBV2WM5W4AAGHFVK7ANOXSVYPOEMR55N3JF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:8\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -3837,23 +4034,23 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813317,\n  \"jti\": \"BJLA6MOSSIBSMVAOJ4A6C3ZLT7WYUDYKRFHTYJEPZ4VMEGOVVCVQ\",\n  \"iat\": 1791277317,\n  \"iss\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n  \"name\": \"studio\",\n  \"sub\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885947,\n  \"jti\": \"NELSX35IFXHGVBPSXKEPFLJEP2RMRTAOMBLJ6WTPBD3I2C3ZYRBA\",\n  \"iat\": 1791349947,\n  \"iss\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n  \"name\": \"studio\",\n  \"sub\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -3861,7 +4058,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/manifest.json",
@@ -3869,7 +4066,7 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 4456,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 8,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:02:05.742933+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retired\": {\n          \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UAY6SWK64V6IJVS7PKG4JGVV77Q5QOVJCUMPJDJXWGD3OL25MQ2CZC67\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 8,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277325,\n        \"expires_at\": 1822813325,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n        \"reason\": \"reissued\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"at\": 1791277325,\n        \"generation\": 8,\n        \"expires_at\": 1822813314,\n        \"kind\": \"superseded\"\n      },\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"446460d22c2f22585efebc8d19215574d9067ff4dac763d240bf138fbbe0880095057146dbf6e79b09e5afd9e9af8281856f05844a85fe6ac9f0527677ae9907\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 8,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:38.107251+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retired\": {\n          \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UCSTOMOIMPGUBGO62LOQKGBV2WM5W4AAGHFVK7ANOXSVYPOEMR55N3JF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 8,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349958,\n        \"expires_at\": 1822885958,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n        \"reason\": \"reissued\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      },\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"at\": 1791349958,\n        \"generation\": 8,\n        \"expires_at\": 1822885943,\n        \"kind\": \"superseded\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"39f40fb9037919bcb558a6c5b21b2f9ad562d8839c1585fba6c3c9c860c3c5e3900a34b7cdd317a08c2b39e2134fe09544e16223e2fdf677bb0ede0ec825930b\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -3877,7 +4074,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
@@ -3885,53 +4082,53 @@ window.TOPOLOGY_WALK = {
      "change": "changed",
      "secret": false,
      "size": 249,
-     "content": "[\n  {\n    \"Name\": \"batch\",\n    \"Account\": \"CALLER-batch\",\n    \"Public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n    \"At\": \"2026-10-06T13:02:05.742933+04:00\",\n    \"Kind\": \"superseded\",\n    \"Why\": \"superseded by generation 8\"\n  }\n]"
+     "content": "[\n  {\n    \"Name\": \"batch\",\n    \"Account\": \"CALLER-batch\",\n    \"Public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n    \"At\": \"2026-10-07T09:12:38.107251+04:00\",\n    \"Kind\": \"superseded\",\n    \"Why\": \"superseded by generation 8\"\n  }\n]"
     }
    ],
    "bus": {
-    "server": "tls://127.0.0.1:62849",
+    "server": "tls://127.0.0.1:62504",
     "accounts": [
      {
       "name": "CALLER-batch",
-      "public": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
+      "public": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
       "signing_keys": [
-       "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP"
+       "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D"
       ],
       "revocations": 1,
       "pushed": true
      },
      {
       "name": "CALLER-studio",
-      "public": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
+      "public": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
       "signing_keys": [
-       "AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF"
+       "AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "GARM",
-      "public": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
+      "public": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
       "signing_keys": [
-       "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G"
+       "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "SYS",
-      "public": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
+      "public": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
       "signing_keys": [
-       "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB"
+       "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR"
       ],
       "revocations": 0,
       "pushed": true
      },
      {
       "name": "TOOLS",
-      "public": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
+      "public": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
       "signing_keys": [
-       "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U"
+       "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT"
       ],
       "revocations": 1,
       "pushed": true
@@ -3941,33 +4138,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/batch.creds",
       "name": "batch",
-      "account": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F",
-      "public": "UAY6SWK64V6IJVS7PKG4JGVV77Q5QOVJCUMPJDJXWGD3OL25MQ2CZC67",
-      "issuer": "ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP",
+      "account": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB",
+      "public": "UCSTOMOIMPGUBGO62LOQKGBV2WM5W4AAGHFVK7ANOXSVYPOEMR55N3JF",
+      "issuer": "ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:8"
       ],
-      "expires": "2027-10-06T09:02:05Z",
+      "expires": "2027-10-07T05:12:38Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/ops.creds",
       "name": "ops",
-      "account": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY",
-      "public": "UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA",
-      "issuer": "AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB",
+      "account": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH",
+      "public": "UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA",
+      "issuer": "ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": null,
       "accepted": true
@@ -3975,16 +4175,17 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/rund.creds",
       "name": "rund",
-      "account": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7",
-      "public": "UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF",
-      "issuer": "ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G",
+      "account": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A",
+      "public": "UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O",
+      "issuer": "AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": [
-       "garm.tool.>"
+       "garm.tool.>",
+       "garm.run.v1.*.out.>"
       ],
       "sub_allow": [
        "garm.run.v1.*.>",
@@ -3996,33 +4197,36 @@ window.TOPOLOGY_WALK = {
      {
       "file": "creds/studio.creds",
       "name": "studio",
-      "account": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ",
-      "public": "UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI",
-      "issuer": "AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF",
+      "account": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7",
+      "public": "UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH",
+      "issuer": "AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:6"
       ],
-      "expires": "2027-10-06T09:01:57Z",
+      "expires": "2027-10-07T05:12:27Z",
       "pub_allow": [
-       "garm.run.v1.>"
+       "garm.run.v1.invoke",
+       "garm.run.v1.fetch",
+       "garm.run.v1.events"
       ],
       "sub_allow": [
-       "_INBOX.>"
+       "_INBOX.>",
+       "garm.run.v1.out.>"
       ],
       "accepted": true
      },
      {
       "file": "creds/weather.v1.WeatherService.creds",
       "name": "weather.v1.WeatherService",
-      "account": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI",
-      "public": "UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN",
-      "issuer": "AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U",
+      "account": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36",
+      "public": "UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ",
+      "issuer": "ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT",
       "tags": [
        "catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73",
        "generation:1"
       ],
-      "expires": "2027-10-06T09:01:49Z",
+      "expires": "2027-10-07T05:12:15Z",
       "pub_allow": null,
       "sub_allow": [
        "$SRV.>",
@@ -4062,6 +4266,24 @@ window.TOPOLOGY_WALK = {
       "action": "subscribe",
       "subject": "garm.run.v1.*.invoke",
       "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "subscribe",
+      "subject": "garm.run.v1.out.>",
+      "outcome": "allowed"
+     },
+     {
+      "cred": "studio",
+      "action": "publish",
+      "subject": "garm.run.v1.out.forged.1",
+      "outcome": "refused by the server: nats: permissions violation: Permissions Violation for Publish to \"garm.run.v1.out.forged.1\""
+     },
+     {
+      "cred": "rund",
+      "action": "publish",
+      "subject": "garm.run.v1.ACX.out.r.1",
+      "outcome": "allowed"
      }
     ]
    }
@@ -4071,7 +4293,7 @@ window.TOPOLOGY_WALK = {
    "title": "Where things stand",
    "prose": "`--status` reads the manifest and issues nothing: the generation, the catalogue it came from, every account with its identity and signing keys, and any key still retiring.",
    "command": "garmctl topology --status --keys ceremony/keys --manifest manifest.json",
-   "stdout": "generation 8 from catalogue 24164e3e783d, issued 2026-10-06T13:02:05+04:00; 5 credentials\n  CALLER-batch  identity ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F  signing ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\n  CALLER-studio  identity AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ  signing AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\n  GARM  identity ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7  signing ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\n  SYS  identity AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY  signing AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\n  TOOLS  identity AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI  signing AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\n",
+   "stdout": "generation 8 from catalogue 24164e3e783d, issued 2026-10-07T09:12:38+04:00; 5 credentials\n  CALLER-batch  identity AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB  signing ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\n  CALLER-studio  identity ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7  signing AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\n  GARM  identity ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A  signing AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\n  SYS  identity ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH  signing ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\n  TOOLS  identity AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36  signing ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\n",
    "stderr": "",
    "files": [
     {
@@ -4088,7 +4310,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F"
+     "content": "AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB"
     },
     {
      "path": "ceremony/keys/CALLER-batch.signing.nk",
@@ -4104,7 +4326,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ"
+     "content": "ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7"
     },
     {
      "path": "ceremony/keys/CALLER-studio.signing.nk",
@@ -4120,7 +4342,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7"
+     "content": "ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A"
     },
     {
      "path": "ceremony/keys/GARM.signing.nk",
@@ -4136,7 +4358,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY"
+     "content": "ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH"
     },
     {
      "path": "ceremony/keys/SYS.signing.nk",
@@ -4152,7 +4374,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 57,
-     "content": "AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI"
+     "content": "AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36"
     },
     {
      "path": "ceremony/keys/TOOLS.signing.nk",
@@ -4179,7 +4401,7 @@ window.TOPOLOGY_WALK = {
      "content": "(a private seed, 0600 -- never shown, never leaves the issuance environment)"
     },
     {
-     "path": "ceremony/keys/archive/CALLER-studio.signing.ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM.nk",
+     "path": "ceremony/keys/archive/CALLER-studio.signing.AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL.nk",
      "kind": "seed",
      "change": "same",
      "secret": true,
@@ -4224,7 +4446,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "ceremony/root/root.nk",
@@ -4240,31 +4462,31 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 4456,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 8,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:02:05.742933+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retired\": {\n          \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UAY6SWK64V6IJVS7PKG4JGVV77Q5QOVJCUMPJDJXWGD3OL25MQ2CZC67\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 8,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277325,\n        \"expires_at\": 1822813325,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n        \"reason\": \"reissued\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"at\": 1791277325,\n        \"generation\": 8,\n        \"expires_at\": 1822813314,\n        \"kind\": \"superseded\"\n      },\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"446460d22c2f22585efebc8d19215574d9067ff4dac763d240bf138fbbe0880095057146dbf6e79b09e5afd9e9af8281856f05844a85fe6ac9f0527677ae9907\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 8,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:38.107251+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retired\": {\n          \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UCSTOMOIMPGUBGO62LOQKGBV2WM5W4AAGHFVK7ANOXSVYPOEMR55N3JF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 8,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349958,\n        \"expires_at\": 1822885958,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n        \"reason\": \"reissued\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      },\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"at\": 1791349958,\n        \"generation\": 8,\n        \"expires_at\": 1822885943,\n        \"kind\": \"superseded\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"39f40fb9037919bcb558a6c5b21b2f9ad562d8839c1585fba6c3c9c860c3c5e3900a34b7cdd317a08c2b39e2134fe09544e16223e2fdf677bb0ede0ec825930b\"\n}"
     },
     {
      "path": "topo/accounts/CALLER-batch.jwt",
      "kind": "jwt",
      "change": "same",
      "secret": false,
-     "size": 2248,
-     "content": "{\n  \"jti\": \"CKPQC5Y42YZGYDNICLMDL5JFUF623F5R4TKGS6OKMOAUNFDO67IA\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJJRk1ETTVST1ZHUVhEQjZNSUg0VFdKUVhHUVpVR0JBS1lLNlBKUDZYTlZJM1ZHRUZSSzZRIiwiaWF0IjoxNzkxMjc3MzI1LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFESlY3QUY1TEJUTVNDTlZGWTJCN0tFRlNIWTRGT0YzNlhFQU1TNkxIM1dYN0lDV0JGVEQzNDZGIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURKVjdBRjVMQlRNU0NOVkZZMkI3S0VGU0hZNEZPRjM2WEVBTVM2TEgzV1g3SUNXQkZURDM0NkYuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.iwE3pv__sUXHtpQStVzupImDYhYVaVV89usgneleondLXkQgapV9FkNDz0BopJtgUu9riNku6yKUBM4PZQWQAA\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n    ],\n    \"revocations\": {\n      \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\": 1791277325\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3524,
+     "content": "{\n  \"jti\": \"KK6R4ODNCJ6WZYDWKVVEAHDBBONR4VTVXXS6DFPTWC2QGRSPMXUA\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-batch\",\n  \"sub\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJGVExWUVJCT0NFU0Y2RVBLTVhKMk41U0JCVEJPSkRJTkJNU0RPWklPQU8ySVNaTVhMSjdBIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.WdvY3Re5xZgS1uxBjc43uiOYOrf7RjlkjovHo7Tzwvo6pl30t52Zdlyr9QVLyqW0ch6pgWYsg0it35n0bJnsCg\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJGVExWUVJCT0NFU0Y2RVBLTVhKMk41U0JCVEJPSkRJTkJNU0RPWklPQU8ySVNaTVhMSjdBIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFBRUhUWTJRQ1Q1M0hJSE4zMlpKU0NTNVdMUzZPVUEyRVRHNUNVWkVRTEJLVVhEUlUyM0VBVlBCIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUFFSFRZMlFDVDUzSElITjMyWkpTQ1M1V0xTNk9VQTJFVEc1Q1VaRVFMQktVWERSVTIzRUFWUEIub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.r51o3MOffUiS8b6xBD0OCutII44RIqEPvzq4RiMKbJqQDrFtcQUPagkzpeKouRGza1QKgNUzQx7hGgXDup50Cg\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n    ],\n    \"revocations\": {\n      \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\": 1791349958\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/CALLER-studio.jwt",
      "kind": "jwt",
      "change": "same",
      "secret": false,
-     "size": 2134,
-     "content": "{\n  \"jti\": \"UWTTQ6OE3P3HEJP76XHN3ZFBN2QI3UTKJACSEZV3C7QX3C47TUVA\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ.\\u003e\",\n        \"account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJOV0xQUVpTWUpRNVNEWDNXWldaTDUzSTdMS0FVNkJBUFdHVVFTTjNSTktMUDRUN1JGVldRIiwiaWF0IjoxNzkxMjc3MzI1LCJpc3MiOiJBRENRT0xNRlVRVkk3RUNTU1IyNlc0T05HWFZWSEhFQzI2WE9PUzVMNUdIRzdQRUdQWVpYQVYzRyIsInN1YiI6IkFEMjdXVE9UNEVJM0hFNDVFQlhTQkNQVUhGWFdTV0pFRUUyRUdHM0xMWklPM0RCTlA1NDdZWkNRIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQUQyN1dUT1Q0RUkzSEU0NUVCWFNCQ1BVSEZYV1NXSkVFRTJFR0czTExaSU8zREJOUDU0N1laQ1EuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.fDhed53To90TRxvYNNXmtcl0NJOSmBjvNQYijj8FwdnqSAimqGCntbYwb3XuxZwhK9WAil20rqX57uQcBgxLCQ\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 3410,
+     "content": "{\n  \"jti\": \"GWKQ3XLQRGAZ23TBKEZZ42CJ3A6SKKCHWCVMJS5MGGQFETR7QY6Q\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"CALLER-studio\",\n  \"sub\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJKSzVQWTZUU1VZR0FaUVNPM0pLNURZWUVYTFVURVNLWDY0RjQ3SE5LUlhKV1NRRjVXS05BIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1UzcuXHUwMDNlIiwia2luZCI6InNlcnZpY2UiLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.Ts7CAdROf2F11vHf1FPGYdKljpeleFFDwxauFLQZyEbQHFwcY-ml---odtsNNTuLZqaO6BDMzAKWSqIjz6-xAw\",\n        \"local_subject\": \"garm.run.v1.\\u003e\",\n        \"type\": \"service\"\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7.out.\\u003e\",\n        \"account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJKSzVQWTZUU1VZR0FaUVNPM0pLNURZWUVYTFVURVNLWDY0RjQ3SE5LUlhKV1NRRjVXS05BIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQjZCMkJSTFRaQjJHTlpGQkJQNEVCWEhQWkdWU0dIU0lDUEJXTlhVUTdLS0tSUDNVM0FZUko3QSIsInN1YiI6IkFEUkhPREpaRExPWDY0SFg1NlpFUjM3TTJMUzNIM0JaS1JDUFlLVkgzS0dIVVJGQjZOSVlXNVM3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS5ydW4udjEuQURSSE9ESlpETE9YNjRIWDU2WkVSMzdNMkxTM0gzQlpLUkNQWUtWSDNLR0hVUkZCNk5JWVc1Uzcub3V0Llx1MDAzZSIsImtpbmQiOiJzdHJlYW0iLCJpc3N1ZXJfYWNjb3VudCI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwidHlwZSI6ImFjdGl2YXRpb24iLCJ2ZXJzaW9uIjoyfX0.r2gb_wblQkDQrsx7vSmcxrLC3gyxnq0yO5Er1sb2Y8YApLkZLniBZclcGpvkKhyuNNGHTrx0dGe8wJ-47ZeIBA\",\n        \"local_subject\": \"garm.run.v1.out.\\u003e\",\n        \"type\": \"stream\"\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": 64,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/GARM.jwt",
      "kind": "jwt",
      "change": "same",
      "secret": false,
-     "size": 2053,
-     "content": "{\n  \"jti\": \"WW5OFS6PWKTEESYPLR3SIR2W5IMMEKSYQNSAI47DK46ESXX5E37A\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiI2NEFaRVREWElOTlhZWEdGWkFMRVpXREJPS0ZHQlVLVEZZNVBWNDZBWjNNS1FPTEIyT09RIiwiaWF0IjoxNzkxMjc3MzI1LCJpc3MiOiJBQjZDWlJBWVdIUUFXNzYzTkxXMkhYQk9WUFpTR09XNVZFSkZMTzRNQlJMTU5JRElZQ1FZVzQ0VSIsInN1YiI6IkFDR0FWTjUyTTdMR1paNjQ0VFgyUENZVEtTU0JCWU41SFcyTTVSVE01M0RFUlNJRkJXR1pUSkY3IiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUNVVE9YR0tGT0c2VkdUTUhKRTRDTFJNNVhETDdKS0ZFWDJQNkxOT1NZWklTM0ZJSVBYS1NUSSIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.Mr6XZHx6yCuMaeODSQKsKXXzHxQaRyAe7DI8wGmo7qJj74gRPWK4DxgHVB2ozL04rb9RBWjADqhQbLhmFGIaBA\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "size": 2202,
+     "content": "{\n  \"jti\": \"QWKAZ5K5WKNDCKIDQ4HUNRYRR5OKLMQRUZTCXCJHQQYEZZ7ZQ5QA\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"GARM\",\n  \"sub\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n  \"nats\": {\n    \"imports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJCVFozVUNJSzJHS1FOWFFQSjRFV1lJVVBSNEVaVkpNQzZEUEhIRUlZTVAyNURYTklZVEhBIiwiaWF0IjoxNzkxMzQ5OTU4LCJpc3MiOiJBQklRSFQ1SFlNRENIRURTWEhFQTRaUVVNWkVWMlczWko2WlNZSEdMQkVBRFNGVE1YSUFaVVdNVCIsInN1YiI6IkFDS09ZWllXN1o3RldGV1NEMlVKTUlaRFhSWDJFWFdQUUZTSUtPVVo2Q0JUN0hBSURQRTJUUjVBIiwibmF0cyI6eyJzdWJqZWN0IjoiZ2FybS50b29sLlx1MDAzZSIsImtpbmQiOiJzZXJ2aWNlIiwiaXNzdWVyX2FjY291bnQiOiJBQUFJSVZZMklVVlpGWUNWV1NHRDNCVFdDVEJNUkJNRkhZWFpaWlpUT0dGVUtXSDc0TU9LSUozNiIsInR5cGUiOiJhY3RpdmF0aW9uIiwidmVyc2lvbiI6Mn19.MnwTkNQf-Q7mByOgc1xqrh-Zs555WDiWcR_sDMuhydXtl2WxgKaArs3Qxaq1lqv7FiHJ7HDOON5XzYakZqeQAQ\",\n        \"type\": \"service\"\n      }\n    ],\n    \"exports\": [\n      {\n        \"name\": \"run\",\n        \"subject\": \"garm.run.v1.*.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      },\n      {\n        \"name\": \"out\",\n        \"subject\": \"garm.run.v1.*.out.\\u003e\",\n        \"type\": \"stream\",\n        \"token_req\": true,\n        \"account_token_position\": 4\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/SYS.jwt",
@@ -4272,7 +4494,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 844,
-     "content": "{\n  \"jti\": \"44IVEQFPUT44JPONERFMRIGYX56UBAE7FCJIRID7VLJX6LTMAODA\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"SYS\",\n  \"sub\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"EYQ3P6RJ5TFD7ZP55WHKIL2RQG6GEYYAPQ6FHJACAW5Y7K2GZLGQ\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"SYS\",\n  \"sub\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n  \"nats\": {\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n    ],\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/accounts/TOOLS.jwt",
@@ -4280,7 +4502,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 1084,
-     "content": "{\n  \"jti\": \"EZ5OXQAIROS3LFJARBGQJJORNAEZ2GJW26FDG5JYZSHNLDSWCCLA\",\n  \"iat\": 1791277325,\n  \"iss\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n    ],\n    \"revocations\": {\n      \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\": 1791277312\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"VCOYAEPW2KUK53Y73FAMSM4IUMSPNA6AX4FD5NGV7YBXPPHAK5QA\",\n  \"iat\": 1791349958,\n  \"iss\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"name\": \"TOOLS\",\n  \"sub\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n  \"nats\": {\n    \"exports\": [\n      {\n        \"name\": \"tools\",\n        \"subject\": \"garm.tool.\\u003e\",\n        \"type\": \"service\",\n        \"token_req\": true\n      }\n    ],\n    \"limits\": {\n      \"subs\": -1,\n      \"data\": -1,\n      \"payload\": 1048576,\n      \"imports\": -1,\n      \"exports\": -1,\n      \"wildcards\": true,\n      \"disallow_bearer\": true,\n      \"conn\": -1,\n      \"leaf\": -1\n    },\n    \"signing_keys\": [\n      \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n    ],\n    \"revocations\": {\n      \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\": 1791349939\n    },\n    \"default_permissions\": {\n      \"pub\": {},\n      \"sub\": {}\n    },\n    \"authorization\": {},\n    \"type\": \"account\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/callers.json",
@@ -4288,15 +4510,15 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 145,
-     "content": "{\n  \"batch\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n  \"studio\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\"\n}"
+     "content": "{\n  \"batch\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n  \"studio\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\"\n}"
     },
     {
      "path": "topo/creds/batch.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1307,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813325,\n  \"jti\": \"N4ZMBH5OSNN6DD6MKTB42KECZ5SL55KR3WPQ5TRYBTFLTUKH7HKQ\",\n  \"iat\": 1791277325,\n  \"iss\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n  \"name\": \"batch\",\n  \"sub\": \"UAY6SWK64V6IJVS7PKG4JGVV77Q5QOVJCUMPJDJXWGD3OL25MQ2CZC67\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:8\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1395,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885958,\n  \"jti\": \"5ZHSNK3LWRVMR45J5MJJC7JGPH462XLHORAQVD4G32DRDM6UIL3Q\",\n  \"iat\": 1791349958,\n  \"iss\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n  \"name\": \"batch\",\n  \"sub\": \"UCSTOMOIMPGUBGO62LOQKGBV2WM5W4AAGHFVK7ANOXSVYPOEMR55N3JF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:8\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/ops.creds",
@@ -4304,23 +4526,23 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1231,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"JOZ5EPLT7TQF2C42SDAH4ECIX6RZRQD2WLRN75KUZLPSEVR36SQQ\",\n  \"iat\": 1791277309,\n  \"iss\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\",\n  \"name\": \"ops\",\n  \"sub\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"WRYA3EIFM4RWGTNTCRQ36TAONJ55DYPL46XQPRM6PS4MFCB3TBDQ\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\",\n  \"name\": \"ops\",\n  \"sub\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n  \"nats\": {\n    \"pub\": {},\n    \"sub\": {},\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/rund.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1385,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"YOBOFUF7UXKB66VMGWMQZZJN6JVLFQNNQAG5XZQU66UH4D4R2J6Q\",\n  \"iat\": 1791277309,\n  \"iss\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\",\n  \"name\": \"rund\",\n  \"sub\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1421,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"SN6TG73UXVVPZORNIAYAVDCUJ2ZUOP2YMFV5SYARWYV52F6OBUEA\",\n  \"iat\": 1791349935,\n  \"iss\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\",\n  \"name\": \"rund\",\n  \"sub\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.tool.\\u003e\",\n        \"garm.run.v1.*.out.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"garm.run.v1.*.\\u003e\",\n        \"_INBOX.\\u003e\",\n        \"$SRV.\\u003e\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/studio.creds",
      "kind": "creds",
      "change": "same",
      "secret": true,
-     "size": 1308,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813317,\n  \"jti\": \"BJLA6MOSSIBSMVAOJ4A6C3ZLT7WYUDYKRFHTYJEPZ4VMEGOVVCVQ\",\n  \"iat\": 1791277317,\n  \"iss\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n  \"name\": \"studio\",\n  \"sub\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "size": 1396,
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885947,\n  \"jti\": \"NELSX35IFXHGVBPSXKEPFLJEP2RMRTAOMBLJ6WTPBD3I2C3ZYRBA\",\n  \"iat\": 1791349947,\n  \"iss\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n  \"name\": \"studio\",\n  \"sub\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n  \"nats\": {\n    \"pub\": {\n      \"allow\": [\n        \"garm.run.v1.invoke\",\n        \"garm.run.v1.fetch\",\n        \"garm.run.v1.events\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"_INBOX.\\u003e\",\n        \"garm.run.v1.out.\\u003e\"\n      ]\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:6\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/creds/weather.v1.WeatherService.creds",
@@ -4328,7 +4550,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": true,
      "size": 1447,
-     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822813309,\n  \"jti\": \"OZDQG7LQN6SJN6OAPPUWQNBO45QJWOLBF67W2RCR5SBRIS34KWVA\",\n  \"iat\": 1791277309,\n  \"iss\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
+     "content": "-----BEGIN NATS USER JWT----- (decoded)\n{\n  \"exp\": 1822885935,\n  \"jti\": \"7I5GELQJ5BXHYJ6MTWDUEC7AMWYYDR5GYATO2SMT7RKFATYSRBUA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\",\n  \"name\": \"weather.v1.WeatherService\",\n  \"sub\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n  \"nats\": {\n    \"pub\": {\n      \"deny\": [\n        \"\\u003e\"\n      ]\n    },\n    \"sub\": {\n      \"allow\": [\n        \"$SRV.\\u003e\",\n        \"garm.tool.weather.v1.get_forecast\",\n        \"garm.tool.weather.v1.schedule_report\"\n      ]\n    },\n    \"resp\": {\n      \"max\": 1,\n      \"ttl\": 0\n    },\n    \"subs\": -1,\n    \"data\": -1,\n    \"payload\": -1,\n    \"issuer_account\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n    \"tags\": [\n      \"catalogue:24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n      \"generation:1\"\n    ],\n    \"type\": \"user\",\n    \"version\": 2\n  }\n}\n-----BEGIN USER NKEY SEED-----\n(the seed: not shown)"
     },
     {
      "path": "topo/manifest.json",
@@ -4336,7 +4558,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 4456,
-     "content": "{\n  \"manifest\": {\n    \"generation\": 8,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-06T13:02:05.742933+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"ADJV7AF5LBTMSCNVFY2B7KEFSHY4FOF36XEAMS6LH3WX7ICWBFTD346F\",\n        \"signing\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"AD27WTOT4EI3HE45EBXSBCPUHFXWSWJEEE2EGG3LLZIO3DBNP547YZCQ\",\n        \"signing\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\",\n        \"retired\": {\n          \"ACE5CZRPMHXTE2H5OSFRRV2JTWZG7INTGEXI6OBD2G7JVHWVZ5O4ZHGM\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACGAVN52M7LGZZ644TX2PCYTKSSBBYN5HW2M5RTM53DERSIFBWGZTJF7\",\n        \"signing\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      \"SYS\": {\n        \"identity\": \"AAUGHK2OEKBBWAYAJVFLU324UVDT6YFU6VSGIT77B4YIIXMAK6PJJCWY\",\n        \"signing\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AACUTOXGKFOG6VGTMHJE4CLRM5XDL7JKFEX2P6LNOSYZIS3FIIPXKSTI\",\n        \"signing\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UAY6SWK64V6IJVS7PKG4JGVV77Q5QOVJCUMPJDJXWGD3OL25MQ2CZC67\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 8,\n        \"permissions_hash\": \"80b7810c3e17989d\",\n        \"issued_at\": 1791277325,\n        \"expires_at\": 1822813325,\n        \"signing_key\": \"ABCDAERGLIHHPVWBXHTCBDWWZ6N4YATDHQMQZWMTHWBXI6FAB2NYIKKP\",\n        \"reason\": \"reissued\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UDH2HEZ7JLZRBE4GUMYDRBUDK2MYCPQI6FBY57DE54RMD6CKBR5FQKTA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AAO7RPOKFBL7BL76JTH3CZJ2YP6DSJTYZIKCT67EXRUQS32TEVF6X4SB\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UCS3LIZ4Y2WSLQCTNWXGFD4ODCW53VA2GBZNIHW5BP577IFN5NXZEAOF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"4c2d65b9986f1f0f\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"ADCQOLMFUQVI7ECSSR26W4ONGXVVHHEC26XOOS5L5GHG7PEGPYZXAV3G\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UD5AXT6FJTAWWGSZTBTOWKQDWHSPVODRUW4LRQTX6IWNQXUHWMF5XHJI\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"190cdc15c2d35c25\",\n        \"issued_at\": 1791277317,\n        \"expires_at\": 1822813317,\n        \"signing_key\": \"AANTUL47E7MGOYCDERTEBCHDB6QNQTC7QWUFNIZBBKH2M47U7G25EVCF\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC2DQNXSA4W5LHTFRQWNRG3BDNDUCHWMT4VAQ6D2TZBJCPKDYI3K7FZN\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791277309,\n        \"expires_at\": 1822813309,\n        \"signing_key\": \"AB6CZRAYWHQAW763NLW2HXBOVPZSGOW5VEJFLO4MBRLMNIDIYCQYW44U\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n        \"at\": 1791277325,\n        \"generation\": 8,\n        \"expires_at\": 1822813314,\n        \"kind\": \"superseded\"\n      },\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC5CPEH27FKAZOTI4GE6PYZUTQBZFOKYGGPTGNCXNMVAMKNZYUJDBNNS\",\n        \"at\": 1791277312,\n        \"generation\": 3,\n        \"expires_at\": 1822813310,\n        \"kind\": \"retired\"\n      }\n    ]\n  },\n  \"signer\": \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\",\n  \"signature\": \"446460d22c2f22585efebc8d19215574d9067ff4dac763d240bf138fbbe0880095057146dbf6e79b09e5afd9e9af8281856f05844a85fe6ac9f0527677ae9907\"\n}"
+     "content": "{\n  \"manifest\": {\n    \"generation\": 8,\n    \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n    \"issued_at\": \"2026-10-07T09:12:38.107251+04:00\",\n    \"accounts\": {\n      \"CALLER-batch\": {\n        \"identity\": \"AAEHTY2QCT53HIHN32ZJSCS5WLS6OUA2ETG5CUZEQLBKUXDRU23EAVPB\",\n        \"signing\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\"\n      },\n      \"CALLER-studio\": {\n        \"identity\": \"ADRHODJZDLOX64HX56ZER37M2LS3H3BZKRCPYKVH3KGHURFB6NIYW5S7\",\n        \"signing\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\",\n        \"retired\": {\n          \"AAZTMXYMLJ4VIHSG77AQODE26PVOHKG4FOAVE7EGUUWIVKWXL4AB5EBL\": 7\n        }\n      },\n      \"GARM\": {\n        \"identity\": \"ACKOYZYW7Z7FWFWSD2UJMIZDXRX2EXWPQFSIKOUZ6CBT7HAIDPE2TR5A\",\n        \"signing\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      \"SYS\": {\n        \"identity\": \"ABXFHUYV3E3PQR3DA6GPS3R4WAHJXHSPZEGUQJSP6COFTFZ23KP5DGXH\",\n        \"signing\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      \"TOOLS\": {\n        \"identity\": \"AAAIIVY2IUVZFYCVWSGD3BTWCTBMRBMFHYXZZZZTOGFUKWH74MOKIJ36\",\n        \"signing\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    },\n    \"entries\": [\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UCSTOMOIMPGUBGO62LOQKGBV2WM5W4AAGHFVK7ANOXSVYPOEMR55N3JF\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 8,\n        \"permissions_hash\": \"0f5b5da9ac25bd0b\",\n        \"issued_at\": 1791349958,\n        \"expires_at\": 1822885958,\n        \"signing_key\": \"ADRQQOKUWUNSFZY272IYT4AQSCFUGQBKL3E4FDF4DGMBLBHVRDAAS45D\",\n        \"reason\": \"reissued\"\n      },\n      {\n        \"name\": \"ops\",\n        \"account\": \"SYS\",\n        \"public\": \"UAO5VBYHDBX35YK5IDB2XTLHVFJAJF3YFO6MFR27S6IVKCL3Q4U3TEIA\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"e11981ec3d5b466e\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABY6QTMSR7E2WWLNEAFD4ANNV3FHNUEXZPSLR2QC6VTSIARL3UJOINUR\"\n      },\n      {\n        \"name\": \"rund\",\n        \"account\": \"GARM\",\n        \"public\": \"UBP66OK4BIZJLVIH6SB43TIJE766FYDCSBLHMODBWWABC375CQVUNC2O\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"10d053423b42ba95\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"AB6B2BRLTZB2GNZFBBP4EBXHPZGVSGHSICPBWNXUQ7KKKRP3U3AYRJ7A\"\n      },\n      {\n        \"name\": \"studio\",\n        \"account\": \"CALLER-studio\",\n        \"public\": \"UC4QJXPZJCTABSEE47MF2SI5GY5ENZ5YF5BIBFC6PJSDE5IF446QP5DH\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 6,\n        \"permissions_hash\": \"de4176fe88b30b4e\",\n        \"issued_at\": 1791349947,\n        \"expires_at\": 1822885947,\n        \"signing_key\": \"AD5WUXS6O7P6UEXDC7CLJZUG7CSU2XNFHNREF5XAQ54M3JJHAAEAFU56\"\n      },\n      {\n        \"name\": \"weather.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UDZH5AW253AI3OE2QBNJTI277OYZP635ODL2GUILNVQYALXX3H27IYQJ\",\n        \"catalogue_sha256\": \"24164e3e783d08b091082b41669a949a2f7a7be6867469c4d4f157d71b056c73\",\n        \"generation\": 1,\n        \"permissions_hash\": \"122117da58f99905\",\n        \"issued_at\": 1791349935,\n        \"expires_at\": 1822885935,\n        \"signing_key\": \"ABIQHT5HYMDCHEDSXHEA4ZQUMZEV2W3ZJ6ZSYHGLBEADSFTMXIAZUWMT\"\n      }\n    ],\n    \"revocations\": [\n      {\n        \"name\": \"weather2.v1.WeatherService\",\n        \"account\": \"TOOLS\",\n        \"public\": \"UC4KCI5YJAKRCPNIMPPDVM2VGLQBWA3ROVELTT6B2VSOJSSUJPSEZFWI\",\n        \"at\": 1791349939,\n        \"generation\": 3,\n        \"expires_at\": 1822885937,\n        \"kind\": \"retired\"\n      },\n      {\n        \"name\": \"batch\",\n        \"account\": \"CALLER-batch\",\n        \"public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n        \"at\": 1791349958,\n        \"generation\": 8,\n        \"expires_at\": 1822885943,\n        \"kind\": \"superseded\"\n      }\n    ]\n  },\n  \"signer\": \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\",\n  \"signature\": \"39f40fb9037919bcb558a6c5b21b2f9ad562d8839c1585fba6c3c9c860c3c5e3900a34b7cdd317a08c2b39e2134fe09544e16223e2fdf677bb0ede0ec825930b\"\n}"
     },
     {
      "path": "topo/operator.jwt",
@@ -4344,7 +4566,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 628,
-     "content": "{\n  \"jti\": \"GARCG2P6TXZD2R4BJBITKB3RIONXBT4RW3XWDGCC46JAXUDUPCNA\",\n  \"iat\": 1791277309,\n  \"iss\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"name\": \"garm\",\n  \"sub\": \"OAFYJKC5ZJOIYHZA7RGBIYWWAOQNXV7I6UEVOKO7YAYIS47B3MIXFYMP\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OD6Q4YARDQILNUC5JMKS5PSZSCLMX2FBCSBVIBKF6EWANMNCVLKFLNZM\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
+     "content": "{\n  \"jti\": \"H3IVWVKBNX6GTOHUWVRDWLZXJJQVCZPGYH7YCAAW74MXAH2QT5UA\",\n  \"iat\": 1791349935,\n  \"iss\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"name\": \"garm\",\n  \"sub\": \"ODS5VIJDPP4CCYUHKJEJ34HTRXVLULAMNTKOOHJKA7XB7AUSCUDGN2NF\",\n  \"nats\": {\n    \"signing_keys\": [\n      \"OCSMB5E5KZBGZAH67XSFAIVCFU5NN3HI3UGW7XKFDXUP3RXTQOKUHWAB\"\n    ],\n    \"strict_signing_key_usage\": true,\n    \"type\": \"operator\",\n    \"version\": 2\n  }\n}"
     },
     {
      "path": "topo/revocations.json",
@@ -4352,7 +4574,7 @@ window.TOPOLOGY_WALK = {
      "change": "same",
      "secret": false,
      "size": 249,
-     "content": "[\n  {\n    \"Name\": \"batch\",\n    \"Account\": \"CALLER-batch\",\n    \"Public\": \"UB2KV5ZF44YORRNYSML3S6ZOG3EYOMBC2RPHZUV7NJT4GTASV6MSPYBG\",\n    \"At\": \"2026-10-06T13:02:05.742933+04:00\",\n    \"Kind\": \"superseded\",\n    \"Why\": \"superseded by generation 8\"\n  }\n]"
+     "content": "[\n  {\n    \"Name\": \"batch\",\n    \"Account\": \"CALLER-batch\",\n    \"Public\": \"UDNHFYT5X44XEZWSFL355ADABM5YCTWUTBHCD5WJKIZ2EGE5VHVXDFKY\",\n    \"At\": \"2026-10-07T09:12:38.107251+04:00\",\n    \"Kind\": \"superseded\",\n    \"Why\": \"superseded by generation 8\"\n  }\n]"
     }
    ]
   }

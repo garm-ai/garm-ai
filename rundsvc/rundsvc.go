@@ -44,6 +44,9 @@ const (
 	SubjectInvoke = "garm.run.v1.invoke"
 	SubjectFetch  = "garm.run.v1.fetch"
 	SubjectEvents = "garm.run.v1.events"
+	// SubjectOut is the local prefix a caller subscribes under for a run's
+	// live events: SubjectOut + "." + run + ".>" (push spec §2).
+	SubjectOut = "garm.run.v1.out"
 )
 
 // Patterns rund ANSWERS on. Token 4 is the caller's account, placed by the server.
@@ -282,6 +285,20 @@ func reply(r micro.Request, w *invokev1.Error) {
 
 // ToolCaller reaches tools over NATS. It is run.Caller.
 type ToolCaller struct{ NC *nats.Conn }
+
+// OutSubject is where rund publishes event seq of run runID owned by owner:
+// the account token at position four, so only the owner's account may import it.
+func OutSubject(owner, runID string, seq uint64) string {
+	return fmt.Sprintf("garm.run.v1.%s.out.%s.%d", owner, runID, seq)
+}
+
+// LivePublisher is rundbos.Live on the bus: one core publish per event, no
+// JetStream, delivered to whoever is subscribed now. Best effort by contract.
+type LivePublisher struct{ NC *nats.Conn }
+
+func (p LivePublisher) Publish(owner, runID string, seq uint64, event []byte) error {
+	return p.NC.Publish(OutSubject(owner, runID, seq), event)
+}
 
 // Call makes one tool call on the internal subject.
 //
