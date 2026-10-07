@@ -499,11 +499,16 @@ of our own duplicating that.
 
 ## What does not exist yet
 
-**Nothing calls a tool for you.** There is no generated client, so a caller
-marshals a request and does `nc.Request(natsserve.Subject(name), body, timeout)`
-itself. That is the next step.
+**No decider.** An agent can be declared, and compose checks its allowlist, but
+invoking one is refused with "no decider to run it": nothing yet runs a declared
+workflow or a ReAct loop, so no agent has ever executed. **No authority.** A
+caller's identity is proved on every hop and then unused; any caller may invoke
+any tool, and a run is visible only to the account that started it. **No
+approval**, and nothing that pauses a run for a person; the event feed can carry
+a `question`, and nothing emits one. No gateway, no discovery, no clearance,
+compartments, verbs or tool sets.
 
-There is also no gateway, no decider, no discovery, no descriptor hash, no clearance,
-compartments, verbs, tool sets or approvals. Those are real and most are coming —
-they are absent because nothing enforces them yet, and a declaration nothing acts
-on is a promise the platform breaks silently.
+Those are real and coming in that order — the authority model, a workflow
+decider, approval — and they are absent because nothing enforces them yet: a
+declaration nothing acts on is a promise the platform breaks silently.
+[docs/roadmap.md](roadmap.md) keeps the list beside what each waits on.

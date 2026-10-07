@@ -122,3 +122,21 @@ id; `rund`'s carries the run id, which is on the same trace. Logs are stamped wi
 the trace id and shipped beside spans and counters over OTLP to whatever
 `OTEL_EXPORTER_OTLP_ENDPOINT` names — and nowhere, when it names nothing. Never a
 payload in a span, a metric or a log attribute: the envelope only.
+
+## A run outlives its call, and its record is the truth
+
+A `sync` tool answers inside the call. An `async` tool's call returns
+`pending{run_id}` the moment the run is durable in the run store — DBOS on
+Postgres, SQLite on a laptop — and a `rund` replica executes it from a queue:
+step 0 is the plan, then one step per tool call under a deterministic key, so
+a replay after a crash re-sends the same ids and the tool collapses the
+duplicate. The caller's idempotency key **is** the run id; a reused key with a
+different request is refused. `Fetch` reads the run's state and result, to
+the account that started it and nobody else; a foreign run is `NOT_FOUND`.
+
+Every run records its events — `stage`, each `step`'s outcome, `done` — in a
+durable stream, numbered from 1, and `rund` publishes each live on a subject
+only the owner's account can import. The record is the truth and the feed is a
+faster way to learn what the record will say: a subscriber that was not there
+reads `Events` from a cursor, and `Follow` stitches the two by sequence number.
+An event is a word and a reference, never a payload; `done` carries no result.

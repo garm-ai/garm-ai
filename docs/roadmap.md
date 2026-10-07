@@ -33,15 +33,6 @@ one component in more detail. They link here rather than repeating it.
 | The root offline; accounts signed by an operator signing key, credentials by account signing keys, enforced by the server; two-step rotation with `--verify-live` | `estate.TestTheServerRefusesAnAccountSignedByTheRoot` · `estate.TestRotationKeepsTheOldCredentialAliveUntilStepTwo` · `garmctl.TestVerifyLiveRefusesWhileTheOldKeyIsStillOnTheWire` — step **9f** |
 | **The run store**: an async tool is `pending{run_id}` once durable, executed from a DBOS queue by a replica, read back with `Fetch --wait`; the plan is step 0 and a replay follows it; the key is fingerprinted; a run is visible to its invoking account only; sync is sovereign when the store is down; only `rundbos` imports DBOS | `estate.TestAnAsyncToolIsPendingThenAnswered` · `rundbos.TestAStoppedReplicasRunIsFinishedByItsSuccessorWithTheSameIdentity` · `rundbos.TestAReplayFollowsThePlanRecordedAtStart` · `estate.TestSyncIsSovereignWhenTheStoreIsDown` · `mise run no-sdk` — step **10** |
 
-## Being built
-
-| | step |
-|---|---|
-| `rund`: `Invoke`/`Fetch`, catalogue-loaded, sync fast path | ✅ **9b** |
-| The budget binds: handler deadline and compose check | ✅ 9b — the client deadline lands with the client, in 9c |
-| Correlation, causation, message ids and `traceparent`, end to end | ✅ 9b |
-| The generated client, `garmctl call`, and an example loop that answers | ✅ **9c** |
-
 ## Waiting on something real
 
 **Step 9 is complete**: a caller names a tool and gets an answer, through a
