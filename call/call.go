@@ -7,6 +7,8 @@ package call
 
 import (
 	"context"
+	"errors"
+	"iter"
 	"time"
 
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
@@ -117,3 +119,114 @@ type Options struct {
 
 // Deadline is the budget a generated client applies, including the hops.
 func Deadline(budget time.Duration) time.Duration { return budget + Overhead }
+
+// Follower is what a transport offers beyond Invoke and Fetch when it can carry
+// a run's event feed (push spec §4): the record after a cursor, and the live
+// copy. natscall.Client is one.
+type Follower interface {
+	// Events is the run's record with Seq > after, at most 256; wait holds the
+	// request on rund when nothing is past the cursor yet (rund caps it).
+	Events(ctx context.Context, runID string, after uint64, wait time.Duration) (*runv1.EventsResponse, error)
+	// Subscribe delivers the run's live events until stop is called. The
+	// transport decides the subject; what arrives is what the bus delivers to
+	// this caller's account, and only that.
+	Subscribe(ctx context.Context, runID string) (events <-chan *runv1.Event, stop func(), err error)
+}
+
+// ErrCannotFollow: the Ref's Invoker is not a Follower.
+var ErrCannotFollow = errors.New("call: this transport cannot Follow a run (it is not a call.Follower)")
+
+// Follow yields the run's events from after onward, exactly once each, in
+// order, until done -- stitching the record to the live feed so no caller
+// writes that twice:
+//
+//  1. subscribe to the live feed FIRST, so nothing published during the
+//     catch-up is missed: it is either in the batch or in the subscription;
+//  2. catch up from the cursor through Events, paging while a batch is full;
+//  3. switch to the live feed, dropping any event at or below the last yielded;
+//  4. on the live side going away, go to 2 with the last sequence as the cursor;
+//  5. return after done, or when ctx ends.
+//
+// A caller that wants history only calls Events itself; the bus is not touched.
+func (r Ref) Follow(ctx context.Context, after uint64) iter.Seq2[*runv1.Event, error] {
+	return func(yield func(*runv1.Event, error) bool) {
+		f, ok := r.Invoker.(Follower)
+		if !ok {
+			yield(nil, ErrCannotFollow)
+			return
+		}
+		live, stop, err := f.Subscribe(ctx, r.RunID)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+		defer stop()
+		last := after
+		for {
+			// catch up from the record
+			for {
+				if err := ctx.Err(); err != nil {
+					yield(nil, err)
+					return
+				}
+				resp, err := f.Events(ctx, r.RunID, last, 0)
+				if err != nil {
+					yield(nil, err)
+					return
+				}
+				for _, ev := range resp.GetEvents() {
+					if ev.GetSeq() <= last {
+						continue
+					}
+					last = ev.GetSeq()
+					if !yield(ev, nil) {
+						return
+					}
+					if ev.GetDone() != nil {
+						return
+					}
+				}
+				if resp.GetClosed() {
+					return
+				}
+				if len(resp.GetEvents()) < 256 {
+					break
+				}
+			}
+			// then live, until it ends; then back to the record from last
+			liveEnded := false
+			for !liveEnded {
+				select {
+				case <-ctx.Done():
+					yield(nil, ctx.Err())
+					return
+				case ev, open := <-live:
+					if !open {
+						liveEnded = true
+						break
+					}
+					if ev.GetSeq() <= last {
+						continue
+					}
+					last = ev.GetSeq()
+					if !yield(ev, nil) {
+						return
+					}
+					if ev.GetDone() != nil {
+						return
+					}
+				}
+			}
+			// the live side went away: resume from the record; it will say closed
+			// if the run is over, and the loop will subscribe again otherwise
+			live, stop2, err := f.Subscribe(ctx, r.RunID)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			stop()
+			stop = stop2
+			_ = live
+		}
+	}
+}

@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -203,6 +204,59 @@ func (c Client) Events(ctx context.Context, runID string, after uint64, wait tim
 		return nil, serve.Internal(err)
 	}
 	return resp, nil
+}
+
+// Subscribe delivers a run's live events: the caller's account imports them
+// under the flat prefix, the server maps them from the owner-keyed subject,
+// and nothing of another account's arrives. Buffered; a slow reader never
+// blocks the connection, and a dropped event is in the record.
+func (c Client) Subscribe(ctx context.Context, runID string) (<-chan *runv1.Event, func(), error) {
+	out := make(chan *runv1.Event, 256)
+	sub, err := c.NC.Subscribe(rundsvc.SubjectOut+"."+runID+".>", func(m *nats.Msg) {
+		ev := &runv1.Event{}
+		if err := proto.Unmarshal(m.Data, ev); err != nil {
+			return
+		}
+		select {
+		case out <- ev:
+		default: // full: the record has it
+		}
+	})
+	if err != nil {
+		return nil, nil, serve.Unavailable("subscribing to the run's events").Because(err)
+	}
+	if err := c.NC.Flush(); err != nil {
+		_ = sub.Unsubscribe()
+		return nil, nil, serve.Unavailable("subscribing to the run's events").Because(err)
+	}
+	var once sync.Once
+	stop := func() {
+		once.Do(func() {
+			_ = sub.Unsubscribe()
+			close(out)
+		})
+	}
+	// The connection closing ends the feed: the channel closes and Follow resumes.
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-closedCh(c.NC):
+		}
+		stop()
+	}()
+	return out, stop, nil
+}
+
+// closedCh is a channel that closes when the connection does.
+func closedCh(nc *nats.Conn) <-chan struct{} {
+	ch := make(chan struct{})
+	go func() {
+		for !nc.IsClosed() {
+			time.Sleep(200 * time.Millisecond)
+		}
+		close(ch)
+	}()
+	return ch
 }
 
 // finish records the outcome on the span: the kind as an attribute always, an

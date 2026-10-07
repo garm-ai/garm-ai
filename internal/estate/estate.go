@@ -92,12 +92,80 @@ type Estate struct {
 	rec      *otlptest.Recorder
 	store    *rundbos.Store
 	storeDir string
+	gated    *gatedCaller
 }
 
 // Option shapes an estate.
 type Option func(*options)
 
-type options struct{ store, storeDown bool }
+type options struct {
+	store, storeDown bool
+	gates            []string
+}
+
+// WithToolGate blocks the tool call whose idempotency key is key until
+// OpenToolGate is called: a test can stand inside a run.
+func WithToolGate(keys ...string) Option {
+	return func(o *options) { o.store = true; o.gates = append(o.gates, keys...) }
+}
+
+// gatedCaller holds a tool call at its key until the gate opens.
+type gatedCaller struct {
+	inner run.Caller
+	mu    sync.Mutex
+	gates map[string]chan struct{}
+	seen  map[string]chan struct{}
+}
+
+func (g *gatedCaller) Call(ctx context.Context, tool string, input []byte, budget time.Duration, h run.Headers) ([]byte, error) {
+	g.mu.Lock()
+	gate := g.gates[h.Idempotency]
+	if seen, ok := g.seen[h.Idempotency]; ok {
+		select {
+		case <-seen:
+		default:
+			close(seen)
+		}
+	}
+	g.mu.Unlock()
+	if gate != nil {
+		select {
+		case <-gate:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	return g.inner.Call(ctx, tool, input, budget, h)
+}
+
+// AwaitToolCall returns once the tool call with this key has been made.
+func (e *Estate) AwaitToolCall(t testing.TB, key string) {
+	t.Helper()
+	e.gated.mu.Lock()
+	seen := e.gated.seen[key]
+	e.gated.mu.Unlock()
+	if seen == nil {
+		t.Fatalf("no gate for %s", key)
+	}
+	select {
+	case <-seen:
+	case <-time.After(10 * time.Second):
+		t.Fatalf("the tool call %s was not made", key)
+	}
+}
+
+// OpenToolGate lets the held call through.
+func (e *Estate) OpenToolGate(key string) {
+	e.gated.mu.Lock()
+	defer e.gated.mu.Unlock()
+	if g := e.gated.gates[key]; g != nil {
+		select {
+		case <-g:
+		default:
+			close(g)
+		}
+	}
+}
 
 // WithStore gives rund a run store -- rundbos on a SQLite file in the test's
 // temp dir. OPT-IN: a DBOS runtime is a real cost per test, and the many tests
@@ -450,10 +518,15 @@ func New(t testing.TB, opts ...Option) *Estate {
 				t.Fatal(err)
 			}
 		}
+		e.gated = &gatedCaller{inner: engine.Tools, gates: map[string]chan struct{}{}, seen: map[string]chan struct{}{}}
+		for _, k := range o.gates {
+			e.gated.gates[k] = make(chan struct{})
+			e.gated.seen[k] = make(chan struct{})
+		}
 		store, err := rundbos.Open(context.Background(), rundbos.Config{
 			URL: rundbos.FileURL(filepath.Join(e.storeDir, "runs.db")), AppName: "estate",
 			Executor: "estate-rund", Workers: 2, Migrate: true, Logger: rundLog, Retry: 100 * time.Millisecond,
-		}, e.Catalogue, engine.Tools, rundsvc.LivePublisher{NC: rundNC})
+		}, e.Catalogue, e.gated, rundsvc.LivePublisher{NC: rundNC})
 		if err != nil {
 			t.Fatal(err)
 		}

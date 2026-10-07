@@ -16,6 +16,7 @@ import (
 	"github.com/garm-ai/garm-ai/call"
 	"github.com/garm-ai/garm-ai/catalogue"
 	"github.com/garm-ai/garm-ai/fetch"
+	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/natscall"
 	"github.com/garm-ai/garm-ai/natsconn"
@@ -30,6 +31,8 @@ func fetchCmd() *cobra.Command {
 		catSHA  string
 		catDir  string
 		wait    time.Duration
+		follow  bool
+		after   uint64
 	)
 	cmd := &cobra.Command{
 		Use:   "fetch <run-id>",
@@ -65,11 +68,22 @@ func fetchCmd() *cobra.Command {
 			}
 			defer nc.Close()
 
+			out := cmd.OutOrStdout()
+			if follow {
+				// One line per event, as it arrives: the record first, then live,
+				// stitched by sequence; returns on done.
+				for ev, err := range (call.Ref{RunID: args[0], Invoker: natscall.Client{NC: nc}}).Follow(ctx, after) {
+					if err != nil {
+						return err
+					}
+					fmt.Fprintln(out, eventLine(ev))
+				}
+				return nil
+			}
 			resp, err := (call.Ref{RunID: args[0], Invoker: natscall.Client{NC: nc}}).Fetch(ctx, wait)
 			if err != nil {
 				return err
 			}
-			out := cmd.OutOrStdout()
 			state := strings.TrimPrefix(resp.GetState().String(), "RUN_STATE_")
 			fmt.Fprintf(out, "%s", state)
 			if resp.GetStage() != "" {
@@ -108,5 +122,30 @@ func fetchCmd() *cobra.Command {
 	cmd.Flags().StringVar(&catSHA, "catalogue-sha256", "", "hex digest the catalogue must have; REQUIRED for remote")
 	cmd.Flags().StringVar(&catDir, "catalogue-dir", ".", "what a relative file:// catalogue resolves against")
 	cmd.Flags().DurationVar(&wait, "wait", 0, "how long rund may hold the request for the run to change; 0 answers at once, 30s is the most")
+	cmd.Flags().BoolVar(&follow, "follow", false, "print the run's events as they arrive -- the record first, then live -- and return on done")
+	cmd.Flags().Uint64Var(&after, "after", 0, "with --follow: start after this sequence number; 0 is the start")
 	return cmd
+}
+
+// eventLine renders one event for a person: the sequence, the kind, its word.
+func eventLine(ev *runv1.Event) string {
+	switch k := ev.GetKind().(type) {
+	case *runv1.Event_Stage:
+		return fmt.Sprintf("%d stage %s", ev.GetSeq(), k.Stage.GetStage())
+	case *runv1.Event_Step:
+		kind := "OK"
+		if k.Step.GetKind() != invokev1.ErrorKind_ERROR_KIND_UNSPECIFIED {
+			kind = strings.TrimPrefix(k.Step.GetKind().String(), "ERROR_KIND_")
+		}
+		return fmt.Sprintf("%d step %s %s", ev.GetSeq(), k.Step.GetKey(), kind)
+	case *runv1.Event_Progress:
+		return fmt.Sprintf("%d progress %s", ev.GetSeq(), k.Progress.GetText())
+	case *runv1.Event_Question:
+		return fmt.Sprintf("%d question %s: %s", ev.GetSeq(), k.Question.GetId(), k.Question.GetText())
+	case *runv1.Event_Chunk:
+		return fmt.Sprintf("%d chunk %s", ev.GetSeq(), k.Chunk.GetText())
+	case *runv1.Event_Done:
+		return fmt.Sprintf("%d done %s", ev.GetSeq(), strings.TrimPrefix(k.Done.GetState().String(), "RUN_STATE_"))
+	}
+	return fmt.Sprintf("%d ?", ev.GetSeq())
 }

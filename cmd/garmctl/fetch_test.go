@@ -47,3 +47,25 @@ func TestFetchRefusesAMalformedWait(t *testing.T) {
 		t.Fatal("a malformed --wait was accepted")
 	}
 }
+
+// --follow prints the run's events, one line each, and returns on done.
+func TestFetchFollowPrintsTheEventsAndReturnsOnDone(t *testing.T) {
+	e := estate.New(t, estate.WithStore())
+	stdout, _, err := run(t, e, "weather.v1.schedule_report", `{"place":"Ghent"}`, "--idempotency-key", "k-follow")
+	if err != nil || !strings.HasPrefix(stdout, "pending k-follow") {
+		t.Fatalf("%v %s", err, stdout)
+	}
+	out, err := runFetch(t, e, "k-follow", "--follow")
+	if err != nil {
+		t.Fatalf("fetch --follow: %v\n%s", err, out)
+	}
+	for _, want := range []string{"stage calling:0", "step k-follow:0 OK", "stage done", "done SUCCEEDED"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("missing %q in:\n%s", want, out)
+		}
+	}
+	after, err := runFetch(t, e, "k-follow", "--follow", "--after", "2")
+	if err != nil || strings.Contains(after, "calling:0") || !strings.Contains(after, "done SUCCEEDED") {
+		t.Fatalf("--after 2: %v\n%s", err, after)
+	}
+}

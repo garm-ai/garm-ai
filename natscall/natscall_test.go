@@ -183,3 +183,33 @@ func TestAnAsyncInvokeAnswersPendingAndFetchTheResult(t *testing.T) {
 		t.Fatalf("result %v %v", &out, err)
 	}
 }
+
+// Events reaches the caller: after the run, the record from zero is the four
+// events; Subscribe delivers the live copy of a run that has not started yet.
+func TestEventsAndSubscribeReachTheCaller(t *testing.T) {
+	nc := estate.New(t, estate.WithStore()).Connect(t, estate.RoleCaller)
+	c := natscall.Client{NC: nc}
+	live, stop, err := c.Subscribe(context.Background(), "wire-ev")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stop()
+	body, _ := proto.Marshal(&weatherv1.ScheduleReportRequest{Place: "Ghent"})
+	if _, err := c.Invoke(context.Background(), "weather.v1.schedule_report", body, call.Options{Idempotency: "wire-ev"}); err != nil {
+		t.Fatal(err)
+	}
+	var seen []uint64
+	deadline := time.After(10 * time.Second)
+	for len(seen) < 4 {
+		select {
+		case ev := <-live:
+			seen = append(seen, ev.GetSeq())
+		case <-deadline:
+			t.Fatalf("live delivered %v", seen)
+		}
+	}
+	resp, err := c.Events(context.Background(), "wire-ev", 0, 0)
+	if err != nil || len(resp.GetEvents()) != 4 || !resp.GetClosed() {
+		t.Fatalf("%v %v", resp, err)
+	}
+}

@@ -139,3 +139,53 @@ func TestACallerMayNotPublishOnTheEventPrefix(t *testing.T) {
 		t.Fatal("a caller published on the event prefix without a violation")
 	}
 }
+
+// Property 3: Follow started after the run finished yields the full record
+// and returns on done.
+func TestFollowAfterTheRunYieldsTheRecord(t *testing.T) {
+	e := estate.New(t, estate.WithStore())
+	ref := schedule(t, e, estate.RoleCaller, "k-after", "Ghent")
+	if _, _, err := weatherv1.NewWeatherServiceClient(ref.Invoker).ScheduleReportResult(context.Background(), ref, 10*time.Second); err != nil {
+		t.Fatal(err)
+	}
+	var got []*runv1.Event
+	for ev, err := range ref.Follow(context.Background(), 0) {
+		if err != nil {
+			t.Fatal(err)
+		}
+		got = append(got, ev)
+	}
+	if d := describe(got); !reflect.DeepEqual(d, []string{"stage:calling:0", "step:k-after:0:OK", "stage:done", "done:SUCCEEDED"}) {
+		t.Fatalf("%v", d)
+	}
+}
+
+// Property 4 end to end: Follow started while the tool is blocked at step 0
+// yields every event exactly once across the boundary.
+func TestFollowMidRunYieldsEveryEventOnce(t *testing.T) {
+	e := estate.New(t, estate.WithStore(), estate.WithToolGate("k-mid:0"))
+	ref := schedule(t, e, estate.RoleCaller, "k-mid", "Ghent")
+	e.AwaitToolCall(t, "k-mid:0")
+	got := make(chan []*runv1.Event, 1)
+	go func() {
+		var evs []*runv1.Event
+		for ev, err := range ref.Follow(context.Background(), 0) {
+			if err != nil {
+				t.Error(err)
+				break
+			}
+			evs = append(evs, ev)
+		}
+		got <- evs
+	}()
+	time.Sleep(300 * time.Millisecond) // the catch-up has happened; the live side is waiting
+	e.OpenToolGate("k-mid:0")
+	select {
+	case evs := <-got:
+		if d := describe(evs); !reflect.DeepEqual(d, []string{"stage:calling:0", "step:k-mid:0:OK", "stage:done", "done:SUCCEEDED"}) {
+			t.Fatalf("%v", d)
+		}
+	case <-time.After(15 * time.Second):
+		t.Fatal("Follow did not finish")
+	}
+}
