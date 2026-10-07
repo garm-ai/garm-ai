@@ -23,6 +23,8 @@ import (
 	"github.com/dbos-inc/dbos-transact-golang/dbos"
 	_ "github.com/dbos-inc/dbos-transact-golang/dbos/driver/sqlite" // sqlite: URLs, pure Go: the estate needs no Postgres
 	"go.opentelemetry.io/otel/metric"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
@@ -40,9 +42,18 @@ const (
 	// StepAttempts bounds the UNAVAILABLE retry of one tool-call step: the
 	// first attempt plus the retries.
 	StepAttempts = 3
-	// StageKey is the event a run publishes about where it is.
+	// StageKey is the DBOS event a run publishes about where it is: the latest word.
 	StageKey = "stage"
+	// StreamKey is the DBOS stream a run writes every Event to: the record.
+	StreamKey = "events"
 )
+
+// Live is where a run's events go as they happen -- the bus, in rund. Best
+// effort by contract: an error is counted and logged, never returned to the run.
+// nil publishes nothing. The subject is the publisher's business (push spec §2).
+type Live interface {
+	Publish(owner, runID string, seq uint64, event []byte) error
+}
 
 // Config is what rund's flags fill in.
 type Config struct {
@@ -86,6 +97,7 @@ type Store struct {
 	cfg   Config
 	cat   *catalogue.Holder
 	tools run.Caller
+	out   Live
 	log   *slog.Logger
 
 	live     atomic.Pointer[session]
@@ -101,7 +113,7 @@ var _ run.Store = (*Store)(nil)
 // Open validates the configuration -- a URL that is not a store is an error,
 // never "degraded" -- and connects. An unreachable database degrades the store
 // rather than failing Open: rund starts, serves sync, and reconnects on its own.
-func Open(ctx context.Context, cfg Config, cat *catalogue.Holder, tools run.Caller) (*Store, error) {
+func Open(ctx context.Context, cfg Config, cat *catalogue.Holder, tools run.Caller, live Live) (*Store, error) {
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
 	}
@@ -120,7 +132,7 @@ func Open(ctx context.Context, cfg Config, cat *catalogue.Holder, tools run.Call
 	if !strings.HasPrefix(cfg.URL, "postgres://") && !strings.HasPrefix(cfg.URL, "postgresql://") && !strings.HasPrefix(cfg.URL, "sqlite:") {
 		return nil, fmt.Errorf("rundbos: --run-store must be postgres://… or sqlite:…, not %q", Redact(cfg.URL))
 	}
-	s := &Store{cfg: cfg, cat: cat, tools: tools, log: cfg.Logger, closed: make(chan struct{})}
+	s := &Store{cfg: cfg, cat: cat, tools: tools, out: live, log: cfg.Logger, closed: make(chan struct{})}
 	if err := s.connect(ctx); err != nil {
 		if !cfg.Migrate && !IsConnectionError(err) {
 			// The deployment said it owns the migrations and the schema is not
@@ -477,8 +489,9 @@ func (s *Store) Steps(ctx context.Context, id string) ([]Step, error) {
 	}
 	out := make([]Step, 0, len(infos))
 	for _, i := range infos {
-		if strings.HasPrefix(i.StepName, "DBOS.") {
-			// DBOS's own bookkeeping (a SetEvent is a step): not the run's audit.
+		if strings.HasPrefix(i.StepName, "DBOS.") || strings.HasPrefix(i.StepName, "publish:") {
+			// DBOS's own bookkeeping (a SetEvent is a step) and the live copy's
+			// (a publish is a step so a replay skips it): not the run's audit.
 			continue
 		}
 		st := Step{Name: i.StepName}
@@ -507,8 +520,99 @@ func (s *Store) storeErr(sess *session, err error) error {
 // wireOf turns a tool's error into what the wire carries, with the run id.
 func wireOf(err error, id string) *invokev1.Error { return serve.Wire(err, id) }
 
-// Events is the run's record after a cursor. The record arrives with the next
-// step of the push plan; until then the store has none to read.
+// Events is the run's record after a cursor (push spec §4). The record is the
+// run's DBOS stream, read from offset after; the sequence number is the offset
+// plus one. With nothing past the cursor and wait > 0, a re-read every
+// StagePoll until one arrives, the stream closes, or wait elapses. closed means
+// the run will emit no more AND the reply reaches the end.
+//
+// A cancelled run's workflow cannot write its last word, so the reader says it:
+// a terminal CANCELLED status with no done event yet yields a synthesised
+// done CANCELLED as the final event, numbered after the last recorded one.
 func (s *Store) Events(ctx context.Context, id string, after uint64, wait time.Duration) ([]*runv1.Event, bool, error) {
-	return nil, false, errors.New("rundbos: the event record is not recorded yet")
+	sess, err := s.session()
+	if err != nil {
+		return nil, false, err
+	}
+	h, err := dbos.RetrieveWorkflow[outcome](sess.ctx, id)
+	if errors.Is(err, dbos.ErrNonExistentWorkflow) {
+		return nil, false, run.ErrNotFound
+	}
+	if err != nil {
+		return nil, false, s.storeErr(sess, err)
+	}
+	read := func() ([]*runv1.Event, bool, error) {
+		st, err := h.GetStatus()
+		if err != nil {
+			return nil, false, s.storeErr(sess, err)
+		}
+		// A SNAPSHOT: what is there now and whether the stream is closed. The
+		// default read blocks until the stream closes, which for an open run is
+		// until the run ends -- the hold below is ours, bounded, and ours to stop.
+		raw, streamClosed, err := dbos.ReadStream[[]byte](sess.ctx, id, StreamKey, dbos.WithReadStreamSnapshot())
+		if err != nil {
+			return nil, false, s.storeErr(sess, err)
+		}
+		all := make([]*runv1.Event, 0, len(raw)+1)
+		for i, b := range raw {
+			ev := &runv1.Event{}
+			if err := proto.Unmarshal(b, ev); err != nil {
+				return nil, false, s.storeErr(sess, fmt.Errorf("event %d of %s: %w", i+1, id, err))
+			}
+			ev.Seq = uint64(i) + 1
+			all = append(all, ev)
+		}
+		terminal := st.Status == dbos.WorkflowStatusSuccess || st.Status == dbos.WorkflowStatusError ||
+			st.Status == dbos.WorkflowStatusCancelled || st.Status == dbos.WorkflowStatusMaxRecoveryAttemptsExceeded
+		if terminal && (len(all) == 0 || all[len(all)-1].GetDone() == nil) {
+			state := runv1.RunState_RUN_STATE_CANCELLED
+			if st.Status != dbos.WorkflowStatusCancelled {
+				state = runv1.RunState_RUN_STATE_FAILED // a run that could not be executed: its record ends here
+			}
+			all = append(all, &runv1.Event{RunId: id, Seq: uint64(len(all)) + 1, At: timestamppb.New(st.CompletedAt),
+				Kind: &runv1.Event_Done{Done: &runv1.Done{State: state}}})
+		}
+		var out []*runv1.Event
+		for _, ev := range all {
+			if ev.GetSeq() > after {
+				out = append(out, ev)
+			}
+		}
+		total := uint64(len(all))
+		if len(out) > run.MaxEventsBatch {
+			out = out[:run.MaxEventsBatch]
+		}
+		last := after
+		if len(out) > 0 {
+			last = out[len(out)-1].GetSeq()
+		}
+		closed := (streamClosed || terminal) && last >= total
+		return out, closed, nil
+	}
+	evs, closed, err := read()
+	if err != nil || len(evs) > 0 || closed || wait <= 0 {
+		return evs, closed, err
+	}
+	deadline := time.Now().Add(wait)
+	tick := time.NewTicker(StagePoll)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, false, nil
+		case <-tick.C:
+			evs, closed, err = read()
+			if err != nil || len(evs) > 0 || closed || time.Now().After(deadline) {
+				return evs, closed, err
+			}
+		}
+	}
+}
+
+// CheckEvent refuses what the record must not hold: a chunk over MaxChunk.
+func CheckEvent(ev *runv1.Event) error {
+	if c := ev.GetChunk(); c != nil && len(c.GetText()) > run.MaxChunk {
+		return fmt.Errorf("%w (%d bytes)", run.ErrChunkTooLarge, len(c.GetText()))
+	}
+	return nil
 }

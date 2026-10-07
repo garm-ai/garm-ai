@@ -428,7 +428,7 @@ func New(t testing.TB, opts ...Option) *Estate {
 		store, err := rundbos.Open(context.Background(), rundbos.Config{
 			URL: rundbos.FileURL(filepath.Join(e.storeDir, "runs.db")), AppName: "estate",
 			Executor: "estate-rund", Workers: 2, Migrate: true, Logger: rundLog, Retry: 100 * time.Millisecond,
-		}, e.Catalogue, engine.Tools)
+		}, e.Catalogue, engine.Tools, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
