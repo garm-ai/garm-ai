@@ -86,7 +86,7 @@ what it waited on.
 
 | | waits on |
 |---|---|
-| **Push** — a subscriber sees a run's events without polling: DBOS streams as the record, a NATS stream export `garm.run.v1.*.out.>` for live delivery; `Answer` as `Send` for a decider that needs input | nothing — the run store is built; next |
+| **Push** — a subscriber sees a run's events without polling: DBOS streams as the record, a NATS stream export `garm.run.v1.*.out.>` for live delivery, `Events` with a cursor, `Follow` in the client | nothing — [spec](specs/2026-10-07-push-design.md) written, plan next |
 | The authority model, then `Cancel` / `Approve` / deciders on it | push, so an approver can be told |
 | **Cross-executor recovery** — a dead replica's in-flight runs taken over by a live one without DBOS's Conductor; a lease and a heartbeat, because DBOS re-enqueues a dead executor's runs only at that executor's own relaunch | the run store; a liveness signal DBOS does not keep |
 
