@@ -92,13 +92,17 @@ func TestAwaitStopsWithTheCaller(t *testing.T) {
 // seq > after; Subscribe hands out live, a channel the test feeds.
 type follower struct {
 	fake
-	record    []*runv1.Event
-	grow      []*runv1.Event // appended to record after the FIRST Events call: the run moved on
-	closed    bool
-	live      chan *runv1.Event
-	stopped   int
-	eventsErr error
-	calls     []uint64 // every after a call to Events carried
+	record     []*runv1.Event
+	grow       []*runv1.Event // appended to record after the FIRST Events call: the run moved on
+	closed     bool
+	live       chan *runv1.Event
+	stopped    int
+	eventsErr  error
+	calls      []uint64 // every after a call to Events carried
+	subscribed bool
+	// between is published "while the catch-up is in flight": delivered into
+	// live only if a subscription exists then, as the real bus would.
+	between *runv1.Event
 }
 
 func ev(seq uint64, kind string) *runv1.Event {
@@ -121,6 +125,12 @@ func (f *follower) Events(_ context.Context, _ string, after uint64, _ time.Dura
 		if len(f.calls) == 1 && len(f.grow) > 0 {
 			f.record = append(f.record, f.grow...)
 		}
+		if len(f.calls) == 1 && f.between != nil {
+			f.record = append(f.record, f.between)
+			if f.subscribed {
+				f.live <- f.between
+			}
+		}
 	}()
 	var out []*runv1.Event
 	for _, e := range f.record {
@@ -132,6 +142,7 @@ func (f *follower) Events(_ context.Context, _ string, after uint64, _ time.Dura
 }
 
 func (f *follower) Subscribe(context.Context, string) (<-chan *runv1.Event, func(), error) {
+	f.subscribed = true
 	return f.live, func() { f.stopped++ }, nil
 }
 
@@ -152,14 +163,15 @@ func drain(t *testing.T, it iter.Seq2[*runv1.Event, error], within time.Duration
 	done := make(chan res, 1)
 	go func() {
 		var evs []*runv1.Event
+		var failed error
 		for e, err := range it {
 			if err != nil {
-				done <- res{evs, err}
-				return
+				failed = err
+				break // the iterator's own defers run as the range ends, BEFORE the send below
 			}
 			evs = append(evs, e)
 		}
-		done <- res{evs, nil}
+		done <- res{evs, failed}
 	}()
 	select {
 	case r := <-done:
@@ -245,5 +257,18 @@ func TestFollowNeedsAFollower(t *testing.T) {
 	_, err := drain(t, call.Ref{RunID: "k", Invoker: &fake{}}.Follow(context.Background(), 0), time.Second)
 	if err == nil || !strings.Contains(err.Error(), "Follow") {
 		t.Fatalf("got %v", err)
+	}
+}
+
+// Subscribe BEFORE catching up, or an event published while the catch-up is
+// in flight is in neither the batch nor the subscription. Here event 2 is
+// published during the first Events call: it reaches the live side only if
+// the subscription already exists, and Follow must yield it.
+func TestFollowSubscribesBeforeCatchingUp(t *testing.T) {
+	f := &follower{record: []*runv1.Event{ev(1, "a")}, live: make(chan *runv1.Event, 8), between: ev(2, "b")}
+	go func() { time.Sleep(300 * time.Millisecond); f.live <- ev(3, "done") }()
+	got, err := drain(t, call.Ref{RunID: "k", Invoker: f}.Follow(context.Background(), 0), 5*time.Second)
+	if err != nil || !reflect.DeepEqual(seqs(got), []uint64{1, 2, 3}) {
+		t.Fatalf("%v %v -- event 2, published during the catch-up, was lost", seqs(got), err)
 	}
 }
