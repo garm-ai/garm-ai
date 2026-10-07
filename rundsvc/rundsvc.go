@@ -8,6 +8,7 @@ package rundsvc
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -294,7 +295,38 @@ func OutSubject(owner, runID string, seq uint64) string {
 
 // LivePublisher is rundbos.Live on the bus: one core publish per event, no
 // JetStream, delivered to whoever is subscribed now. Best effort by contract.
-type LivePublisher struct{ NC *nats.Conn }
+//
+// A core publish returns nil once the bytes are handed to the socket; the one
+// refusal a deployment will meet -- a credential without publish on the event
+// subject, a topology not reissued -- arrives later, on the connection's
+// asynchronous error path. NewLivePublisher hooks that path so such a refusal
+// is counted as dropped and logged with its subject, instead of every event
+// counting as delivered while nobody receives one.
+type LivePublisher struct {
+	NC  *nats.Conn
+	log *slog.Logger
+}
+
+// NewLivePublisher wires the connection's asynchronous errors on the event
+// subjects into the dropped count and the log, keeping any handler already set.
+func NewLivePublisher(nc *nats.Conn, log *slog.Logger) LivePublisher {
+	if log == nil {
+		log = slog.Default()
+	}
+	p := LivePublisher{NC: nc, log: log}
+	prev := nc.ErrorHandler()
+	nc.SetErrorHandler(func(c *nats.Conn, s *nats.Subscription, err error) {
+		if strings.Contains(err.Error(), "Permissions Violation") && strings.Contains(err.Error(), ".out.") {
+			log.Warn("live event refused by the bus; is rund's credential issued from this catalogue?", "error", err)
+			observe.Instruments().RunEvents.Add(context.Background(), 1, metric.WithAttributes(observe.KeyOutcome.String("dropped")))
+			return
+		}
+		if prev != nil {
+			prev(c, s, err)
+		}
+	})
+	return p
+}
 
 func (p LivePublisher) Publish(owner, runID string, seq uint64, event []byte) error {
 	return p.NC.Publish(OutSubject(owner, runID, seq), event)

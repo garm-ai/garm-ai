@@ -136,16 +136,30 @@ type Follower interface {
 // ErrCannotFollow: the Ref's Invoker is not a Follower.
 var ErrCannotFollow = errors.New("call: this transport cannot Follow a run (it is not a call.Follower)")
 
+// MaxEventsBatch is the most one Events reply carries: rund's cap, mirrored
+// here because this package imports no engine (run.MaxEventsBatch; a test pins
+// the two equal). A full batch means there may be more.
+const MaxEventsBatch = 256
+
+// FollowIdle is how long Follow waits on a silent live feed before consulting
+// the record again. A run whose last word was never published -- a cancelled
+// one, or one the bus failed to deliver -- is finished by the record, not by
+// the feed. A variable so a test can shorten it.
+var FollowIdle = 2 * time.Second
+
 // Follow yields the run's events from after onward, exactly once each, in
 // order, until done -- stitching the record to the live feed so no caller
-// writes that twice:
+// writes that twice. One rule: THE RECORD IS THE TRUTH, and the live feed is
+// a faster way to learn what the record will say. So:
 //
 //  1. subscribe to the live feed FIRST, so nothing published during the
 //     catch-up is missed: it is either in the batch or in the subscription;
 //  2. catch up from the cursor through Events, paging while a batch is full;
-//  3. switch to the live feed, dropping any event at or below the last yielded;
-//  4. on the live side going away, go to 2 with the last sequence as the cursor;
-//  5. return after done, or when ctx ends.
+//  3. follow the live feed, dropping anything at or below the last yielded;
+//     a GAP (a sequence beyond last+1) means the bus lost one, and the record
+//     fills it; a feed that ENDS or stays SILENT for FollowIdle sends Follow
+//     back to the record, which also says when the run is over;
+//  4. return after done, or when ctx ends.
 //
 // A caller that wants history only calls Events itself; the bus is not touched.
 func (r Ref) Follow(ctx context.Context, after uint64) iter.Seq2[*runv1.Event, error] {
@@ -155,24 +169,35 @@ func (r Ref) Follow(ctx context.Context, after uint64) iter.Seq2[*runv1.Event, e
 			yield(nil, ErrCannotFollow)
 			return
 		}
-		live, stop, err := f.Subscribe(ctx, r.RunID)
-		if err != nil {
-			yield(nil, err)
-			return
+		var (
+			live <-chan *runv1.Event
+			stop = func() {}
+			last = after
+		)
+		defer func() { stop() }()
+		subscribe := func() bool {
+			stop()
+			var err error
+			live, stop, err = f.Subscribe(ctx, r.RunID)
+			if err != nil {
+				stop = func() {}
+				yield(nil, err)
+				return false
+			}
+			return true
 		}
-		defer stop()
-		last := after
-		for {
-			// catch up from the record
+		// catchUp reads the record from last; it returns finished when the run is
+		// over or the consumer stopped, and ok=false after yielding an error.
+		catchUp := func() (finished, ok bool) {
 			for {
 				if err := ctx.Err(); err != nil {
 					yield(nil, err)
-					return
+					return true, false
 				}
 				resp, err := f.Events(ctx, r.RunID, last, 0)
 				if err != nil {
 					yield(nil, err)
-					return
+					return true, false
 				}
 				for _, ev := range resp.GetEvents() {
 					if ev.GetSeq() <= last {
@@ -180,53 +205,67 @@ func (r Ref) Follow(ctx context.Context, after uint64) iter.Seq2[*runv1.Event, e
 					}
 					last = ev.GetSeq()
 					if !yield(ev, nil) {
-						return
+						return true, false
 					}
 					if ev.GetDone() != nil {
-						return
+						return true, true
 					}
 				}
 				if resp.GetClosed() {
-					return
+					return true, true
 				}
-				if len(resp.GetEvents()) < 256 {
-					break
+				if len(resp.GetEvents()) < MaxEventsBatch {
+					return false, true
 				}
 			}
-			// then live, until it ends; then back to the record from last
-			liveEnded := false
-			for !liveEnded {
+		}
+		if !subscribe() {
+			return
+		}
+		for {
+			if finished, _ := catchUp(); finished {
+				return
+			}
+			idle := time.NewTimer(FollowIdle)
+		liveLoop:
+			for {
 				select {
 				case <-ctx.Done():
+					idle.Stop()
 					yield(nil, ctx.Err())
 					return
+				case <-idle.C:
+					// silence: the run may have ended without a published word
+					break liveLoop
 				case ev, open := <-live:
 					if !open {
-						liveEnded = true
-						break
+						// the feed went away: a new one, then the record from last
+						idle.Stop()
+						if !subscribe() {
+							return
+						}
+						break liveLoop
 					}
 					if ev.GetSeq() <= last {
 						continue
 					}
+					if ev.GetSeq() > last+1 {
+						// the bus lost one; the record has it
+						idle.Stop()
+						break liveLoop
+					}
 					last = ev.GetSeq()
 					if !yield(ev, nil) {
+						idle.Stop()
 						return
 					}
 					if ev.GetDone() != nil {
+						idle.Stop()
 						return
 					}
+					idle.Reset(FollowIdle)
 				}
 			}
-			// the live side went away: resume from the record; it will say closed
-			// if the run is over, and the loop will subscribe again otherwise
-			live, stop2, err := f.Subscribe(ctx, r.RunID)
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			stop()
-			stop = stop2
-			_ = live
 		}
 	}
 }

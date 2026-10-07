@@ -169,7 +169,7 @@ func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, na
 		// Opened BEFORE anything is mounted: Launch recovers this executor's
 		// in-flight runs, and a run started on a store that is not yet up
 		// would be a run nobody holds.
-		store, err := rundbos.Open(ctx, storeCfg, &holder, engine.Tools, rundsvc.LivePublisher{NC: nc})
+		store, err := rundbos.Open(ctx, storeCfg, &holder, engine.Tools, rundsvc.NewLivePublisher(nc, log))
 		if err != nil {
 			return err
 		}

@@ -302,3 +302,19 @@ func TestWithoutAStoreEventsIsEmptyAndClosed(t *testing.T) {
 		t.Fatalf("%v %v", resp, failure)
 	}
 }
+
+// Important 9 of the push review: an async run's key becomes a subject token
+// -- garm.run.v1.<owner>.out.<key>.<seq> -- so a key that is not one is
+// refused up front, naming the rule, rather than failing silently on the bus.
+func TestAnAsyncKeyThatIsNotASubjectTokenIsInvalid(t *testing.T) {
+	e, _ := engineWith(t, &recorder{})
+	for _, bad := range []string{"has space", "star*", "gt>", "dot.ted", "\t", "nul\x00"} {
+		_, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeAsync}, run.Headers{Idempotency: bad, Caller: "ACX"})
+		if failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_INVALID || !strings.Contains(failure.GetMessage(), "subject") {
+			t.Errorf("key %q: %v, want INVALID naming the subject rule", bad, failure)
+		}
+	}
+	if _, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeAsync}, run.Headers{Idempotency: "ok-key_1:ABC", Caller: "ACX"}); failure != nil {
+		t.Fatalf("a plain key was refused: %v", failure)
+	}
+}

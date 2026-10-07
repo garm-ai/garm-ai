@@ -113,7 +113,7 @@ done
 [[ "$fetched" == *"SUCCEEDED"* && "$fetched" == *"report-Ghent"* ]] || fail "fetch did not return the run's answer: $fetched ($(cat "$out/fetch.log"))"
 grep -q "msg=\"run started\"" "$out/rund.log" || fail "rund logged no run start"
 
-say "follow: the run's events -- the record first, then live, stitched by sequence; then again from zero once it is over"
+say "follow: the run's events from the record, twice, identical -- the live path is proved in internal/estate, where a run can be held still"
 followed=$("$bin/garmctl" fetch "$key" --follow \
   --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" \
   --catalogue "file://$out/catalogue.binpb" 2>"$out/follow.log")

@@ -78,6 +78,10 @@ service exports (`accounts.go`, checked 2026-10-05).
 - `rund` publishes event `seq` of run `r`, owned by account `A`, to
   `garm.run.v1.<A>.out.<r>.<seq>`, with the `Event` as the body and no headers
   a subscriber needs. The owner is what the run store recorded at `Start`.
+  **Built:** the run id is therefore a subject token, and an async key that is
+  not one — whitespace, `.`, `*`, `>`, a control character — is refused at
+  `Invoke` as `INVALID` naming the rule (`run.ValidKey`), rather than failing
+  silently on every publish.
 - A caller subscribes to `garm.run.v1.out.<r>.>` in its own account; the import
   maps it; it receives exactly its own runs' events. Another account subscribing
   to the same run id receives nothing: the subject it would need carries a key
@@ -197,7 +201,11 @@ and the sequence number says which to keep. A caller that wants history only —
 a batch job an hour later — calls `Events` alone and the bus is never touched.
 
 `garmctl fetch --follow` prints events as they arrive and returns on `done`;
-with `--after N` it starts from a cursor.
+with `--after N` it starts from a cursor. **Built:** `natscall.Events` sets a
+deadline whether or not a wait was asked, as `Ref.Fetch` does, so a `rund` that
+vanished after the request was published cannot hang a catch-up; a live
+subscription's buffer drops on full (a gap the record fills), closes only under
+a lock the callback also takes, and releases its goroutines on stop.
 
 ## 5. What the workflow emits, and the publish rule
 
@@ -209,8 +217,16 @@ refusal is a `step` with the tool's kind and a `done {FAILED}`. **Built:** a
 cancelled workflow does not get to write its last word, so the READER says it:
 a terminal status with no `done` recorded yields a synthesised `done` as the
 final event, numbered after the last recorded one — `CANCELLED` for a cancelled
-run, `FAILED` for one DBOS could not execute. **Built:** the publish is a step
-of its own, `publish:<seq>`, hidden from the step audit like DBOS's own.
+run, `FAILED` for one DBOS could not execute. And since such a `done` is never
+PUBLISHED, `Follow` cannot rely on the live feed to end: after `FollowIdle`
+(2 s) of silence it consults the record, which is also how it fills a gap (a
+live sequence beyond `last+1`: the bus lost one) and how it resumes when the
+feed goes away. The record is the truth; the feed is a faster way to learn
+what the record will say. **Built:** the publish is a step of its own,
+`publish:<seq>`, hidden from the step audit like DBOS's own. **Built:** a
+refusal the bus makes asynchronously — rund's credential lacking publish on
+the event subject, a topology not reissued — is counted as `dropped` and logged
+with its subject (`rundsvc.NewLivePublisher`), not counted as delivered.
 
 Emitting is two acts of different standing, inside one step:
 
@@ -252,10 +268,13 @@ verbs, `invoke`, `fetch`, `events` — it only receives on the event prefix.
 
 No new flag. `rund` publishes from the same connection it serves on. The
 counter joins `observe.Instruments`. `garmctl fetch` gains `--follow` and
-`--after`. `scripts/e2e.sh` follows the async report run live and then, after
-it has finished, follows it again from zero to prove catch-up: both runs print
-`stage calling:0`, `step weather.v1.schedule_report OK`, `stage done`,
-`done SUCCEEDED`.
+`--after`. **Built:** `scripts/e2e.sh` proves the CATCH-UP path only — it
+follows the report run twice after `fetch` has seen it finish, and asserts the
+two follows print the same four lines; a script cannot stand inside a run that
+finishes in milliseconds. The LIVE path is proved where a run can be held
+still: `internal/estate` gates the tool call and follows across the boundary on
+the real bus (property 4), and a live subscriber sees the events through the
+real import (property 2).
 
 ## 9. Decisions settled in conversation
 

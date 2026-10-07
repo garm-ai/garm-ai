@@ -194,6 +194,20 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 	}, nil
 }
 
+// ValidKey says whether a key may be a run id: it becomes one token of a NATS
+// subject, so no whitespace, no separator, no wildcard, no control character.
+func ValidKey(key string) bool {
+	if key == "" {
+		return false
+	}
+	for _, r := range key {
+		if r <= ' ' || r == '.' || r == '*' || r == '>' || r == 0x7f {
+			return false
+		}
+	}
+	return true
+}
+
 // startAsync is the async path: nothing executes here. The run is made durable
 // and the caller gets its id; a replica executes it from the queue (spec §2).
 func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.InvokeRequest, h Headers) (*runv1.InvokeResponse, *invokev1.Error) {
@@ -207,6 +221,13 @@ func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.
 		// of idempotent (spec §6). A model never sets one; the decider does.
 		return nil, e.fail(ctx, "", h, tool.Name, serve.Invalid(
 			"%s is async: an idempotency key is required (Garm-Idempotency-Key), and it becomes the run id", tool.Name))
+	}
+	if !ValidKey(h.Idempotency) {
+		// The key becomes a subject token -- garm.run.v1.<owner>.out.<key>.<seq>
+		// (push spec §2) -- so a key the bus would reject is refused here, with
+		// the rule, rather than failing silently on every publish.
+		return nil, e.fail(ctx, h.Idempotency, h, tool.Name, serve.Invalid(
+			"the idempotency key %q is not a subject token: no whitespace, no '.', '*' or '>', no control characters", h.Idempotency))
 	}
 	r := Run{
 		ID: h.Idempotency, Tool: tool.Name, Input: req.GetInput(),

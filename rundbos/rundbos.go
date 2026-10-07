@@ -546,47 +546,49 @@ func (s *Store) Events(ctx context.Context, id string, after uint64, wait time.D
 		if err != nil {
 			return nil, false, s.storeErr(sess, err)
 		}
-		// A SNAPSHOT: what is there now and whether the stream is closed. The
-		// default read blocks until the stream closes, which for an open run is
-		// until the run ends -- the hold below is ours, bounded, and ours to stop.
-		raw, streamClosed, err := dbos.ReadStream[[]byte](sess.ctx, id, StreamKey, dbos.WithReadStreamSnapshot())
+		// From the cursor, as a snapshot: seq is the offset plus one, and the
+		// bytes before the cursor are never read. (The default read blocks until
+		// the stream closes, which for an open run is until the run ends -- the
+		// hold below is ours, bounded, and ours to stop.)
+		raw, streamClosed, err := dbos.ReadStream[[]byte](sess.ctx, id, StreamKey, dbos.WithReadStreamSnapshot(), dbos.WithReadStreamFromOffset(int(after)))
 		if err != nil {
 			return nil, false, s.storeErr(sess, err)
 		}
-		all := make([]*runv1.Event, 0, len(raw)+1)
+		truncated := len(raw) > run.MaxEventsBatch
+		if truncated {
+			raw = raw[:run.MaxEventsBatch]
+		}
+		out := make([]*runv1.Event, 0, len(raw)+1)
 		for i, b := range raw {
 			ev := &runv1.Event{}
 			if err := proto.Unmarshal(b, ev); err != nil {
-				return nil, false, s.storeErr(sess, fmt.Errorf("event %d of %s: %w", i+1, id, err))
+				return nil, false, s.storeErr(sess, err)
 			}
-			ev.Seq = uint64(i) + 1
-			all = append(all, ev)
+			ev.Seq = after + uint64(i) + 1
+			out = append(out, ev)
 		}
 		terminal := st.Status == dbos.WorkflowStatusSuccess || st.Status == dbos.WorkflowStatusError ||
 			st.Status == dbos.WorkflowStatusCancelled || st.Status == dbos.WorkflowStatusMaxRecoveryAttemptsExceeded
-		if terminal && (len(all) == 0 || all[len(all)-1].GetDone() == nil) {
+		if terminal && !truncated && !streamClosed && (len(out) == 0 || out[len(out)-1].GetDone() == nil) {
+			// The workflow never wrote its last word (cancelled, or DBOS could
+			// not execute it): the reader says it, numbered after the record --
+			// the stream's length plus one, so the number is stable whatever
+			// the cursor; a cursor at or past it gets nothing, closed.
+			n, err := s.streamLength(sess, id)
+			if err != nil {
+				return nil, false, s.storeErr(sess, err)
+			}
+			if after >= n+1 {
+				return nil, true, nil
+			}
 			state := runv1.RunState_RUN_STATE_CANCELLED
 			if st.Status != dbos.WorkflowStatusCancelled {
-				state = runv1.RunState_RUN_STATE_FAILED // a run that could not be executed: its record ends here
+				state = runv1.RunState_RUN_STATE_FAILED
 			}
-			all = append(all, &runv1.Event{RunId: id, Seq: uint64(len(all)) + 1, At: timestamppb.New(st.CompletedAt),
+			out = append(out, &runv1.Event{RunId: id, Seq: n + 1, At: timestamppb.New(st.CompletedAt),
 				Kind: &runv1.Event_Done{Done: &runv1.Done{State: state}}})
 		}
-		var out []*runv1.Event
-		for _, ev := range all {
-			if ev.GetSeq() > after {
-				out = append(out, ev)
-			}
-		}
-		total := uint64(len(all))
-		if len(out) > run.MaxEventsBatch {
-			out = out[:run.MaxEventsBatch]
-		}
-		last := after
-		if len(out) > 0 {
-			last = out[len(out)-1].GetSeq()
-		}
-		closed := (streamClosed || terminal) && last >= total
+		closed := (streamClosed || terminal) && !truncated
 		return out, closed, nil
 	}
 	evs, closed, err := read()
@@ -607,6 +609,15 @@ func (s *Store) Events(ctx context.Context, id string, after uint64, wait time.D
 			}
 		}
 	}
+}
+
+// streamLength is how many events the record holds.
+func (s *Store) streamLength(sess *session, id string) (uint64, error) {
+	raw, _, err := dbos.ReadStream[[]byte](sess.ctx, id, StreamKey, dbos.WithReadStreamSnapshot())
+	if err != nil {
+		return 0, err
+	}
+	return uint64(len(raw)), nil
 }
 
 // CheckEvent refuses what the record must not hold: a chunk over MaxChunk.

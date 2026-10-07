@@ -177,11 +177,13 @@ func (c Client) Events(ctx context.Context, runID string, after uint64, wait tim
 	req := &runv1.EventsRequest{RunId: runID, After: after}
 	if wait > 0 {
 		req.Wait = durationpb.New(wait)
-		if _, has := ctx.Deadline(); !has {
-			var cancel context.CancelFunc
-			ctx, cancel = context.WithTimeout(ctx, call.Deadline(wait))
-			defer cancel()
-		}
+	}
+	// A deadline ALWAYS, wait or not: a rund that vanished after the request
+	// was published must not hang the caller (Ref.Fetch applies the same rule).
+	if _, has := ctx.Deadline(); !has {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, call.Deadline(wait))
+		defer cancel()
 	}
 	body, err := proto.Marshal(req)
 	if err != nil {
@@ -209,19 +211,12 @@ func (c Client) Events(ctx context.Context, runID string, after uint64, wait tim
 // Subscribe delivers a run's live events: the caller's account imports them
 // under the flat prefix, the server maps them from the owner-keyed subject,
 // and nothing of another account's arrives. Buffered; a slow reader never
-// blocks the connection, and a dropped event is in the record.
+// blocks the connection, and a dropped event is a GAP Follow fills from the
+// record. The channel closes when the feed ends -- stop, the connection
+// closing or disconnecting, or ctx -- and never under a callback's feet.
 func (c Client) Subscribe(ctx context.Context, runID string) (<-chan *runv1.Event, func(), error) {
-	out := make(chan *runv1.Event, 256)
-	sub, err := c.NC.Subscribe(rundsvc.SubjectOut+"."+runID+".>", func(m *nats.Msg) {
-		ev := &runv1.Event{}
-		if err := proto.Unmarshal(m.Data, ev); err != nil {
-			return
-		}
-		select {
-		case out <- ev:
-		default: // full: the record has it
-		}
-	})
+	feed := &liveFeed{out: make(chan *runv1.Event, MaxLiveBuffer), done: make(chan struct{})}
+	sub, err := c.NC.Subscribe(rundsvc.SubjectOut+"."+runID+".>", feed.deliver)
 	if err != nil {
 		return nil, nil, serve.Unavailable("subscribing to the run's events").Because(err)
 	}
@@ -229,34 +224,59 @@ func (c Client) Subscribe(ctx context.Context, runID string) (<-chan *runv1.Even
 		_ = sub.Unsubscribe()
 		return nil, nil, serve.Unavailable("subscribing to the run's events").Because(err)
 	}
-	var once sync.Once
+	// The connection going away ends the feed, and the listener is released
+	// with it: no goroutine outlives stop.
+	status := c.NC.StatusChanged(nats.CLOSED, nats.DISCONNECTED)
 	stop := func() {
-		once.Do(func() {
+		feed.once.Do(func() {
+			close(feed.done)
 			_ = sub.Unsubscribe()
-			close(out)
+			c.NC.RemoveStatusListener(status)
+			feed.mu.Lock()
+			feed.closed = true
+			close(feed.out)
+			feed.mu.Unlock()
 		})
 	}
-	// The connection closing ends the feed: the channel closes and Follow resumes.
 	go func() {
 		select {
 		case <-ctx.Done():
-		case <-closedCh(c.NC):
+		case <-status:
+		case <-feed.done:
 		}
 		stop()
 	}()
-	return out, stop, nil
+	return feed.out, stop, nil
 }
 
-// closedCh is a channel that closes when the connection does.
-func closedCh(nc *nats.Conn) <-chan struct{} {
-	ch := make(chan struct{})
-	go func() {
-		for !nc.IsClosed() {
-			time.Sleep(200 * time.Millisecond)
-		}
-		close(ch)
-	}()
-	return ch
+// MaxLiveBuffer is how many live events a subscription holds for a slow reader
+// before dropping; a drop is a gap the record fills.
+const MaxLiveBuffer = 256
+
+type liveFeed struct {
+	out    chan *runv1.Event
+	done   chan struct{}
+	mu     sync.Mutex
+	closed bool
+	once   sync.Once
+}
+
+// deliver is the subscription's callback: a non-blocking send under the lock
+// stop takes before closing, so a callback in flight and a close never meet.
+func (f *liveFeed) deliver(m *nats.Msg) {
+	ev := &runv1.Event{}
+	if err := proto.Unmarshal(m.Data, ev); err != nil {
+		return
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.closed {
+		return
+	}
+	select {
+	case f.out <- ev:
+	default: // full: the record has it, and Follow will notice the gap
+	}
 }
 
 // finish records the outcome on the span: the kind as an attribute always, an

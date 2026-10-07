@@ -272,3 +272,74 @@ func TestFollowSubscribesBeforeCatchingUp(t *testing.T) {
 		t.Fatalf("%v %v -- event 2, published during the catch-up, was lost", seqs(got), err)
 	}
 }
+
+// ---- the review's findings, each a test that failed first ----
+
+// feeds is a Follower whose Subscribe hands out a NEW channel on each call,
+// from a script, so a resume lands on an open feed -- as a real transport's does.
+type feeds struct {
+	follower
+	channels   []chan *runv1.Event
+	subscribes int
+}
+
+func (f *feeds) Subscribe(context.Context, string) (<-chan *runv1.Event, func(), error) {
+	f.subscribed = true
+	i := f.subscribes
+	f.subscribes++
+	if i < len(f.channels) {
+		return f.channels[i], func() { f.stopped++ }, nil
+	}
+	return make(chan *runv1.Event), func() { f.stopped++ }, nil
+}
+
+// Critical 1: after the live feed ends, Follow resumes on a NEW feed -- it
+// does not busy-spin on the old closed channel. The first feed closes after 2;
+// the second carries 3 and done; the record never closes on its own.
+func TestFollowResumesOnAnOpenFeedWithoutSpinning(t *testing.T) {
+	first, second := make(chan *runv1.Event, 4), make(chan *runv1.Event, 4)
+	f := &feeds{follower: follower{record: []*runv1.Event{ev(1, "a"), ev(2, "b")}}, channels: []chan *runv1.Event{first, second}}
+	first <- ev(2, "b")
+	close(first)
+	go func() { time.Sleep(300 * time.Millisecond); second <- ev(3, "c"); second <- ev(4, "done") }()
+	got, err := drain(t, call.Ref{RunID: "k", Invoker: f}.Follow(context.Background(), 0), 10*time.Second)
+	if err != nil || !reflect.DeepEqual(seqs(got), []uint64{1, 2, 3, 4}) {
+		t.Fatalf("%v %v", seqs(got), err)
+	}
+	if f.subscribes > 3 || len(f.calls) > 6 {
+		t.Fatalf("Follow spun: %d subscribes, %d Events calls", f.subscribes, len(f.calls))
+	}
+}
+
+// Critical 2: a run that never publishes done -- a cancelled one; the record
+// says done, the live feed says nothing -- still ends Follow, through the
+// record, within the idle recheck.
+func TestFollowEndsOnACancelledRunThroughTheRecord(t *testing.T) {
+	defer func(d time.Duration) { call.FollowIdle = d }(call.FollowIdle)
+	call.FollowIdle = 200 * time.Millisecond
+	f := &follower{record: []*runv1.Event{ev(1, "a")}, live: make(chan *runv1.Event), grow: []*runv1.Event{{RunId: "k", Seq: 2,
+		Kind: &runv1.Event_Done{Done: &runv1.Done{State: runv1.RunState_RUN_STATE_CANCELLED}}}}}
+	got, err := drain(t, call.Ref{RunID: "k", Invoker: f}.Follow(context.Background(), 0), 5*time.Second)
+	if err != nil || !reflect.DeepEqual(seqs(got), []uint64{1, 2}) || got[1].GetDone().GetState() != runv1.RunState_RUN_STATE_CANCELLED {
+		t.Fatalf("%v %v", seqs(got), err)
+	}
+}
+
+// Important 3: a lost live event is not a silent gap. The live feed delivers
+// 1 then 3; the record has 1..4; Follow yields 1, 2, 3, 4 in order.
+func TestFollowFillsAGapFromTheRecord(t *testing.T) {
+	f := &follower{record: []*runv1.Event{ev(1, "a")}, live: make(chan *runv1.Event, 4),
+		grow: []*runv1.Event{ev(2, "b"), ev(3, "c"), ev(4, "done")}}
+	f.live <- ev(3, "c") // 2 was lost on the wire
+	got, err := drain(t, call.Ref{RunID: "k", Invoker: f}.Follow(context.Background(), 0), 5*time.Second)
+	if err != nil || !reflect.DeepEqual(seqs(got), []uint64{1, 2, 3, 4}) {
+		t.Fatalf("%v %v -- a gap on the live side must be filled from the record", seqs(got), err)
+	}
+}
+
+// Minor 11, taken: the batch size the client pages on is the engine's.
+func TestTheClientsBatchIsTheEnginesBatch(t *testing.T) {
+	if call.MaxEventsBatch != 256 {
+		t.Fatalf("call.MaxEventsBatch = %d", call.MaxEventsBatch)
+	}
+}
