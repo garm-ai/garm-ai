@@ -1,7 +1,7 @@
 # Push: a subscriber sees a run without polling
 
 **Date:** 2026-10-07
-**Status:** designed — nothing built; the plan follows review of this document
+**Status:** active — built as step **11** ([plan](../plans/2026-10-07-push.md)); the amendments execution made are marked **built:** inline
 
 **Spec for:** the event feed of a run. A run emits events as it goes — its stage,
 each step's outcome, its end, and later a decider's questions and a streamed
@@ -40,7 +40,14 @@ effort** and never fails the run; writing the record is not.
 The workflow writes each event with `WriteStream(ctx, "events", ev)`. A DBOS
 stream is append-only, ordered by offset, part of the workflow's durable state
 and checkpointed like a step: a replayed workflow does not write an event
-twice, and a recovered run continues its sequence where it stopped. The stream
+twice, and a recovered run continues its sequence where it stopped. **Built:**
+the write is at workflow level (DBOS's own checkpointed operation; inside a
+step a crash between the write and the checkpoint would write twice), the
+value is the proto-encoded `Event` bytes (a `oneof` does not survive DBOS's JSON
+serializer on read), and the sequence is a workflow-local counter a replay
+rebuilds, equal to the offset plus one. **Built:** `ReadStream` blocks until the
+stream closes unless asked for a snapshot; `rund` reads snapshots and holds on
+its own cadence. The stream
 is closed by `CloseStream` when the workflow returns, so a reader can tell "no
 more" from "not yet".
 
@@ -172,8 +179,10 @@ different caps, holds and sizes, and one verb would carry two contracts.
   unknown id. With no store, `Events` answers `NOT_RETAINED`-equivalent: an
   empty, closed reply.
 
-The generated client gains **`Follow(ctx, ref) iter.Seq2[*Event, error]`**, which
-does the stitch once for everyone:
+**Built:** `Follow` lives once, on `call.Ref` (`ref.Follow(ctx, after)`), not
+generated per tool: events are untyped, every generated async method returns a
+`Ref`, and six generated copies would be the same code. It does the stitch once
+for everyone:
 
 1. subscribe to `garm.run.v1.out.<run>.>` in the caller's account;
 2. call `Events(after: 0)` until `closed` or the batch is short, yielding each;
@@ -196,8 +205,12 @@ In this slice the `invoke` workflow emits, in order: `stage queued` is not an
 event (nothing is running yet to write one; `Fetch` reports it from DBOS's
 status, as today), then for each action `stage calling:<i>`, the tool-call
 step, `step {key, kind, tool}`, then `stage done` and `done {state}`. A tool's
-refusal is a `step` with the tool's kind and a `done {FAILED}`; a cancelled run
-emits `done {CANCELLED}` from the cancel path.
+refusal is a `step` with the tool's kind and a `done {FAILED}`. **Built:** a
+cancelled workflow does not get to write its last word, so the READER says it:
+a terminal status with no `done` recorded yields a synthesised `done` as the
+final event, numbered after the last recorded one — `CANCELLED` for a cancelled
+run, `FAILED` for one DBOS could not execute. **Built:** the publish is a step
+of its own, `publish:<seq>`, hidden from the step audit like DBOS's own.
 
 Emitting is two acts of different standing, inside one step:
 
@@ -232,7 +245,8 @@ at `garm.run.v1.<key>.out.>` mapped to `garm.run.v1.out.>`, plus the
 subscribe permission `garm.run.v1.out.>` on the caller's credential. One
 issuance reissues every caller credential (its permission set changed); the
 manifest's delta says so. `rund`'s credential gains publish on
-`garm.run.v1.*.out.>`.
+`garm.run.v1.*.out.>`. **Built:** the caller's publish allow narrows to the three
+verbs, `invoke`, `fetch`, `events` — it only receives on the event prefix.
 
 ## 8. Configuration, `rund`, `garmctl`
 

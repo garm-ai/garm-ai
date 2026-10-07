@@ -100,12 +100,31 @@ pending=$("$bin/garmctl" call weather.v1.schedule_report '{"place":"Ghent"}' --i
   --catalogue "file://$out/catalogue.binpb" 2>"$out/call.log")
 echo "  $pending"
 [[ "$pending" == "pending $key" ]] || fail "the async call did not come back pending with the key as the run id: $pending ($(cat "$out/call.log"))"
-fetched=$("$bin/garmctl" fetch "$key" --wait 30s \
-  --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" \
-  --catalogue "file://$out/catalogue.binpb" 2>"$out/fetch.log")
-echo "$fetched" | sed 's/^/  /'
+# A held fetch returns when the run CHANGES -- a stage change included -- so a
+# person sees where it is; the answer is whichever fetch finds it terminal.
+fetched=""
+for _ in $(seq 1 10); do
+  fetched=$("$bin/garmctl" fetch "$key" --wait 30s \
+    --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" \
+    --catalogue "file://$out/catalogue.binpb" 2>"$out/fetch.log")
+  echo "$fetched" | sed 's/^/  /'
+  [[ "$fetched" == RUNNING* ]] || break
+done
 [[ "$fetched" == *"SUCCEEDED"* && "$fetched" == *"report-Ghent"* ]] || fail "fetch did not return the run's answer: $fetched ($(cat "$out/fetch.log"))"
 grep -q "msg=\"run started\"" "$out/rund.log" || fail "rund logged no run start"
+
+say "follow: the run's events -- the record first, then live, stitched by sequence; then again from zero once it is over"
+followed=$("$bin/garmctl" fetch "$key" --follow \
+  --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" \
+  --catalogue "file://$out/catalogue.binpb" 2>"$out/follow.log")
+echo "$followed" | sed 's/^/  /'
+[[ "$followed" == *"stage calling:0"* && "$followed" == *"step $key:0 OK"* && "$followed" == *"done SUCCEEDED"* ]] || fail "follow did not print the run's events: $followed ($(cat "$out/follow.log"))"
+again=$("$bin/garmctl" fetch "$key" --follow --after 0 \
+  --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" \
+  --catalogue "file://$out/catalogue.binpb" 2>"$out/follow2.log")
+[[ "$again" == "$followed" ]] || fail "the catch-up from zero after the run differs from the live follow:
+$again"
+echo "  (the same four lines again, from the record alone)"
 
 say "what each process said at startup"
 grep -q 'msg=credential expires=' "$out/weatherd.log" || fail "weatherd did not say when its credential expires"

@@ -30,7 +30,9 @@ go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds --tls-ca 
 
 Or all of it in one go, with the answer checked: `mise run e2e`. It also invokes
 the example's **async** tool — `pending <run id>` comes back at once, `garmctl
-fetch <run id> --wait 30s` reads the answer from the run store, which
+fetch <run id> --wait 30s` reads the answer, `garmctl fetch <run id> --follow`
+prints the run's events as they happen and again from the record once it is
+over, all from the run store, which
 `--run-store sqlite:build/runs.db` puts in a file on a laptop and `postgres://…`
 in a deployment.
 
