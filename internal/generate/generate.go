@@ -37,8 +37,8 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/types/pluginpb"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/pluginpb"
 
 	"github.com/garm-ai/garm-ai/declared"
 )
