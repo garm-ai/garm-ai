@@ -139,7 +139,7 @@ message Event {
 }
 
 message Stage    { string stage = 1; }
-message Step     { string key = 1; garm.invoke.v1.ErrorKind kind = 2; string tool = 3; }
+message Step     { string key = 1; garm.invoke.v1.ErrorKind kind = 2; string tool = 3; }   // kind UNSPECIFIED = the step succeeded
 message Progress { string text = 1; optional float fraction = 2; }
 message Question { string id = 1; string text = 2; }
 message Chunk    { string text = 1; }        // > 4 KB is refused at write; larger content is an artefact reference in a Progress or Question
