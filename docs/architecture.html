@@ -121,11 +121,11 @@
   <p class="tagline">A tool author writes a plain function. Everything that makes a
     call durable, approvable, retryable or budgeted happens somewhere else — and that
     somewhere is one component.</p>
-  <p class="note">Green is built and tested — a caller now names a tool and gets an
-    answer through every green box. Terracotta is <b>next</b>: the run store, which
-    turns <code>async</code> on. Dashed is designed and deliberately not built,
-    because in this repository a field arrives when the thing that enforces it
-    arrives.</p>
+  <p class="note">Green is built and tested — a caller names a tool and gets an
+    answer through every green box, a run is durable in the store and its events
+    reach a subscriber live and from the record. Terracotta is <b>next</b>: the
+    authority model. Dashed is designed and deliberately not built, because in this
+    repository a field arrives when the thing that enforces it arrives.</p>
 
   <section>
     <h2>Solid is a call, dotted is a record, dashed is loaded or derived</h2>
@@ -135,7 +135,7 @@
           <span class="lbl">show</span>
           <button data-f="" aria-pressed="true">everything</button>
           <button data-f="f-ok" aria-pressed="false">built</button>
-          <button data-f="f-next" aria-pressed="false">step 9</button>
+          <button data-f="f-next" aria-pressed="false">next</button>
           <button data-f="f-later" aria-pressed="false">designed only</button>
           <span class="lbl" style="margin-left:10px">edges</span>
           <button data-f="f-call" aria-pressed="false">calls</button>
@@ -263,16 +263,16 @@
     <text x="480" y="510">persist, THEN publish</text></g>
   <g class="ae rec"><path d="M770 572 L790 572" marker-end="url(#a-rec)"/></g>
 
-  <g class="an next"><rect x="250" y="540" width="200" height="66" rx="9"/>
+  <g class="an ok"><rect x="250" y="540" width="200" height="66" rx="9"/>
     <text class="t1" x="350" y="562" text-anchor="middle">The run store</text>
     <text class="t2" x="350" y="578" text-anchor="middle">DBOS · Postgres · ASYNC ONLY</text>
-    <text class="t2" x="350" y="592" text-anchor="middle">runs · steps · the tree</text></g>
-  <g class="an later"><rect x="560" y="540" width="210" height="64" rx="9"/>
-    <text class="t1" x="665" y="566" text-anchor="middle">garm.run.event.&lt;id&gt;</text>
-    <text class="t2" x="665" y="583" text-anchor="middle">progress · questions · done</text></g>
-  <g class="an later"><rect x="790" y="540" width="150" height="64" rx="9"/>
+    <text class="t2" x="350" y="592" text-anchor="middle">runs · steps · the event record</text></g>
+  <g class="an ok"><rect x="560" y="540" width="210" height="64" rx="9"/>
+    <text class="t1" x="665" y="566" text-anchor="middle">garm.run.v1.&lt;owner&gt;.out.&lt;run&gt;</text>
+    <text class="t2" x="665" y="583" text-anchor="middle">stage · step · done · live, owner only</text></g>
+  <g class="an ok"><rect x="790" y="540" width="150" height="64" rx="9"/>
     <text class="t1" x="865" y="566" text-anchor="middle">Subscribers</text>
-    <text class="t2" x="865" y="583" text-anchor="middle">a UI · a log</text></g>
+    <text class="t2" x="865" y="583" text-anchor="middle">Follow · garmctl fetch --follow</text></g>
 
   <!-- ============ band 4 ============ -->
   <text class="bandlbl" x="20" y="640">4 · designed, and deliberately not built</text>

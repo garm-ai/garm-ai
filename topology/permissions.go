@@ -13,6 +13,18 @@ const (
 	microDiscovery = "$SRV.>"
 )
 
+// The event feed's subjects (push spec §2): what rund exports and publishes
+// on, keyed by the owner's account at position four; and what a caller
+// subscribes to in its own account, the import mapping one to the other.
+const (
+	OutExport = "garm.run.v1.*.out.>"
+	OutLocal  = "garm.run.v1.out.>"
+)
+
+// callerVerbs is what a caller may publish: the three verbs of the run
+// service, and nothing else -- not the event prefix, which it only receives.
+var callerVerbs = []string{"garm.run.v1.invoke", "garm.run.v1.fetch", "garm.run.v1.events"}
+
 // replies is the ONLY way a service answers: NATS's allow-responses permission
 // lets a subscriber publish a reply to a request it actually received, and
 // nothing else -- across accounts included, where the reply subject is the
@@ -48,17 +60,18 @@ func toolService(names []string) jwt.Permissions {
 // latter as a reply, not a publish.
 func rund() jwt.Permissions {
 	return jwt.Permissions{
-		Pub:  jwt.Permission{Allow: []string{"garm.tool.>"}},
+		Pub:  jwt.Permission{Allow: []string{"garm.tool.>", OutExport}},
 		Sub:  jwt.Permission{Allow: []string{"garm.run.v1.*.>", inbox, microDiscovery}},
 		Resp: replies(),
 	}
 }
 
-// caller publishes the run subjects it publishes today; the import rewrites them.
+// caller publishes the run service's three verbs, which the import rewrites,
+// and receives its own runs' events under the local event prefix.
 func caller() jwt.Permissions {
 	return jwt.Permissions{
-		Pub: jwt.Permission{Allow: []string{"garm.run.v1.>"}},
-		Sub: jwt.Permission{Allow: []string{inbox}},
+		Pub: jwt.Permission{Allow: append([]string(nil), callerVerbs...)},
+		Sub: jwt.Permission{Allow: []string{inbox, OutLocal}},
 	}
 }
 

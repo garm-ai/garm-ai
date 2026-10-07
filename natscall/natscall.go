@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -164,6 +165,118 @@ func (c Client) Fetch(ctx context.Context, runID string, wait time.Duration) (re
 		return nil, serve.Internal(err)
 	}
 	return &out, nil
+}
+
+// Events asks for a run's record after a cursor. wait rides in the body and
+// sets the request's deadline, as Fetch's does.
+func (c Client) Events(ctx context.Context, runID string, after uint64, wait time.Duration) (resp *runv1.EventsResponse, err error) {
+	ctx, span := observe.Tracer().Start(ctx, "garm.events", trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(observe.KeyRunID.String(runID)))
+	defer func() { finish(span, err, 0) }()
+
+	req := &runv1.EventsRequest{RunId: runID, After: after}
+	if wait > 0 {
+		req.Wait = durationpb.New(wait)
+	}
+	// A deadline ALWAYS, wait or not: a rund that vanished after the request
+	// was published must not hang the caller (Ref.Fetch applies the same rule).
+	if _, has := ctx.Deadline(); !has {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, call.Deadline(wait))
+		defer cancel()
+	}
+	body, err := proto.Marshal(req)
+	if err != nil {
+		return nil, serve.Internal(err)
+	}
+	m := nats.NewMsg(rundsvc.SubjectEvents)
+	m.Data = body
+	set(m, rundsvc.HeaderMessage, newID())
+	otel.GetTextMapPropagator().Inject(ctx, observe.HeaderCarrier(m.Header))
+
+	reply, err := c.request(ctx, m, rundsvc.PatternEvents)
+	if err != nil {
+		return nil, err
+	}
+	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
+		return nil, wireError(code, reply)
+	}
+	resp = &runv1.EventsResponse{}
+	if err := proto.Unmarshal(reply.Data, resp); err != nil {
+		return nil, serve.Internal(err)
+	}
+	return resp, nil
+}
+
+// Subscribe delivers a run's live events: the caller's account imports them
+// under the flat prefix, the server maps them from the owner-keyed subject,
+// and nothing of another account's arrives. Buffered; a slow reader never
+// blocks the connection, and a dropped event is a GAP Follow fills from the
+// record. The channel closes when the feed ends -- stop, the connection
+// closing or disconnecting, or ctx -- and never under a callback's feet.
+func (c Client) Subscribe(ctx context.Context, runID string) (<-chan *runv1.Event, func(), error) {
+	feed := &liveFeed{out: make(chan *runv1.Event, MaxLiveBuffer), done: make(chan struct{})}
+	sub, err := c.NC.Subscribe(rundsvc.SubjectOut+"."+runID+".>", feed.deliver)
+	if err != nil {
+		return nil, nil, serve.Unavailable("subscribing to the run's events").Because(err)
+	}
+	if err := c.NC.Flush(); err != nil {
+		_ = sub.Unsubscribe()
+		return nil, nil, serve.Unavailable("subscribing to the run's events").Because(err)
+	}
+	// The connection going away ends the feed, and the listener is released
+	// with it: no goroutine outlives stop.
+	status := c.NC.StatusChanged(nats.CLOSED, nats.DISCONNECTED)
+	stop := func() {
+		feed.once.Do(func() {
+			close(feed.done)
+			_ = sub.Unsubscribe()
+			c.NC.RemoveStatusListener(status)
+			feed.mu.Lock()
+			feed.closed = true
+			close(feed.out)
+			feed.mu.Unlock()
+		})
+	}
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-status:
+		case <-feed.done:
+		}
+		stop()
+	}()
+	return feed.out, stop, nil
+}
+
+// MaxLiveBuffer is how many live events a subscription holds for a slow reader
+// before dropping; a drop is a gap the record fills.
+const MaxLiveBuffer = 256
+
+type liveFeed struct {
+	out    chan *runv1.Event
+	done   chan struct{}
+	mu     sync.Mutex
+	closed bool
+	once   sync.Once
+}
+
+// deliver is the subscription's callback: a non-blocking send under the lock
+// stop takes before closing, so a callback in flight and a close never meet.
+func (f *liveFeed) deliver(m *nats.Msg) {
+	ev := &runv1.Event{}
+	if err := proto.Unmarshal(m.Data, ev); err != nil {
+		return
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.closed {
+		return
+	}
+	select {
+	case f.out <- ev:
+	default: // full: the record has it, and Follow will notice the gap
+	}
 }
 
 // finish records the outcome on the span: the kind as an attribute always, an

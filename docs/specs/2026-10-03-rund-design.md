@@ -1,7 +1,7 @@
 # rund — the run manager
 
 **Date:** 2026-10-03
-**Status:** active — step 9 implements §9.1; step 10 ([the run store](2026-10-05-run-store-design.md)) builds §7.3.1–§7.3.3 as far as invoke and fetch; everything else is designed, not built
+**Status:** active — step 9 implements §9.1; step 10 ([the run store](2026-10-05-run-store-design.md)) builds §7.3.1–§7.3.3 as far as invoke and fetch; step 11 ([push](2026-10-07-push-design.md)) builds §3.2's events as a DBOS stream and an account-token stream export; everything else is designed, not built
 
 **Spec for:** a new component, `cmd/rund`, serving `garm.run.v1`.
 

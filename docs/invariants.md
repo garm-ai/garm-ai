@@ -134,6 +134,23 @@ unenforced, in the same table, deliberately.
 | A URL that is not a store is a **configuration error**, not "degraded" | `rundbos.TestABadStoreURLRefusesToStart`, naming `--run-store` |
 | The store's credential never reaches a log line | `rundbos.TestTheStartupLineRedactsTheCredential` |
 
+### Push
+
+| invariant | kept true by |
+|---|---|
+| A run's events are recorded in order, numbered from 1, readable after the fact from a cursor; the stream is closed when the run is done | `rundbos.TestARunsEventsAreRecordedInOrder` |
+| A live subscriber receives the same events with the same numbers, on the real bus through the real import | `estate.TestALiveSubscriberSeesTheRunsEvents` |
+| A late subscriber gets what it missed: `Follow` after the run yields the record and returns on `done` | `estate.TestFollowAfterTheRunYieldsTheRecord` |
+| `Follow` started mid-run yields every event exactly once across the catch-up/live boundary, and subscribes **before** catching up so nothing published meanwhile is lost | `estate.TestFollowMidRunYieldsEveryEventOnce`, `call.TestFollowYieldsEveryEventOnceAcrossTheBoundary`, `call.TestFollowSubscribesBeforeCatchingUp`, `call.TestFollowKeepsOrderAcrossTwoLiveEventsBehindTheCatchUp` |
+| A lost live feed resumes from the last sequence, no duplicate, no gap | `call.TestFollowResumesFromTheLastSequence` |
+| Another account receives nothing on the bus and `NOT_FOUND` from `Events`; a caller may not publish on the event prefix | `estate.TestAnotherAccountReceivesNothingOnTheBus`, `run.TestEventsFromAnotherAccountIsNotFound`, `estate.TestACallerMayNotPublishOnTheEventPrefix` |
+| A tool's refusal is a `step` with its kind and a `done FAILED`; a cancelled run's record ends `done CANCELLED` | `rundbos.TestAToolsRefusalIsAStepWithItsKindAndDoneFailed`, `TestACancelledRunEmitsDoneCancelled` |
+| `Events` with a wait returns when an event arrives, on the cap when none does; a cursor past the end is empty, not an error | `rundbos.TestEventsWaitReturnsOnArrival`, `TestEventsPastTheEndIsEmptyNotAnError` |
+| A bus that cannot be published to drops the live copy, counts it (`garm.run.events{outcome}`), and the run finishes with its record complete | `rundbos.TestAnUnreachableBusDropsTheLiveCopyAndTheRunFinishes` |
+| A replayed run does not publish twice; every event is published once to its owner; a run with no owner is published to nobody | `rundbos.TestAReplayDoesNotRepublish`, `TestEveryEventIsPublishedOnceToItsOwner`, `TestARunWithNoOwnerIsPublishedToNobody` |
+| A chunk over 4 KB is refused at write; no event carries input or result bytes, on the bus or in the record | `rundbos.TestAChunkOverTheCapIsRefused`, `TestNoEventCarriesThePayload`, `estate.TestTheLiveFeedCarriesNoPayload` |
+| GARM exports the event stream with the owner's account at position four; every caller imports it privately; a caller publishes only the three verbs; the change reissues every caller once and nothing else | `topology.TestTheRunAccountExportsTheEventStreamAndEveryCallerImportsIt`, `TestTheEventImportReissuesEveryCallerOnceAndNothingElse` |
+
 ### Revocation is permanent
 
 | invariant | kept true by |

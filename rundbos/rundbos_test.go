@@ -1,11 +1,14 @@
 package rundbos_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -17,11 +20,14 @@ import (
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/internal/fixtures"
+	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundbos"
 	"github.com/garm-ai/garm-ai/serve"
+	"google.golang.org/protobuf/proto"
 )
 
 // asyncTool is the example's async tool, which the Weather fixture declares.
@@ -90,7 +96,7 @@ func openOn(t *testing.T, url, executor string, workers int, tools run.Caller, c
 	s, err := rundbos.Open(context.Background(), rundbos.Config{
 		URL: url, AppName: "garm-test", Executor: executor, Workers: workers, Migrate: true,
 		Logger: slog.New(slog.DiscardHandler),
-	}, cat, tools)
+	}, cat, tools, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -694,7 +700,7 @@ func TestConcurrentStartsWithOneKeyAndTwoRequestsNeverBothSucceed(t *testing.T) 
 func TestAnAbsentSchemaWithMigrateFalseRefusesToStart(t *testing.T) {
 	_, err := rundbos.Open(context.Background(), rundbos.Config{
 		URL: memory(t), AppName: "garm-test", Executor: "test-a", Migrate: false, Logger: slog.New(slog.DiscardHandler),
-	}, holder(t), &fakeTools{})
+	}, holder(t), &fakeTools{}, nil)
 	if err == nil || !strings.Contains(err.Error(), "--run-store-migrate") {
 		t.Fatalf("got %v, want a refusal naming --run-store-migrate", err)
 	}
@@ -711,7 +717,7 @@ func TestARunPastTheRunLimitIsCancelled(t *testing.T) {
 	s, err := rundbos.Open(context.Background(), rundbos.Config{
 		URL: memory(t), AppName: "garm-test", Executor: "test-a", Workers: 1, Migrate: true,
 		Logger: slog.New(slog.DiscardHandler), RunLimit: 500 * time.Millisecond,
-	}, holder(t), tools)
+	}, holder(t), tools, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -727,5 +733,309 @@ func TestARunPastTheRunLimitIsCancelled(t *testing.T) {
 	}
 	if st.CompletedAt.IsZero() {
 		t.Error("a cancelled run has no completed_at")
+	}
+}
+
+// ---- the record: what a run emits, read back from a cursor ----
+
+// describeEvents renders events as kind:detail, for assertions.
+func describeEvents(evs []*runv1.Event) []string {
+	var out []string
+	for _, ev := range evs {
+		switch k := ev.GetKind().(type) {
+		case *runv1.Event_Stage:
+			out = append(out, "stage:"+k.Stage.GetStage())
+		case *runv1.Event_Step:
+			kind := "OK"
+			if k.Step.GetKind() != invokev1.ErrorKind_ERROR_KIND_UNSPECIFIED {
+				kind = strings.TrimPrefix(k.Step.GetKind().String(), "ERROR_KIND_")
+			}
+			out = append(out, "step:"+k.Step.GetKey()+":"+kind)
+		case *runv1.Event_Done:
+			out = append(out, "done:"+strings.TrimPrefix(k.Done.GetState().String(), "RUN_STATE_"))
+		case *runv1.Event_Chunk:
+			out = append(out, fmt.Sprintf("chunk:%d", len(k.Chunk.GetText())))
+		default:
+			out = append(out, fmt.Sprintf("%T", k))
+		}
+	}
+	return out
+}
+
+func openLimited(t *testing.T, url string, tools run.Caller, limit time.Duration) *rundbos.Store {
+	t.Helper()
+	s, err := rundbos.Open(context.Background(), rundbos.Config{
+		URL: url, AppName: "garm-test", Executor: "test-a", Workers: 1, Migrate: true,
+		Logger: slog.New(slog.DiscardHandler), RunLimit: limit,
+	}, holder(t), tools, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close(context.Background()) })
+	return s
+}
+
+// Property 1: a run's events are recorded in order, numbered from 1, readable
+// after the fact from the start, and the stream is closed when the run is done.
+func TestARunsEventsAreRecordedInOrder(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok")}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-ev")
+	awaitTerminal(t, s, "k-ev", 5*time.Second)
+	evs, closed, err := s.Events(context.Background(), "k-ev", 0, 0)
+	if err != nil || !closed {
+		t.Fatalf("%v closed=%v", err, closed)
+	}
+	want := []string{"stage:calling:0", "step:k-ev:0:OK", "stage:done", "done:SUCCEEDED"}
+	if got := describeEvents(evs); !reflect.DeepEqual(got, want) {
+		t.Fatalf("events %v, want %v", got, want)
+	}
+	for i, ev := range evs {
+		if ev.GetSeq() != uint64(i+1) || ev.GetRunId() != "k-ev" || ev.GetAt() == nil {
+			t.Fatalf("event %d: %v", i, ev)
+		}
+	}
+	// A cursor in the middle returns the rest, numbered as before.
+	rest, closed, _ := s.Events(context.Background(), "k-ev", 2, 0)
+	if !closed || len(rest) != 2 || rest[0].GetSeq() != 3 {
+		t.Fatalf("after 2: %v closed=%v", describeEvents(rest), closed)
+	}
+}
+
+// Property 8: a tool's refusal is a step with its kind and a done FAILED.
+func TestAToolsRefusalIsAStepWithItsKindAndDoneFailed(t *testing.T) {
+	tools := &fakeTools{err: serve.Invalid("place is required")}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-ref")
+	awaitTerminal(t, s, "k-ref", 5*time.Second)
+	evs, _, _ := s.Events(context.Background(), "k-ref", 0, 0)
+	if got := describeEvents(evs); !reflect.DeepEqual(got, []string{"stage:calling:0", "step:k-ref:0:INVALID", "stage:done", "done:FAILED"}) {
+		t.Fatalf("%v", got)
+	}
+}
+
+// Property 9: a cancelled run's record ends with done CANCELLED and is closed.
+func TestACancelledRunEmitsDoneCancelled(t *testing.T) {
+	tools := &fakeTools{block: make(chan struct{})}
+	defer close(tools.block)
+	s := openLimited(t, memory(t), tools, 500*time.Millisecond)
+	mustStart(t, s, "k-can")
+	awaitTerminal(t, s, "k-can", 10*time.Second)
+	evs, closed, _ := s.Events(context.Background(), "k-can", 0, 0)
+	got := describeEvents(evs)
+	if !closed || len(got) == 0 || got[len(got)-1] != "done:CANCELLED" {
+		t.Fatalf("%v closed=%v", got, closed)
+	}
+}
+
+// Property 10: Events with a wait returns when an event arrives, and on the
+// cap when none does.
+func TestEventsWaitReturnsOnArrival(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok"), block: make(chan struct{})}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-w")
+	waitUntil(t, "the tool to be called", func() bool { return tools.n() == 1 })
+	evs, _, _ := s.Events(context.Background(), "k-w", 0, 0)
+	if d := describeEvents(evs); !reflect.DeepEqual(d, []string{"stage:calling:0"}) {
+		t.Fatalf("%v", d)
+	}
+	began := time.Now()
+	none, closed, _ := s.Events(context.Background(), "k-w", 1, 300*time.Millisecond)
+	if len(none) != 0 || closed || time.Since(began) < 250*time.Millisecond {
+		t.Fatalf("a bounded wait with nothing new: %v closed=%v after %v", none, closed, time.Since(began))
+	}
+	go func() { time.Sleep(200 * time.Millisecond); close(tools.block) }()
+	began = time.Now()
+	more, _, _ := s.Events(context.Background(), "k-w", 1, 10*time.Second)
+	if len(more) == 0 || more[0].GetSeq() != 2 || time.Since(began) > 3*time.Second {
+		t.Fatalf("after the tool answered: %v in %v", describeEvents(more), time.Since(began))
+	}
+}
+
+// Review focus 2: a cursor past the end is empty, not an error, and does not
+// hold past the cap.
+func TestEventsPastTheEndIsEmptyNotAnError(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok")}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-past")
+	awaitTerminal(t, s, "k-past", 5*time.Second)
+	evs, closed, err := s.Events(context.Background(), "k-past", 99, 300*time.Millisecond)
+	if err != nil || len(evs) != 0 || !closed {
+		t.Fatalf("%v %v closed=%v", evs, err, closed)
+	}
+	if _, _, err := s.Events(context.Background(), "never-started", 0, 0); !errors.Is(err, run.ErrNotFound) {
+		t.Fatalf("an unknown run: %v", err)
+	}
+}
+
+// Property 13: a chunk over 4 KB is refused at write, naming the limit.
+func TestAChunkOverTheCapIsRefused(t *testing.T) {
+	over := &runv1.Event{Kind: &runv1.Event_Chunk{Chunk: &runv1.Chunk{Text: strings.Repeat("x", run.MaxChunk+1)}}}
+	if err := rundbos.CheckEvent(over); !errors.Is(err, run.ErrChunkTooLarge) {
+		t.Fatalf("got %v", err)
+	}
+	at := &runv1.Event{Kind: &runv1.Event_Chunk{Chunk: &runv1.Chunk{Text: strings.Repeat("x", run.MaxChunk)}}}
+	if err := rundbos.CheckEvent(at); err != nil {
+		t.Fatalf("at the cap: %v", err)
+	}
+}
+
+// Property 14: no event carries input or result bytes.
+func TestNoEventCarriesThePayload(t *testing.T) {
+	tools := &fakeTools{reply: []byte("RESULT-SENTINEL")}
+	s := open(t, memory(t), tools)
+	r := run.Run{ID: "k-pay", Tool: asyncTool, Input: []byte("INPUT-SENTINEL"), Fingerprint: run.Fingerprint(asyncTool, []byte("INPUT-SENTINEL")), Caller: "ACX", Message: "m0"}
+	if _, err := s.Start(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	awaitTerminal(t, s, "k-pay", 5*time.Second)
+	evs, _, _ := s.Events(context.Background(), "k-pay", 0, 0)
+	if len(evs) != 4 {
+		t.Fatalf("%v", describeEvents(evs))
+	}
+	for _, ev := range evs {
+		if b, _ := proto.Marshal(ev); bytes.Contains(b, []byte("SENTINEL")) {
+			t.Fatalf("event %d carries the payload: %v", ev.GetSeq(), ev)
+		}
+	}
+}
+
+// An event survives the stream: a step with its kind comes back as written.
+func TestAnEventRoundTripsThroughTheStream(t *testing.T) {
+	tools := &fakeTools{err: serve.Unavailable("down").Because(context.DeadlineExceeded)}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-rt")
+	awaitTerminal(t, s, "k-rt", 5*time.Second)
+	evs, _, _ := s.Events(context.Background(), "k-rt", 0, 0)
+	var step *runv1.Step
+	for _, ev := range evs {
+		if k, ok := ev.GetKind().(*runv1.Event_Step); ok {
+			step = k.Step
+		}
+	}
+	if step == nil || step.GetKind() != invokev1.ErrorKind_ERROR_KIND_UNAVAILABLE || step.GetTool() != asyncTool || step.GetKey() != "k-rt:0" {
+		t.Fatalf("the step came back as %v", step)
+	}
+}
+
+// ---- the live copy ----
+
+// recordingLive remembers every publish; failingLive refuses every one.
+type recordingLive struct {
+	mu   sync.Mutex
+	pubs []string // "<run>:<seq>:<kind>"
+}
+
+func (l *recordingLive) Publish(owner, runID string, seq uint64, event []byte) error {
+	ev := &runv1.Event{}
+	_ = proto.Unmarshal(event, ev)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.pubs = append(l.pubs, fmt.Sprintf("%s:%s:%d:%s", owner, runID, seq, describeEvents([]*runv1.Event{ev})[0]))
+	return nil
+}
+
+func (l *recordingLive) list() []string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return append([]string(nil), l.pubs...)
+}
+
+type failingLive struct{}
+
+func (failingLive) Publish(string, string, uint64, []byte) error { return errors.New("no bus") }
+
+func openLive(t *testing.T, url string, tools run.Caller, live rundbos.Live) *rundbos.Store {
+	t.Helper()
+	s, err := rundbos.Open(context.Background(), rundbos.Config{
+		URL: url, AppName: "garm-test", Executor: "test-a", Workers: 2, Migrate: true,
+		Logger: slog.New(slog.DiscardHandler),
+	}, holder(t), tools, live)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close(context.Background()) })
+	return s
+}
+
+// Property 11: a bus that cannot be published to drops the live copy, counts
+// it, and the run finishes with its record complete.
+func TestAnUnreachableBusDropsTheLiveCopyAndTheRunFinishes(t *testing.T) {
+	rec := otlptest.Install(t)
+	tools := &fakeTools{reply: []byte("ok")}
+	s := openLive(t, memory(t), tools, failingLive{})
+	mustStart(t, s, "k-nobus")
+	if st := awaitTerminal(t, s, "k-nobus", 5*time.Second); st.Status != run.StatusSucceeded {
+		t.Fatalf("%+v", st)
+	}
+	evs, closed, _ := s.Events(context.Background(), "k-nobus", 0, 0)
+	if len(evs) != 4 || !closed {
+		t.Fatalf("the record: %v closed=%v", describeEvents(evs), closed)
+	}
+	if n := rec.Counter(context.Background(), "garm.run.events", observe.KeyOutcome.String("dropped")); n != 4 {
+		t.Fatalf("dropped = %d, want 4", n)
+	}
+}
+
+// Every event of a run is published once, to its owner, with its sequence.
+func TestEveryEventIsPublishedOnceToItsOwner(t *testing.T) {
+	live := &recordingLive{}
+	tools := &fakeTools{reply: []byte("ok")}
+	s := openLive(t, memory(t), tools, live)
+	mustStart(t, s, "k-pub")
+	awaitTerminal(t, s, "k-pub", 5*time.Second)
+	want := []string{"ACX:k-pub:1:stage:calling:0", "ACX:k-pub:2:step:k-pub:0:OK", "ACX:k-pub:3:stage:done", "ACX:k-pub:4:done:SUCCEEDED"}
+	if got := live.list(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("published %v, want %v", got, want)
+	}
+}
+
+// Property 12: a replayed run does not publish twice -- the successor after a
+// death mid-step republishes nothing the first replica already published.
+func TestAReplayDoesNotRepublish(t *testing.T) {
+	file := memory(t)
+	live := &recordingLive{}
+	tools := &fakeTools{reply: []byte("done"), block: make(chan struct{})}
+	a := openLive(t, file, tools, live)
+	mustStart(t, a, "k-rep")
+	waitUntil(t, "the step to be in flight", func() bool { return tools.n() == 1 })
+	die(t, a)
+	close(tools.block)
+	successor := openLive(t, file, tools, live)
+	if st := awaitTerminal(t, successor, "k-rep", 15*time.Second); st.Status != run.StatusSucceeded {
+		t.Fatalf("%+v", st)
+	}
+	got := live.list()
+	counts := map[string]int{}
+	for _, p := range got {
+		counts[p]++
+	}
+	for p, n := range counts {
+		if n != 1 {
+			t.Fatalf("%s published %d times: %v", p, n, got)
+		}
+	}
+	if len(got) != 4 {
+		t.Fatalf("published %v, want the four events once each", got)
+	}
+}
+
+// Review focus 4: a run with no owner is recorded, published to nobody, and
+// completes.
+func TestARunWithNoOwnerIsPublishedToNobody(t *testing.T) {
+	live := &recordingLive{}
+	tools := &fakeTools{reply: []byte("ok")}
+	s := openLive(t, memory(t), tools, live)
+	if _, err := s.Start(context.Background(), run.Run{ID: "k-noone", Tool: asyncTool, Fingerprint: run.Fingerprint(asyncTool, nil), Message: "m0"}); err != nil {
+		t.Fatal(err)
+	}
+	if st := awaitTerminal(t, s, "k-noone", 5*time.Second); st.Status != run.StatusSucceeded {
+		t.Fatalf("%+v", st)
+	}
+	if got := live.list(); len(got) != 0 {
+		t.Fatalf("published %v for a run with no owner", got)
+	}
+	if evs, _, _ := s.Events(context.Background(), "k-noone", 0, 0); len(evs) != 4 {
+		t.Fatalf("the record: %v", describeEvents(evs))
 	}
 }

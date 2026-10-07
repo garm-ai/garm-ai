@@ -3,6 +3,7 @@ package natscall_test
 import (
 	"context"
 	"errors"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -182,4 +183,81 @@ func TestAnAsyncInvokeAnswersPendingAndFetchTheResult(t *testing.T) {
 	if err := proto.Unmarshal(resp.GetResult(), &out); err != nil || out.GetReportId() != "report-Ghent" {
 		t.Fatalf("result %v %v", &out, err)
 	}
+}
+
+// Events reaches the caller: after the run, the record from zero is the four
+// events; Subscribe delivers the live copy of a run that has not started yet.
+func TestEventsAndSubscribeReachTheCaller(t *testing.T) {
+	nc := estate.New(t, estate.WithStore()).Connect(t, estate.RoleCaller)
+	c := natscall.Client{NC: nc}
+	live, stop, err := c.Subscribe(context.Background(), "wire-ev")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stop()
+	body, _ := proto.Marshal(&weatherv1.ScheduleReportRequest{Place: "Ghent"})
+	if _, err := c.Invoke(context.Background(), "weather.v1.schedule_report", body, call.Options{Idempotency: "wire-ev"}); err != nil {
+		t.Fatal(err)
+	}
+	var seen []uint64
+	deadline := time.After(10 * time.Second)
+	for len(seen) < 4 {
+		select {
+		case ev := <-live:
+			seen = append(seen, ev.GetSeq())
+		case <-deadline:
+			t.Fatalf("live delivered %v", seen)
+		}
+	}
+	resp, err := c.Events(context.Background(), "wire-ev", 0, 0)
+	if err != nil || len(resp.GetEvents()) != 4 || !resp.GetClosed() {
+		t.Fatalf("%v %v", resp, err)
+	}
+}
+
+// Important 4 and 5: abandoning a Follow while events are still arriving
+// neither panics (the subscription callback racing a closed channel) nor
+// leaves goroutines behind; Important 8: an Events request with no wait still
+// has a deadline, so a rund that vanished mid-request cannot hang it.
+func TestStoppingASubscriptionMidFlightIsSafeAndLeavesNothingBehind(t *testing.T) {
+	e := estate.New(t, estate.WithStore(), estate.WithToolGate("k-stop:0"))
+	nc := e.Connect(t, estate.RoleCaller)
+	c := natscall.Client{NC: nc}
+	before := goroutinesIn("natscall.")
+	for i := 0; i < 20; i++ {
+		_, stop, err := c.Subscribe(context.Background(), "k-stop")
+		if err != nil {
+			t.Fatal(err)
+		}
+		stop()
+		stop() // twice is fine
+	}
+	live, stop, err := c.Subscribe(context.Background(), "k-stop")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := proto.Marshal(&weatherv1.ScheduleReportRequest{Place: "Ghent"})
+	if _, err := c.Invoke(context.Background(), "weather.v1.schedule_report", body, call.Options{Idempotency: "k-stop"}); err != nil {
+		t.Fatal(err)
+	}
+	e.AwaitToolCall(t, "k-stop:0")
+	<-live // calling:0 arrived; the next events are about to be published
+	e.OpenToolGate("k-stop:0")
+	stop() // while three more publishes race in
+	time.Sleep(500 * time.Millisecond)
+	if after := goroutinesIn("natscall."); after > before {
+		t.Fatalf("%d natscall goroutines before, %d after every subscription was stopped", before, after)
+	}
+	// and a deadline-less Events against a rund that is gone returns, not hangs
+	began := time.Now()
+	_, err = c.Events(context.Background(), "k-stop", 0, 0)
+	if err != nil && time.Since(began) > 5*time.Second {
+		t.Fatalf("Events hung %v: %v", time.Since(began), err)
+	}
+}
+
+func goroutinesIn(fn string) int {
+	buf := make([]byte, 1<<20)
+	n := runtime.Stack(buf, true)
+	return strings.Count(string(buf[:n]), fn)
 }

@@ -30,7 +30,9 @@ go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds --tls-ca 
 
 Or all of it in one go, with the answer checked: `mise run e2e`. It also invokes
 the example's **async** tool — `pending <run id>` comes back at once, `garmctl
-fetch <run id> --wait 30s` reads the answer from the run store, which
+fetch <run id> --wait 30s` reads the answer, `garmctl fetch <run id> --follow`
+prints the run's events as they happen and again from the record once it is
+over, all from the run store, which
 `--run-store sqlite:build/runs.db` puts in a file on a laptop and `postgres://…`
 in a deployment.
 
@@ -225,11 +227,12 @@ third fixture shape appears, that is the moment to check whether one can go.
 
 **Nothing authorizes anything.** A caller's identity is proved — placed in the
 subject by the server, carried on every trace — and then not used: any caller may
-invoke any tool through `rund`. The order the last review set, and the roadmap
-keeps: the run store (built — async delivery, `Fetch` with a result, the step log)
-→ push (a subscriber sees a run without polling) → **the authority model** →
-person identity. [docs/roadmap.md](docs/roadmap.md) has every
-unbuilt thing beside what it waits on.
+invoke any tool through `rund`. The run store and push are built: a run is
+durable, has a step log, and can be followed live and from its record. Next is
+**the authority model** — who may invoke what, who may approve — then the first
+decider (a declared workflow), then approval, which closes the steel thread, then
+person identity. [docs/roadmap.md](docs/roadmap.md) has every unbuilt thing
+beside what it waits on.
 
 ## What is deliberately absent
 

@@ -68,16 +68,22 @@ func TestGARMExportsPrivatelyAndEachCallerHoldsItsOwnActivation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(garm.Exports) != 1 || !garm.Exports[0].TokenReq {
-		t.Fatalf("GARM's export is not private: %+v", garm.Exports)
+	// Two exports -- the run service and the event stream -- both private.
+	if len(garm.Exports) != 2 {
+		t.Fatalf("GARM exports %d things, want the run service and the event stream", len(garm.Exports))
+	}
+	for _, ex := range garm.Exports {
+		if !ex.TokenReq {
+			t.Fatalf("GARM's export %s is not private: %+v", ex.Name, ex)
+		}
 	}
 	for _, caller := range []string{"studio", "batch"} {
 		ac, err := jwt.DecodeAccountClaims(out.Accounts[topology.CallerPrefix+caller])
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(ac.Imports) != 1 || ac.Imports[0].Token == "" {
-			t.Fatalf("%s imports the run service with no activation", caller)
+		if len(ac.Imports) != 2 || ac.Imports[0].Token == "" || ac.Imports[1].Token == "" {
+			t.Fatalf("%s imports without an activation: %+v", caller, ac.Imports)
 		}
 		act, err := jwt.DecodeActivationClaims(ac.Imports[0].Token)
 		if err != nil {

@@ -156,7 +156,9 @@ first's executor id after the first is shut down mid-step.
 
 ## 3. The wire
 
-Additive only; `buf breaking` stays green.
+Additive only; `buf breaking` stays green. **Built, later:** `Events`, the run's
+record after a cursor, joined the service with push
+([spec](2026-10-07-push-design.md) §3).
 
 ```proto
 message InvokeResponse {

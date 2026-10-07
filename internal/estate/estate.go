@@ -30,10 +30,12 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nkeys"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/garm-ai/garm-ai/catalogue"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	"github.com/garm-ai/garm-ai/examples/weatherd"
+	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/internal/fixtures"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
@@ -90,12 +92,80 @@ type Estate struct {
 	rec      *otlptest.Recorder
 	store    *rundbos.Store
 	storeDir string
+	gated    *gatedCaller
 }
 
 // Option shapes an estate.
 type Option func(*options)
 
-type options struct{ store, storeDown bool }
+type options struct {
+	store, storeDown bool
+	gates            []string
+}
+
+// WithToolGate blocks the tool call whose idempotency key is key until
+// OpenToolGate is called: a test can stand inside a run.
+func WithToolGate(keys ...string) Option {
+	return func(o *options) { o.store = true; o.gates = append(o.gates, keys...) }
+}
+
+// gatedCaller holds a tool call at its key until the gate opens.
+type gatedCaller struct {
+	inner run.Caller
+	mu    sync.Mutex
+	gates map[string]chan struct{}
+	seen  map[string]chan struct{}
+}
+
+func (g *gatedCaller) Call(ctx context.Context, tool string, input []byte, budget time.Duration, h run.Headers) ([]byte, error) {
+	g.mu.Lock()
+	gate := g.gates[h.Idempotency]
+	if seen, ok := g.seen[h.Idempotency]; ok {
+		select {
+		case <-seen:
+		default:
+			close(seen)
+		}
+	}
+	g.mu.Unlock()
+	if gate != nil {
+		select {
+		case <-gate:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	return g.inner.Call(ctx, tool, input, budget, h)
+}
+
+// AwaitToolCall returns once the tool call with this key has been made.
+func (e *Estate) AwaitToolCall(t testing.TB, key string) {
+	t.Helper()
+	e.gated.mu.Lock()
+	seen := e.gated.seen[key]
+	e.gated.mu.Unlock()
+	if seen == nil {
+		t.Fatalf("no gate for %s", key)
+	}
+	select {
+	case <-seen:
+	case <-time.After(10 * time.Second):
+		t.Fatalf("the tool call %s was not made", key)
+	}
+}
+
+// OpenToolGate lets the held call through.
+func (e *Estate) OpenToolGate(key string) {
+	e.gated.mu.Lock()
+	defer e.gated.mu.Unlock()
+	if g := e.gated.gates[key]; g != nil {
+		select {
+		case <-g:
+		default:
+			close(g)
+		}
+	}
+}
 
 // WithStore gives rund a run store -- rundbos on a SQLite file in the test's
 // temp dir. OPT-IN: a DBOS runtime is a real cost per test, and the many tests
@@ -110,6 +180,29 @@ func WithStoreDown() Option { return func(o *options) { o.store, o.storeDown = t
 
 // Store is the estate's run store, nil without WithStore.
 func (e *Estate) Store() *rundbos.Store { return e.store }
+
+// SubscribeEvents subscribes as a role to a run's live events, under the local
+// prefix the role's account imports, and delivers them decoded. What the bus
+// delivers to that account -- and only that -- is what arrives.
+func (e *Estate) SubscribeEvents(t testing.TB, as Role, runID string) <-chan *runv1.Event {
+	t.Helper()
+	nc := e.Connect(t, as)
+	out := make(chan *runv1.Event, 64)
+	sub, err := nc.Subscribe(rundsvc.SubjectOut+"."+runID+".>", func(m *nats.Msg) {
+		ev := &runv1.Event{}
+		if err := proto.Unmarshal(m.Data, ev); err == nil {
+			out <- ev
+		}
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := nc.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sub.Unsubscribe() })
+	return out
+}
 
 // StoreUp makes a WithStoreDown estate's database reachable and waits for the
 // store to reconnect.
@@ -425,10 +518,15 @@ func New(t testing.TB, opts ...Option) *Estate {
 				t.Fatal(err)
 			}
 		}
+		e.gated = &gatedCaller{inner: engine.Tools, gates: map[string]chan struct{}{}, seen: map[string]chan struct{}{}}
+		for _, k := range o.gates {
+			e.gated.gates[k] = make(chan struct{})
+			e.gated.seen[k] = make(chan struct{})
+		}
 		store, err := rundbos.Open(context.Background(), rundbos.Config{
 			URL: rundbos.FileURL(filepath.Join(e.storeDir, "runs.db")), AppName: "estate",
 			Executor: "estate-rund", Workers: 2, Migrate: true, Logger: rundLog, Retry: 100 * time.Millisecond,
-		}, e.Catalogue, engine.Tools)
+		}, e.Catalogue, e.gated, rundsvc.NewLivePublisher(rundNC, rundLog))
 		if err != nil {
 			t.Fatal(err)
 		}

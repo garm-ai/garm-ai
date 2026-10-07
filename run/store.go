@@ -9,6 +9,7 @@ import (
 	"time"
 
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 )
 
 // Store is the engine's view of durability (run-store spec §1). One
@@ -25,7 +26,24 @@ type Store interface {
 	// changes or wait elapses; the engine clamps wait to MaxFetchWait first.
 	// ErrNotFound for an id the store has never seen.
 	Fetch(ctx context.Context, id string, wait time.Duration) (State, error)
+	// Events returns the run's events with Seq > after, in order, at most
+	// MaxEventsBatch. With none past the cursor and wait > 0 it blocks until
+	// one arrives or wait elapses (the engine clamps wait). closed is true when
+	// the run's stream is closed and every event is at or before the reply.
+	// ErrNotFound for an id the store has never seen.
+	Events(ctx context.Context, id string, after uint64, wait time.Duration) (events []*runv1.Event, closed bool, err error)
 }
+
+// MaxEventsBatch is the most one Events reply carries; a caller a long way
+// behind pages.
+const MaxEventsBatch = 256
+
+// MaxChunk bounds a chunk's text: the one event that carries content, and the
+// bound that keeps the record's rows and the bus's messages small.
+const MaxChunk = 4096
+
+// ErrChunkTooLarge: a chunk over MaxChunk is refused at write.
+var ErrChunkTooLarge = errors.New("run: a chunk is at most 4 KB of text")
 
 // MaxFetchWait caps a Fetch's wait: a request must never outlive the bus's own
 // timeouts, and a thousand front doors waiting are goroutines here, not pollers.

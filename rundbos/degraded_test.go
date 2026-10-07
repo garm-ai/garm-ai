@@ -36,7 +36,7 @@ func openDegradable(t *testing.T, url string, log *slog.Logger) *rundbos.Store {
 	s, err := rundbos.Open(context.Background(), rundbos.Config{
 		URL: url, AppName: "garm-test", Executor: "test-a", Workers: 1, Migrate: true,
 		Logger: log, Retry: 100 * time.Millisecond,
-	}, holder(t), &fakeTools{reply: []byte("ok")})
+	}, holder(t), &fakeTools{reply: []byte("ok")}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestTheStoreRecoversWhenTheDatabaseReturns(t *testing.T) {
 // Review focus 4: a URL that is not a store is a CONFIGURATION error -- rund
 // refuses to start, naming the flag -- never "degraded".
 func TestABadStoreURLRefusesToStart(t *testing.T) {
-	_, err := rundbos.Open(context.Background(), rundbos.Config{URL: "mysql://x/y", AppName: "garm-test"}, holder(t), &fakeTools{})
+	_, err := rundbos.Open(context.Background(), rundbos.Config{URL: "mysql://x/y", AppName: "garm-test"}, holder(t), &fakeTools{}, nil)
 	if err == nil || !strings.Contains(err.Error(), "--run-store") {
 		t.Fatalf("got %v, want a refusal naming --run-store", err)
 	}
@@ -117,7 +117,7 @@ func TestTheStartupLineRedactsTheCredential(t *testing.T) {
 	s, err := rundbos.Open(context.Background(), rundbos.Config{
 		URL: "postgres://garm:s3cret@127.0.0.1:1/garm?connect_timeout=1", AppName: "garm-test", Executor: "test-a",
 		Logger: slog.New(slog.NewTextHandler(&buf, nil)), Retry: time.Hour,
-	}, holder(t), &fakeTools{})
+	}, holder(t), &fakeTools{}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -31,6 +31,7 @@ import (
 	toolv1 "github.com/garm-ai/garm-ai/garm/tool/v1"
 	"github.com/garm-ai/garm-ai/natsmicro"
 	"github.com/garm-ai/garm-ai/natsserve"
+	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/observe/otlp/otlptest"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundsvc"
@@ -373,3 +374,85 @@ func TestFetchSaysNotRetained(t *testing.T) {
 // property. What would enforce it is NATS account permissions -- only rund's
 // credential allowed to publish on garm.tool.> -- which is recorded in
 // docs/invariants.md's unenforced table rather than asserted here.
+
+// Events is mounted beside invoke and fetch, under the same caller-rewritten
+// subject; without a store it answers empty and closed.
+func TestEventsIsMountedAndAnswersEmptyClosedWithoutAStore(t *testing.T) {
+	nc, _ := bareServer(t)
+	body, _ := proto.Marshal(&runv1.EventsRequest{RunId: "r1"})
+	m := nats.NewMsg(asRewritten(rundsvc.SubjectEvents))
+	m.Data = body
+	reply, err := nc.RequestMsg(m, 5*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code := reply.Header.Get(micro.ErrorCodeHeader); code != "" {
+		t.Fatalf("events answered an error: %s %s", code, reply.Header.Get(micro.ErrorHeader))
+	}
+	var resp runv1.EventsResponse
+	if err := proto.Unmarshal(reply.Data, &resp); err != nil {
+		t.Fatal(err)
+	}
+	if len(resp.GetEvents()) != 0 || !resp.GetClosed() {
+		t.Fatalf("got %v", &resp)
+	}
+}
+
+// Important 10 of the push review: a core publish succeeds once the bytes are
+// on the socket, and the bus's refusal arrives later, asynchronously. A
+// publisher built with NewLivePublisher turns that refusal into a dropped
+// count and a log line; a bare one would count every event delivered.
+func TestALivePublisherSeesTheBussRefusal(t *testing.T) {
+	rec := otlptest.Install(t)
+	srv, err := natsserver.NewServer(&natsserver.Options{
+		Host: "127.0.0.1", Port: -1, NoLog: true, NoSigs: true,
+		Users: []*natsserver.User{{Username: "rund", Password: "x", Permissions: &natsserver.Permissions{
+			Publish: &natsserver.SubjectPermission{Deny: []string{"garm.run.v1.*.out.>"}},
+		}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	go srv.Start()
+	t.Cleanup(srv.Shutdown)
+	if !srv.ReadyForConnections(5 * time.Second) {
+		t.Fatal("server not ready")
+	}
+	nc, err := nats.Connect(srv.ClientURL(), nats.UserInfo("rund", "x"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer nc.Close()
+	var buf lockedBuf
+	p := rundsvc.NewLivePublisher(nc, slog.New(slog.NewTextHandler(&buf, nil)))
+	if err := p.Publish("ACX", "k", 1, []byte("ev")); err != nil {
+		t.Fatalf("a core publish does not fail synchronously: %v", err)
+	}
+	_ = nc.Flush()
+	deadline := time.Now().Add(3 * time.Second)
+	for rec.Counter(context.Background(), "garm.run.events", observe.KeyOutcome.String("dropped")) < 1 && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
+	if n := rec.Counter(context.Background(), "garm.run.events", observe.KeyOutcome.String("dropped")); n != 1 {
+		t.Fatalf("dropped = %d after the bus refused the publish", n)
+	}
+	if !strings.Contains(buf.String(), "refused by the bus") {
+		t.Fatalf("no log line about the refusal:\n%s", buf.String())
+	}
+}
+
+type lockedBuf struct {
+	mu sync.Mutex
+	b  strings.Builder
+}
+
+func (l *lockedBuf) Write(p []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.b.Write(p)
+}
+func (l *lockedBuf) String() string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.b.String()
+}

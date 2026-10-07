@@ -256,7 +256,33 @@ response saying where the run is (`stage=queued`, `calling:0`) while it is still
 ```bash
 garmctl call weather.v1.schedule_report '{"place":"Ghent"}' --idempotency-key report-1 ...   # pending report-1
 garmctl fetch report-1 --wait 30s ...                                                        # SUCCEEDED stage=done tool=weather.v1.schedule_report  {"reportId": "report-Ghent"}
+garmctl fetch report-1 --follow ...                                                          # 1 stage calling:0 / 2 step report-1:0 OK / 3 stage done / 4 done SUCCEEDED
 ```
+
+**Following a run.** A run records every event — its stage, each step's
+outcome, its end — in a durable stream, numbered from 1, and `rund` publishes
+each one live on a subject only the run's owner's account can import. From a
+`Ref`:
+
+```go
+for ev, err := range ref.Follow(ctx, 0) {           // subscribe first, catch up from the record, then live
+    if err != nil { return err }
+    switch k := ev.GetKind().(type) {
+    case *runv1.Event_Stage: ...                       // "calling:0", "done"
+    case *runv1.Event_Step:  ...                       // key, tool, the outcome kind (UNSPECIFIED = OK)
+    case *runv1.Event_Done:  ...                       // the terminal state; the result is fetched, not pushed
+    }
+}
+```
+
+`Follow` yields every event exactly once, in order, across the boundary between
+the record and the live feed, and resumes from the last sequence if the feed
+goes away. A subscriber that was not there gets what it missed: `Events(run_id,
+after, wait)` is the record after a cursor, 256 at a time, held up to 30 s when
+nothing is past the cursor yet. An event is a word and a reference, never a
+payload; `done` carries no result. Another account subscribing to your run's
+subject receives nothing, and its `Events` is `NOT_FOUND`. If the bus cannot be
+published to, the record is still complete and the run still finishes.
 
 Only the account that started a run can read it; another's `fetch` is
 `NOT_FOUND`. The same key with a different request is `INVALID`: a key names
@@ -473,11 +499,16 @@ of our own duplicating that.
 
 ## What does not exist yet
 
-**Nothing calls a tool for you.** There is no generated client, so a caller
-marshals a request and does `nc.Request(natsserve.Subject(name), body, timeout)`
-itself. That is the next step.
+**No decider.** An agent can be declared, and compose checks its allowlist, but
+invoking one is refused with "no decider to run it": nothing yet runs a declared
+workflow or a ReAct loop, so no agent has ever executed. **No authority.** A
+caller's identity is proved on every hop and then unused; any caller may invoke
+any tool, and a run is visible only to the account that started it. **No
+approval**, and nothing that pauses a run for a person; the event feed can carry
+a `question`, and nothing emits one. No gateway, no discovery, no clearance,
+compartments, verbs or tool sets.
 
-There is also no gateway, no decider, no discovery, no descriptor hash, no clearance,
-compartments, verbs, tool sets or approvals. Those are real and most are coming —
-they are absent because nothing enforces them yet, and a declaration nothing acts
-on is a promise the platform breaks silently.
+Those are real and coming in that order — the authority model, a workflow
+decider, approval — and they are absent because nothing enforces them yet: a
+declaration nothing acts on is a promise the platform breaks silently.
+[docs/roadmap.md](roadmap.md) keeps the list beside what each waits on.

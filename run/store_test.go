@@ -57,10 +57,29 @@ func TestFingerprintBindsToolAndInput(t *testing.T) {
 
 // recorder is a Store that remembers what it was asked and answers what it is told.
 type recorder struct {
-	started []run.Run
-	state   run.State
-	err     error
-	waits   []time.Duration
+	started    []run.Run
+	state      run.State
+	err        error
+	waits      []time.Duration
+	events     []*runv1.Event
+	closed     bool
+	eventWaits []time.Duration
+	lastAfter  uint64
+}
+
+func (r *recorder) Events(_ context.Context, _ string, after uint64, wait time.Duration) ([]*runv1.Event, bool, error) {
+	r.eventWaits = append(r.eventWaits, wait)
+	r.lastAfter = after
+	if r.err != nil {
+		return nil, false, r.err
+	}
+	var out []*runv1.Event
+	for _, ev := range r.events {
+		if ev.GetSeq() > after {
+			out = append(out, ev)
+		}
+	}
+	return out, r.closed, nil
 }
 
 func (r *recorder) Start(_ context.Context, x run.Run) (run.Started, error) {
@@ -237,5 +256,65 @@ func TestWithoutAStoreFetchIsNotRetained(t *testing.T) {
 func TestTheClientsMaxWaitIsTheEnginesCap(t *testing.T) {
 	if call.MaxWait != run.MaxFetchWait {
 		t.Fatalf("call.MaxWait %v != run.MaxFetchWait %v", call.MaxWait, run.MaxFetchWait)
+	}
+}
+
+// Property 7 at the engine: another account's Events is NOT_FOUND, like Fetch --
+// the run's state is read first, so the stream of a run the caller may not see
+// is never read.
+func TestEventsFromAnotherAccountIsNotFound(t *testing.T) {
+	rec := &recorder{state: run.State{ID: "k", Status: run.StatusRunning, Caller: "ACX"},
+		events: []*runv1.Event{{RunId: "k", Seq: 1, Kind: &runv1.Event_Stage{Stage: &runv1.Stage{Stage: "calling:0"}}}}}
+	e, _ := engineWith(t, rec)
+	resp, failure := e.Events(context.Background(), &runv1.EventsRequest{RunId: "k"}, run.Headers{Caller: "ACX"})
+	if failure != nil || len(resp.GetEvents()) != 1 || resp.GetEvents()[0].GetSeq() != 1 {
+		t.Fatalf("the owner's events: %v %v", resp, failure)
+	}
+	_, failure = e.Events(context.Background(), &runv1.EventsRequest{RunId: "k"}, run.Headers{Caller: "ACY"})
+	if failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_NOT_FOUND {
+		t.Fatalf("a foreign Events: %v, want NOT_FOUND", failure)
+	}
+	if len(rec.eventWaits) != 1 {
+		t.Fatalf("the stream was read %d times; a foreign run's stream must not be read", len(rec.eventWaits))
+	}
+	rec.err = run.ErrNotFound
+	if _, failure = e.Events(context.Background(), &runv1.EventsRequest{RunId: "nope"}, run.Headers{Caller: "ACX"}); failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_NOT_FOUND {
+		t.Fatalf("an unknown run: %v", failure)
+	}
+}
+
+// Events clamps wait as Fetch does and passes the cursor through.
+func TestEventsClampsWaitAndPassesTheCursor(t *testing.T) {
+	rec := &recorder{state: run.State{ID: "k", Status: run.StatusRunning, Caller: "ACX"}}
+	e, _ := engineWith(t, rec)
+	_, _ = e.Events(context.Background(), &runv1.EventsRequest{RunId: "k", After: 7, Wait: durationpb.New(time.Hour)}, run.Headers{Caller: "ACX"})
+	if len(rec.eventWaits) != 1 || rec.eventWaits[0] != run.MaxFetchWait || rec.lastAfter != 7 {
+		t.Fatalf("store asked with wait %v after %d", rec.eventWaits, rec.lastAfter)
+	}
+}
+
+// Without a store there is no record: an empty, closed reply -- never an error,
+// never a lie that the run did not exist.
+func TestWithoutAStoreEventsIsEmptyAndClosed(t *testing.T) {
+	e, _ := engineWith(t, nil)
+	resp, failure := e.Events(context.Background(), &runv1.EventsRequest{RunId: "k"}, run.Headers{Caller: "ACX"})
+	if failure != nil || len(resp.GetEvents()) != 0 || !resp.GetClosed() {
+		t.Fatalf("%v %v", resp, failure)
+	}
+}
+
+// Important 9 of the push review: an async run's key becomes a subject token
+// -- garm.run.v1.<owner>.out.<key>.<seq> -- so a key that is not one is
+// refused up front, naming the rule, rather than failing silently on the bus.
+func TestAnAsyncKeyThatIsNotASubjectTokenIsInvalid(t *testing.T) {
+	e, _ := engineWith(t, &recorder{})
+	for _, bad := range []string{"has space", "star*", "gt>", "dot.ted", "\t", "nul\x00"} {
+		_, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeAsync}, run.Headers{Idempotency: bad, Caller: "ACX"})
+		if failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_INVALID || !strings.Contains(failure.GetMessage(), "subject") {
+			t.Errorf("key %q: %v, want INVALID naming the subject rule", bad, failure)
+		}
+	}
+	if _, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeAsync}, run.Headers{Idempotency: "ok-key_1:ABC", Caller: "ACX"}); failure != nil {
+		t.Fatalf("a plain key was refused: %v", failure)
 	}
 }

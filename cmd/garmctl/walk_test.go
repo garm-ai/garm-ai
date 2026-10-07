@@ -479,6 +479,9 @@ func (w *walk) bus(push bool, holds []held) *walkBus {
 		w.probe("weather.v1.WeatherService", "subscribe", "garm.tool.weather.v1.get_forecast"),
 		w.probe("weather.v1.WeatherService", "subscribe", "garm.run.v1.>"),
 		w.probe("rund", "subscribe", "garm.run.v1.*.invoke"),
+		w.probe("studio", "subscribe", "garm.run.v1.out.>"),
+		w.probe("studio", "publish", "garm.run.v1.out.forged.1"),
+		w.probe("rund", "publish", "garm.run.v1.ACX.out.r.1"),
 	)
 	return b
 }

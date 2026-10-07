@@ -103,6 +103,12 @@ account carrying the revocation is pushed, or it loses its connection mid-call.
 Both orders are one rule: the permission set is briefly a superset of what is
 running, never a subset.
 
+**The event feed.** Every caller account imports `rund`'s event stream, so a
+caller receives its own runs' events live; the issuance that introduced the
+import reissued every caller credential once (its permission set changed) and
+nothing else. A caller may publish only the three verbs of the run service and
+subscribe to `garm.run.v1.out.>`; `rund` publishes on `garm.run.v1.*.out.>`.
+
 **A caller is added.** Add its name to `--callers`. Its account keys are minted
 into `--keys-out`; its account JWT, its credential and a new `callers.json`
 appear. A caller's account imports the run service at its own key, which is how

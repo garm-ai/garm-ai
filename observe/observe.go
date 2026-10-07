@@ -37,8 +37,9 @@ const (
 	KeyRequestBytes   = attribute.Key("garm.request_bytes")
 	KeyResponseBytes  = attribute.Key("garm.response_bytes")
 	KeyService        = attribute.Key("garm.service")
-	KeyQueued         = attribute.Key("garm.queued") // bool: was anything waiting at the drain
-	KeyState          = attribute.Key("garm.state")  // up | down: the run store's reachability
+	KeyQueued         = attribute.Key("garm.queued")  // bool: was anything waiting at the drain
+	KeyState          = attribute.Key("garm.state")   // up | down: the run store's reachability
+	KeyOutcome        = attribute.Key("garm.outcome") // delivered | dropped: a live event's fate
 )
 
 // Tracer is the module's tracer, from whatever provider is global.
@@ -66,6 +67,7 @@ type Metrics struct {
 	RunInvocations       metric.Int64Counter       // garm.run.invocations {tool, caller, caller_name, kind}
 	ServiceDrain         metric.Int64Counter       // garm.service.drain {service, queued}
 	RunStore             metric.Int64Counter       // garm.run.store {state}: each transition of the store's reachability
+	RunEvents            metric.Int64Counter       // garm.run.events {outcome}: live copies delivered or dropped
 }
 
 var (
@@ -94,6 +96,7 @@ func newInstruments() *Metrics {
 		RunInvocations:       must(m.Int64Counter("garm.run.invocations", metric.WithDescription("invocations rund answered, by caller and outcome kind"))),
 		ServiceDrain:         must(m.Int64Counter("garm.service.drain", metric.WithDescription("drains, with how many calls were in flight"))),
 		RunStore:             must(m.Int64Counter("garm.run.store", metric.WithDescription("run store reachability transitions, by state"))),
+		RunEvents:            must(m.Int64Counter("garm.run.events", metric.WithDescription("live run events, delivered to the bus or dropped"))),
 	}
 }
 

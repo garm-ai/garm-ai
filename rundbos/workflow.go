@@ -9,9 +9,13 @@ import (
 
 	"github.com/dbos-inc/dbos-transact-golang/dbos"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/observe"
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/serve"
@@ -75,9 +79,15 @@ func (s *Store) invoke(ctx dbos.Context, r run.Run) (outcome, error) {
 		return outcome{Error: planned.Error}, nil
 	}
 
+	// The record (push spec §1, §5): every event written to the run's stream,
+	// numbered by a counter replay rebuilds, published live best effort.
+	em := &emitter{s: s, r: r}
 	var last []byte
 	for i, a := range planned.Actions {
 		if err := dbos.SetEvent(ctx, StageKey, fmt.Sprintf("calling:%d", i)); err != nil {
+			return outcome{}, err
+		}
+		if err := em.emit(ctx, &runv1.Event_Stage{Stage: &runv1.Stage{Stage: fmt.Sprintf("calling:%d", i)}}); err != nil {
 			return outcome{}, err
 		}
 		h := run.StepHeaders(r, i)
@@ -87,15 +97,114 @@ func (s *Store) invoke(ctx dbos.Context, r run.Run) (outcome, error) {
 		if err != nil {
 			return outcome{}, err // cancelled, or DBOS itself
 		}
+		step := &runv1.Step{Key: h.Idempotency, Tool: a.Tool}
 		if out.Error != nil {
+			step.Kind = out.Error.GetKind()
+		}
+		if err := em.emit(ctx, &runv1.Event_Step{Step: step}); err != nil {
+			return outcome{}, err
+		}
+		if out.Error != nil {
+			if err := em.finish(ctx, runv1.RunState_RUN_STATE_FAILED); err != nil {
+				return outcome{}, err
+			}
 			return outcome{Error: out.Error}, nil
 		}
 		last = out.Result
 	}
-	if err := dbos.SetEvent(ctx, StageKey, "done"); err != nil {
+	if err := em.finish(ctx, runv1.RunState_RUN_STATE_SUCCEEDED); err != nil {
 		return outcome{}, err
 	}
 	return outcome{Result: last}, nil
+}
+
+// emitter numbers a run's events. The counter lives in the workflow's locals,
+// which a replay rebuilds by the same path, so the number is deterministic and
+// equals the stream offset plus one.
+type emitter struct {
+	s *Store
+	r run.Run
+	n uint64
+}
+
+// emit records one event, then offers it live. Two acts of different standing:
+// WriteStream at workflow level is DBOS's own durable, checkpointed write -- a
+// replay does not write again -- and a failure fails the run, because a run
+// with no record of what it did is not a run this platform keeps. The publish
+// is a step of its own, best effort: a failure is counted and logged and never
+// returned, and a replay skips the step, because live means now.
+func (e *emitter) emit(ctx dbos.Context, kind any) error {
+	e.n++
+	ev := &runv1.Event{RunId: e.r.ID, Seq: e.n, At: timestamppb.Now()}
+	switch k := kind.(type) {
+	case *runv1.Event_Stage:
+		ev.Kind = k
+	case *runv1.Event_Step:
+		ev.Kind = k
+	case *runv1.Event_Done:
+		ev.Kind = k
+	case *runv1.Event_Progress:
+		ev.Kind = k
+	case *runv1.Event_Question:
+		ev.Kind = k
+	case *runv1.Event_Chunk:
+		ev.Kind = k
+	}
+	if err := CheckEvent(ev); err != nil {
+		return err
+	}
+	b, err := proto.Marshal(ev)
+	if err != nil {
+		return err
+	}
+	if err := dbos.WriteStream(ctx, StreamKey, b); err != nil {
+		return err
+	}
+	seq := e.n
+	_, _ = dbos.RunAsStep(ctx, func(context.Context) (bool, error) {
+		return e.s.publish(e.r, seq, b), nil
+	}, dbos.WithStepName(fmt.Sprintf("publish:%d", seq)), dbos.WithStepMaxRetries(0))
+	return nil
+}
+
+// finish is the run's last two words: stage done, done <state>, and the
+// stream closed so a reader can tell "no more" from "not yet".
+func (e *emitter) finish(ctx dbos.Context, state runv1.RunState) error {
+	if err := dbos.SetEvent(ctx, StageKey, "done"); err != nil {
+		return err
+	}
+	if err := e.emit(ctx, &runv1.Event_Stage{Stage: &runv1.Stage{Stage: "done"}}); err != nil {
+		return err
+	}
+	if err := e.emit(ctx, &runv1.Event_Done{Done: &runv1.Done{State: state}}); err != nil {
+		return err
+	}
+	return dbos.CloseStream(ctx, StreamKey)
+}
+
+// publish offers one event live. A run with no proven owner has no subject
+// that can carry it: nothing is published, once said.
+func (s *Store) publish(r run.Run, seq uint64, b []byte) bool {
+	if s.out == nil {
+		return false
+	}
+	if r.Caller == "" {
+		if seq == 1 {
+			s.log.Warn("run has no owner; its events are recorded and published to nobody", "run", r.ID)
+		}
+		return false
+	}
+	if err := s.out.Publish(r.Caller, r.ID, seq, b); err != nil {
+		s.log.Warn("live event not delivered", "run", r.ID, "seq", seq, "error", err)
+		s.recordEvent("dropped")
+		return false
+	}
+	s.recordEvent("delivered")
+	return true
+}
+
+func (s *Store) recordEvent(outcome string) {
+	observe.Instruments().RunEvents.Add(context.Background(), 1, metric.WithAttributes(observe.KeyOutcome.String(outcome)))
 }
 
 // call is one tool-call step's body: up to StepAttempts calls, retried only

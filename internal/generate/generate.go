@@ -38,6 +38,7 @@ import (
 
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/pluginpb"
 
 	"github.com/garm-ai/garm-ai/declared"
 )
@@ -61,6 +62,9 @@ const (
 
 // Run is the whole plugin.
 func Run(gen *protogen.Plugin) error {
+	// proto3 `optional` (a presence-tracked scalar) is used by garm.run.v1.Progress;
+	// a plugin that does not say it understands it is refused by protoc.
+	gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
 	// Every file in the request, not only the ones to generate: a dependency
 	// declaring a name this module also declares is a real collision inside one
 	// compile unit, and the point of checking here is to catch it at build time

@@ -8,6 +8,7 @@ package rundsvc
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -43,12 +44,17 @@ import (
 const (
 	SubjectInvoke = "garm.run.v1.invoke"
 	SubjectFetch  = "garm.run.v1.fetch"
+	SubjectEvents = "garm.run.v1.events"
+	// SubjectOut is the local prefix a caller subscribes under for a run's
+	// live events: SubjectOut + "." + run + ".>" (push spec §2).
+	SubjectOut = "garm.run.v1.out"
 )
 
 // Patterns rund ANSWERS on. Token 4 is the caller's account, placed by the server.
 const (
 	PatternInvoke = "garm.run.v1.*.invoke"
 	PatternFetch  = "garm.run.v1.*.fetch"
+	PatternEvents = "garm.run.v1.*.events"
 )
 
 // CallerKey is the context key under which a handler finds the calling account.
@@ -144,9 +150,35 @@ func Serve(svc *natsmicro.Service, e *run.Engine, names observe.CallerNames) err
 	})); err != nil {
 		return err
 	}
-	return svc.Mount("fetch", PatternFetch, micro.HandlerFunc(func(r micro.Request) {
+	if err := svc.Mount("fetch", PatternFetch, micro.HandlerFunc(func(r micro.Request) {
 		svc.Track(func() { fetch(e, names, r) })
+	})); err != nil {
+		return err
+	}
+	return svc.Mount("events", PatternEvents, micro.HandlerFunc(func(r micro.Request) {
+		svc.Track(func() { events(e, names, r) })
 	}))
+}
+
+func events(e *run.Engine, names observe.CallerNames, r micro.Request) {
+	ctx, span := withCaller(e, names, r, "events")
+	defer span.End()
+	var req runv1.EventsRequest
+	if err := proto.Unmarshal(r.Data(), &req); err != nil {
+		unreadable := serve.Invalid("the request could not be read as garm.run.v1.EventsRequest")
+		reply(r, serve.Wire(unreadable, ""))
+		mark(span, unreadable)
+		return
+	}
+	span.SetAttributes(observe.KeyRunID.String(req.GetRunId()))
+	resp, failure := e.Events(ctx, &req, headersOf(ctx, r))
+	if failure != nil {
+		reply(r, failure)
+		mark(span, &serve.Error{Kind: failure.GetKind()})
+		return
+	}
+	mark(span, nil)
+	respond(r, resp)
 }
 
 func invoke(e *run.Engine, names observe.CallerNames, r micro.Request) {
@@ -254,6 +286,51 @@ func reply(r micro.Request, w *invokev1.Error) {
 
 // ToolCaller reaches tools over NATS. It is run.Caller.
 type ToolCaller struct{ NC *nats.Conn }
+
+// OutSubject is where rund publishes event seq of run runID owned by owner:
+// the account token at position four, so only the owner's account may import it.
+func OutSubject(owner, runID string, seq uint64) string {
+	return fmt.Sprintf("garm.run.v1.%s.out.%s.%d", owner, runID, seq)
+}
+
+// LivePublisher is rundbos.Live on the bus: one core publish per event, no
+// JetStream, delivered to whoever is subscribed now. Best effort by contract.
+//
+// A core publish returns nil once the bytes are handed to the socket; the one
+// refusal a deployment will meet -- a credential without publish on the event
+// subject, a topology not reissued -- arrives later, on the connection's
+// asynchronous error path. NewLivePublisher hooks that path so such a refusal
+// is counted as dropped and logged with its subject, instead of every event
+// counting as delivered while nobody receives one.
+type LivePublisher struct {
+	NC  *nats.Conn
+	log *slog.Logger
+}
+
+// NewLivePublisher wires the connection's asynchronous errors on the event
+// subjects into the dropped count and the log, keeping any handler already set.
+func NewLivePublisher(nc *nats.Conn, log *slog.Logger) LivePublisher {
+	if log == nil {
+		log = slog.Default()
+	}
+	p := LivePublisher{NC: nc, log: log}
+	prev := nc.ErrorHandler()
+	nc.SetErrorHandler(func(c *nats.Conn, s *nats.Subscription, err error) {
+		if strings.Contains(err.Error(), "Permissions Violation") && strings.Contains(err.Error(), ".out.") {
+			log.Warn("live event refused by the bus; is rund's credential issued from this catalogue?", "error", err)
+			observe.Instruments().RunEvents.Add(context.Background(), 1, metric.WithAttributes(observe.KeyOutcome.String("dropped")))
+			return
+		}
+		if prev != nil {
+			prev(c, s, err)
+		}
+	})
+	return p
+}
+
+func (p LivePublisher) Publish(owner, runID string, seq uint64, event []byte) error {
+	return p.NC.Publish(OutSubject(owner, runID, seq), event)
+}
 
 // Call makes one tool call on the internal subject.
 //

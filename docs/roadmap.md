@@ -28,18 +28,10 @@ one component in more detail. They link here rather than repeating it.
 | A caller's identity arrives in the subject, placed by the server | `rundsvc.TestTheCallerIsTokenFourAndMustBeAnAccountKey` · `TestRundLogsTheCallingAccount` |
 | Every test runs against operator mode, TLS, the full resolver | `internal/estate` |
 | One trace per call; the quoted id opens it; counters by tool and caller; `/readyz` agrees with `$SRV.PING`; OTLP to OpenObserve | `estate.TestOneCallIsOneTraceWithRundBetweenCallerAndTool` · `natsmicro.TestReadyAgreesWithPingThroughTheLifecycle` — step **9e** |
+| **Push**: a run records every event in a DBOS stream and `rund` publishes each live on an account-token stream export only the owner imports; `Events` reads the record from a cursor; `Follow` stitches catch-up to live by sequence; `garmctl fetch --follow` | `estate.TestALiveSubscriberSeesTheRunsEvents` · `estate.TestFollowMidRunYieldsEveryEventOnce` · `estate.TestAnotherAccountReceivesNothingOnTheBus` · `rundbos.TestAnUnreachableBusDropsTheLiveCopyAndTheRunFinishes` — step **11** |
 | **Revoked stays revoked**: the manifest's cumulative record carries every revocation into every later account JWT until the credential expires; a leaving caller's tombstone is re-emitted while its revocation lives | `topology.TestARevocationIsCarriedAcrossGenerations` · `TestARevocationIsPrunedOnceTheCredentialHasExpired` · `TestATombstoneIsReemittedWhileItsRevocationLives` |
 | The root offline; accounts signed by an operator signing key, credentials by account signing keys, enforced by the server; two-step rotation with `--verify-live` | `estate.TestTheServerRefusesAnAccountSignedByTheRoot` · `estate.TestRotationKeepsTheOldCredentialAliveUntilStepTwo` · `garmctl.TestVerifyLiveRefusesWhileTheOldKeyIsStillOnTheWire` — step **9f** |
 | **The run store**: an async tool is `pending{run_id}` once durable, executed from a DBOS queue by a replica, read back with `Fetch --wait`; the plan is step 0 and a replay follows it; the key is fingerprinted; a run is visible to its invoking account only; sync is sovereign when the store is down; only `rundbos` imports DBOS | `estate.TestAnAsyncToolIsPendingThenAnswered` · `rundbos.TestAStoppedReplicasRunIsFinishedByItsSuccessorWithTheSameIdentity` · `rundbos.TestAReplayFollowsThePlanRecordedAtStart` · `estate.TestSyncIsSovereignWhenTheStoreIsDown` · `mise run no-sdk` — step **10** |
-
-## Being built
-
-| | step |
-|---|---|
-| `rund`: `Invoke`/`Fetch`, catalogue-loaded, sync fast path | ✅ **9b** |
-| The budget binds: handler deadline and compose check | ✅ 9b — the client deadline lands with the client, in 9c |
-| Correlation, causation, message ids and `traceparent`, end to end | ✅ 9b |
-| The generated client, `garmctl call`, and an example loop that answers | ✅ **9c** |
 
 ## Waiting on something real
 
@@ -86,8 +78,7 @@ what it waited on.
 
 | | waits on |
 |---|---|
-| **Push** — a subscriber sees a run's events without polling: DBOS streams as the record, a NATS stream export `garm.run.v1.*.out.>` for live delivery; `Answer` as `Send` for a decider that needs input | nothing — the run store is built; next |
-| The authority model, then `Cancel` / `Approve` / deciders on it | push, so an approver can be told |
+| The authority model, then `Cancel` / `Approve` / deciders on it | nothing — push is built; next |
 | **Cross-executor recovery** — a dead replica's in-flight runs taken over by a live one without DBOS's Conductor; a lease and a heartbeat, because DBOS re-enqueues a dead executor's runs only at that executor's own relaunch | the run store; a liveness signal DBOS does not keep |
 
 | A `garmctl topology --push` that sends every changed account JWT to the cluster over `$SYS` with the ops credential | nothing — today it is one `nats request` per changed account ([operating the topology](operating-the-topology.md)) |
