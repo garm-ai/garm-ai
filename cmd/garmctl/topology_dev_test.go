@@ -130,3 +130,33 @@ func TestDevEmitsAContainerConfigThatBootsFromItsOwnDirectory(t *testing.T) {
 	}
 	nc.Close()
 }
+
+// The native config's addresses are the quick start's to choose. A laptop has
+// one 4222 and one 8222, and the comment above already says the monitor port
+// "collides with whatever a laptop runs there" -- so a hardcoded pair makes the
+// quick start unrunnable on a machine that is already running something. The
+// CONTAINER copy is not configurable: compose maps host ports onto the
+// container's fixed ones.
+func TestDevTakesTheNativeConfigsAddresses(t *testing.T) {
+	e := estate.New(t)
+	out := t.TempDir()
+	if _, _, err := runTopology(t, append(catalogueArgs(e), "--dev", "--callers", "studio",
+		"--listen", "127.0.0.1:14222", "--monitor", "127.0.0.1:18222", "--out", out)...); err != nil {
+		t.Fatal(err)
+	}
+	native := mustRead(t, filepath.Join(out, "nats-server.conf"))
+	for _, want := range []string{"listen: 127.0.0.1:14222", "http: 127.0.0.1:18222"} {
+		if !strings.Contains(native, want) {
+			t.Errorf("the native config does not carry %q:\n%s", want, native)
+		}
+	}
+	if strings.Contains(native, ":4222") || strings.Contains(native, ":8222") {
+		t.Errorf("the native config still carries a default port:\n%s", native)
+	}
+	container := mustRead(t, filepath.Join(out, "nats-server.docker.conf"))
+	for _, want := range []string{"listen: 0.0.0.0:4222", "http: 0.0.0.0:8222"} {
+		if !strings.Contains(container, want) {
+			t.Errorf("the container config must keep %q -- compose maps host ports onto it:\n%s", want, container)
+		}
+	}
+}

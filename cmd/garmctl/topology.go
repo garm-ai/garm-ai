@@ -40,6 +40,7 @@ func topologyCmd() *cobra.Command {
 		noVerifyLive           bool
 		servers                int
 		natsURL, opsCreds, ca  string
+		listen, monitor        string
 	)
 	cmd := &cobra.Command{
 		Use:   "topology",
@@ -197,7 +198,7 @@ func topologyCmd() *cobra.Command {
 				if err := writeKeys(filepath.Join(out, "keys"), keys); err != nil {
 					return err
 				}
-				if err := writeDevServer(out, res); err != nil {
+				if err := writeDevServer(out, res, listen, monitor); err != nil {
 					return err
 				}
 			}
@@ -217,6 +218,8 @@ func topologyCmd() *cobra.Command {
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "the issuance manifest; read as the previous topology, written back after")
 	cmd.Flags().BoolVar(&first, "first", false, "this is the first issuance and there is no manifest yet")
 	cmd.Flags().BoolVar(&dev, "dev", false, "mint throwaway keys for a local estate; never for a deployment")
+	cmd.Flags().StringVar(&listen, "listen", "127.0.0.1:4222", "--dev only: where the emitted nats-server.conf listens for clients; a laptop has one 4222")
+	cmd.Flags().StringVar(&monitor, "monitor", "127.0.0.1:8222", "--dev only: where it serves /healthz; the container config keeps 0.0.0.0:8222, which compose maps")
 	cmd.Flags().BoolVar(&rotate, "rotate", false, "reissue EVERY credential and revoke every previous one; otherwise only what changed is issued")
 	cmd.Flags().StringSliceVar(&rotateSigning, "rotate-signing", nil, "accounts whose SIGNING KEY is replaced: the new key is listed beside the old and every credential of the account reissued; the next issuance retires the old key")
 	cmd.Flags().BoolVar(&status, "status", false, "print the manifest's state -- generation, accounts, any retiring key -- and issue nothing")
@@ -408,7 +411,7 @@ func writeOutput(dir string, res *topology.Output, signer nkeys.KeyPair) error {
 // the self-signed certificate it refers to. The memory resolver with every
 // account preloaded is the simplest server that honours the topology; a
 // deployment runs the full resolver and its own CA, and the guide says so.
-func writeDevServer(dir string, res *topology.Output) error {
+func writeDevServer(dir string, res *topology.Output, listen, monitor string) error {
 	certPEM, keyPEM, err := devtls.SelfSigned(24*time.Hour, "127.0.0.1", "localhost")
 	if err != nil {
 		return err
@@ -461,7 +464,7 @@ tls {
 }
 `, listen, http, operator, sysPub, preload.String(), cert, key)
 	}
-	native := render("127.0.0.1:4222", "127.0.0.1:8222",
+	native := render(listen, monitor,
 		filepath.Join(abs, "operator.jwt"), filepath.Join(abs, "server.pem"), filepath.Join(abs, "server-key.pem"))
 	if err := os.WriteFile(filepath.Join(dir, "nats-server.conf"), []byte(native), 0o600); err != nil {
 		return err
