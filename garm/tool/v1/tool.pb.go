@@ -83,7 +83,16 @@ type Tool struct {
 	//
 	//	*Tool_Sync
 	//	*Tool_Async
-	Delivery      isTool_Delivery `protobuf_oneof:"delivery"`
+	Delivery isTool_Delivery `protobuf_oneof:"delivery"`
+	// WHAT A CALLER MUST HOLD, declared by the only party who knows: this tool's
+	// author. A property of the TOOL -- "this moves money" -- and never of a
+	// caller: nothing here names a principal, a role or a team, because a tool's
+	// author does not know who should hold what, and a declaration that named
+	// them would be policy written by the wrong person (authority spec §1).
+	//
+	// Absent means the tool asks nothing. It does NOT mean "open": with a grant
+	// source configured, a principal still needs a grant admitting the tool.
+	Requires      *Requirement `protobuf:"bytes,5,opt,name=requires,proto3" json:"requires,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -157,6 +166,13 @@ func (x *Tool) GetAsync() *Async {
 	return nil
 }
 
+func (x *Tool) GetRequires() *Requirement {
+	if x != nil {
+		return x.Requires
+	}
+	return nil
+}
+
 type isTool_Delivery interface {
 	isTool_Delivery()
 }
@@ -172,6 +188,55 @@ type Tool_Async struct {
 func (*Tool_Sync) isTool_Delivery() {}
 
 func (*Tool_Async) isTool_Delivery() {}
+
+// What a caller must hold to invoke a tool.
+type Requirement struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Every compartment a caller must hold -- ALL of them, not any. A compartment
+	// is a name a deployment owns, declared in its grants; a requirement naming
+	// one no deployment declares is a tool nobody can call, and rund refuses to
+	// start rather than refuse every call (authority spec §6).
+	Compartments  []string `protobuf:"bytes,1,rep,name=compartments,proto3" json:"compartments,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Requirement) Reset() {
+	*x = Requirement{}
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Requirement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Requirement) ProtoMessage() {}
+
+func (x *Requirement) ProtoReflect() protoreflect.Message {
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Requirement.ProtoReflect.Descriptor instead.
+func (*Requirement) Descriptor() ([]byte, []int) {
+	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Requirement) GetCompartments() []string {
+	if x != nil {
+		return x.Compartments
+	}
+	return nil
+}
 
 // Sync: the answer comes back on the reply, within a budget.
 //
@@ -199,7 +264,7 @@ type Sync struct {
 
 func (x *Sync) Reset() {
 	*x = Sync{}
-	mi := &file_garm_tool_v1_tool_proto_msgTypes[1]
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -211,7 +276,7 @@ func (x *Sync) String() string {
 func (*Sync) ProtoMessage() {}
 
 func (x *Sync) ProtoReflect() protoreflect.Message {
-	mi := &file_garm_tool_v1_tool_proto_msgTypes[1]
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -224,7 +289,7 @@ func (x *Sync) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Sync.ProtoReflect.Descriptor instead.
 func (*Sync) Descriptor() ([]byte, []int) {
-	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{1}
+	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Sync) GetBudget() *durationpb.Duration {
@@ -254,7 +319,7 @@ type Async struct {
 
 func (x *Async) Reset() {
 	*x = Async{}
-	mi := &file_garm_tool_v1_tool_proto_msgTypes[2]
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -266,7 +331,7 @@ func (x *Async) String() string {
 func (*Async) ProtoMessage() {}
 
 func (x *Async) ProtoReflect() protoreflect.Message {
-	mi := &file_garm_tool_v1_tool_proto_msgTypes[2]
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -279,7 +344,7 @@ func (x *Async) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Async.ProtoReflect.Descriptor instead.
 func (*Async) Descriptor() ([]byte, []int) {
-	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{2}
+	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Async) GetLimit() *durationpb.Duration {
@@ -320,7 +385,7 @@ type Agent struct {
 
 func (x *Agent) Reset() {
 	*x = Agent{}
-	mi := &file_garm_tool_v1_tool_proto_msgTypes[3]
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -332,7 +397,7 @@ func (x *Agent) String() string {
 func (*Agent) ProtoMessage() {}
 
 func (x *Agent) ProtoReflect() protoreflect.Message {
-	mi := &file_garm_tool_v1_tool_proto_msgTypes[3]
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -345,7 +410,7 @@ func (x *Agent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Agent.ProtoReflect.Descriptor instead.
 func (*Agent) Descriptor() ([]byte, []int) {
-	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{3}
+	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Agent) GetTools() []*ToolRef {
@@ -372,7 +437,7 @@ type ToolRef struct {
 
 func (x *ToolRef) Reset() {
 	*x = ToolRef{}
-	mi := &file_garm_tool_v1_tool_proto_msgTypes[4]
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -384,7 +449,7 @@ func (x *ToolRef) String() string {
 func (*ToolRef) ProtoMessage() {}
 
 func (x *ToolRef) ProtoReflect() protoreflect.Message {
-	mi := &file_garm_tool_v1_tool_proto_msgTypes[4]
+	mi := &file_garm_tool_v1_tool_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -397,7 +462,7 @@ func (x *ToolRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolRef.ProtoReflect.Descriptor instead.
 func (*ToolRef) Descriptor() ([]byte, []int) {
-	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{4}
+	return file_garm_tool_v1_tool_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ToolRef) GetName() string {
@@ -428,14 +493,17 @@ var File_garm_tool_v1_tool_proto protoreflect.FileDescriptor
 
 const file_garm_tool_v1_tool_proto_rawDesc = "" +
 	"\n" +
-	"\x17garm/tool/v1/tool.proto\x12\fgarm.tool.v1\x1a google/protobuf/descriptor.proto\x1a\x1egoogle/protobuf/duration.proto\"\xa8\x01\n" +
+	"\x17garm/tool/v1/tool.proto\x12\fgarm.tool.v1\x1a google/protobuf/descriptor.proto\x1a\x1egoogle/protobuf/duration.proto\"\xdf\x01\n" +
 	"\x04Tool\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12)\n" +
 	"\x05agent\x18\x02 \x01(\v2\x13.garm.tool.v1.AgentR\x05agent\x12(\n" +
 	"\x04sync\x18\x03 \x01(\v2\x12.garm.tool.v1.SyncH\x00R\x04sync\x12+\n" +
-	"\x05async\x18\x04 \x01(\v2\x13.garm.tool.v1.AsyncH\x00R\x05asyncB\n" +
+	"\x05async\x18\x04 \x01(\v2\x13.garm.tool.v1.AsyncH\x00R\x05async\x125\n" +
+	"\brequires\x18\x05 \x01(\v2\x19.garm.tool.v1.RequirementR\brequiresB\n" +
 	"\n" +
-	"\bdelivery\"9\n" +
+	"\bdelivery\"1\n" +
+	"\vRequirement\x12\"\n" +
+	"\fcompartments\x18\x01 \x03(\tR\fcompartments\"9\n" +
 	"\x04Sync\x121\n" +
 	"\x06budget\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x06budget\"8\n" +
 	"\x05Async\x12/\n" +
@@ -458,30 +526,32 @@ func file_garm_tool_v1_tool_proto_rawDescGZIP() []byte {
 	return file_garm_tool_v1_tool_proto_rawDescData
 }
 
-var file_garm_tool_v1_tool_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_garm_tool_v1_tool_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_garm_tool_v1_tool_proto_goTypes = []any{
 	(*Tool)(nil),                       // 0: garm.tool.v1.Tool
-	(*Sync)(nil),                       // 1: garm.tool.v1.Sync
-	(*Async)(nil),                      // 2: garm.tool.v1.Async
-	(*Agent)(nil),                      // 3: garm.tool.v1.Agent
-	(*ToolRef)(nil),                    // 4: garm.tool.v1.ToolRef
-	(*durationpb.Duration)(nil),        // 5: google.protobuf.Duration
-	(*descriptorpb.MethodOptions)(nil), // 6: google.protobuf.MethodOptions
+	(*Requirement)(nil),                // 1: garm.tool.v1.Requirement
+	(*Sync)(nil),                       // 2: garm.tool.v1.Sync
+	(*Async)(nil),                      // 3: garm.tool.v1.Async
+	(*Agent)(nil),                      // 4: garm.tool.v1.Agent
+	(*ToolRef)(nil),                    // 5: garm.tool.v1.ToolRef
+	(*durationpb.Duration)(nil),        // 6: google.protobuf.Duration
+	(*descriptorpb.MethodOptions)(nil), // 7: google.protobuf.MethodOptions
 }
 var file_garm_tool_v1_tool_proto_depIdxs = []int32{
-	3, // 0: garm.tool.v1.Tool.agent:type_name -> garm.tool.v1.Agent
-	1, // 1: garm.tool.v1.Tool.sync:type_name -> garm.tool.v1.Sync
-	2, // 2: garm.tool.v1.Tool.async:type_name -> garm.tool.v1.Async
-	5, // 3: garm.tool.v1.Sync.budget:type_name -> google.protobuf.Duration
-	5, // 4: garm.tool.v1.Async.limit:type_name -> google.protobuf.Duration
-	4, // 5: garm.tool.v1.Agent.tools:type_name -> garm.tool.v1.ToolRef
-	6, // 6: garm.tool.v1.tool:extendee -> google.protobuf.MethodOptions
-	0, // 7: garm.tool.v1.tool:type_name -> garm.tool.v1.Tool
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	7, // [7:8] is the sub-list for extension type_name
-	6, // [6:7] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	4, // 0: garm.tool.v1.Tool.agent:type_name -> garm.tool.v1.Agent
+	2, // 1: garm.tool.v1.Tool.sync:type_name -> garm.tool.v1.Sync
+	3, // 2: garm.tool.v1.Tool.async:type_name -> garm.tool.v1.Async
+	1, // 3: garm.tool.v1.Tool.requires:type_name -> garm.tool.v1.Requirement
+	6, // 4: garm.tool.v1.Sync.budget:type_name -> google.protobuf.Duration
+	6, // 5: garm.tool.v1.Async.limit:type_name -> google.protobuf.Duration
+	5, // 6: garm.tool.v1.Agent.tools:type_name -> garm.tool.v1.ToolRef
+	7, // 7: garm.tool.v1.tool:extendee -> google.protobuf.MethodOptions
+	0, // 8: garm.tool.v1.tool:type_name -> garm.tool.v1.Tool
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	8, // [8:9] is the sub-list for extension type_name
+	7, // [7:8] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_garm_tool_v1_tool_proto_init() }
@@ -499,7 +569,7 @@ func file_garm_tool_v1_tool_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_garm_tool_v1_tool_proto_rawDesc), len(file_garm_tool_v1_tool_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 1,
 			NumServices:   0,
 		},

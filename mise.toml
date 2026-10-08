@@ -128,7 +128,7 @@ description = "Refuse a tool author's build that can reach a message broker"
 # who wants to add to it imports the OTel API in their own module, by choice.
 run = """
 set -e
-for pkg in ./serve ./call ./declared ./images ./fetch ./run ./examples/gen/...; do
+for pkg in ./serve ./call ./declared ./images ./fetch ./run ./examples/gen/... ./authority; do
   if go list -deps "$pkg" 2>/dev/null | grep -Eq 'nats-io|go.opentelemetry.io'; then
     echo "$pkg reaches a broker or OTel package:" >&2
     go list -deps "$pkg" | grep -E 'nats-io|go.opentelemetry.io' >&2
