@@ -10,6 +10,7 @@ import (
 	"github.com/garm-ai/garm-ai/call"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/internal/estate"
 	"github.com/garm-ai/garm-ai/natscall"
 	"github.com/garm-ai/garm-ai/serve"
@@ -88,5 +89,52 @@ func TestAGrantListingOneToolRefusesItsSibling(t *testing.T) {
 	se := denied(t, err)
 	if !strings.Contains(se.Message, "does not admit") || !strings.Contains(se.Message, "weather.v1.schedule_report") {
 		t.Fatalf("%q", se.Message)
+	}
+}
+
+// Property 16 and review focus 5: a grant's acts_for is recorded on the run,
+// reaches rund's log line, and lets the SUBJECT read the run its agent made --
+// while the live event feed stays per owner, because push's export is keyed by
+// the account the server placed in the subject, not by a grant (push spec §2).
+func TestTheSubjectReadsTheRunButDoesNotReceiveItsLiveEvents(t *testing.T) {
+	const person = "p.laenen@example.com"
+	e := estate.New(t, estate.WithStore(),
+		estate.WithGrantActingFor(estate.RoleCaller, []string{"*"}, []string{"weather"}, "person", person))
+	studio := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
+	ref, err := studio.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-behalf"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := studio.ScheduleReportResult(context.Background(), ref, 10*time.Second); err != nil {
+		t.Fatal(err)
+	}
+
+	// The log says on whose behalf.
+	if !strings.Contains(e.RundLog(), person) {
+		t.Errorf("rund's log does not say whose authority was exercised:\n%s", e.RundLog())
+	}
+
+	// The subject reads the run through all three verbs.
+	asPerson := e.AsPrincipal(t, "person", person)
+	if resp, failure := asPerson.Fetch(context.Background(), "k-behalf", 0); failure != nil || resp.GetState() != runv1.RunState_RUN_STATE_SUCCEEDED {
+		t.Fatalf("the subject's Fetch: %v %v", resp, failure)
+	}
+	evs, failure := asPerson.Events(context.Background(), "k-behalf", 0, 0)
+	if failure != nil || len(evs.GetEvents()) == 0 {
+		t.Fatalf("the subject's Events: %v %v", evs, failure)
+	}
+
+	// A third principal reads nothing.
+	if _, failure := e.AsPrincipal(t, "person", "someone.else@example.com").Fetch(context.Background(), "k-behalf", 0); failure == nil {
+		t.Fatal("a third principal read the run")
+	}
+
+	// And the live feed is unchanged: batch's account cannot import studio's
+	// events whatever any grant says, which is the second, independent half.
+	batch := e.SubscribeEvents(t, estate.RoleCaller2, "k-behalf")
+	select {
+	case ev := <-batch:
+		t.Fatalf("another account received the run's live events: %v", ev)
+	case <-time.After(300 * time.Millisecond):
 	}
 }

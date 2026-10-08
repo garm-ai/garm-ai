@@ -34,18 +34,16 @@ type Principal struct {
 // Zero reports whether the transport proved nobody.
 func (p Principal) Zero() bool { return p.Kind == "" || p.ID == "" }
 
-// String is what a refusal and a log line carry: the kind, and enough of the id
-// to recognise. The full id stays in the struct -- an account key is 56
-// characters and a refusal nobody can read is a refusal nobody can act on.
+// String is what a refusal, a log line and an audit record carry: the kind and
+// the WHOLE id. Not abbreviated -- an account key is 56 characters and reading
+// one is a chore, but a record that loses half an identity is a record an
+// operator cannot grep and an auditor cannot trust, and this is the same string
+// in all three places.
 func (p Principal) String() string {
 	if p.Zero() {
 		return "an unidentified caller"
 	}
-	id := p.ID
-	if len(id) > 12 {
-		id = id[:12] + "…"
-	}
-	return fmt.Sprintf("%s:%s", p.Kind, id)
+	return fmt.Sprintf("%s:%s", p.Kind, p.ID)
 }
 
 // PrincipalOf is the principal a call's envelope proves. ONE spelling: Headers
@@ -53,6 +51,12 @@ func (p Principal) String() string {
 // principal from it. A second field holding the same fact is the most expensive
 // bug this repository has had (see tool.proto's `name`).
 func PrincipalOf(h Headers) Principal {
+	// A principal the transport proved as something other than an account --
+	// a person or a service identified at connect -- wins, because it is the
+	// finer identity and the same mechanism proved both.
+	if h.AsPrincipal != nil {
+		return *h.AsPrincipal
+	}
 	if h.Caller == "" {
 		return Principal{}
 	}

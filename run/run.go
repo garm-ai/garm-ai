@@ -52,6 +52,15 @@ type Headers struct {
 	// Neither is a header on the wire: they are what the transport PROVED, and
 	// a run is visible only to the account that started it.
 	Caller, CallerName string
+
+	// AsPrincipal is the principal the transport proved when it is NOT an
+	// account -- a person or a service identified at connect, which arrives
+	// with auth callout (identity spec §11, slice 2). Nil means the account is
+	// the principal, which is every connection this build can authenticate.
+	//
+	// NEVER SET FROM A HEADER a caller wrote: it is set by whatever
+	// authenticated the connection, exactly as Caller is.
+	AsPrincipal *Principal
 }
 
 // Decider is the authority model, as the engine needs it. An interface here so
@@ -298,9 +307,17 @@ func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.
 	if err != nil {
 		return nil, e.fail(ctx, r.ID, h, tool.Name, err)
 	}
-	e.log().InfoContext(ctx, "run started",
-		"run", started.ID, "tool", tool.Name, "existing", started.Existing,
-		"correlation", r.Correlation, "caller", h.Caller)
+	// The decision is in the line an operator reads: who asked, on whose
+	// behalf, and which grant permitted it (authority spec §8).
+	fields := []any{"run", started.ID, "tool", tool.Name, "existing", started.Existing,
+		"correlation", r.Correlation, "caller", h.Caller, "principal", r.Principal.String()}
+	if r.ActsFor != nil {
+		fields = append(fields, "acts_for", r.ActsFor.String())
+	}
+	if r.GrantID != "" {
+		fields = append(fields, "grant", r.GrantID)
+	}
+	e.log().InfoContext(ctx, "run started", fields...)
 	return &runv1.InvokeResponse{
 		RunId:   started.ID,
 		Outcome: &runv1.InvokeResponse_Pending{Pending: &runv1.Pending{}},

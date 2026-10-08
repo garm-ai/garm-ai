@@ -37,9 +37,11 @@ const (
 	KeyRequestBytes   = attribute.Key("garm.request_bytes")
 	KeyResponseBytes  = attribute.Key("garm.response_bytes")
 	KeyService        = attribute.Key("garm.service")
-	KeyQueued         = attribute.Key("garm.queued")  // bool: was anything waiting at the drain
-	KeyState          = attribute.Key("garm.state")   // up | down: the run store's reachability
-	KeyOutcome        = attribute.Key("garm.outcome") // delivered | dropped: a live event's fate
+	KeyQueued         = attribute.Key("garm.queued")    // bool: was anything waiting at the drain
+	KeyState          = attribute.Key("garm.state")     // up | down: the run store's reachability
+	KeyOutcome        = attribute.Key("garm.outcome")   // delivered | dropped: a live event's fate
+	KeyPrincipal      = attribute.Key("garm.principal") // who asked, as the authority model names them
+	KeyActsFor        = attribute.Key("garm.acts_for")  // on whose behalf, from the grant; absent when nobody's
 )
 
 // Tracer is the module's tracer, from whatever provider is global.

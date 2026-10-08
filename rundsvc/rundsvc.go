@@ -192,7 +192,8 @@ func invoke(e *run.Engine, names observe.CallerNames, r micro.Request) {
 		return
 	}
 	h := headersOf(ctx, r)
-	span.SetAttributes(observe.KeyTool.String(req.GetTool()), observe.KeyIdempotencyKey.String(h.Idempotency))
+	span.SetAttributes(observe.KeyTool.String(req.GetTool()), observe.KeyIdempotencyKey.String(h.Idempotency),
+		observe.KeyPrincipal.String(run.PrincipalOf(h).String()))
 	resp, failure := e.Invoke(ctx, &req, h)
 	if failure != nil {
 		reply(r, failure)

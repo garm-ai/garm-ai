@@ -32,11 +32,13 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nkeys"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/garm-ai/garm-ai/authority"
 	"github.com/garm-ai/garm-ai/catalogue"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	"github.com/garm-ai/garm-ai/examples/weatherd"
+	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/internal/fixtures"
 	"github.com/garm-ai/garm-ai/natsmicro"
@@ -96,6 +98,7 @@ type Estate struct {
 	storeDir string
 	gated    *gatedCaller
 	grants   string
+	engine   *run.Engine
 }
 
 // GrantsFile is where the estate wrote its grants, for a test that reads or
@@ -131,6 +134,55 @@ func WithGrant(as Role, tools, compartments []string) Option {
     compartments: [%s]
 `, topology.CallerPrefix, as, strings.Join(quoteAll(tools), ", "), strings.Join(compartments, ", ")))
 	}
+}
+
+// WithGrantActingFor is WithGrant for an agent assigned to a subject: the grant
+// is held by the ACTING principal, with the subject recorded (authority spec
+// §8). Replaces the defaults, as WithGrant does.
+func WithGrantActingFor(as Role, tools, compartments []string, subjectKind, subjectID string) Option {
+	return func(o *options) {
+		o.ownGrants = true
+		o.grants = append(o.grants, fmt.Sprintf(`  - principal: { kind: account, id: %s%s }
+    acts_for: { kind: %s, id: %s }
+    tools: [%s]
+    compartments: [%s]
+`, topology.CallerPrefix, as, subjectKind, subjectID, strings.Join(quoteAll(tools), ", "), strings.Join(compartments, ", ")))
+	}
+}
+
+// AsPrincipal reads runs as a principal the TRANSPORT cannot present: a person,
+// in a build where only accounts connect. It calls the engine directly, which
+// is the only honest way to exercise a subject's visibility before auth callout
+// exists -- and it is exactly what the engine will be handed once it does.
+func (e *Estate) AsPrincipal(t testing.TB, kind, id string) *AsReader {
+	t.Helper()
+	if e.engine == nil {
+		t.Fatal("the estate has no engine")
+	}
+	return &AsReader{e: e.engine, h: run.Headers{}, p: run.Principal{Kind: run.PrincipalKind(kind), ID: id}}
+}
+
+// AsReader is the read half of the run service, as one principal.
+type AsReader struct {
+	e *run.Engine
+	h run.Headers
+	p run.Principal
+}
+
+func (r *AsReader) Fetch(ctx context.Context, id string, wait time.Duration) (*runv1.FetchResponse, *invokev1.Error) {
+	return r.e.Fetch(ctx, &runv1.FetchRequest{RunId: id, Wait: durationpb.New(wait)}, r.headers())
+}
+
+func (r *AsReader) Events(ctx context.Context, id string, after uint64, wait time.Duration) (*runv1.EventsResponse, *invokev1.Error) {
+	return r.e.Events(ctx, &runv1.EventsRequest{RunId: id, After: after, Wait: durationpb.New(wait)}, r.headers())
+}
+
+// headers carries the principal the way rundsvc will once a connection can be
+// identified as one: through the envelope, never as something a caller asserts.
+func (r *AsReader) headers() run.Headers {
+	h := r.h
+	h.AsPrincipal = &r.p
+	return h
 }
 
 func quoteAll(ss []string) []string {
@@ -604,6 +656,7 @@ func New(t testing.TB, opts ...Option) *Estate {
 		engine.Store = store
 		t.Cleanup(func() { _ = store.Close(context.Background()) })
 	}
+	e.engine = engine
 	if err := rundsvc.Serve(svc, engine, names); err != nil {
 		t.Fatal(err)
 	}
