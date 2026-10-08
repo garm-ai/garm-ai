@@ -78,7 +78,10 @@ what it waited on.
 
 | | waits on |
 |---|---|
-| The authority model, then `Cancel` / `Approve` / deciders on it | nothing — push is built; next |
+| **The authority model** — a tool declares `requires{compartments}`, a deployment's reviewed inputs grant principals tools and compartments, `rund` decides once at `Invoke` and records it on the run; `DENIED` names the failing half | nothing — [spec](specs/2026-10-08-authority-design.md) written, plan next |
+| **The grant store** — a `Grant` verb, grants in our own table, a bootstrap grant in the file as the root of trust, so assigning an agent to a person is a runtime write | the authority model |
+| **The signed per-call authorization** — `rund` attaches a short-lived operator-signed statement to each tool call and the generated binding verifies it, so a tool service trusts a statement rather than the position of the message | the authority model; it closes the identity page's gap 1 |
+| `Cancel` / `Approve` / deciders, on the authority model | the authority model |
 | **Cross-executor recovery** — a dead replica's in-flight runs taken over by a live one without DBOS's Conductor; a lease and a heartbeat, because DBOS re-enqueues a dead executor's runs only at that executor's own relaunch | the run store; a liveness signal DBOS does not keep |
 
 | A `garmctl topology --push` that sends every changed account JWT to the cluster over `$SYS` with the ops credential | nothing — today it is one `nats request` per changed account ([operating the topology](operating-the-topology.md)) |
