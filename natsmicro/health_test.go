@@ -58,8 +58,26 @@ func TestReadyAgreesWithPingThroughTheLifecycle(t *testing.T) {
 	if err := stop(); err != nil {
 		t.Fatal(err)
 	}
-	if get(t, live) != 200 || get(t, ready) != 503 || pingAnswers(probe, "probed") {
-		t.Fatal("after drain: want livez 200, readyz 503, no PING")
+	// readyz is deterministic here: the flag flips before Stop. PING is not --
+	// Stop DRAINS, and a drain's unsubscribe reaches the server asynchronously,
+	// so a PING published in that window is still routed to the draining
+	// connection and answered. The property is that it STOPS, with readyz 503
+	// throughout; a drain that never unsubscribed still fails this.
+	if get(t, live) != 200 || get(t, ready) != 503 {
+		t.Fatal("after drain: want livez 200, readyz 503")
+	}
+	var settled bool
+	for deadline := time.Now().Add(3 * time.Second); time.Now().Before(deadline); {
+		if !pingAnswers(probe, "probed") {
+			settled = true
+			break
+		}
+		if get(t, ready) != 503 {
+			t.Fatal("readyz went back to 200 while the drain was finishing")
+		}
+	}
+	if !settled {
+		t.Fatal("after drain: $SRV.PING still answers")
 	}
 	// A clean drain counts once, with queued=false -- a BOOL, so the series is
 	// bounded: the question is whether anything was waiting, not how many.
