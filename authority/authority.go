@@ -83,6 +83,12 @@ type Source interface {
 	For(ctx context.Context, p run.Principal, now time.Time) ([]Grant, error)
 }
 
+// Generational is a Source that can identify its content. A reload's log line
+// says which content replaced which, which is the one question a person asking
+// "did my edit take?" has; a source that cannot say is logged as unknown rather
+// than silently as nothing.
+type Generational interface{ Generation() string }
+
 // Authority decides. rund holds one; nothing else does.
 //
 // The source is swappable while running (Set, used by a SIGHUP reload) because
@@ -173,9 +179,11 @@ func (a *Authority) Allow(ctx context.Context, p run.Principal, t declared.Tool)
 			// What the permission relied on -- never the grant itself, so a
 			// caller cannot read a principal's whole authority off one decision.
 			return run.Allowed{GrantID: g.ID, Compartments: g.Compartments, ActsFor: g.ActsFor}, nil
-		} else if missing == nil {
-			// The first admitting grant's shortfall is the one reported: it is
-			// the closest the caller came.
+		} else if missing == nil || len(m) < len(missing) {
+			// The CLOSEST admitting grant's shortfall is the one reported --
+			// fewest compartments missing, not first in file order. Reporting
+			// the first names compartments the caller does hold under another
+			// grant and buries the one thing it needs.
 			missing, held, forTool = m, g.Compartments, t.Name
 		}
 	}
@@ -199,16 +207,41 @@ func (a *Authority) CanSee(_ context.Context, p run.Principal, r run.Seen) bool 
 	return r.ActsFor != nil && p == *r.ActsFor
 }
 
+// Allowlist is an agent's tool list AND whether this step belongs to an agent
+// at all.
+//
+// Two fields rather than one slice because an agent that allows nothing must
+// reach nothing, and a nil slice cannot tell "no agent" from "an agent with an
+// empty list". Found in review: it could not, and the ambiguity resolved OPEN.
+// A checkpoint makes a bare slice worse still -- an empty one comes back nil
+// after a replay, so the distinction could not survive the round trip even if
+// the producer were careful.
+type Allowlist struct {
+	// Agent is whether a decider is choosing these steps. False is a plain
+	// tool's own step: there is no allowlist to satisfy.
+	Agent bool
+	// Tools is what the agent's declaration cites, by name.
+	Tools []string
+}
+
+// Admits reports whether this step's tool is reachable. An agent admits only
+// what it cites; anything else admits everything, because there is no agent.
+func (a Allowlist) Admits(tool string) bool {
+	if !a.Agent {
+		return true
+	}
+	return slices.Contains(a.Tools, tool)
+}
+
 // CheckStep is the decision a run makes before each tool call: the agent's
 // allowlist and the run's RECORDED compartments must both admit it -- the
 // intersection, never the union. An allowlist cannot widen a grant, and a grant
 // cannot widen an allowlist (spec §7).
 //
 // compartments are the run's recorded ones and requires is the plan's pinned
-// requirement, so a replay decides identically; a nil allowlist is a plain
-// tool's own step rather than an agent's, and only the compartments apply.
-func CheckStep(compartments, allowlist []string, tool string, requires []string) error {
-	if allowlist != nil && !slices.Contains(allowlist, tool) {
+// requirement, so a replay decides identically.
+func CheckStep(compartments []string, allowlist Allowlist, tool string, requires []string) error {
+	if !allowlist.Admits(tool) {
 		return serve.Denied("%s is not in this run's allowlist", tool)
 	}
 	g := Grant{Compartments: compartments}

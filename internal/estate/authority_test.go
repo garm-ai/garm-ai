@@ -114,6 +114,21 @@ func TestTheSubjectReadsTheRunButDoesNotReceiveItsLiveEvents(t *testing.T) {
 		t.Errorf("rund's log does not say whose authority was exercised:\n%s", e.RundLog())
 	}
 
+	// And the SPAN carries both halves (spec §8): an auditor opening the trace
+	// for this call sees who connected and on whose behalf, not only the first.
+	// Found in review: observe.KeyActsFor was declared, claimed by the spec, the
+	// invariants table and property 16, and set by nothing.
+	span, ok := awaitSpan(e.Recorder(), "garm.run.invoke")
+	if !ok {
+		t.Fatal("no garm.run.invoke span")
+	}
+	if got, ok := attr(span, "garm.acts_for"); !ok || got != "person:"+person {
+		t.Errorf("garm.acts_for = %q (present %v), want %q", got, ok, "person:"+person)
+	}
+	if got, ok := attr(span, "garm.principal"); !ok || !strings.HasPrefix(got, "account:") {
+		t.Errorf("garm.principal = %q (present %v), want the proved account", got, ok)
+	}
+
 	// The subject reads the run through all three verbs.
 	asPerson := e.AsPrincipal(t, "person", person)
 	if resp, failure := asPerson.Fetch(context.Background(), "k-behalf", 0); failure != nil || resp.GetState() != runv1.RunState_RUN_STATE_SUCCEEDED {

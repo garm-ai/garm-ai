@@ -116,7 +116,7 @@ func TestGrantsCheckAgainstTheCatalogueNamesTheToolsEachPrincipalMayInvoke(t *te
 	if may := block(stdout, "CALLER-batch", "may invoke:"); strings.Contains(may, gated) {
 		t.Errorf("batch does not hold `weather`, yet may invoke:\n%s", may)
 	}
-	refused := block(stdout, "CALLER-batch", "refused for a compartment")
+	refused := block(stdout, "CALLER-batch", "refused anyway")
 	if !strings.Contains(refused, gated) || !strings.Contains(refused, "weather") {
 		t.Errorf("batch's refusal does not name the tool and the compartment:\n%s", refused)
 	}
@@ -238,5 +238,37 @@ func TestGrantsCheckWithoutCallersIsRefused(t *testing.T) {
 	_, _, err := runGrants(t, "check", "--grants", grantsFile(t, goodGrants))
 	if err == nil || !strings.Contains(err.Error(), "callers") {
 		t.Fatalf("err = %v, want one naming --callers", err)
+	}
+}
+
+// Found in review: the report built its second list from `Admits` with no
+// liveness filter and printed the tool's requirements as the reason -- so an
+// EXPIRED grant with `tools: ["*"]` and no compartments listed every tool as
+// "refused for a compartment it does not hold", `requires none`. Both halves
+// were wrong, on the one screen a person reads when debugging a refusal.
+func TestGrantsCheckSaysAGrantIsExpiredRatherThanBlamingACompartment(t *testing.T) {
+	cat := fixtures.TwoServices(t)
+	body := `schema: v1
+compartments: [weather]
+grants:
+  - principal: { kind: account, id: CALLER-studio }
+    tools: ["*"]
+    compartments: [weather]
+    expires: 2020-01-01T00:00:00Z
+`
+	stdout, _, err := runGrants(t, "check", "--grants", grantsFile(t, body), "--callers", callersFile(t, "studio"),
+		"--catalogue", cat.URI, "--catalogue-sha256", cat.SHA, "--catalogue-dir", cat.Dir)
+	if err != nil {
+		t.Fatalf("an expired grant is a valid file: %v", err)
+	}
+	s := section(stdout, "CALLER-studio")
+	if !strings.Contains(s, "EXPIRED") {
+		t.Errorf("the report does not mark the expired grant:\n%s", s)
+	}
+	if strings.Contains(s, "requires weather;") {
+		t.Errorf("the report blames a compartment for an expired grant:\n%s", s)
+	}
+	if block(stdout, "CALLER-studio", "may invoke") != "" {
+		t.Errorf("an expired grant admits something:\n%s", s)
 	}
 }

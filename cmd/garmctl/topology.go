@@ -68,6 +68,16 @@ func topologyCmd() *cobra.Command {
 			if catURI == "" || out == "" {
 				return errors.New("--catalogue and --out are required")
 			}
+			// They shape the server configuration only --dev writes. Accepted
+			// without it they would do nothing, which is the one thing a flag
+			// must never do.
+			if !dev {
+				for flag, set := range map[string]bool{"--listen": cmd.Flags().Changed("listen"), "--monitor": cmd.Flags().Changed("monitor")} {
+					if set {
+						return fmt.Errorf("%s shapes the nats-server.conf that only --dev writes; without --dev it would be silently ignored", flag)
+					}
+				}
+			}
 			if !dev && (keysDir == "" || manifestPath == "") {
 				return errors.New("--keys and --manifest are required (or --dev for a throwaway topology)")
 			}

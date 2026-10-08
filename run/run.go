@@ -108,9 +108,31 @@ type Engine struct {
 	// reports the refusal it was given.
 	Authority Decider
 
+	// Decided, when set, is called once per call with the decision that call
+	// relied on, immediately after it is taken.
+	//
+	// It exists so the TRANSPORT can put the subject on its span. The engine
+	// imports no OpenTelemetry and must not learn to, and `acts_for` is only
+	// known after Allow -- so the span cannot be stamped where the principal is
+	// (authority spec §8). nil means nobody is listening.
+	Decided func(ctx context.Context, d Allowed)
+
 	// NewID mints run and message ids. A field so a test can make them
 	// predictable; nil means crypto/rand.
 	NewID func() string
+
+	// Planner turns a tool and its input into the actions a run takes. A field
+	// so a test can make a plan that today's Plan cannot produce -- the guard
+	// that the sync path refuses a plan it did not decide is otherwise
+	// unprovable. nil means Plan.
+	Planner func(declared.Tool, []byte) ([]Action, error)
+}
+
+func (e *Engine) plan(t declared.Tool, input []byte) ([]Action, error) {
+	if e.Planner != nil {
+		return e.Planner(t, input)
+	}
+	return Plan(t, input)
 }
 
 func (e *Engine) id() string {
@@ -197,14 +219,28 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 	if err != nil {
 		return nil, e.fail(ctx, runID, h, tool.Name, err)
 	}
+	if e.Decided != nil {
+		e.Decided(ctx, allowed)
+	}
 
 	if !tool.IsSync() && !tool.IsAgent() {
 		return e.startAsync(ctx, tool, req, h, allowed)
 	}
 
-	actions, err := Plan(tool, req.GetInput())
+	actions, err := e.plan(tool, req.GetInput())
 	if err != nil {
 		return nil, e.fail(ctx, runID, h, tool.Name, err)
+	}
+	// permit decided ONE tool: the one the caller named. Every further action is
+	// one nothing decided, and this loop cannot decide it -- the step check
+	// lives in `authority`, which imports this package, so the dependency runs
+	// one way on purpose. The store's loop decides each step from the run's
+	// record (authority spec §7); a plan that grew belongs there, so refuse it
+	// here rather than execute half of it undecided.
+	if len(actions) > 1 {
+		return nil, e.fail(ctx, runID, h, tool.Name, serve.Internal(fmt.Errorf(
+			"%s planned %d actions and is not async: a multi-action plan runs in the run store, where every step is decided from the run's record",
+			tool.Name, len(actions))))
 	}
 
 	var last []byte
@@ -356,11 +392,10 @@ func (e *Engine) Fetch(ctx context.Context, req *runv1.FetchRequest, h Headers) 
 	case err != nil:
 		return nil, e.fail(ctx, req.GetRunId(), h, "", err)
 	}
-	// Visibility (spec §4): the first body of the function the authority model
-	// will replace. A foreign run is NOT_FOUND, not DENIED -- its existence is
-	// not the caller's to learn, and the answer is the same as for an id that
-	// never existed.
-	if !e.visible(h, st) {
+	// Visibility (authority spec §4): the authority decides, and a foreign run
+	// is NOT_FOUND, not DENIED -- its existence is not the caller's to learn,
+	// and the answer is the same as for an id that never existed.
+	if !e.visible(ctx, h, st) {
 		return nil, serve.Wire(serve.NotFound("no run %s", req.GetRunId()), "")
 	}
 	resp := &runv1.FetchResponse{State: wireState(st.Status), Stage: st.Stage, Tool: st.Tool}
@@ -398,7 +433,7 @@ func (e *Engine) Events(ctx context.Context, req *runv1.EventsRequest, h Headers
 	case err != nil:
 		return nil, e.fail(ctx, req.GetRunId(), h, "", err)
 	}
-	if !e.visible(h, st) {
+	if !e.visible(ctx, h, st) {
 		return nil, serve.Wire(serve.NotFound("no run %s", req.GetRunId()), "")
 	}
 	wait := req.GetWait().AsDuration()
@@ -416,7 +451,7 @@ func (e *Engine) Events(ctx context.Context, req *runv1.EventsRequest, h Headers
 // there is one -- the starting principal, or the subject it acted for; with
 // none, the invoking account and nobody else, which is what this was before.
 // Its callers -- Fetch, Events -- do not change.
-func (e *Engine) visible(h Headers, st State) bool {
+func (e *Engine) visible(ctx context.Context, h Headers, st State) bool {
 	if e.Authority != nil {
 		seen := Seen{Principal: st.Principal, ActsFor: st.ActsFor}
 		if seen.Principal.Zero() {
@@ -424,7 +459,7 @@ func (e *Engine) visible(h Headers, st State) bool {
 			// account, so an upgrade does not hide every run already started.
 			seen.Principal = Principal{Kind: KindAccount, ID: st.Caller}
 		}
-		return e.Authority.CanSee(context.Background(), PrincipalOf(h), seen)
+		return e.Authority.CanSee(ctx, PrincipalOf(h), seen)
 	}
 	return h.Caller != "" && h.Caller == st.Caller
 }

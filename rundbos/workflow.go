@@ -40,8 +40,10 @@ type plan struct {
 	Actions []run.Action
 	// Allowlist is an agent's, pinned at plan time: what a run of it may call,
 	// and the half of a step's decision the grant cannot widen (authority spec
-	// §7). nil for a plain tool, whose own step is its only one.
-	Allowlist []string
+	// §7). Its Agent field says whether there is an agent at all -- a plain
+	// tool's own step has no allowlist to satisfy, and a slice alone could not
+	// say that without reading an empty agent as an unrestricted one.
+	Allowlist authority.Allowlist
 	Error     *invokev1.Error
 }
 
@@ -75,11 +77,9 @@ func (s *Store) invoke(ctx dbos.Context, r run.Run) (outcome, error) {
 		if err != nil {
 			return plan{Error: wireOf(err, r.ID)}, nil
 		}
-		var allowlist []string
-		if tool.IsAgent() {
-			for _, ref := range tool.Agent.GetTools() {
-				allowlist = append(allowlist, ref.GetName())
-			}
+		allowlist := authority.Allowlist{Agent: tool.IsAgent()}
+		for _, ref := range tool.Agent.GetTools() {
+			allowlist.Tools = append(allowlist.Tools, ref.GetName())
 		}
 		return plan{Actions: actions, Allowlist: allowlist}, nil
 	}, dbos.WithStepName("plan"), dbos.WithStepMaxRetries(0))

@@ -105,7 +105,7 @@ for _ in $(seq 1 200); do ready "$hp_tool" && ready "$hp_rund" && break; sleep 0
 ready "$hp_tool" || fail "weatherd never became ready: $(tail -5 "$out/weatherd.log")"
 ready "$hp_rund" || fail "rund never became ready: $(tail -5 "$out/rund.log")"
 echo "readyz: weatherd 200, rund 200"
-grep -q "grants=$topo/grants.yaml" "$out/rund.log" || fail "rund's startup line does not name its grants: $(grep -m1 'msg=serving' "$out/rund.log")"
+grep -q "grants=$topo/grants.yaml" "$out/rund.log" || fail "rund's startup line does not name its grants: $(grep -m1 'msg=starting' "$out/rund.log")"
 grep -q 'msg=grants ' "$out/rund.log" || fail "rund did not say which grants it loaded: $(tail -5 "$out/rund.log")"
 grep -h 'msg=grants ' "$out/rund.log" | sed 's/^/  /'
 

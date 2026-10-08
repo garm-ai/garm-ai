@@ -391,6 +391,7 @@ identities already go.
 | when the decision is made | once, at `Invoke`, recorded on the run; steps check the recorded compartments | per step, re-read: a revoked grant would change a replay's path, which the run store's determinism forbids |
 | what a refusal says | `DENIED` naming the failing half for a tool; `NOT_FOUND` for a run | a uniform `NOT_FOUND`, which hides nothing the caller lacks and makes every misconfiguration unactionable |
 | no `--grants` | a reduced, announced posture (requirement-less tools open, requiring tools refused) | deny everything (the quick start stops working) or allow everything (a security posture chosen by omission) |
+| whether a subject keeps reading a run after its grant is gone | **yes**: `CanSee` compares against the `acts_for` RECORDED on the run, never the source as it now stands | re-checking at read time, which would make the run's own record a lie and make a person's history disappear when an assignment ends. **Named in review** rather than left emergent: revoking an assignment stops an agent acting, it does not unmake what it already did, and a deployment that needs the history hidden needs a retention decision, not a visibility one |
 
 ---
 
@@ -538,3 +539,28 @@ Five, each with what it cost.
    `weather`, then takes the compartment away, `SIGHUP`s, and asserts the same
    call is `DENIED` — which proves §9's reload end to end as well, where it had
    been unit-tested only.
+
+6. **The live-feed half of property 15 substitutes a third account for the
+   subject** (§8). "The subject does not receive the live events" cannot be
+   staged as written: a person has no connection in this build, so nothing can
+   subscribe as one. The test subscribes as a second ACCOUNT, which proves the
+   export is keyed by the account the server placed in the subject and not by a
+   grant — the mechanism the property is about. `Follow` is not asserted
+   separately either: it is client-side over `Events` plus the live feed, both
+   of which are.
+
+7. **The grant generation is on the `grants` line, not the `starting` line**
+   (§9). The startup line is this process's effective configuration, logged
+   before anything is read; a file's content digest is not configuration. The
+   `grants` line at boot carries the path, the generation and the vocabulary,
+   and a reload logs the new generation beside the old one — which is the
+   question a person editing the file actually has.
+
+8. **Five guards were found passing blind, and one declaration honoured by
+   nothing** (review, 2026-10-08). The deny-by-default guard in `Allow`, the
+   two-unknowns guard in `CanSee`, the refused reload's log line, the subject's
+   read in `run`, and the `--listen`/`--monitor` refusal each had a test that
+   passed with the mechanism removed; `observe.KeyActsFor` was declared and
+   claimed in three documents and set nowhere. Each is now proved to fail. The
+   project's rule that a check passing blind is worse than none made this a
+   fix-now rather than a note.

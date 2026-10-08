@@ -138,8 +138,21 @@ func reloadAuthority(a *authority.Authority, path, callersPath string, cat *cata
 		// Only possible with an empty path, which a reload never has.
 		return fmt.Errorf("reloading %s produced no grant source", path)
 	}
+	was := generationOf(a.Loaded())
 	a.Set(next.Loaded())
+	// The line a person reads after editing the file: which content replaced
+	// which. One generation alone cannot answer "did my edit take?".
+	log.Info("grants reloaded", "path", path, "generation", generationOf(next.Loaded()), "was", was)
 	return nil
+}
+
+// generationOf identifies a source's content for the reload line, or says it
+// cannot -- never silently nothing.
+func generationOf(s authority.Source) string {
+	if g, ok := s.(authority.Generational); ok {
+		return g.Generation()
+	}
+	return "unknown"
 }
 
 // loadAuthority reads the grant file and CHECKS IT AGAINST THE CATALOGUE before
@@ -291,9 +304,9 @@ func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, na
 				case <-ctx.Done():
 					return
 				case <-hup:
-					if err := reloadAuthority(auth, grantsPath, callersPath, cat, log); err == nil {
-						log.Info("grants reloaded", "path", grantsPath)
-					}
+					// reloadAuthority logs both outcomes, naming the
+					// generations, so there is nothing to add here.
+					_ = reloadAuthority(auth, grantsPath, callersPath, cat, log)
 				}
 			}
 		}()

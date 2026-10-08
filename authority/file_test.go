@@ -288,3 +288,47 @@ func TestCheckCatalogueRefusesARequirementTheFileDoesNotDeclare(t *testing.T) {
 		}
 	}
 }
+
+// Found in review: the decoder read ONE document, so a file with a `---`
+// separator silently dropped every grant after the first -- exactly the "a
+// grant that silently matches nothing" class this file's checks exist to
+// refuse. It failed closed, which is why it was not a hole; it was still a
+// refusal nobody could debug.
+func TestASecondYAMLDocumentIsRefusedRatherThanDropped(t *testing.T) {
+	_, err := loadGrants(t, `schema: v1
+compartments: [weather]
+grants:
+  - principal: { kind: account, id: CALLER-studio }
+    tools: ["*"]
+    compartments: [weather]
+---
+schema: v1
+compartments: [payments]
+grants:
+  - principal: { kind: account, id: CALLER-batch }
+    tools: ["*"]
+    compartments: [payments]
+`)
+	if err == nil {
+		t.Fatal("a second document was accepted, so its grants were silently dropped")
+	}
+	if !strings.Contains(err.Error(), "document") {
+		t.Fatalf("the refusal does not say what was wrong: %v", err)
+	}
+}
+
+// Found in review: ".*" passed the pattern check -- one star, trailing ".*" --
+// and then matched nothing, because no tool name may begin with a dot. A
+// pattern that silently matches nothing is what checkPattern exists to refuse.
+func TestAPrefixPatternNeedsSomethingBeforeTheStar(t *testing.T) {
+	for _, bad := range []string{".*", "*.*"} {
+		_, err := loadGrants(t, one(`"`+bad+`"`))
+		if err == nil {
+			t.Errorf("%q was accepted and matches nothing", bad)
+			continue
+		}
+		if !strings.Contains(err.Error(), bad) {
+			t.Errorf("the refusal for %q does not name it: %v", bad, err)
+		}
+	}
+}

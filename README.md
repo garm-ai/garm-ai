@@ -258,7 +258,7 @@ graph, or consent — and a dozen other things, each listed in
 
 They are absent because nothing enforces them yet, and in the old estate the
 authority model is where all four of 2026-10-02's bugs lived. **Compartments
-came back first**, in step 12, with an enforcer and seventeen rows in
+came back first**, in step 12, with an enforcer and twenty-five rows in
 [docs/invariants.md](docs/invariants.md) rather than a sentence in a guide. The
 rest return the same way, one at a time.
 

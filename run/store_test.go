@@ -2,6 +2,7 @@ package run_test
 
 import (
 	"context"
+	"log/slog"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/garm-ai/garm-ai/authority"
 	"github.com/garm-ai/garm-ai/call"
+	"github.com/garm-ai/garm-ai/declared"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/run"
@@ -444,11 +446,61 @@ func TestFetchAndEventsAdmitTheStarterAndTheSubject(t *testing.T) {
 	if _, failure := e.Events(context.Background(), &runv1.EventsRequest{RunId: "k"}, run.Headers{Caller: "ACX"}); failure != nil {
 		t.Fatalf("the starter's Events: %v", failure)
 	}
+	// the subject, which has no account and presents itself as a principal --
+	// the arm this test was named for and did not exercise, found in review.
+	behalf := run.Headers{AsPrincipal: &person}
+	if resp, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "k"}, behalf); failure != nil || resp.GetState() != runv1.RunState_RUN_STATE_SUCCEEDED {
+		t.Fatalf("the subject's Fetch: %v %v", resp, failure)
+	}
+	if _, failure := e.Events(context.Background(), &runv1.EventsRequest{RunId: "k"}, behalf); failure != nil {
+		t.Fatalf("the subject's Events: %v", failure)
+	}
+	// a third PERSON, so the subject's admission is its identity and not its kind
+	stranger := run.Principal{Kind: run.KindPerson, ID: "someone.else@example.com"}
+	if _, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "k"}, run.Headers{AsPrincipal: &stranger}); failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_NOT_FOUND {
+		t.Fatalf("a third person's Fetch: %v, want NOT_FOUND", failure)
+	}
 	// a third account
 	if _, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "k"}, run.Headers{Caller: "ACY"}); failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_NOT_FOUND {
 		t.Fatalf("a third account's Fetch: %v, want NOT_FOUND", failure)
 	}
 	if _, failure := e.Events(context.Background(), &runv1.EventsRequest{RunId: "k"}, run.Headers{Caller: "ACY"}); failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_NOT_FOUND {
 		t.Fatalf("a third account's Events: %v, want NOT_FOUND", failure)
+	}
+}
+
+// Found in review: the sync loop iterates the plan's actions and calls each
+// tool with no authority check, while the store's loop checks every step
+// against the run's recorded compartments. `permit` decided ONE tool -- the one
+// the caller named -- so a plan that grew a second action would have been
+// executed undecided on the sync path and refused on the async one.
+//
+// The engine cannot check it itself: `authority` imports `run`, so the step
+// check lives on the other side of a deliberate one-way dependency. So the sync
+// path refuses a plan it did not decide, rather than running half of it.
+func TestASyncPlanBeyondTheDecidedActionIsRefused(t *testing.T) {
+	e, c := engineWith(t, nil)
+	e.Planner = func(t declared.Tool, input []byte) ([]run.Action, error) {
+		return []run.Action{
+			{Tool: t.Name, Input: input, Budget: t.Budget()},
+			{Tool: "probe.v1.read", Input: input, Budget: time.Second},
+		}, nil
+	}
+	var logged strings.Builder
+	e.Log = slog.New(slog.NewTextHandler(&logged, nil))
+	_, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: "probe.v1.read"}, run.Headers{Caller: "ACX"})
+	if failure == nil {
+		t.Fatal("a two-action sync plan ran with one action decided")
+	}
+	if failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_INTERNAL {
+		t.Errorf("got %v, want INTERNAL: a plan the platform cannot decide is the platform's fault, not the caller's", failure.GetKind())
+	}
+	if len(c.calls) != 0 {
+		t.Errorf("a tool was called %d times before the refusal", len(c.calls))
+	}
+	// The caller is told nothing (INTERNAL keeps its cause at home); the
+	// operator is told everything.
+	if !strings.Contains(logged.String(), "run store") {
+		t.Errorf("the log does not say where a multi-action plan belongs:\n%s", logged.String())
 	}
 }

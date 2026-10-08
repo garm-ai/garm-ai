@@ -196,7 +196,7 @@ func ToolOf(md protoreflect.MethodDescriptor) (Tool, bool) {
 		Agent:    tool.GetAgent(),
 		Sync:     tool.GetSync(),
 		Async:    tool.GetAsync(),
-		Requires: tool.GetRequires().GetCompartments(),
+		Requires: append([]string(nil), tool.GetRequires().GetCompartments()...),
 	}, true
 }
 

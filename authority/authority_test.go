@@ -165,8 +165,15 @@ func TestARequirementlessToolStillNeedsAGrantAdmittingIt(t *testing.T) {
 
 // An unidentified caller holds nothing: the transport proved nobody, so there
 // is nothing to look a grant up by.
+//
+// The source holds a grant whose principal IS the zero principal, which is the
+// only shape that makes this test bite. Found in review: with a grant for
+// `account:""` the lookup missed and the refusal came from "no grants at all" --
+// the same refusal from a different guard, leaving the guard this test is named
+// after passing whether it existed or not.
 func TestAnUnidentifiedCallerIsDenied(t *testing.T) {
-	a := authorityOver(fixed{grant("", []string{"*"}, []string{"payments"}, time.Time{})})
+	nobody := authority.Grant{ID: "nobody#0", Tools: []string{"*"}, Compartments: []string{"payments"}}
+	a := authorityOver(fixed{nobody})
 	denial(t, mustDeny(t, a, run.Principal{}, tool("payments.v1.get_balance", "payments")))
 }
 
@@ -192,6 +199,13 @@ func TestCanSeeAdmitsTheStarterAndTheSubjectOnly(t *testing.T) {
 	if a.CanSee(context.Background(), acct("ACX"), run.Seen{}) {
 		t.Error("a run with no principal is visible")
 	}
+	// Both halves zero AT ONCE, which is the case that bites: equality alone
+	// would make two unknowns a match and hand every ownerless run to every
+	// unidentified reader. Found in review -- varying one side at a time left
+	// the guard untested.
+	if a.CanSee(context.Background(), run.Principal{}, run.Seen{}) {
+		t.Error("an unidentified caller can see a run with no principal: two unknowns are not a match")
+	}
 }
 
 // Property 11's policy half, which rundbos must not hold: a step is permitted
@@ -199,22 +213,42 @@ func TestCanSeeAdmitsTheStarterAndTheSubjectOnly(t *testing.T) {
 // allowlist cites it -- the intersection, never the union.
 func TestCheckStepIsTheIntersectionOfTheAllowlistAndTheCompartments(t *testing.T) {
 	target := tool("payments.v1.get_balance", "payments")
-	allowed := []string{"payments.v1.get_balance", "weather.v1.get_forecast"}
-	if err := authority.CheckStep([]string{"payments"}, allowed, target.Name, target.Requires); err != nil {
+	agent := authority.Allowlist{Agent: true, Tools: []string{"payments.v1.get_balance", "weather.v1.get_forecast"}}
+	if err := authority.CheckStep([]string{"payments"}, agent, target.Name, target.Requires); err != nil {
 		t.Fatalf("both halves satisfied: %v", err)
 	}
-	se := denial(t, authority.CheckStep([]string{"weather"}, allowed, target.Name, target.Requires))
+	se := denial(t, authority.CheckStep([]string{"weather"}, agent, target.Name, target.Requires))
 	if !strings.Contains(se.Message, "payments") {
 		t.Errorf("%q", se.Message)
 	}
-	se = denial(t, authority.CheckStep([]string{"payments"}, []string{"weather.v1.get_forecast"}, target.Name, target.Requires))
+	narrow := authority.Allowlist{Agent: true, Tools: []string{"weather.v1.get_forecast"}}
+	se = denial(t, authority.CheckStep([]string{"payments"}, narrow, target.Name, target.Requires))
 	if !strings.Contains(se.Message, "allowlist") {
 		t.Errorf("the allowlist refusal does not say so: %q", se.Message)
 	}
-	// No allowlist at all is not an agent: a plain tool's own step, permitted by
-	// the compartments alone.
-	if err := authority.CheckStep([]string{"payments"}, nil, target.Name, target.Requires); err != nil {
+	// Not an agent at all: a plain tool's own step, permitted by the
+	// compartments alone.
+	if err := authority.CheckStep([]string{"payments"}, authority.Allowlist{}, target.Name, target.Requires); err != nil {
 		t.Fatalf("a plain tool's step: %v", err)
+	}
+}
+
+// An agent that allows nothing reaches nothing. Found in review: the allowlist
+// was a bare []string and nil meant "not an agent", so an agent declared with
+// no tools produced a nil allowlist and the check was SKIPPED rather than
+// failed -- a contract whose two sides disagreed, resolving open. A nil slice
+// cannot carry the difference, least of all across the plan's checkpoint, which
+// turns an empty slice back into nil.
+func TestAnAgentThatAllowsNothingReachesNothing(t *testing.T) {
+	target := tool("weather.v1.get_forecast") // requires nothing: the allowlist is the only gate
+	for _, empty := range []authority.Allowlist{
+		{Agent: true},
+		{Agent: true, Tools: []string{}},
+	} {
+		se := denial(t, authority.CheckStep([]string{"weather"}, empty, target.Name, target.Requires))
+		if !strings.Contains(se.Message, "allowlist") {
+			t.Errorf("%+v: the refusal does not say which half failed: %q", empty, se.Message)
+		}
 	}
 }
 
@@ -240,7 +274,7 @@ func TestARequirementIsEveryCompartmentNotAnyOfThem(t *testing.T) {
 		t.Errorf("the refusal names a compartment the grant DOES hold as missing: %q", se.Message)
 	}
 	// And the same at the step check, which is the half a run uses.
-	se = denial(t, authority.CheckStep([]string{"payments"}, nil, "payments.v1.transfer", []string{"payments", "dual-control"}))
+	se = denial(t, authority.CheckStep([]string{"payments"}, authority.Allowlist{}, "payments.v1.transfer", []string{"payments", "dual-control"}))
 	if !strings.Contains(se.Message, "dual-control") {
 		t.Fatalf("%q", se.Message)
 	}
@@ -267,5 +301,25 @@ func TestAReloadThatFailsKeepsTheRunningSource(t *testing.T) {
 	a.Set(fixed{grant("ACX", []string{"*"}, []string{"weather"}, time.Time{})})
 	if permitted() {
 		t.Fatal("the replaced source still permits what only the old one did")
+	}
+}
+
+// Allow's refusal says "the closest the caller came", and it has to mean it.
+// Found in review: it reported the FIRST admitting grant's shortfall in source
+// order, so a caller holding `payments` under a second grant was told it
+// lacked `payments, dual-control` -- naming a compartment it holds, and burying
+// the one thing it needs.
+func TestTheRefusalNamesTheClosestGrantsShortfall(t *testing.T) {
+	target := tool("payments.v1.transfer", "payments", "dual-control")
+	a := authorityOver(fixed{
+		authority.Grant{ID: "far#0", Principal: acct("ACX"), Tools: []string{"*"}},
+		authority.Grant{ID: "near#1", Principal: acct("ACX"), Tools: []string{"*"}, Compartments: []string{"payments"}},
+	})
+	se := denial(t, mustDeny(t, a, acct("ACX"), target))
+	if !strings.Contains(se.Message, "requires dual-control;") {
+		t.Fatalf("the refusal does not name only the missing compartment: %q", se.Message)
+	}
+	if strings.Contains(se.Message, "requires payments") {
+		t.Errorf("the refusal names a compartment the caller holds as missing: %q", se.Message)
 	}
 }

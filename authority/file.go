@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"slices"
 	"strings"
@@ -72,6 +73,11 @@ func LoadFile(path string, resolve func(name string) (key string, ok bool)) (*Fi
 	dec.KnownFields(true)
 	if err := dec.Decode(&doc); err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	// A second YAML document would be read by nothing. Dropping grants silently
+	// is the failure this file's checks exist to prevent, so say so instead.
+	if err := dec.Decode(new(document)); err != io.EOF {
+		return nil, fmt.Errorf("%s: a second YAML document, after a \"---\" separator; one file is one document, and grants in a second one would be read by nothing", path)
 	}
 	if doc.Schema != Schema {
 		return nil, fmt.Errorf("%s: schema is %q; this build understands %q", path, doc.Schema, Schema)
@@ -162,6 +168,11 @@ func checkPattern(p, where string) error {
 	if stars := strings.Count(p, "*"); stars > 0 {
 		if stars > 1 || !strings.HasSuffix(p, ".*") {
 			return fmt.Errorf("%s: tool pattern %q is neither a name, a prefix ending in \".*\", nor \"*\"", where, p)
+		}
+		// ".*" passes the rule above and matches nothing: no tool name begins
+		// with a dot. A pattern that matches nothing is what this refuses.
+		if p == ".*" {
+			return fmt.Errorf("%s: tool pattern %q has nothing before the star, so it matches no tool; write a prefix (\"weather.v1.*\") or exactly \"*\"", where, p)
 		}
 	}
 	return nil

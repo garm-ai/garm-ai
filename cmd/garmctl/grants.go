@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -104,6 +105,10 @@ func grantsCheck(cmd *cobra.Command, grantsPath, callersPath, catURI, catSHA, ca
 			}
 			if !g.Expires.IsZero() {
 				fmt.Fprintf(out, "  expires %s", g.Expires.Format("2006-01-02T15:04:05Z07:00"))
+				// The most actionable fact about a grant that decides nothing.
+				if !g.Live(time.Now()) {
+					fmt.Fprintf(out, " (EXPIRED -- this grant decides nothing)")
+				}
 			}
 			fmt.Fprintln(out)
 		}
@@ -116,13 +121,18 @@ func grantsCheck(cmd *cobra.Command, grantsPath, callersPath, catURI, catSHA, ca
 }
 
 // report writes one principal's two tool lists: what it may invoke, and what a
-// grant admits but a compartment refuses. The second list is the one a person
-// debugging a DENIED comes here for; tools no grant admits at all are the
+// grant claims but the decision refuses. The second list is the one a person
+// debugging a DENIED comes here for; tools no grant names at all are the
 // complement of the first list and are not worth a line each.
+//
+// The REASON is always the decider's own words. It was a sentence built here
+// once, and it misreported an expired grant as a missing compartment -- the
+// report may decide what to show, never why.
 func report(cmd *cobra.Command, out io.Writer, a *authority.Authority, p principal, tools []declared.Tool) {
 	var may, blocked []string
 	for _, t := range tools {
-		if _, err := a.Allow(cmd.Context(), p.principal, t); err == nil {
+		_, err := a.Allow(cmd.Context(), p.principal, t)
+		if err == nil {
 			line := t.Name
 			if len(t.Requires) > 0 {
 				line += "  requires " + list(t.Requires)
@@ -132,7 +142,7 @@ func report(cmd *cobra.Command, out io.Writer, a *authority.Authority, p princip
 		}
 		for _, g := range p.grants {
 			if g.Admits(t.Name) {
-				blocked = append(blocked, fmt.Sprintf("%s  requires %s", t.Name, list(t.Requires)))
+				blocked = append(blocked, err.Error())
 				break
 			}
 		}
@@ -146,7 +156,7 @@ func report(cmd *cobra.Command, out io.Writer, a *authority.Authority, p princip
 		}
 	}
 	if len(blocked) > 0 {
-		fmt.Fprintf(out, "  admitted by a grant, refused for a compartment it does not hold:\n")
+		fmt.Fprintf(out, "  named by a grant and refused anyway:\n")
 		for _, line := range blocked {
 			fmt.Fprintf(out, "    %s\n", line)
 		}

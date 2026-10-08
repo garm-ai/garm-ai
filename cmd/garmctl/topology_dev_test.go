@@ -160,3 +160,26 @@ func TestDevTakesTheNativeConfigsAddresses(t *testing.T) {
 		}
 	}
 }
+
+// --listen and --monitor shape the file only --dev writes. Found in review:
+// they were accepted without it and silently ignored, which is the failure
+// --status's own refusal in this file exists to prevent -- a flag that looks
+// like it did something.
+func TestTheServerAddressesAreRefusedWithoutDev(t *testing.T) {
+	e := estate.New(t)
+	for _, flag := range []string{"--listen", "--monitor"} {
+		_, _, err := runTopology(t, append(catalogueArgs(e), "--callers", "studio",
+			flag, "127.0.0.1:19999", "--out", t.TempDir())...)
+		if err == nil {
+			t.Errorf("%s was accepted without --dev, and would have done nothing", flag)
+			continue
+		}
+		// The flag's own name, not just "--dev": without --dev the command
+		// already refuses for want of --keys and --manifest, and that refusal
+		// happens to mention --dev -- so asserting on it would pass whether
+		// this guard existed or not.
+		if !strings.Contains(err.Error(), flag) {
+			t.Errorf("the refusal does not name %s, so it is not this refusal: %v", flag, err)
+		}
+	}
+}

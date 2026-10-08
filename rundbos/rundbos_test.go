@@ -18,6 +18,7 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/garm-ai/garm-ai/authority"
 	"github.com/garm-ai/garm-ai/catalogue"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
@@ -1115,12 +1116,18 @@ func TestAReplayDecidesFromTheRecordedDecision(t *testing.T) {
 	}
 	var p struct {
 		Actions   []run.Action
-		Allowlist []string
+		Allowlist authority.Allowlist
 	}
 	if err := json.Unmarshal(steps[0].Output, &p); err != nil || len(p.Actions) != 1 {
 		t.Fatalf("%s: %v", steps[0].Output, err)
 	}
 	if !reflect.DeepEqual(p.Actions[0].Requires, []string{"weather"}) {
 		t.Fatalf("the plan pinned requirements %v, want the tool's at plan time", p.Actions[0].Requires)
+	}
+	// Agent-ness survives the checkpoint as a FIELD. It could not survive as an
+	// empty slice -- JSON brings one back as nil -- which is why an agent that
+	// allows nothing would have replayed as an agent that allows everything.
+	if p.Allowlist.Agent {
+		t.Errorf("a plain tool's plan says it is an agent's: %+v", p.Allowlist)
 	}
 }

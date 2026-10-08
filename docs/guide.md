@@ -260,7 +260,7 @@ never pooled across two grants. Everything else is `DENIED`, naming the half
 that failed:
 
 ```
-DENIED: weather.v1.schedule_report requires weather; account:ACJUIM… holds nothing
+DENIED: weather.v1.schedule_report requires weather; account:ACJUIMSA76BT55RGWVAVFRZDDCZHCHZKACRGSTCBHXRY7RAO6QRIYRQZ holds nothing
 ```
 
 The decision is taken once, when the run starts, and recorded on the run with
@@ -297,8 +297,8 @@ cannot drift from what would happen.
 `SIGHUP` reloads the file into a running `rund`; a file that fails those checks
 leaves the running grants standing and says why. **Without `--grants`**, `rund`
 announces a reduced posture: a tool that requires nothing is open, a tool with
-a requirement is refused naming the flag, and the startup line says how many
-declared tools it cannot decide. It never guesses.
+a requirement is refused naming the flag, and a warning at boot names the
+declared tools it cannot decide, if there are any. It never guesses.
 
 `scripts/e2e.sh` runs all of this: it writes the file, checks it, hands it to
 `rund`, takes the compartment away, `SIGHUP`s, and asserts the same call is

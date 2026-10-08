@@ -94,11 +94,18 @@ func TestReloadRereadsTheGrants(t *testing.T) {
 		t.Fatal("permitted before the grant existed")
 	}
 	write("weather")
-	if err := reloadAuthority(auth, grants, callers, e.Catalogue.Current(), slog.New(slog.DiscardHandler)); err != nil {
+	var reloaded strings.Builder
+	if err := reloadAuthority(auth, grants, callers, e.Catalogue.Current(), slog.New(slog.NewTextHandler(&reloaded, nil))); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := auth.Allow(context.Background(), principal, report); err != nil {
 		t.Fatalf("the reloaded grant does not permit: %v", err)
+	}
+	// The line says WHICH content replaced which: the one question a person
+	// asking "did my edit take?" has, and two generations answer it.
+	line := reloaded.String()
+	if !strings.Contains(line, "was=") || !strings.Contains(line, "generation=") {
+		t.Errorf("the reload line does not name the old and new generation:\n%s", line)
 	}
 }
 
@@ -136,6 +143,12 @@ func TestARefusedReloadKeepsTheRunningAuthority(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "weather") {
 		t.Errorf("the refusal does not say why: %v", err)
+	}
+	// And the OPERATOR is told, not only the caller of this function. Found in
+	// review: this buffer was built and never read, so the half of property 17
+	// that says the refusal is announced was asserted by nothing.
+	if logged := buf.String(); !strings.Contains(logged, "weather") || !strings.Contains(logged, grants) {
+		t.Errorf("the log does not say which file was refused and why:\n%s", logged)
 	}
 	if _, err := auth.Allow(context.Background(), principal, report); err != nil {
 		t.Fatalf("the running authority was replaced by a refused reload: %v", err)
