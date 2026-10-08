@@ -82,7 +82,7 @@ func TestTheStoreRecoversWhenTheDatabaseReturns(t *testing.T) {
 	deadline := time.Now().Add(10 * time.Second)
 	for {
 		_, err := s.Start(context.Background(), run.Run{ID: "k", Tool: asyncTool, Input: []byte("in"),
-			Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m0"})
+			Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m0", Compartments: []string{"weather"}})
 		if err == nil {
 			break
 		}

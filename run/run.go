@@ -131,6 +131,11 @@ type Action struct {
 	Tool   string
 	Input  []byte
 	Budget time.Duration
+	// Requires is the tool's compartments AS THEY WERE WHEN THE PLAN WAS MADE.
+	// Pinned here for the same reason the budget is: the step checks against
+	// this, so a replay after a declaration changed decides as the run was
+	// decided, not as the catalogue reads now (authority spec §4, §7).
+	Requires []string
 }
 
 // Plan says what an invocation does.
@@ -151,7 +156,7 @@ func Plan(t declared.Tool, input []byte) ([]Action, error) {
 		return nil, serve.Unavailable(
 			"%s is an agent; this build has no decider to run it", t.Name)
 	}
-	return []Action{{Tool: t.Name, Input: input, Budget: t.Budget()}}, nil
+	return []Action{{Tool: t.Name, Input: input, Budget: t.Budget(), Requires: t.Requires}}, nil
 }
 
 // Invoke runs one invocation to an answer.

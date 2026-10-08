@@ -204,16 +204,16 @@ func (a *Authority) CanSee(_ context.Context, p run.Principal, r run.Seen) bool 
 // intersection, never the union. An allowlist cannot widen a grant, and a grant
 // cannot widen an allowlist (spec §7).
 //
-// compartments are the run's recorded ones, so a replay decides identically; a
-// nil allowlist is a plain tool's own step rather than an agent's, and only the
-// compartments apply.
-func CheckStep(compartments, allowlist []string, t declared.Tool) error {
-	if allowlist != nil && !slices.Contains(allowlist, t.Name) {
-		return serve.Denied("%s is not in this run's allowlist", t.Name)
+// compartments are the run's recorded ones and requires is the plan's pinned
+// requirement, so a replay decides identically; a nil allowlist is a plain
+// tool's own step rather than an agent's, and only the compartments apply.
+func CheckStep(compartments, allowlist []string, tool string, requires []string) error {
+	if allowlist != nil && !slices.Contains(allowlist, tool) {
+		return serve.Denied("%s is not in this run's allowlist", tool)
 	}
 	g := Grant{Compartments: compartments}
-	if m := g.Satisfies(t.Requires); len(m) > 0 {
-		return serve.Denied("%s requires %s, which this run does not carry", t.Name, strings.Join(m, ", "))
+	if m := g.Satisfies(requires); len(m) > 0 {
+		return serve.Denied("%s requires %s, which this run does not carry", tool, strings.Join(m, ", "))
 	}
 	return nil
 }

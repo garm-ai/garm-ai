@@ -200,20 +200,20 @@ func TestCanSeeAdmitsTheStarterAndTheSubjectOnly(t *testing.T) {
 func TestCheckStepIsTheIntersectionOfTheAllowlistAndTheCompartments(t *testing.T) {
 	target := tool("payments.v1.get_balance", "payments")
 	allowed := []string{"payments.v1.get_balance", "weather.v1.get_forecast"}
-	if err := authority.CheckStep([]string{"payments"}, allowed, target); err != nil {
+	if err := authority.CheckStep([]string{"payments"}, allowed, target.Name, target.Requires); err != nil {
 		t.Fatalf("both halves satisfied: %v", err)
 	}
-	se := denial(t, authority.CheckStep([]string{"weather"}, allowed, target))
+	se := denial(t, authority.CheckStep([]string{"weather"}, allowed, target.Name, target.Requires))
 	if !strings.Contains(se.Message, "payments") {
 		t.Errorf("%q", se.Message)
 	}
-	se = denial(t, authority.CheckStep([]string{"payments"}, []string{"weather.v1.get_forecast"}, target))
+	se = denial(t, authority.CheckStep([]string{"payments"}, []string{"weather.v1.get_forecast"}, target.Name, target.Requires))
 	if !strings.Contains(se.Message, "allowlist") {
 		t.Errorf("the allowlist refusal does not say so: %q", se.Message)
 	}
 	// No allowlist at all is not an agent: a plain tool's own step, permitted by
 	// the compartments alone.
-	if err := authority.CheckStep([]string{"payments"}, nil, target); err != nil {
+	if err := authority.CheckStep([]string{"payments"}, nil, target.Name, target.Requires); err != nil {
 		t.Fatalf("a plain tool's step: %v", err)
 	}
 }
@@ -240,7 +240,7 @@ func TestARequirementIsEveryCompartmentNotAnyOfThem(t *testing.T) {
 		t.Errorf("the refusal names a compartment the grant DOES hold as missing: %q", se.Message)
 	}
 	// And the same at the step check, which is the half a run uses.
-	se = denial(t, authority.CheckStep([]string{"payments"}, nil, tool("payments.v1.transfer", "payments", "dual-control")))
+	se = denial(t, authority.CheckStep([]string{"payments"}, nil, "payments.v1.transfer", []string{"payments", "dual-control"}))
 	if !strings.Contains(se.Message, "dual-control") {
 		t.Fatalf("%q", se.Message)
 	}
