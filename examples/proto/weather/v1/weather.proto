@@ -52,6 +52,10 @@ service WeatherService {
       // from the queue: the handler's own deadline and rund's request timeout,
       // both from here. Not how long the run may take.
       async: { limit: { seconds: 60 } }
+      // WHAT A CALLER MUST HOLD. A report costs something to produce, so this
+      // one asks; the forecast beside it asks nothing, and the two together are
+      // what make the quick start exercise both halves of the authority model.
+      requires: { compartments: ["weather"] }
     };
   }
 }

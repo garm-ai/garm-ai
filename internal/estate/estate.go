@@ -22,6 +22,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -32,6 +33,7 @@ import (
 	"github.com/nats-io/nkeys"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/garm-ai/garm-ai/authority"
 	"github.com/garm-ai/garm-ai/catalogue"
 	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
 	"github.com/garm-ai/garm-ai/examples/weatherd"
@@ -93,14 +95,50 @@ type Estate struct {
 	store    *rundbos.Store
 	storeDir string
 	gated    *gatedCaller
+	grants   string
 }
+
+// GrantsFile is where the estate wrote its grants, for a test that reads or
+// rewrites them; empty under WithoutGrants.
+func (e *Estate) GrantsFile() string { return e.grants }
 
 // Option shapes an estate.
 type Option func(*options)
 
 type options struct {
 	store, storeDown bool
+	noGrants         bool
+	ownGrants        bool // WithGrant was used: the defaults are replaced
 	gates            []string
+	grants           []string // grant entries, as YAML list items
+}
+
+// WithoutGrants is rund with no grant source: the reduced posture (authority
+// spec §9) -- a tool that requires nothing is open, a tool with a requirement
+// is refused naming the flag.
+func WithoutGrants() Option { return func(o *options) { o.noGrants = true } }
+
+// WithGrant REPLACES the estate's default grants with exactly the ones given,
+// so a test states precisely what the world holds. The defaults -- studio
+// holding `weather`, batch holding `support`, both with tools ["*"] -- are what
+// an estate has when no test says otherwise, and they are what make a refusal
+// assertable without any option at all.
+func WithGrant(as Role, tools, compartments []string) Option {
+	return func(o *options) {
+		o.ownGrants = true
+		o.grants = append(o.grants, fmt.Sprintf(`  - principal: { kind: account, id: %s%s }
+    tools: [%s]
+    compartments: [%s]
+`, topology.CallerPrefix, as, strings.Join(quoteAll(tools), ", "), strings.Join(compartments, ", ")))
+	}
+}
+
+func quoteAll(ss []string) []string {
+	out := make([]string, 0, len(ss))
+	for _, s := range ss {
+		out = append(out, `"`+s+`"`)
+	}
+	return out
 }
 
 // WithToolGate blocks the tool call whose idempotency key is key until
@@ -507,6 +545,38 @@ func New(t testing.TB, opts ...Option) *Estate {
 		Catalogue: e.Catalogue,
 		Tools:     rundsvc.ToolCaller{NC: rundNC},
 		Log:       rundLog,
+	}
+	if !o.noGrants {
+		// studio holds `weather`, so it may invoke the example's requiring tool;
+		// batch holds `support`, so it may not. One estate, both halves of a
+		// decision (authority spec §11 properties 1 and 3).
+		entries := o.grants
+		if !o.ownGrants {
+			entries = []string{
+				"  - principal: { kind: account, id: " + topology.CallerPrefix + string(RoleCaller) + " }\n    tools: [\"*\"]\n    compartments: [weather]\n",
+				"  - principal: { kind: account, id: " + topology.CallerPrefix + string(RoleCaller2) + " }\n    tools: [\"*\"]\n    compartments: [support]\n",
+			}
+		}
+		body := "schema: v1\ncompartments: [weather, support, payments]\ngrants:\n" + strings.Join(entries, "")
+		path := filepath.Join(t.TempDir(), "grants.yaml")
+		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		// The estate resolves every role it issues, not only the ones its
+		// caller table labels: rund's resolver is callers.json, and this is not
+		// rund's main.
+		file, err := authority.LoadFile(path, func(name string) (string, bool) {
+			role := Role(strings.TrimPrefix(name, topology.CallerPrefix))
+			key := e.AccountKey(role)
+			return key, key != ""
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		a := &authority.Authority{}
+		a.Set(file)
+		engine.Authority = a
+		e.grants = path
 	}
 	if o.store {
 		// The run store on a SQLite file in the test's temp dir -- the same

@@ -66,7 +66,7 @@ func TestAGrantThatSatisfiesTheRequirementPermitsAndSaysWhatItReliedOn(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	if g.ID != "ACX#0" || !reflect.DeepEqual(g.Compartments, []string{"payments"}) {
+	if g.GrantID != "ACX#0" || !reflect.DeepEqual(g.Compartments, []string{"payments"}) {
 		t.Fatalf("relied on %+v", g)
 	}
 }

@@ -8,14 +8,17 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 	"time"
 
 	"github.com/nats-io/nats.go"
 
+	"github.com/garm-ai/garm-ai/authority"
 	"github.com/garm-ai/garm-ai/catalogue"
 	"github.com/garm-ai/garm-ai/fetch"
 	"github.com/garm-ai/garm-ai/natsconn"
@@ -25,6 +28,7 @@ import (
 	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundbos"
 	"github.com/garm-ai/garm-ai/rundsvc"
+	"github.com/garm-ai/garm-ai/topology"
 )
 
 func main() {
@@ -44,6 +48,7 @@ func main() {
 		storeWk = flag.Int("run-store-workers", 4, "runs this replica executes at once")
 		storeMg = flag.Bool("run-store-migrate", true, "create and migrate the store's schema at start; false verifies it and refuses to start if it is absent")
 		storeRL = flag.Duration("run-store-run-limit", 24*time.Hour, "the ceiling on one run, from the moment a replica starts executing it until it is CANCELLED; a tool's own limit bounds one call, this bounds the whole run; 0 means none")
+		grants  = flag.String("grants", "", "grants.yaml as a deployment reviews it: which principals may invoke which tools, and the compartments they hold; empty means no grant source -- a tool that requires nothing is open and a tool with a requirement is refused")
 	)
 	flag.Parse()
 
@@ -63,14 +68,15 @@ func main() {
 		// Every value, defaults included, so nobody has to guess which one is in force.
 		log.Info("starting", "nats", *natsURL, "creds", *creds, "tls_ca", *tlsCA, "catalogue", *catURI, "catalogue_dir", *catDir,
 			"name", *name, "version", *version, "callers", *callers, "health", *health,
-			"run_store", storeLabel(*store), "run_store_executor", *storeEx, "run_store_workers", *storeWk, "run_store_migrate", *storeMg, "run_store_run_limit", *storeRL)
+			"run_store", storeLabel(*store), "run_store_executor", *storeEx, "run_store_workers", *storeWk, "run_store_migrate", *storeMg, "run_store_run_limit", *storeRL,
+			"grants", labelOrNone(*grants))
 		if *catURI == "" {
 			log.Error("no catalogue", "hint", "pass -catalogue file://build/catalogue.binpb")
 			return 2
 		}
 		logCredentialExpiry(log, *creds)
 		storeCfg := rundbos.Config{URL: *store, AppName: "garm", Executor: *storeEx, Workers: *storeWk, Migrate: *storeMg, RunLimit: *storeRL, Logger: log}
-		if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, storeCfg, log); err != nil {
+		if err := serveRund(*natsURL, natsconn.Options{Creds: *creds, CA: *tlsCA}, *catURI, *catSHA, *catDir, *name, *version, *callers, *health, *grants, storeCfg, log); err != nil {
 			log.Error("stopped", "error", err)
 			return 1
 		}
@@ -109,7 +115,68 @@ func storeLabel(url string) string {
 	return rundbos.Redact(url)
 }
 
-func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version, callersPath, health string, storeCfg rundbos.Config, log *slog.Logger) error {
+// labelOrNone is a path as the startup line shows it, or "none".
+func labelOrNone(path string) string {
+	if path == "" {
+		return "none"
+	}
+	return path
+}
+
+// loadAuthority reads the grant file and CHECKS IT AGAINST THE CATALOGUE before
+// anything is mounted (authority spec §6): a tool requiring a compartment no
+// deployment declares is a tool nobody can call, and a grant naming an unknown
+// one grants nothing -- each is a configuration error, refused at boot rather
+// than once per call.
+func loadAuthority(path, callersPath string, cat *catalogue.Catalogue, log *slog.Logger) (*authority.Authority, error) {
+	if path == "" {
+		var unsatisfiable []string
+		for _, t := range cat.Tools.Tools() {
+			if len(t.Requires) > 0 {
+				unsatisfiable = append(unsatisfiable, t.Name)
+			}
+		}
+		if len(unsatisfiable) > 0 {
+			log.Warn("declared tools this rund cannot decide",
+				"count", len(unsatisfiable), "tools", unsatisfiable,
+				"why", "they require a compartment and this rund has no grants (--grants)")
+		}
+		return nil, nil
+	}
+	if callersPath == "" {
+		return nil, fmt.Errorf("--grants names principals by name, so --callers is required to resolve them to account keys")
+	}
+	names, err := observe.LoadCallerNames(callersPath)
+	if err != nil {
+		return nil, err
+	}
+	byName := map[string]string{}
+	for key, name := range names {
+		byName[topology.CallerPrefix+name] = key
+	}
+	file, err := authority.LoadFile(path, func(name string) (string, bool) {
+		key, ok := byName[name]
+		return key, ok
+	})
+	if err != nil {
+		return nil, err
+	}
+	vocabulary := file.Vocabulary()
+	for _, t := range cat.Tools.Tools() {
+		for _, c := range t.Requires {
+			if !slices.Contains(vocabulary, c) {
+				return nil, fmt.Errorf("%s requires the compartment %q, which %s does not declare -- a requirement nothing can satisfy is a tool nobody can call",
+					t.Name, c, path)
+			}
+		}
+	}
+	a := &authority.Authority{}
+	a.Set(file)
+	log.Info("grants", "path", path, "generation", file.Generation(), "compartments", vocabulary)
+	return a, nil
+}
+
+func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, name, version, callersPath, health, grantsPath string, storeCfg rundbos.Config, log *slog.Logger) error {
 	ctx := context.Background()
 
 	// A broken table refuses to start rather than labelling half the callers.
@@ -164,7 +231,14 @@ func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, na
 	// call has been answered. Closing earlier turns a deploy into caller timeouts.
 	defer nc.Close()
 
+	auth, err := loadAuthority(grantsPath, callersPath, cat, log)
+	if err != nil {
+		return err
+	}
 	engine := &run.Engine{Catalogue: &holder, Tools: rundsvc.ToolCaller{NC: nc}, Log: log}
+	if auth != nil {
+		engine.Authority = auth
+	}
 	if storeCfg.URL != "" {
 		// Opened BEFORE anything is mounted: Launch recovers this executor's
 		// in-flight runs, and a run started on a store that is not yet up

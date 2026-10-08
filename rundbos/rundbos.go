@@ -311,6 +311,13 @@ func (s *Store) Start(ctx context.Context, r run.Run) (run.Started, error) {
 	attrs := map[string]any{
 		"tool": r.Tool, "caller": r.Caller, "caller_name": r.CallerName, "fingerprint": r.Fingerprint,
 		"correlation": r.Correlation,
+		// The authority decision, recorded with the run: what the audit answers
+		// with, and what a later task list filters on (authority spec §4).
+		"principal_kind": string(r.Principal.Kind), "principal": r.Principal.ID,
+		"compartments": r.Compartments, "grant": r.GrantID,
+	}
+	if r.ActsFor != nil {
+		attrs["acts_for_kind"], attrs["acts_for"] = string(r.ActsFor.Kind), r.ActsFor.ID
 	}
 	for k, v := range r.Attributes {
 		attrs[k] = v
@@ -426,6 +433,16 @@ func (s *Store) state(sess *session, h dbos.WorkflowHandle[outcome]) (run.State,
 	}
 	out := run.State{ID: st.ID, Caller: st.AuthenticatedUser, CreatedAt: st.CreatedAt, CompletedAt: st.CompletedAt}
 	out.Tool, _ = st.Attributes["tool"].(string)
+	// The recorded decision, read back so a visibility check has something to
+	// decide on (authority spec §4).
+	if id, _ := st.Attributes["principal"].(string); id != "" {
+		kind, _ := st.Attributes["principal_kind"].(string)
+		out.Principal = run.Principal{Kind: run.PrincipalKind(kind), ID: id}
+	}
+	if id, _ := st.Attributes["acts_for"].(string); id != "" {
+		kind, _ := st.Attributes["acts_for_kind"].(string)
+		out.ActsFor = &run.Principal{Kind: run.PrincipalKind(kind), ID: id}
+	}
 	out.Stage = s.stage(sess, st)
 	switch st.Status {
 	case dbos.WorkflowStatusSuccess:

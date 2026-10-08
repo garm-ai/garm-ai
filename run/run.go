@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -53,6 +54,26 @@ type Headers struct {
 	Caller, CallerName string
 }
 
+// Decider is the authority model, as the engine needs it. An interface here so
+// `run` does not import `authority` -- which imports `run` for the principal --
+// and so a test can decide without a grant file.
+type Decider interface {
+	// Allow permits this principal to invoke this tool, returning what it
+	// relied on, or an error that is the refusal a caller receives.
+	Allow(ctx context.Context, p Principal, t declared.Tool) (Allowed, error)
+	// CanSee says whether this principal may read this run.
+	CanSee(ctx context.Context, p Principal, r Seen) bool
+}
+
+// Allowed is what a permission relied on: the engine records it on the run so
+// the audit says what was decided, and the workflow checks against it rather
+// than deciding again.
+type Allowed struct {
+	GrantID      string
+	Compartments []string
+	ActsFor      *Principal
+}
+
 // Caller is how the engine reaches a tool. An interface so the engine is testable
 // without a broker, and so the transport can change without the engine moving.
 type Caller interface {
@@ -70,6 +91,13 @@ type Engine struct {
 	// is refused per call naming the flag that would enable it. A sync call
 	// never touches the store, so the store being down never touches sync.
 	Store Store
+
+	// Authority decides who may invoke what and who may see which run. nil is
+	// the REDUCED POSTURE (authority spec §9): a tool that requires nothing is
+	// open, a tool with a requirement is refused naming --grants. The engine
+	// holds no policy of its own -- it asks, records what it was told, and
+	// reports the refusal it was given.
+	Authority Decider
 
 	// NewID mints run and message ids. A field so a test can make them
 	// predictable; nil means crypto/rand.
@@ -151,8 +179,13 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 			"no tool named %q in the catalogue loaded from %s", req.GetTool(), cat.Source))
 	}
 
+	allowed, err := e.permit(ctx, tool, h)
+	if err != nil {
+		return nil, e.fail(ctx, runID, h, tool.Name, err)
+	}
+
 	if !tool.IsSync() && !tool.IsAgent() {
-		return e.startAsync(ctx, tool, req, h)
+		return e.startAsync(ctx, tool, req, h, allowed)
 	}
 
 	actions, err := Plan(tool, req.GetInput())
@@ -208,9 +241,26 @@ func ValidKey(key string) bool {
 	return true
 }
 
+// permit is the authority decision, taken ONCE per invocation (authority spec
+// §4). With no Authority the posture is reduced and announced: a tool that
+// requires nothing proceeds, and a tool with a requirement is refused naming
+// the flag that would decide it -- a security posture is never chosen by
+// omission, and never silently widened either.
+func (e *Engine) permit(ctx context.Context, tool declared.Tool, h Headers) (Allowed, error) {
+	if e.Authority == nil {
+		if len(tool.Requires) == 0 {
+			return Allowed{}, nil
+		}
+		return Allowed{}, serve.Denied(
+			"%s requires %s and this rund has no grants to decide with; start it with --grants",
+			tool.Name, strings.Join(tool.Requires, ", "))
+	}
+	return e.Authority.Allow(ctx, PrincipalOf(h), tool)
+}
+
 // startAsync is the async path: nothing executes here. The run is made durable
 // and the caller gets its id; a replica executes it from the queue (spec §2).
-func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.InvokeRequest, h Headers) (*runv1.InvokeResponse, *invokev1.Error) {
+func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.InvokeRequest, h Headers, allowed Allowed) (*runv1.InvokeResponse, *invokev1.Error) {
 	if e.Store == nil {
 		// Said before the key check: no key the caller adds would help here.
 		return nil, e.fail(ctx, h.Idempotency, h, tool.Name, serve.Unavailable(
@@ -234,6 +284,10 @@ func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.
 		Fingerprint: Fingerprint(tool.Name, req.GetInput()),
 		Caller:      h.Caller, CallerName: h.CallerName,
 		Correlation: h.Correlation, Message: h.Message, Traceparent: h.Traceparent,
+		// The decision, recorded: the workflow checks against THIS and never
+		// decides again (authority spec §4).
+		Principal: PrincipalOf(h), ActsFor: allowed.ActsFor,
+		Compartments: allowed.Compartments, GrantID: allowed.GrantID,
 	}
 	started, err := e.Store.Start(ctx, r)
 	if err != nil {
@@ -336,10 +390,20 @@ func (e *Engine) Events(ctx context.Context, req *runv1.EventsRequest, h Headers
 	return &runv1.EventsResponse{Events: events, Closed: closed}, nil
 }
 
-// visible: may this principal see this run? Today: the invoking account, and
-// nobody else -- an anonymous principal sees nothing. The authority model
-// replaces this body; its callers do not change.
+// visible: may this principal see this run? The authority model decides when
+// there is one -- the starting principal, or the subject it acted for; with
+// none, the invoking account and nobody else, which is what this was before.
+// Its callers -- Fetch, Events -- do not change.
 func (e *Engine) visible(h Headers, st State) bool {
+	if e.Authority != nil {
+		seen := Seen{Principal: st.Principal, ActsFor: st.ActsFor}
+		if seen.Principal.Zero() {
+			// A run recorded before there was an authority: fall back to the
+			// account, so an upgrade does not hide every run already started.
+			seen.Principal = Principal{Kind: KindAccount, ID: st.Caller}
+		}
+		return e.Authority.CanSee(context.Background(), PrincipalOf(h), seen)
+	}
 	return h.Caller != "" && h.Caller == st.Caller
 }
 

@@ -1,0 +1,92 @@
+package estate_test
+
+import (
+	"context"
+	"errors"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/garm-ai/garm-ai/call"
+	weatherv1 "github.com/garm-ai/garm-ai/examples/gen/weather/v1"
+	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
+	"github.com/garm-ai/garm-ai/internal/estate"
+	"github.com/garm-ai/garm-ai/natscall"
+	"github.com/garm-ai/garm-ai/serve"
+)
+
+func denied(t *testing.T, err error) *serve.Error {
+	t.Helper()
+	var se *serve.Error
+	if !errors.As(err, &se) {
+		t.Fatalf("got %v, want a serve.Error", err)
+	}
+	if se.Kind != invokev1.ErrorKind_ERROR_KIND_DENIED {
+		t.Fatalf("got %v, want DENIED", err)
+	}
+	return se
+}
+
+// Property 1 on the wire: the caller whose grant carries `weather` invokes the
+// example's requiring tool; the one whose grant does not is DENIED with the
+// compartment named. One estate, both halves of a decision.
+func TestAGrantDecidesTheRequiringToolOnTheWire(t *testing.T) {
+	e := estate.New(t, estate.WithStore())
+	studio := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
+	ref, err := studio.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-granted"})
+	if err != nil {
+		t.Fatalf("studio holds weather and was refused: %v", err)
+	}
+	if out, _, err := studio.ScheduleReportResult(context.Background(), ref, 10*time.Second); err != nil || out.GetReportId() != "report-Ghent" {
+		t.Fatalf("%v %v", out, err)
+	}
+
+	batch := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller2)})
+	_, err = batch.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k-denied"})
+	se := denied(t, err)
+	if !strings.Contains(se.Message, "weather") || !strings.Contains(se.Message, "weather.v1.schedule_report") {
+		t.Fatalf("the refusal does not name the tool and the missing compartment: %q", se.Message)
+	}
+}
+
+// The requirement-less tool beside it is unaffected: a grant admitting it is
+// all it needs, and both callers hold `tools: ["*"]`.
+func TestARequirementlessToolIsUnaffected(t *testing.T) {
+	e := estate.New(t)
+	for _, as := range []estate.Role{estate.RoleCaller, estate.RoleCaller2} {
+		client := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, as)})
+		if out, err := client.GetForecast(context.Background(), &weatherv1.GetForecastRequest{Place: "Ghent"}); err != nil || out.GetSummary() == "" {
+			t.Fatalf("%s: %v %v", as, out, err)
+		}
+	}
+}
+
+// Property 9 on the wire: with no grant source, the requiring tool is refused
+// naming the flag and the requirement-less one still answers.
+func TestWithoutGrantsTheRequiringToolNamesTheFlag(t *testing.T) {
+	e := estate.New(t, estate.WithoutGrants())
+	client := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
+	if _, err := client.GetForecast(context.Background(), &weatherv1.GetForecastRequest{Place: "Ghent"}); err != nil {
+		t.Fatalf("the requirement-less tool was refused: %v", err)
+	}
+	_, err := client.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k"})
+	se := denied(t, err)
+	if !strings.Contains(se.Message, "--grants") {
+		t.Fatalf("%q", se.Message)
+	}
+}
+
+// Property 5 on the wire: a grant listing one tool admits that one and refuses
+// its sibling by name, even though the compartments would satisfy it.
+func TestAGrantListingOneToolRefusesItsSibling(t *testing.T) {
+	e := estate.New(t, estate.WithGrant(estate.RoleCaller, []string{"weather.v1.get_forecast"}, []string{"weather"}))
+	client := weatherv1.NewWeatherServiceClient(natscall.Client{NC: e.Connect(t, estate.RoleCaller)})
+	if _, err := client.GetForecast(context.Background(), &weatherv1.GetForecastRequest{Place: "Ghent"}); err != nil {
+		t.Fatalf("the granted tool was refused: %v", err)
+	}
+	_, err := client.ScheduleReport(context.Background(), &weatherv1.ScheduleReportRequest{Place: "Ghent"}, call.Options{Idempotency: "k"})
+	se := denied(t, err)
+	if !strings.Contains(se.Message, "does not admit") || !strings.Contains(se.Message, "weather.v1.schedule_report") {
+		t.Fatalf("%q", se.Message)
+	}
+}

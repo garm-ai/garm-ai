@@ -74,12 +74,20 @@ type Run struct {
 	Tool        string
 	Input       []byte
 	Fingerprint string // Fingerprint(Tool, Input)
-	Caller      string // the invoking account's public key
-	CallerName  string // its label, if known
-	Attributes  map[string]string
-	Correlation string // the caller's, or the run id if it sent none
-	Message     string // the caller's message id: the causation of step 0
-	Traceparent string // continued by the step that executes
+	// The authority decision, taken once at Invoke and recorded here (authority
+	// spec §4): who asked, on whose behalf, what the decision relied on, and
+	// which grant. The workflow reads Compartments and NEVER re-decides -- a
+	// fresh lookup inside a run would make a replay take a different path.
+	Principal    Principal
+	ActsFor      *Principal
+	Compartments []string
+	GrantID      string
+	Caller       string // the invoking account's public key
+	CallerName   string // its label, if known
+	Attributes   map[string]string
+	Correlation  string // the caller's, or the run id if it sent none
+	Message      string // the caller's message id: the causation of step 0
+	Traceparent  string // continued by the step that executes
 }
 
 // Started is Start's answer.
@@ -90,8 +98,14 @@ type Started struct {
 
 // State is Fetch's answer.
 type State struct {
-	ID          string
-	Tool        string
+	ID   string
+	Tool string
+	// Principal is who started the run and ActsFor whose authority it exercises:
+	// what a visibility decision reads (authority spec §4). Caller below is the
+	// same account as Principal.ID, kept because the push export and the
+	// observability attributes are account-shaped.
+	Principal   Principal
+	ActsFor     *Principal
 	Status      Status
 	Stage       string
 	Result      []byte

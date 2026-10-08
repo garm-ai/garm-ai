@@ -119,28 +119,30 @@ func (a *Authority) now() time.Time {
 }
 
 // Allow says whether this principal may invoke this tool, and WHAT IT RELIED
-// ON: the grant, which the caller records on a run so the audit says what was
-// decided and a replay never re-decides (spec §4).
+// ON -- the grant's id, its compartments and its subject -- which the caller
+// records on a run so the audit says what was decided and a replay never
+// re-decides (spec §4). It returns run.Allowed rather than the Grant: a
+// decision is not a disclosure of everything the principal holds.
 //
 // Deny by default. The checks run in the order in which a refusal can be most
 // useful: no grant at all, then an expired one, then one that does not admit
 // the tool, then a missing compartment. Compartments are never unioned across
 // grants: a call permitted by two half-grants is a call nobody granted.
-func (a *Authority) Allow(ctx context.Context, p run.Principal, t declared.Tool) (Grant, error) {
+func (a *Authority) Allow(ctx context.Context, p run.Principal, t declared.Tool) (run.Allowed, error) {
 	if p.Zero() {
-		return Grant{}, noGrant(p)
+		return run.Allowed{}, noGrant(p)
 	}
 	src := a.Loaded()
 	if src == nil {
-		return Grant{}, errors.New("authority: no grant source")
+		return run.Allowed{}, errors.New("authority: no grant source")
 	}
 	now := a.now()
 	grants, err := src.For(ctx, p, now)
 	if err != nil {
-		return Grant{}, err
+		return run.Allowed{}, err
 	}
 	if len(grants) == 0 {
-		return Grant{}, noGrant(p)
+		return run.Allowed{}, noGrant(p)
 	}
 	var (
 		live        []Grant
@@ -160,7 +162,7 @@ func (a *Authority) Allow(ctx context.Context, p run.Principal, t declared.Tool)
 		live = append(live, g)
 	}
 	if len(live) == 0 {
-		return Grant{}, expired(p, lastExpiry)
+		return run.Allowed{}, expired(p, lastExpiry)
 	}
 	for _, g := range live {
 		if !g.Admits(t.Name) {
@@ -168,7 +170,9 @@ func (a *Authority) Allow(ctx context.Context, p run.Principal, t declared.Tool)
 		}
 		anyAdmitted = true
 		if m := g.Satisfies(t.Requires); len(m) == 0 {
-			return g, nil
+			// What the permission relied on -- never the grant itself, so a
+			// caller cannot read a principal's whole authority off one decision.
+			return run.Allowed{GrantID: g.ID, Compartments: g.Compartments, ActsFor: g.ActsFor}, nil
 		} else if missing == nil {
 			// The first admitting grant's shortfall is the one reported: it is
 			// the closest the caller came.
@@ -176,9 +180,9 @@ func (a *Authority) Allow(ctx context.Context, p run.Principal, t declared.Tool)
 		}
 	}
 	if !anyAdmitted {
-		return Grant{}, notAdmitted(p, t.Name)
+		return run.Allowed{}, notAdmitted(p, t.Name)
 	}
-	return Grant{}, missingCompartments(p, forTool, missing, held)
+	return run.Allowed{}, missingCompartments(p, forTool, missing, held)
 }
 
 // CanSee says whether this principal may read a run: the principal that started
