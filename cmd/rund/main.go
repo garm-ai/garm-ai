@@ -123,6 +123,26 @@ func labelOrNone(path string) string {
 	return path
 }
 
+// reloadAuthority re-reads the grant file into a RUNNING authority, on SIGHUP.
+// A grant change that needed a restart of the component every call goes through
+// is a change a deployment would avoid making -- so this exists, and it
+// validates before it swaps: a file that fails the same checks the boot made
+// leaves the running authority standing, says why, and denies nothing new
+// (authority spec §9).
+func reloadAuthority(a *authority.Authority, path, callersPath string, cat *catalogue.Catalogue, log *slog.Logger) error {
+	next, err := loadAuthority(path, callersPath, cat, log)
+	if err != nil {
+		log.Warn("grants not reloaded; the running grants still decide", "path", path, "error", err)
+		return err
+	}
+	if next == nil {
+		// Only possible with an empty path, which a reload never has.
+		return fmt.Errorf("reloading %s produced no grant source", path)
+	}
+	a.Set(next.Loaded())
+	return nil
+}
+
 // loadAuthority reads the grant file and CHECKS IT AGAINST THE CATALOGUE before
 // anything is mounted (authority spec §6): a tool requiring a compartment no
 // deployment declares is a tool nobody can call, and a grant naming an unknown
@@ -272,5 +292,25 @@ func serveRund(natsURL string, conn natsconn.Options, catURI, catSHA, catDir, na
 
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	// SIGHUP re-reads the grants, and nothing else: the catalogue is loaded at
+	// boot by design, and a signal that reloaded both would make one operation
+	// out of two decisions.
+	if auth != nil {
+		hup := make(chan os.Signal, 1)
+		signal.Notify(hup, syscall.SIGHUP)
+		defer signal.Stop(hup)
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-hup:
+					if err := reloadAuthority(auth, grantsPath, callersPath, cat, log); err == nil {
+						log.Info("grants reloaded", "path", grantsPath)
+					}
+				}
+			}
+		}()
+	}
 	return svc.Serve(ctx)
 }

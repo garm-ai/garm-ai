@@ -245,3 +245,27 @@ func TestARequirementIsEveryCompartmentNotAnyOfThem(t *testing.T) {
 		t.Fatalf("%q", se.Message)
 	}
 }
+
+// Property 17's core: a reload swaps the source atomically, and a refused one
+// LEAVES THE RUNNING AUTHORITY STANDING -- never an empty source, which would
+// deny every call, and never a widened one.
+func TestAReloadThatFailsKeepsTheRunningSource(t *testing.T) {
+	a := authorityOver(fixed{grant("ACX", []string{"*"}, []string{"payments"}, time.Time{})})
+	permitted := func() bool {
+		_, err := a.Allow(context.Background(), acct("ACX"), tool("payments.v1.get_balance", "payments"))
+		return err == nil
+	}
+	if !permitted() {
+		t.Fatal("the starting source does not permit")
+	}
+	// A refused reload: Set never installs nil.
+	a.Set(nil)
+	if a.Loaded() == nil || !permitted() {
+		t.Fatal("a nil source was installed, denying every call")
+	}
+	// A successful one takes effect at once.
+	a.Set(fixed{grant("ACX", []string{"*"}, []string{"weather"}, time.Time{})})
+	if permitted() {
+		t.Fatal("the replaced source still permits what only the old one did")
+	}
+}

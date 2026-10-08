@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/garm-ai/garm-ai/internal/estate"
 	"github.com/garm-ai/garm-ai/natsconn"
+	"github.com/garm-ai/garm-ai/run"
 	"github.com/garm-ai/garm-ai/rundbos"
 )
 
@@ -62,5 +64,80 @@ func TestAnUndeclaredCompartmentInTheCatalogueRefusesToStart(t *testing.T) {
 		e.CatalogueURI, e.CatalogueSHA, e.Dir, "rund", "0.1.0", callers, "", grants, rundbos.Config{}, slog.New(slog.DiscardHandler))
 	if err == nil || !strings.Contains(err.Error(), "weather") {
 		t.Fatalf("err = %v, want one naming the tool's undeclared compartment", err)
+	}
+}
+
+// Property 17: a reload re-reads the grants, so a grant added takes effect
+// without restarting the component every call goes through.
+func TestReloadRereadsTheGrants(t *testing.T) {
+	e := estate.New(t)
+	dir := t.TempDir()
+	grants := filepath.Join(dir, "grants.yaml")
+	callers := filepath.Join(dir, "callers.json")
+	if err := os.WriteFile(callers, []byte(`{"studio":"`+e.AccountKey(estate.RoleCaller)+`"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	write := func(compartments string) {
+		body := "schema: v1\ncompartments: [weather]\ngrants:\n  - principal: { kind: account, id: CALLER-studio }\n    tools: [\"*\"]\n    compartments: [" + compartments + "]\n"
+		if err := os.WriteFile(grants, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("") // studio holds nothing yet
+	auth, err := loadAuthority(grants, callers, e.Catalogue.Current(), slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, _ := e.Catalogue.Current().Tool("weather.v1.schedule_report")
+	principal := run.Principal{Kind: run.KindAccount, ID: e.AccountKey(estate.RoleCaller)}
+	if _, err := auth.Allow(context.Background(), principal, report); err == nil {
+		t.Fatal("permitted before the grant existed")
+	}
+	write("weather")
+	if err := reloadAuthority(auth, grants, callers, e.Catalogue.Current(), slog.New(slog.DiscardHandler)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := auth.Allow(context.Background(), principal, report); err != nil {
+		t.Fatalf("the reloaded grant does not permit: %v", err)
+	}
+}
+
+// Review focus 4: a reload whose file now fails the vocabulary check keeps the
+// RUNNING authority -- never an empty source -- and says why.
+func TestARefusedReloadKeepsTheRunningAuthority(t *testing.T) {
+	e := estate.New(t)
+	dir := t.TempDir()
+	grants := filepath.Join(dir, "grants.yaml")
+	callers := filepath.Join(dir, "callers.json")
+	if err := os.WriteFile(callers, []byte(`{"studio":"`+e.AccountKey(estate.RoleCaller)+`"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	good := "schema: v1\ncompartments: [weather]\ngrants:\n  - principal: { kind: account, id: CALLER-studio }\n    tools: [\"*\"]\n    compartments: [weather]\n"
+	if err := os.WriteFile(grants, []byte(good), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	auth, err := loadAuthority(grants, callers, e.Catalogue.Current(), slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, _ := e.Catalogue.Current().Tool("weather.v1.schedule_report")
+	principal := run.Principal{Kind: run.KindAccount, ID: e.AccountKey(estate.RoleCaller)}
+	if _, err := auth.Allow(context.Background(), principal, report); err != nil {
+		t.Fatal(err)
+	}
+	// The vocabulary now omits the compartment the catalogue requires.
+	if err := os.WriteFile(grants, []byte("schema: v1\ncompartments: [support]\ngrants: []\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var buf strings.Builder
+	err = reloadAuthority(auth, grants, callers, e.Catalogue.Current(), slog.New(slog.NewTextHandler(&buf, nil)))
+	if err == nil {
+		t.Fatal("a reload that fails the boot checks was accepted")
+	}
+	if !strings.Contains(err.Error(), "weather") {
+		t.Errorf("the refusal does not say why: %v", err)
+	}
+	if _, err := auth.Allow(context.Background(), principal, report); err != nil {
+		t.Fatalf("the running authority was replaced by a refused reload: %v", err)
 	}
 }
