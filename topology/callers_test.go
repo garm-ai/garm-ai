@@ -1,13 +1,31 @@
 package topology_test
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/nats-io/jwt/v2"
+	"github.com/nats-io/nkeys"
 
 	"github.com/garm-ai/garm-ai/topology"
 )
+
+// accountKey is a real public account key, which the caller table requires.
+func accountKey(t *testing.T) string {
+	t.Helper()
+	kp, err := nkeys.CreateAccount()
+	if err != nil {
+		t.Fatal(err)
+	}
+	pub, err := kp.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return pub
+}
 
 // Found in review: dropping a caller from Callers left its previous entry with no
 // account to revoke in, and the generator dereferenced nil. A partner leaving is a
@@ -111,5 +129,41 @@ func TestCallerNamesThatWouldCollideOrEscapeAreRefused(t *testing.T) {
 		Previous: topology.Empty(), Keys: topology.FreshKeys([]string{"batch-x_2"}), Now: time.Now(),
 	}); err != nil {
 		t.Errorf("a legal caller name was refused: %v", err)
+	}
+}
+
+// CallerKeys is the inverse of the table Callers writes: a grant file names
+// "CALLER-studio" and the table names "studio", so the prefix lives here --
+// in the package that owns it -- rather than in each binary that reads grants.
+func TestCallerKeysResolvesAGrantsPrincipalNameToItsAccount(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "callers.json")
+	if err := os.WriteFile(path, []byte(`{"studio":"`+accountKey(t)+`"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	resolve, err := topology.CallerKeys(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, ok := resolve("CALLER-studio")
+	if !ok || key == "" {
+		t.Fatalf("CALLER-studio did not resolve: %q %v", key, ok)
+	}
+	if _, ok := resolve("studio"); ok {
+		t.Error("the unprefixed name resolved; a grant file names the ACCOUNT, which carries the prefix")
+	}
+	if _, ok := resolve("CALLER-nobody"); ok {
+		t.Error("an unknown name resolved")
+	}
+}
+
+// A broken table is refused here, not resolved to nothing: every grant would
+// otherwise fail to match and every call be refused "no grant".
+func TestCallerKeysRefusesABrokenTable(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "callers.json")
+	if err := os.WriteFile(path, []byte(`{not json`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := topology.CallerKeys(path); err == nil || !strings.Contains(err.Error(), path) {
+		t.Fatalf("err = %v, want one naming %s", err, path)
 	}
 }

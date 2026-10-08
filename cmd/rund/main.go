@@ -12,7 +12,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"slices"
 	"syscall"
 	"time"
 
@@ -166,33 +165,20 @@ func loadAuthority(path, callersPath string, cat *catalogue.Catalogue, log *slog
 	if callersPath == "" {
 		return nil, fmt.Errorf("--grants names principals by name, so --callers is required to resolve them to account keys")
 	}
-	names, err := observe.LoadCallerNames(callersPath)
+	resolve, err := topology.CallerKeys(callersPath)
 	if err != nil {
 		return nil, err
 	}
-	byName := map[string]string{}
-	for key, name := range names {
-		byName[topology.CallerPrefix+name] = key
-	}
-	file, err := authority.LoadFile(path, func(name string) (string, bool) {
-		key, ok := byName[name]
-		return key, ok
-	})
+	file, err := authority.LoadFile(path, resolve)
 	if err != nil {
 		return nil, err
 	}
-	vocabulary := file.Vocabulary()
-	for _, t := range cat.Tools.Tools() {
-		for _, c := range t.Requires {
-			if !slices.Contains(vocabulary, c) {
-				return nil, fmt.Errorf("%s requires the compartment %q, which %s does not declare -- a requirement nothing can satisfy is a tool nobody can call",
-					t.Name, c, path)
-			}
-		}
+	if err := file.CheckCatalogue(cat.Tools.Tools()); err != nil {
+		return nil, err
 	}
 	a := &authority.Authority{}
 	a.Set(file)
-	log.Info("grants", "path", path, "generation", file.Generation(), "compartments", vocabulary)
+	log.Info("grants", "path", path, "generation", file.Generation(), "compartments", file.Vocabulary())
 	return a, nil
 }
 

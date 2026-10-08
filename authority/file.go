@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/garm-ai/garm-ai/declared"
 	"github.com/garm-ai/garm-ai/run"
 )
 
@@ -32,6 +33,7 @@ type File struct {
 	generation string
 	vocabulary []string
 	byKey      map[string][]Grant
+	all        []Grant // file order, for a report a person reads beside the file
 }
 
 var _ Source = (*File)(nil)
@@ -76,7 +78,8 @@ func LoadFile(path string, resolve func(name string) (key string, ok bool)) (*Fi
 	}
 	vocabulary := append([]string(nil), doc.Compartments...)
 	slices.Sort(vocabulary)
-	declared := func(c string) bool { return slices.Contains(vocabulary, c) }
+	// Not named `declared`: this package imports the declared package.
+	inVocabulary := func(c string) bool { return slices.Contains(vocabulary, c) }
 
 	f := &File{path: path, vocabulary: vocabulary, byKey: map[string][]Grant{}}
 	sum := sha256.Sum256(raw)
@@ -99,7 +102,7 @@ func LoadFile(path string, resolve func(name string) (key string, ok bool)) (*Fi
 			}
 		}
 		for _, c := range g.Compartments {
-			if !declared(c) {
+			if !inVocabulary(c) {
 				return nil, fmt.Errorf("%s (%s): compartment %q is not in this deployment's vocabulary %v -- a typo here grants nothing, silently",
 					where, e.Principal.ID, c, vocabulary)
 			}
@@ -122,6 +125,7 @@ func LoadFile(path string, resolve func(name string) (key string, ok bool)) (*Fi
 			g.Expires = at
 		}
 		f.byKey[p.ID] = append(f.byKey[p.ID], g)
+		f.all = append(f.all, g)
 	}
 	return f, nil
 }
@@ -172,6 +176,28 @@ func (f *File) For(_ context.Context, p run.Principal, now time.Time) ([]Grant, 
 		}
 	}
 	return out, nil
+}
+
+// Grants is every grant the file holds, in file order -- what `garmctl grants
+// check` reads back to whoever reviews the file. A copy, so a caller that
+// sorts its report does not reorder the file.
+func (f *File) Grants() []Grant { return append([]Grant(nil), f.all...) }
+
+// CheckCatalogue is the §6 cross-check: a tool requiring a compartment this
+// deployment does not declare is a tool nobody can call, which is a
+// configuration error and not a refusal once per call. Made by rund at boot and
+// by `garmctl grants check` without starting rund -- one implementation,
+// because the two must agree about what refuses.
+func (f *File) CheckCatalogue(tools []declared.Tool) error {
+	for _, t := range tools {
+		for _, c := range t.Requires {
+			if !slices.Contains(f.vocabulary, c) {
+				return fmt.Errorf("%s requires the compartment %q, which %s does not declare -- a requirement nothing can satisfy is a tool nobody can call",
+					t.Name, c, f.path)
+			}
+		}
+	}
+	return nil
 }
 
 // Vocabulary is the compartments this deployment declared, sorted. rund checks

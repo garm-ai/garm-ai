@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/garm-ai/garm-ai/authority"
+	"github.com/garm-ai/garm-ai/declared"
 	"github.com/garm-ai/garm-ai/run"
 )
 
@@ -21,6 +22,16 @@ var callers = map[string]string{
 }
 
 func resolve(name string) (string, bool) { key, ok := callers[name]; return key, ok }
+
+// mustLoad is loadGrants for a body that is expected to be good.
+func mustLoad(t *testing.T, body string) *authority.File {
+	t.Helper()
+	f, err := loadGrants(t, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f
+}
 
 func loadGrants(t *testing.T, body string) (*authority.File, error) {
 	t.Helper()
@@ -228,3 +239,52 @@ func TestAMalformedFileIsRefusedNamingThePath(t *testing.T) {
 }
 
 var _ = time.Time{}
+
+// Grants is every grant the file holds, in file order -- what `garmctl grants
+// check` reads back to a person reviewing what they granted. Order is the
+// file's because a reviewer reads the report beside the file.
+func TestGrantsAreReadBackInFileOrder(t *testing.T) {
+	f := mustLoad(t, `schema: v1
+compartments: [weather, support]
+grants:
+  - principal: { kind: account, id: CALLER-studio }
+    tools: ["weather.v1.*"]
+    compartments: [weather]
+  - principal: { kind: account, id: CALLER-batch }
+    tools: ["*"]
+    compartments: [support]
+`)
+	got := f.Grants()
+	if len(got) != 2 {
+		t.Fatalf("got %d grants, want 2", len(got))
+	}
+	if got[0].ID != "CALLER-studio#0" || got[1].ID != "CALLER-batch#1" {
+		t.Fatalf("out of file order: %q then %q", got[0].ID, got[1].ID)
+	}
+	// A copy: a caller that sorts the report must not reorder the file's grants.
+	got[0], got[1] = got[1], got[0]
+	if again := f.Grants(); again[0].ID != "CALLER-studio#0" {
+		t.Fatalf("Grants handed out the file's own slice: %q", again[0].ID)
+	}
+}
+
+// The §6 cross-check, as a method on the file, because two binaries make it:
+// rund at boot and `garmctl grants check` without starting rund.
+func TestCheckCatalogueRefusesARequirementTheFileDoesNotDeclare(t *testing.T) {
+	f := mustLoad(t, "schema: v1\ncompartments: [weather]\ngrants: []\n")
+	if err := f.CheckCatalogue([]declared.Tool{{Name: "a.b.c", Requires: []string{"weather"}}}); err != nil {
+		t.Fatalf("a declared compartment was refused: %v", err)
+	}
+	err := f.CheckCatalogue([]declared.Tool{
+		{Name: "a.b.c", Requires: []string{"weather"}},
+		{Name: "d.e.f", Requires: []string{"payments"}},
+	})
+	if err == nil {
+		t.Fatal("a requirement nothing can satisfy was accepted")
+	}
+	for _, want := range []string{"d.e.f", "payments"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("the refusal does not name %q: %v", want, err)
+		}
+	}
+}
