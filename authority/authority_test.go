@@ -226,3 +226,22 @@ func mustDeny(t *testing.T, a *authority.Authority, p run.Principal, tl declared
 	}
 	return err
 }
+
+// A requirement is ALL of its compartments, not any of them: a grant holding
+// one of two is refused, and only the missing one is named. Found by a probe:
+// "any" semantics passed every other test in this file.
+func TestARequirementIsEveryCompartmentNotAnyOfThem(t *testing.T) {
+	a := authorityOver(fixed{grant("ACX", []string{"*"}, []string{"payments"}, time.Time{})})
+	se := denial(t, mustDeny(t, a, acct("ACX"), tool("payments.v1.transfer", "payments", "dual-control")))
+	if !strings.Contains(se.Message, "dual-control") {
+		t.Fatalf("the refusal does not name the one missing compartment: %q", se.Message)
+	}
+	if strings.Contains(se.Message, "requires payments,") || strings.Contains(se.Message, "requires payments ") {
+		t.Errorf("the refusal names a compartment the grant DOES hold as missing: %q", se.Message)
+	}
+	// And the same at the step check, which is the half a run uses.
+	se = denial(t, authority.CheckStep([]string{"payments"}, nil, tool("payments.v1.transfer", "payments", "dual-control")))
+	if !strings.Contains(se.Message, "dual-control") {
+		t.Fatalf("%q", se.Message)
+	}
+}
