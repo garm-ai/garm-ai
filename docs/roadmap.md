@@ -31,6 +31,7 @@ one component in more detail. They link here rather than repeating it.
 | **Push**: a run records every event in a DBOS stream and `rund` publishes each live on an account-token stream export only the owner imports; `Events` reads the record from a cursor; `Follow` stitches catch-up to live by sequence; `garmctl fetch --follow` | `estate.TestALiveSubscriberSeesTheRunsEvents` · `estate.TestFollowMidRunYieldsEveryEventOnce` · `estate.TestAnotherAccountReceivesNothingOnTheBus` · `rundbos.TestAnUnreachableBusDropsTheLiveCopyAndTheRunFinishes` — step **11** |
 | **Revoked stays revoked**: the manifest's cumulative record carries every revocation into every later account JWT until the credential expires; a leaving caller's tombstone is re-emitted while its revocation lives | `topology.TestARevocationIsCarriedAcrossGenerations` · `TestARevocationIsPrunedOnceTheCredentialHasExpired` · `TestATombstoneIsReemittedWhileItsRevocationLives` |
 | The root offline; accounts signed by an operator signing key, credentials by account signing keys, enforced by the server; two-step rotation with `--verify-live` | `estate.TestTheServerRefusesAnAccountSignedByTheRoot` · `estate.TestRotationKeepsTheOldCredentialAliveUntilStepTwo` · `garmctl.TestVerifyLiveRefusesWhileTheOldKeyIsStillOnTheWire` — step **9f** |
+| **The authority model**: a tool declares `requires{compartments}`, a deployment's reviewed `grants.yaml` grants principals tools and compartments, `rund` decides **once** at `Invoke` and records the principal, the grant and the compartments on the run; a step needs the pinned allowlist *and* those compartments; `DENIED` names the failing half; `acts_for` lets a person read the runs their agent made; `SIGHUP` reloads and a refused reload keeps the running grants; `garmctl grants check` makes the same refusals without starting `rund` | `estate.TestAGrantDecidesTheRequiringToolOnTheWire` · `authority.TestTwoHalfGrantsDoNotCombine` · `rundbos.TestAStepBeyondTheRunsCompartmentsIsDenied` · `estate.TestTheSubjectReadsTheRunButDoesNotReceiveItsLiveEvents` · `rund.TestARefusedReloadKeepsTheRunningAuthority` · `scripts/e2e.sh` — step **12**
 | **The run store**: an async tool is `pending{run_id}` once durable, executed from a DBOS queue by a replica, read back with `Fetch --wait`; the plan is step 0 and a replay follows it; the key is fingerprinted; a run is visible to its invoking account only; sync is sovereign when the store is down; only `rundbos` imports DBOS | `estate.TestAnAsyncToolIsPendingThenAnswered` · `rundbos.TestAStoppedReplicasRunIsFinishedByItsSuccessorWithTheSameIdentity` · `rundbos.TestAReplayFollowsThePlanRecordedAtStart` · `estate.TestSyncIsSovereignWhenTheStoreIsDown` · `mise run no-sdk` — step **10** |
 
 ## Waiting on something real
@@ -61,27 +62,30 @@ generated client it did not write, over a transport it does not import.
 | Hot reload of the catalogue, converging every replica | a trigger — a JetStream KV key an operator sets |
 | A descriptor hash over wire shape | two repositories on two contract versions, so drift can exist |
 | Catalogue signing | a threat model that says digest-pinning is not enough |
-| A person's identity, and standing grants | the identity spec's slices 2 and 3 — an auth-callout service, then a grant store |
+| A person's identity as something a call can PRESENT | the identity spec's slice 2 — an auth-callout service. Standing grants themselves exist as of step 12; what waits is proving a principal that is not an account |
 
 ## The authority model, absent as a block
 
-No clearance, compartments, verbs, tool sets, principal ceiling, bounds, model,
-prompts, graph or consent. Every one is real and most will return.
+**Compartments returned in step 12, with their enforcer.** Still absent: no
+clearance, no verbs, no tool sets, no principal ceiling, no bounds, no model, no
+prompts, no graph, no consent. Every one is real and most will return.
 
-They are absent together because **that is where all four of 2026-10-02's bugs
+They were absent together because **that is where all four of 2026-10-02's bugs
 lived** in the estate this replaces, and because an authority model asserted by a
 declaration and enforced by nothing is worse than none — it reads as a guarantee.
 They return one at a time, each with its enforcer, each with a row above naming
-what it waited on.
+what it waited on. The compartment is the first to come back, and it came back
+with seventeen rows in [invariants](invariants.md#authority) rather than a
+sentence in a guide.
 
 ## Next
 
 | | waits on |
 |---|---|
-| **The authority model** — a tool declares `requires{compartments}`, a deployment's reviewed inputs grant principals tools and compartments, `rund` decides once at `Invoke` and records it on the run; `DENIED` names the failing half | nothing — [spec](specs/2026-10-08-authority-design.md) written, plan next |
-| **The grant store** — a `Grant` verb, grants in our own table, a bootstrap grant in the file as the root of trust, so assigning an agent to a person is a runtime write | the authority model |
-| **The signed per-call authorization** — `rund` attaches a short-lived operator-signed statement to each tool call and the generated binding verifies it, so a tool service trusts a statement rather than the position of the message | the authority model; it closes the identity page's gap 1 |
-| `Cancel` / `Approve` / deciders, on the authority model | the authority model |
+| **The grant store** — a `Grant` verb, grants in our own table behind the unchanged `authority.Source`, a bootstrap grant in the file as the root of trust, so assigning an agent to a person is a runtime write rather than a commit | nothing — the authority model is built (step 12) |
+| **The signed per-call authorization** — `rund` attaches a short-lived operator-signed statement to each tool call and the generated binding verifies it, so a tool service trusts a statement rather than the position of the message | nothing — it closes the identity page's gap 1 |
+| **A person as a principal** — `kind: person` in a grant, which today is refused because nothing can prove it | auth callout, the identity spec's slice 2. `acts_for` already records a subject and already decides who may read a run |
+| `Cancel` / `Approve` / deciders, on the authority model | nothing — the authority model is built |
 | **Cross-executor recovery** — a dead replica's in-flight runs taken over by a live one without DBOS's Conductor; a lease and a heartbeat, because DBOS re-enqueues a dead executor's runs only at that executor's own relaunch | the run store; a liveness signal DBOS does not keep |
 
 | A `garmctl topology --push` that sends every changed account JWT to the cluster over `$SYS` with the ops credential | nothing — today it is one `nats request` per changed account ([operating the topology](operating-the-topology.md)) |

@@ -1,7 +1,9 @@
 # The authority model: a grant meets a requirement
 
 **Date:** 2026-10-08
-**Status:** designed — nothing built; the plan follows review of this document
+**Status:** active — built as step 12, in the order §12 gives. The five
+amendments execution made are marked **built:** where they apply and listed in
+§14.
 
 **Spec for:** who may invoke what, and who may see which run. A tool declares
 what a caller must hold; a deployment grants principals what they hold; `rund`
@@ -307,8 +309,9 @@ two checks make it mean something:
 `garmctl compose` does **not** check this: it reads images and knows nothing of a
 deployment's inputs, and giving it the grant file would make the catalogue's
 build depend on one deployment's policy. The check belongs where both documents
-are in hand, which is `rund`'s boot. A `garmctl grants --check` that does the
-same without starting `rund` is a small addition and is named in §13.
+are in hand, which is `rund`'s boot. **built:** `garmctl grants check` does the
+same without starting `rund`, over the same `File.CheckCatalogue` the boot calls,
+and prints what each principal may invoke by asking the same `Allow` a call asks.
 
 ---
 
@@ -455,7 +458,7 @@ identities already go.
 6. **The estate, the quick start and the docs.** The estate gains grants for its
    two callers and a `WithoutGrants` option for the reduced posture; the example
    declares one requirement on `weather.v1.schedule_report` so the quick start
-   exercises a real one; `garmctl grants --check`; concepts, guide, invariants,
+   exercises a real one; `garmctl grants check`; concepts, guide, invariants,
    roadmap, the identity page's gaps 1 and 3 answered or re-stated.
 
 Every step is inside the repository and needs no container.
@@ -498,3 +501,40 @@ Every step is inside the repository and needs no container.
   written down; a required compartment belongs in the grant, not the declaration.
 - **Hot reload of the catalogue.** Unchanged: boot only. `SIGHUP` in §9 reloads
   grants, not the catalogue.
+
+---
+
+## 14. Amendments execution made
+
+Five, each with what it cost.
+
+1. **`garmctl grants check`, not `garmctl grants --check`** (§6, §12.6). A bool
+   flag with exactly one meaningful value is debt, `operator init` is the
+   binary's precedent for a noun with verb subcommands, and the grant store's
+   slice needs `grants list` and `grants add` beside it. The command's refusals
+   and its report are what the spec asked for, under a different path.
+
+2. **Property 12's end-to-end half is a unit test** (§7). "A replay follows the
+   compartments the run recorded, not the file's current ones" cannot be staged
+   through a real multi-step run until a decider exists — one tool call is one
+   step. `authority.CheckStep` is tested directly against a recorded run's
+   compartments, and `rundbos.TestAStepBeyondTheRunsCompartmentsIsDenied` makes
+   the same check inside a real workflow. The gap closes with the decider.
+
+3. **`SIGHUP` is tested as the wired function plus one signal test** (§9).
+   Signalling the test process itself to assert a reload would make every other
+   test in the package share a signal handler. `reloadAuthority` is called
+   directly, and the handler's wiring is asserted separately;
+   `scripts/e2e.sh` sends the real `SIGHUP` to a real `rund`.
+
+4. **The example's requirement landed in step 2, not step 6** (§12.1, §12.6).
+   The boot check in §6 cannot be tested without a catalogue tool that requires
+   something, so `weather.v1.schedule_report` gained `requires:
+   { compartments: ["weather"] }` as soon as the check did.
+
+5. **The quick start's refusal is made by a reload** (§12.6). The example
+   declares exactly one gated tool by design, and the async path needs that tool
+   to succeed. So `scripts/e2e.sh` runs the async call under a grant that holds
+   `weather`, then takes the compartment away, `SIGHUP`s, and asserts the same
+   call is `DENIED` — which proves §9's reload end to end as well, where it had
+   been unit-tested only.

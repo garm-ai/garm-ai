@@ -47,7 +47,9 @@ Under `--keys-out` (default `--keys`), only when an account is new or rotated:
 | `archive/<ACCOUNT>.identity.nk` | the identity seed, written once and read by nothing: the identity key signs nothing after creation |
 | `archive/<ACCOUNT>.signing.<key>.nk` | a superseded signing seed after `--rotate-signing`, kept until you delete it |
 
-`--dev` adds `nats-server.conf` (absolute paths, `127.0.0.1`), `nats-server.docker.conf`
+`--dev` adds `nats-server.conf` (absolute paths, `127.0.0.1:4222` and
+`127.0.0.1:8222` unless `--listen` and `--monitor` say otherwise — a laptop has
+one of each), `nats-server.docker.conf`
 (paths relative to the directory, every interface, for `compose.yaml` which mounts
 the directory at `/topo`), and a self-signed `ca.pem`, `server.pem`, `server-key.pem`
 good for a day. Both configurations run the **memory resolver with every account
@@ -60,6 +62,44 @@ The command's last line is the summary:
 ```
 ok: generation 2 from catalogue 4d0c794cd437 -- 4 accounts, 5 credentials, 1 revocations, written to topo
 ```
+
+## The one input nobody generates: `grants.yaml`
+
+`topology` issues identity. It does **not** decide who may invoke what — that is
+the grant file, and a person writes it by hand:
+
+```yaml
+schema: v1
+compartments: [weather, payments]        # this deployment's whole vocabulary
+grants:
+  - principal: { kind: account, id: CALLER-forecast }
+    tools: ["weather.v1.*"]
+    compartments: [weather]
+    expires: 2026-12-31T00:00:00Z        # optional
+```
+
+It belongs in git beside `images.yaml` and the manifest, under the same review,
+and it is read by `rund` alone (`--grants`, which needs `--callers` to resolve a
+principal's name to its account key). The two documents meet at a principal: a
+grant names `CALLER-forecast`, and `callers.json` says which account that is —
+so a caller removed from `--callers` makes every grant naming it a refusal at
+`rund`'s next boot, which is the behaviour you want from a departure.
+
+Check it before `rund` does:
+
+```bash
+garmctl grants check --grants grants.yaml --callers topo/callers.json   --catalogue file://catalogue.binpb
+```
+
+That makes every refusal `rund`'s boot makes — an unknown schema, a pattern that
+is not a pattern, a compartment outside the vocabulary, a principal no caller
+table knows, a declared tool requiring a compartment the file never declares —
+and prints what each principal may invoke. `SIGHUP` reloads the file into a
+running `rund`; a file that fails those checks leaves the running grants
+standing and logs why, so a bad edit denies nothing new.
+
+The [authority spec](specs/2026-10-08-authority-design.md) is the whole model;
+`docs/concepts.md` is the short version.
 
 ## The lifecycle, event by event
 
@@ -233,4 +273,6 @@ days. An operator reading the log on a Tuesday should not learn on Friday.
 ## What this does not cover
 
 Leafnode and route connections, which `--verify-live` cannot see in `CONNZ`;
-nothing in this estate uses them. A `garmctl` push verb.
+nothing in this estate uses them. A `garmctl` push verb. Writing a grant at
+runtime rather than committing it — the grant store is the next slice, and the
+file stays the root of trust the way the manifest is for credentials.

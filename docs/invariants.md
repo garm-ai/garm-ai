@@ -151,6 +151,28 @@ unenforced, in the same table, deliberately.
 | A chunk over 4 KB is refused at write; no event carries input or result bytes, on the bus or in the record | `rundbos.TestAChunkOverTheCapIsRefused`, `TestNoEventCarriesThePayload`, `estate.TestTheLiveFeedCarriesNoPayload` |
 | GARM exports the event stream with the owner's account at position four; every caller imports it privately; a caller publishes only the three verbs; the change reissues every caller once and nothing else | `topology.TestTheRunAccountExportsTheEventStreamAndEveryCallerImportsIt`, `TestTheEventImportReissuesEveryCallerOnceAndNothingElse` |
 
+### Authority
+
+| invariant | kept true by |
+|---|---|
+| **Deny by default**: a tool that requires nothing still needs a grant admitting it | `authority.TestARequirementlessToolStillNeedsAGrantAdmittingIt` |
+| A permitted call needs **both** halves: the grant admits the tool, and that same grant holds every compartment it requires | `authority.TestAGrantThatSatisfiesTheRequirementPermitsAndSaysWhatItReliedOn`, `TestAMissingCompartmentIsDeniedNamingIt`, `TestAGrantThatDoesNotAdmitTheToolIsDenied` |
+| A requirement is **every** compartment, not any of them | `authority.TestARequirementIsEveryCompartmentNotAnyOfThem` — written after a probe showed the first test passed whether the code meant all or any |
+| **Compartments are never pooled across grants**: a call two half-grants would permit is refused | `authority.TestTwoHalfGrantsDoNotCombine` |
+| A refusal names the half that failed, and nothing else the principal holds | `authority.TestNoGrantIsDeniedNamingThePrincipal`, `TestAnExpiredGrantIsRefusedAsExpired`, `TestAnUnidentifiedCallerIsDenied` |
+| A tool pattern is a name, one trailing `.*`, or exactly `*`; anything else is refused at load | `authority.TestAToolPatternMustBeExactOrATrailingStar`, `TestAPrefixGrantAdmitsItsPrefixOnly` |
+| Every grant-file error is caught at **load**, not per call: unknown schema, a compartment outside the vocabulary, a principal no caller table knows, a principal kind nothing can prove, no tools at all | `authority.TestAnUnknownSchemaIsRefused`, `TestAGrantNamingAnUndeclaredCompartmentIsRefused`, `TestAGrantForAnUnknownPrincipalIsRefused`, `TestAPrincipalKindThisBuildCannotProveIsRefused`, `TestAMalformedFileIsRefusedNamingThePath` |
+| A grant is **written by name and matched by key**; an expired one is not even returned by the source | `authority.TestAGrantIsWrittenByNameAndMatchesByKey`, `TestTheSourceFiltersExpiredGrants` |
+| The decision is taken once, at `Invoke`, and the run records what it relied on | `run.TestADeniedInvokeStartsNoRun`, `run.TestADeniedSyncInvokeNeverReachesTheTool` |
+| Inside a run, a step needs the pinned allowlist **and** the recorded compartments | `authority.TestCheckStepIsTheIntersectionOfTheAllowlistAndTheCompartments`, `rundbos.TestAStepBeyondTheRunsCompartmentsIsDenied`, `TestAStepWithinTheRunsCompartmentsProceeds` |
+| A run is readable by the principal that started it **and** the one it `acts_for`, and nobody else | `authority.TestCanSeeAdmitsTheStarterAndTheSubjectOnly`, `estate.TestTheSubjectReadsTheRunButDoesNotReceiveItsLiveEvents`, `estate.TestARunIsVisibleOnlyToItsInvokingAccount` |
+| Without `--grants`, a tool with a requirement is refused **naming the flag**; a requirement-less tool is unaffected | `run.TestWithoutAnAuthorityARequirementIsRefusedNamingTheFlag`, `estate.TestWithoutGrantsTheRequiringToolNamesTheFlag`, `estate.TestARequirementlessToolIsUnaffected` |
+| `rund` refuses to start when `--grants` has no `--callers`, or when the catalogue requires a compartment the file does not declare | `rund.TestGrantsWithoutCallersRefusesToStart`, `rund.TestAnUndeclaredCompartmentInTheCatalogueRefusesToStart` |
+| `SIGHUP` reloads the grants; a file that fails those checks **leaves the running grants standing** | `rund.TestReloadRereadsTheGrants`, `rund.TestARefusedReloadKeepsTheRunningAuthority`, `authority.TestAReloadThatFailsKeepsTheRunningSource` |
+| The whole decision is made on the real bus, not only in a unit | `estate.TestAGrantDecidesTheRequiringToolOnTheWire`, `estate.TestAGrantListingOneToolRefusesItsSibling`; `scripts/e2e.sh` takes a compartment away, `SIGHUP`s, and asserts the same call is `DENIED` |
+| `garmctl grants check` makes every refusal the boot makes, and its report asks the **same decider** a call asks | `garmctl.TestGrantsCheckRefusals`, `TestGrantsCheckRefusesACatalogueRequirementTheFileDoesNotDeclare`, `TestGrantsCheckAgainstTheCatalogueNamesTheToolsEachPrincipalMayInvoke` (probed: a report that used `Admits` alone failed it), `TestGrantsCheckWithoutCallersIsRefused` |
+| One implementation of the §6 cross-check and of the `CALLER-` prefix, shared by `rund`'s boot and `garmctl` | `authority.TestCheckCatalogueRefusesARequirementTheFileDoesNotDeclare`, `topology.TestCallerKeysResolvesAGrantsPrincipalNameToItsAccount`, `TestCallerKeysRefusesABrokenTable` |
+
 ### Revocation is permanent
 
 | invariant | kept true by |
@@ -265,6 +287,7 @@ for claims the code makes today that nothing checks.
 
 | claim | why nothing checks it |
 |---|---|
+| A principal other than an **account** can be proved | Only `kind: account` is provable today — the bus authenticated it — so a grant may name nothing else, and `authority.TestAPrincipalKindThisBuildCannotProveIsRefused` enforces that. A person or a service principal needs auth callout, which is a later slice; `acts_for` records a subject without claiming anyone authenticated as it |
 | A **run limit** must be at least the largest call limit in an allowlist | Specified, then dropped on implementation: an agent is always async and has no call limit of its own, making the check unfireable. `Async.limit` is a CALL limit (built, step 10); a RUN limit arrives with a decider. Recorded rather than silently removed, because a check that cannot fire reads as a guarantee |
 | A tool name should have the *shape* `<package>.<tool>` | Only the **charset** is enforced (see the row above). The shape is a convention in the examples; enforcing it needs a decision about what a package is that nobody has made, and the charset closes the security hole without it |
 | An agent's method name is never read | Closer than it was: the generator emits nothing for an agent, proved by `generate.TestAnAgentProducesNoGoAtAll`. Still unenforced in the direction that matters — no test asserts that *nothing anywhere* resolves an agent by method name, because the decider that would is the next step |
