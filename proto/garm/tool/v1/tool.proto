@@ -76,6 +76,30 @@ message Tool {
     Sync sync = 3;
     Async async = 4;
   }
+
+  // WHAT A CALLER MUST HOLD, declared by the only party who knows: this tool's
+  // author. A property of the TOOL -- "this moves money" -- and never of a
+  // caller: nothing here names a principal, a role or a team, because a tool's
+  // author does not know who should hold what, and a declaration that named
+  // them would be policy written by the wrong person (authority spec §1).
+  //
+  // Absent means the tool asks nothing. It does NOT mean "open": with a grant
+  // source configured, a principal still needs a grant admitting the tool.
+  Requirement requires = 5;
+}
+
+// What a caller must hold to invoke a tool.
+message Requirement {
+  // Every compartment a caller must hold -- ALL of them, not any. A compartment
+  // is a name a deployment owns, declared in its grants; a requirement naming
+  // one no deployment declares is a tool nobody can call, and rund refuses to
+  // start rather than refuse every call (authority spec §6).
+  repeated string compartments = 1;
+
+  // A bound over the REQUEST -- "never above EUR 1m, whoever asks" -- belongs
+  // here rather than in a grant, because it is a fact about this tool, true of
+  // every caller. It is absent because nothing evaluates it yet, and a
+  // declaration nothing enforces reads as a guarantee.
 }
 
 // Sync: the answer comes back on the reply, within a budget.

@@ -13,6 +13,7 @@ cd "$(dirname "$0")/.."
 # the forecast produced: three spans, three services, one trace id.
 mode="${1:-native}"
 nats_port="${NATS_PORT:-4222}"
+mon_port="${NATS_MONITOR_PORT:-8222}"   # native only; the container's is compose's to map
 o2_port="${O2_PORT:-5080}"
 pg_port="${PG_PORT:-5432}"
 hp_rund="${RUND_HEALTH_PORT:-8080}"
@@ -48,26 +49,45 @@ if [ "$mode" = compose ]; then
   topo="$out"
   say "compose mode: the bus is garm-nats on 127.0.0.1:$nats_port, booted from $topo; telemetry goes to OpenObserve on $o2_port"
   [ -f "$topo/nats-server.docker.conf" ] || fail "$topo has no topology; run: garmctl topology --dev --catalogue file://build/catalogue.binpb --callers forecast -o build/topo && docker compose up -d"
-  docker inspect -f '{{.State.Health.Status}}' garm-nats 2>/dev/null | grep -q healthy || fail "garm-nats is not healthy; docker compose up -d first"
+  running_and_healthy() { [ "$(docker inspect -f '{{.State.Running}}/{{.State.Health.Status}}' "$1" 2>/dev/null)" = "true/healthy" ]; }
+  running_and_healthy garm-nats || fail "garm-nats is not running and healthy; docker compose up -d first (an EXITED container keeps its last health status, which is why this asks for both)"
   curl -fsS -o /dev/null "http://127.0.0.1:${o2_port}/healthz" || fail "OpenObserve is not answering on 127.0.0.1:${o2_port}; docker compose up -d first"
-  docker inspect -f '{{.State.Health.Status}}' garm-postgres 2>/dev/null | grep -q healthy || fail "garm-postgres is not healthy; docker compose up -d first"
+  running_and_healthy garm-postgres || fail "garm-postgres is not running and healthy; docker compose up -d first"
   run_store="postgres://garm:garm@127.0.0.1:${pg_port}/garm?sslmode=disable"
 else
   run_store="sqlite:$out/runs.db"
   topo="$out/topo"
   say "topology --dev: a THROWAWAY operator, accounts, one credential per process, a server config"
-  "$bin/garmctl" topology --dev --catalogue "file://$out/catalogue.binpb" --callers forecast -o "$topo"
+  "$bin/garmctl" topology --dev --catalogue "file://$out/catalogue.binpb" --callers forecast \
+    --listen "127.0.0.1:$nats_port" --monitor "127.0.0.1:$mon_port" -o "$topo"
 
   say "nats-server from the emitted config (operator mode, TLS)"
-  if lsof -nP -iTCP:$nats_port -sTCP:LISTEN 2>/dev/null | grep -q "127.0.0.1:$nats_port"; then
-    fail "something already listens on 127.0.0.1:$nats_port; stop it (or docker compose down) or the quick start's server cannot bind"
-  fi
+  for port in "$nats_port" "$mon_port"; do
+    if lsof -nP -iTCP:$port -sTCP:LISTEN 2>/dev/null | grep -q LISTEN; then
+      fail "something already listens on port $port; stop it (or docker compose down), or run with NATS_PORT/NATS_MONITOR_PORT set to free ports -- the quick start's server cannot bind otherwise"
+    fi
+  done
   nats-server -c "$topo/nats-server.conf" > "$out/nats-server.log" 2>&1 &
   pids+=($!)
   for _ in $(seq 1 50); do grep -q "Server is ready" "$out/nats-server.log" 2>/dev/null && break; sleep 0.1; done
   grep -q "Server is ready" "$out/nats-server.log" || fail "nats-server did not become ready: $(tail -5 "$out/nats-server.log")"
 fi
 nats_url="nats://127.0.0.1:$nats_port"
+
+say "grants: the deployment's reviewed answer to who may invoke what"
+# The one input a person WRITES BY HAND. forecast may call the weather tools and
+# holds `weather`, which schedule_report requires; get_forecast requires nothing,
+# so both halves of a decision -- the grant and the compartment -- are exercised.
+cat > "$topo/grants.yaml" <<YAML
+schema: v1
+compartments: [weather]
+grants:
+  - principal: { kind: account, id: CALLER-forecast }
+    tools: ["weather.v1.*"]
+    compartments: [weather]
+YAML
+"$bin/garmctl" grants check --grants "$topo/grants.yaml" --callers "$topo/callers.json" \
+  --catalogue "file://$out/catalogue.binpb" | sed 's/^/  /'
 
 say "weatherd and rund, each with a health listener"
 for port in "$hp_rund" "$hp_tool"; do
@@ -77,7 +97,7 @@ for port in "$hp_rund" "$hp_tool"; do
 done
 "$bin/weatherd" --nats "$nats_url" --creds "$topo/creds/weather.v1.WeatherService.creds" --tls-ca "$topo/ca.pem" --health "127.0.0.1:$hp_tool" > "$out/weatherd.log" 2>&1 &
 pids+=($!)
-"$bin/rund" --nats "$nats_url" --creds "$topo/creds/rund.creds" --tls-ca "$topo/ca.pem" --catalogue "file://$out/catalogue.binpb" --callers "$topo/callers.json" --health "127.0.0.1:$hp_rund" --run-store "$run_store" > "$out/rund.log" 2>&1 &
+"$bin/rund" --nats "$nats_url" --creds "$topo/creds/rund.creds" --tls-ca "$topo/ca.pem" --catalogue "file://$out/catalogue.binpb" --callers "$topo/callers.json" --health "127.0.0.1:$hp_rund" --run-store "$run_store" --grants "$topo/grants.yaml" > "$out/rund.log" 2>&1 &
 pids+=($!)
 
 ready() { [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$1/readyz")" = "200" ]; }
@@ -85,6 +105,9 @@ for _ in $(seq 1 200); do ready "$hp_tool" && ready "$hp_rund" && break; sleep 0
 ready "$hp_tool" || fail "weatherd never became ready: $(tail -5 "$out/weatherd.log")"
 ready "$hp_rund" || fail "rund never became ready: $(tail -5 "$out/rund.log")"
 echo "readyz: weatherd 200, rund 200"
+grep -q "grants=$topo/grants.yaml" "$out/rund.log" || fail "rund's startup line does not name its grants: $(grep -m1 'msg=starting' "$out/rund.log")"
+grep -q 'msg=grants ' "$out/rund.log" || fail "rund did not say which grants it loaded: $(tail -5 "$out/rund.log")"
+grep -h 'msg=grants ' "$out/rund.log" | sed 's/^/  /'
 
 say "forecast: a caller that names a tool and nothing else"
 answer=$("$bin/forecast" --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" --place Ghent --days 2 2>"$out/forecast.log")
@@ -125,6 +148,45 @@ again=$("$bin/garmctl" fetch "$key" --follow --after 0 \
 [[ "$again" == "$followed" ]] || fail "the catch-up from zero after the run differs from the live follow:
 $again"
 echo "  (the same four lines again, from the record alone)"
+
+say "SIGHUP: a grant change takes effect without a restart -- and the first end-to-end refusal"
+# Written by hand, reviewed, reloaded: the compartment is taken away while rund
+# keeps serving. The tool still matches the grant's pattern, so this is the
+# second half of the decision refusing on its own (authority spec SS3).
+if [ "$mode" = compose ]; then rund_pid="${pids[1]}"; else rund_pid="${pids[2]}"; fi
+cat > "$topo/grants.yaml" <<YAML
+schema: v1
+compartments: [weather]
+grants:
+  - principal: { kind: account, id: CALLER-forecast }
+    tools: ["weather.v1.*"]
+    compartments: []
+YAML
+kill -HUP "$rund_pid"
+for _ in $(seq 1 50); do grep -q 'msg="grants reloaded"' "$out/rund.log" && break; sleep 0.1; done
+grep -q 'msg="grants reloaded"' "$out/rund.log" || fail "rund did not reload its grants on SIGHUP: $(tail -5 "$out/rund.log")"
+echo "  $(grep -m1 'msg="grants reloaded"' "$out/rund.log")"
+
+denied_key="e2e-denied-$(date +%s)"
+if "$bin/garmctl" call weather.v1.schedule_report '{"place":"Ghent"}' --idempotency-key "$denied_key" \
+    --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" \
+    --catalogue "file://$out/catalogue.binpb" > "$out/denied.out" 2>"$out/denied.log"; then
+  fail "a caller holding no compartment invoked a tool that requires one: $(cat "$out/denied.out")"
+fi
+sed 's/^/  /' "$out/denied.log"
+grep -q "weather" "$out/denied.log" || fail "the refusal does not name the compartment the caller lacks: $(cat "$out/denied.log")"
+grep -q "kind=ERROR_KIND_DENIED" "$out/rund.log" || fail "rund did not record the refusal as DENIED: $(grep -m1 'msg="invoke failed"' "$out/rund.log")"
+grep -m1 'msg="invoke failed"' "$out/rund.log" | sed 's/^/  /'
+# The refusal happened BEFORE the run existed: nothing was made durable.
+notfound=$("$bin/garmctl" fetch "$denied_key" \
+  --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" \
+  --catalogue "file://$out/catalogue.binpb" 2>&1 || true)
+[[ "$notfound" != *"SUCCEEDED"* ]] || fail "a refused call left a run behind: $notfound"
+# And the tool that requires nothing is still callable: the refusal was the
+# compartment, not the reload taking the grant away.
+answer=$("$bin/forecast" --nats "$nats_url" --creds "$topo/creds/forecast.creds" --tls-ca "$topo/ca.pem" --place Ghent --days 1 2>>"$out/forecast.log")
+[[ "$answer" == *"Ghent"* ]] || fail "a tool that requires nothing stopped working after the reload: $answer"
+echo "  weather.v1.get_forecast still answers: it requires no compartment"
 
 say "what each process said at startup"
 grep -q 'msg=credential expires=' "$out/weatherd.log" || fail "weatherd did not say when its credential expires"

@@ -18,6 +18,7 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/garm-ai/garm-ai/authority"
 	"github.com/garm-ai/garm-ai/catalogue"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
@@ -123,7 +124,11 @@ func memory(t *testing.T) string {
 func mustStart(t *testing.T, s *rundbos.Store, id string) {
 	t.Helper()
 	r := run.Run{ID: id, Tool: asyncTool, Input: []byte("in"), Fingerprint: run.Fingerprint(asyncTool, []byte("in")),
-		Caller: "ACX", CallerName: "studio", Correlation: "c-" + id, Message: "m0"}
+		Caller: "ACX", CallerName: "studio", Correlation: "c-" + id, Message: "m0",
+		// A run an authority permitted: the example's report requires
+		// "weather", and the step checks against what is recorded here
+		// (authority spec §4).
+		Principal: run.Principal{Kind: run.KindAccount, ID: "ACX"}, Compartments: []string{"weather"}}
 	if _, err := s.Start(context.Background(), r); err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +157,7 @@ func TestARunCompletesWithoutTheCaller(t *testing.T) {
 	tools := &fakeTools{reply: []byte("report-1")}
 	s := open(t, memory(t), tools)
 	started, err := s.Start(context.Background(), run.Run{ID: "k1", Tool: asyncTool, Input: []byte("in"),
-		Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m0", Correlation: "c1"})
+		Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m0", Compartments: []string{"weather"}, Correlation: "c1"})
 	if err != nil || started.ID != "k1" || started.Existing {
 		t.Fatalf("%+v %v", started, err)
 	}
@@ -205,7 +210,7 @@ func TestTheToolReceivesTheEnvelope(t *testing.T) {
 	tools := &fakeTools{reply: []byte("ok")}
 	s := open(t, memory(t), tools)
 	r := run.Run{ID: "k4", Tool: asyncTool, Fingerprint: run.Fingerprint(asyncTool, nil), Caller: "ACX",
-		Correlation: "c1", Message: "m0", Traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
+		Correlation: "c1", Message: "m0", Compartments: []string{"weather"}, Traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
 	if _, err := s.Start(context.Background(), r); err != nil {
 		t.Fatal(err)
 	}
@@ -234,7 +239,7 @@ func TestTheStepContinuesTheRunsTrace(t *testing.T) {
 	otlptest.Install(t)
 	tools := &fakeTools{reply: []byte("ok")}
 	s := open(t, memory(t), tools)
-	r := run.Run{ID: "k-trace", Tool: asyncTool, Fingerprint: run.Fingerprint(asyncTool, nil), Caller: "ACX", Message: "m0",
+	r := run.Run{ID: "k-trace", Tool: asyncTool, Fingerprint: run.Fingerprint(asyncTool, nil), Caller: "ACX", Message: "m0", Compartments: []string{"weather"},
 		Traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
 	if _, err := s.Start(context.Background(), r); err != nil {
 		t.Fatal(err)
@@ -343,7 +348,7 @@ func TestAReusedKeyWithDifferentInputIsRefusedBeforeDBOS(t *testing.T) {
 	mustStart(t, s, "k-fp")
 	awaitTerminal(t, s, "k-fp", 5*time.Second)
 	_, err := s.Start(context.Background(), run.Run{ID: "k-fp", Tool: asyncTool, Input: []byte("other"),
-		Fingerprint: run.Fingerprint(asyncTool, []byte("other")), Caller: "ACX", Message: "m0"})
+		Fingerprint: run.Fingerprint(asyncTool, []byte("other")), Caller: "ACX", Message: "m0", Compartments: []string{"weather"}})
 	var se *serve.Error
 	if !errors.As(err, &se) || se.Kind != invokev1.ErrorKind_ERROR_KIND_INVALID || !strings.Contains(err.Error(), "k-fp") {
 		t.Fatalf("got %v, want INVALID naming the key", err)
@@ -364,7 +369,7 @@ func TestAReusedKeyWithTheSameInputIsTheSameRun(t *testing.T) {
 	mustStart(t, s, "k-same")
 	awaitTerminal(t, s, "k-same", 5*time.Second)
 	started, err := s.Start(context.Background(), run.Run{ID: "k-same", Tool: asyncTool, Input: []byte("in"),
-		Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m-retry"})
+		Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m-retry", Compartments: []string{"weather"}})
 	if err != nil || !started.Existing || started.ID != "k-same" {
 		t.Fatalf("%+v %v", started, err)
 	}
@@ -385,12 +390,12 @@ func TestAReusedKeyOnARunningRunIsTheSameRun(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 	}
 	started, err := s.Start(context.Background(), run.Run{ID: "k-live", Tool: asyncTool, Input: []byte("in"),
-		Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m-retry"})
+		Fingerprint: run.Fingerprint(asyncTool, []byte("in")), Caller: "ACX", Message: "m-retry", Compartments: []string{"weather"}})
 	if err != nil || !started.Existing {
 		t.Fatalf("%+v %v", started, err)
 	}
 	_, err = s.Start(context.Background(), run.Run{ID: "k-live", Tool: asyncTool, Input: []byte("else"),
-		Fingerprint: run.Fingerprint(asyncTool, []byte("else")), Caller: "ACX", Message: "m-retry"})
+		Fingerprint: run.Fingerprint(asyncTool, []byte("else")), Caller: "ACX", Message: "m-retry", Compartments: []string{"weather"}})
 	var se *serve.Error
 	if !errors.As(err, &se) || se.Kind != invokev1.ErrorKind_ERROR_KIND_INVALID {
 		t.Fatalf("a different request on a live key: %v", err)
@@ -677,8 +682,8 @@ func TestConcurrentStartsWithOneKeyAndTwoRequestsNeverBothSucceed(t *testing.T) 
 	s := open(t, memory(t), tools)
 	for i := 0; i < 40; i++ {
 		key := "k-race-" + strconv.Itoa(i)
-		a := run.Run{ID: key, Tool: asyncTool, Input: []byte("a"), Fingerprint: run.Fingerprint(asyncTool, []byte("a")), Caller: "ACX", Message: "m0"}
-		b := run.Run{ID: key, Tool: asyncTool, Input: []byte("b"), Fingerprint: run.Fingerprint(asyncTool, []byte("b")), Caller: "ACX", Message: "m0"}
+		a := run.Run{ID: key, Tool: asyncTool, Input: []byte("a"), Fingerprint: run.Fingerprint(asyncTool, []byte("a")), Caller: "ACX", Message: "m0", Compartments: []string{"weather"}}
+		b := run.Run{ID: key, Tool: asyncTool, Input: []byte("b"), Fingerprint: run.Fingerprint(asyncTool, []byte("b")), Caller: "ACX", Message: "m0", Compartments: []string{"weather"}}
 		var wg sync.WaitGroup
 		var errA, errB error
 		wg.Add(2)
@@ -884,7 +889,7 @@ func TestAChunkOverTheCapIsRefused(t *testing.T) {
 func TestNoEventCarriesThePayload(t *testing.T) {
 	tools := &fakeTools{reply: []byte("RESULT-SENTINEL")}
 	s := open(t, memory(t), tools)
-	r := run.Run{ID: "k-pay", Tool: asyncTool, Input: []byte("INPUT-SENTINEL"), Fingerprint: run.Fingerprint(asyncTool, []byte("INPUT-SENTINEL")), Caller: "ACX", Message: "m0"}
+	r := run.Run{ID: "k-pay", Tool: asyncTool, Input: []byte("INPUT-SENTINEL"), Fingerprint: run.Fingerprint(asyncTool, []byte("INPUT-SENTINEL")), Caller: "ACX", Message: "m0", Compartments: []string{"weather"}}
 	if _, err := s.Start(context.Background(), r); err != nil {
 		t.Fatal(err)
 	}
@@ -1026,7 +1031,7 @@ func TestARunWithNoOwnerIsPublishedToNobody(t *testing.T) {
 	live := &recordingLive{}
 	tools := &fakeTools{reply: []byte("ok")}
 	s := openLive(t, memory(t), tools, live)
-	if _, err := s.Start(context.Background(), run.Run{ID: "k-noone", Tool: asyncTool, Fingerprint: run.Fingerprint(asyncTool, nil), Message: "m0"}); err != nil {
+	if _, err := s.Start(context.Background(), run.Run{ID: "k-noone", Tool: asyncTool, Fingerprint: run.Fingerprint(asyncTool, nil), Message: "m0", Compartments: []string{"weather"}}); err != nil {
 		t.Fatal(err)
 	}
 	if st := awaitTerminal(t, s, "k-noone", 5*time.Second); st.Status != run.StatusSucceeded {
@@ -1037,5 +1042,92 @@ func TestARunWithNoOwnerIsPublishedToNobody(t *testing.T) {
 	}
 	if evs, _, _ := s.Events(context.Background(), "k-noone", 0, 0); len(evs) != 4 {
 		t.Fatalf("the record: %v", describeEvents(evs))
+	}
+}
+
+// ---- the authority decision, inside a run ----
+
+// Property 11 and review focus 3: a step is refused when the run's RECORDED
+// compartments do not satisfy the called tool's requirement -- and the tool is
+// never called. The escalation this closes: a run reaching further than the
+// principal that started it held.
+func TestAStepBeyondTheRunsCompartmentsIsDenied(t *testing.T) {
+	tools := &fakeTools{reply: []byte("never")}
+	s := open(t, memory(t), tools)
+	r := run.Run{ID: "k-deny", Tool: asyncTool, Fingerprint: run.Fingerprint(asyncTool, nil),
+		Caller: "ACX", Principal: run.Principal{Kind: run.KindAccount, ID: "ACX"},
+		Compartments: []string{"support"}, // the example's report requires "weather"
+		Message:      "m0"}
+	if _, err := s.Start(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	st := awaitTerminal(t, s, "k-deny", 5*time.Second)
+	if st.Status != run.StatusFailed || st.Error.GetKind() != invokev1.ErrorKind_ERROR_KIND_DENIED {
+		t.Fatalf("%+v", st)
+	}
+	if !strings.Contains(st.Error.GetMessage(), "weather") {
+		t.Errorf("the refusal does not name the missing compartment: %q", st.Error.GetMessage())
+	}
+	if tools.n() != 0 {
+		t.Fatalf("the tool was called %d times on a denied step", tools.n())
+	}
+	evs, _, _ := s.Events(context.Background(), "k-deny", 0, 0)
+	if d := describeEvents(evs); len(d) == 0 || d[len(d)-1] != "done:FAILED" {
+		t.Fatalf("%v", d)
+	}
+}
+
+// A run whose recorded compartments DO satisfy the tool proceeds: the pair of
+// this and the test above is what proves the step reads r.Compartments.
+func TestAStepWithinTheRunsCompartmentsProceeds(t *testing.T) {
+	tools := &fakeTools{reply: []byte("ok")}
+	s := open(t, memory(t), tools)
+	mustStart(t, s, "k-allow") // mustStart grants the compartment the example requires
+	if st := awaitTerminal(t, s, "k-allow", 5*time.Second); st.Status != run.StatusSucceeded {
+		t.Fatalf("%+v", st)
+	}
+	if tools.n() != 1 {
+		t.Fatalf("calls=%d", tools.n())
+	}
+}
+
+// Property 13: a replay decides from the RECORDED decision. The successor has
+// no authority to consult -- the store never holds one, which is the structural
+// half -- and the run completes from what the plan checkpointed, whatever a
+// grant source says by then.
+func TestAReplayDecidesFromTheRecordedDecision(t *testing.T) {
+	file := memory(t)
+	tools := &fakeTools{reply: []byte("done"), block: make(chan struct{})}
+	a := openAs(t, file, "test-a", tools)
+	mustStart(t, a, "k-replay")
+	waitUntil(t, "the step to be in flight", func() bool { return tools.n() == 1 })
+	die(t, a)
+	close(tools.block)
+	successor := openAs(t, file, "test-a", tools)
+	st := awaitTerminal(t, successor, "k-replay", 15*time.Second)
+	if st.Status != run.StatusSucceeded || string(st.Result) != "done" {
+		t.Fatalf("%+v", st)
+	}
+	// The plan's checkpoint is what decided, and it still carries the
+	// requirement it was pinned with.
+	steps, err := successor.Steps(context.Background(), "k-replay")
+	if err != nil || len(steps) == 0 {
+		t.Fatal(err)
+	}
+	var p struct {
+		Actions   []run.Action
+		Allowlist authority.Allowlist
+	}
+	if err := json.Unmarshal(steps[0].Output, &p); err != nil || len(p.Actions) != 1 {
+		t.Fatalf("%s: %v", steps[0].Output, err)
+	}
+	if !reflect.DeepEqual(p.Actions[0].Requires, []string{"weather"}) {
+		t.Fatalf("the plan pinned requirements %v, want the tool's at plan time", p.Actions[0].Requires)
+	}
+	// Agent-ness survives the checkpoint as a FIELD. It could not survive as an
+	// empty slice -- JSON brings one back as nil -- which is why an agent that
+	// allows nothing would have replayed as an agent that allows everything.
+	if p.Allowlist.Agent {
+		t.Errorf("a plain tool's plan says it is an agent's: %+v", p.Allowlist)
 	}
 }

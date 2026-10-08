@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/nats-io/jwt/v2"
+
+	"github.com/garm-ai/garm-ai/observe"
 )
 
 // CallerNames is the public name -> account-key table a deployment hands rund as
@@ -24,4 +26,27 @@ func CallerNames(out *Output) (map[string]string, error) {
 		names[strings.TrimPrefix(account, CallerPrefix)] = ac.Subject
 	}
 	return names, nil
+}
+
+// CallerKeys reads the table CallerNames wrote and returns the lookup a grant
+// file's principals resolve through: a grant names an ACCOUNT, "CALLER-studio",
+// and the table names the caller, "studio", so the prefix is applied here.
+//
+// Here rather than in each binary that reads grants, because the prefix is this
+// package's and a copy of it that drifted would resolve nothing -- every grant
+// would silently fail to match and every call be refused "no grant". rund takes
+// this at boot and `garmctl grants check` takes it without starting rund.
+func CallerKeys(path string) (func(account string) (key string, ok bool), error) {
+	names, err := observe.LoadCallerNames(path)
+	if err != nil {
+		return nil, err
+	}
+	byAccount := make(map[string]string, len(names))
+	for key, name := range names {
+		byAccount[CallerPrefix+name] = key
+	}
+	return func(account string) (string, bool) {
+		key, ok := byAccount[account]
+		return key, ok
+	}, nil
 }

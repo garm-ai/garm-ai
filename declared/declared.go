@@ -69,6 +69,11 @@ type Tool struct {
 	// DeliveryProblems refuses -- silence must not quietly become either.
 	Sync  *toolv1.Sync
 	Async *toolv1.Async
+
+	// Requires is every compartment a caller must hold, in declaration order.
+	// Empty is a tool that asks nothing -- which is not the same as a tool
+	// anyone may call: a grant must still admit it (authority spec §1.1).
+	Requires []string
 }
 
 // IsAgent reports whether rund runs this tool with a decider, rather than a service
@@ -186,11 +191,12 @@ func ToolOf(md protoreflect.MethodDescriptor) (Tool, bool) {
 		return Tool{}, false
 	}
 	return Tool{
-		Name:   tool.GetName(),
-		Method: md,
-		Agent:  tool.GetAgent(),
-		Sync:   tool.GetSync(),
-		Async:  tool.GetAsync(),
+		Name:     tool.GetName(),
+		Method:   md,
+		Agent:    tool.GetAgent(),
+		Sync:     tool.GetSync(),
+		Async:    tool.GetAsync(),
+		Requires: append([]string(nil), tool.GetRequires().GetCompartments()...),
 	}, true
 }
 

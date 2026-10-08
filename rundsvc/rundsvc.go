@@ -145,6 +145,16 @@ const (
 // Serve mounts the run interface on svc. names labels callers on spans and
 // counters (rund --callers); nil labels nobody and drops nothing.
 func Serve(svc *natsmicro.Service, e *run.Engine, names observe.CallerNames) error {
+	// The subject goes on the span from here, not from the engine: `acts_for` is
+	// known only after the decision, and the engine imports no OpenTelemetry
+	// (authority spec §8). The span is the one in the context the handler built.
+	if e.Decided == nil {
+		e.Decided = func(ctx context.Context, d run.Allowed) {
+			if d.ActsFor != nil {
+				trace.SpanFromContext(ctx).SetAttributes(observe.KeyActsFor.String(d.ActsFor.String()))
+			}
+		}
+	}
 	if err := svc.Mount("invoke", PatternInvoke, micro.HandlerFunc(func(r micro.Request) {
 		svc.Track(func() { invoke(e, names, r) })
 	})); err != nil {
@@ -192,7 +202,8 @@ func invoke(e *run.Engine, names observe.CallerNames, r micro.Request) {
 		return
 	}
 	h := headersOf(ctx, r)
-	span.SetAttributes(observe.KeyTool.String(req.GetTool()), observe.KeyIdempotencyKey.String(h.Idempotency))
+	span.SetAttributes(observe.KeyTool.String(req.GetTool()), observe.KeyIdempotencyKey.String(h.Idempotency),
+		observe.KeyPrincipal.String(run.PrincipalOf(h).String()))
 	resp, failure := e.Invoke(ctx, &req, h)
 	if failure != nil {
 		reply(r, failure)

@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -51,6 +52,35 @@ type Headers struct {
 	// Neither is a header on the wire: they are what the transport PROVED, and
 	// a run is visible only to the account that started it.
 	Caller, CallerName string
+
+	// AsPrincipal is the principal the transport proved when it is NOT an
+	// account -- a person or a service identified at connect, which arrives
+	// with auth callout (identity spec §11, slice 2). Nil means the account is
+	// the principal, which is every connection this build can authenticate.
+	//
+	// NEVER SET FROM A HEADER a caller wrote: it is set by whatever
+	// authenticated the connection, exactly as Caller is.
+	AsPrincipal *Principal
+}
+
+// Decider is the authority model, as the engine needs it. An interface here so
+// `run` does not import `authority` -- which imports `run` for the principal --
+// and so a test can decide without a grant file.
+type Decider interface {
+	// Allow permits this principal to invoke this tool, returning what it
+	// relied on, or an error that is the refusal a caller receives.
+	Allow(ctx context.Context, p Principal, t declared.Tool) (Allowed, error)
+	// CanSee says whether this principal may read this run.
+	CanSee(ctx context.Context, p Principal, r Seen) bool
+}
+
+// Allowed is what a permission relied on: the engine records it on the run so
+// the audit says what was decided, and the workflow checks against it rather
+// than deciding again.
+type Allowed struct {
+	GrantID      string
+	Compartments []string
+	ActsFor      *Principal
 }
 
 // Caller is how the engine reaches a tool. An interface so the engine is testable
@@ -71,9 +101,38 @@ type Engine struct {
 	// never touches the store, so the store being down never touches sync.
 	Store Store
 
+	// Authority decides who may invoke what and who may see which run. nil is
+	// the REDUCED POSTURE (authority spec §9): a tool that requires nothing is
+	// open, a tool with a requirement is refused naming --grants. The engine
+	// holds no policy of its own -- it asks, records what it was told, and
+	// reports the refusal it was given.
+	Authority Decider
+
+	// Decided, when set, is called once per call with the decision that call
+	// relied on, immediately after it is taken.
+	//
+	// It exists so the TRANSPORT can put the subject on its span. The engine
+	// imports no OpenTelemetry and must not learn to, and `acts_for` is only
+	// known after Allow -- so the span cannot be stamped where the principal is
+	// (authority spec §8). nil means nobody is listening.
+	Decided func(ctx context.Context, d Allowed)
+
 	// NewID mints run and message ids. A field so a test can make them
 	// predictable; nil means crypto/rand.
 	NewID func() string
+
+	// Planner turns a tool and its input into the actions a run takes. A field
+	// so a test can make a plan that today's Plan cannot produce -- the guard
+	// that the sync path refuses a plan it did not decide is otherwise
+	// unprovable. nil means Plan.
+	Planner func(declared.Tool, []byte) ([]Action, error)
+}
+
+func (e *Engine) plan(t declared.Tool, input []byte) ([]Action, error) {
+	if e.Planner != nil {
+		return e.Planner(t, input)
+	}
+	return Plan(t, input)
 }
 
 func (e *Engine) id() string {
@@ -103,6 +162,11 @@ type Action struct {
 	Tool   string
 	Input  []byte
 	Budget time.Duration
+	// Requires is the tool's compartments AS THEY WERE WHEN THE PLAN WAS MADE.
+	// Pinned here for the same reason the budget is: the step checks against
+	// this, so a replay after a declaration changed decides as the run was
+	// decided, not as the catalogue reads now (authority spec §4, §7).
+	Requires []string
 }
 
 // Plan says what an invocation does.
@@ -123,7 +187,7 @@ func Plan(t declared.Tool, input []byte) ([]Action, error) {
 		return nil, serve.Unavailable(
 			"%s is an agent; this build has no decider to run it", t.Name)
 	}
-	return []Action{{Tool: t.Name, Input: input, Budget: t.Budget()}}, nil
+	return []Action{{Tool: t.Name, Input: input, Budget: t.Budget(), Requires: t.Requires}}, nil
 }
 
 // Invoke runs one invocation to an answer.
@@ -151,13 +215,32 @@ func (e *Engine) Invoke(ctx context.Context, req *runv1.InvokeRequest, h Headers
 			"no tool named %q in the catalogue loaded from %s", req.GetTool(), cat.Source))
 	}
 
-	if !tool.IsSync() && !tool.IsAgent() {
-		return e.startAsync(ctx, tool, req, h)
-	}
-
-	actions, err := Plan(tool, req.GetInput())
+	allowed, err := e.permit(ctx, tool, h)
 	if err != nil {
 		return nil, e.fail(ctx, runID, h, tool.Name, err)
+	}
+	if e.Decided != nil {
+		e.Decided(ctx, allowed)
+	}
+
+	if !tool.IsSync() && !tool.IsAgent() {
+		return e.startAsync(ctx, tool, req, h, allowed)
+	}
+
+	actions, err := e.plan(tool, req.GetInput())
+	if err != nil {
+		return nil, e.fail(ctx, runID, h, tool.Name, err)
+	}
+	// permit decided ONE tool: the one the caller named. Every further action is
+	// one nothing decided, and this loop cannot decide it -- the step check
+	// lives in `authority`, which imports this package, so the dependency runs
+	// one way on purpose. The store's loop decides each step from the run's
+	// record (authority spec §7); a plan that grew belongs there, so refuse it
+	// here rather than execute half of it undecided.
+	if len(actions) > 1 {
+		return nil, e.fail(ctx, runID, h, tool.Name, serve.Internal(fmt.Errorf(
+			"%s planned %d actions and is not async: a multi-action plan runs in the run store, where every step is decided from the run's record",
+			tool.Name, len(actions))))
 	}
 
 	var last []byte
@@ -208,9 +291,26 @@ func ValidKey(key string) bool {
 	return true
 }
 
+// permit is the authority decision, taken ONCE per invocation (authority spec
+// §4). With no Authority the posture is reduced and announced: a tool that
+// requires nothing proceeds, and a tool with a requirement is refused naming
+// the flag that would decide it -- a security posture is never chosen by
+// omission, and never silently widened either.
+func (e *Engine) permit(ctx context.Context, tool declared.Tool, h Headers) (Allowed, error) {
+	if e.Authority == nil {
+		if len(tool.Requires) == 0 {
+			return Allowed{}, nil
+		}
+		return Allowed{}, serve.Denied(
+			"%s requires %s and this rund has no grants to decide with; start it with --grants",
+			tool.Name, strings.Join(tool.Requires, ", "))
+	}
+	return e.Authority.Allow(ctx, PrincipalOf(h), tool)
+}
+
 // startAsync is the async path: nothing executes here. The run is made durable
 // and the caller gets its id; a replica executes it from the queue (spec §2).
-func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.InvokeRequest, h Headers) (*runv1.InvokeResponse, *invokev1.Error) {
+func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.InvokeRequest, h Headers, allowed Allowed) (*runv1.InvokeResponse, *invokev1.Error) {
 	if e.Store == nil {
 		// Said before the key check: no key the caller adds would help here.
 		return nil, e.fail(ctx, h.Idempotency, h, tool.Name, serve.Unavailable(
@@ -234,14 +334,26 @@ func (e *Engine) startAsync(ctx context.Context, tool declared.Tool, req *runv1.
 		Fingerprint: Fingerprint(tool.Name, req.GetInput()),
 		Caller:      h.Caller, CallerName: h.CallerName,
 		Correlation: h.Correlation, Message: h.Message, Traceparent: h.Traceparent,
+		// The decision, recorded: the workflow checks against THIS and never
+		// decides again (authority spec §4).
+		Principal: PrincipalOf(h), ActsFor: allowed.ActsFor,
+		Compartments: allowed.Compartments, GrantID: allowed.GrantID,
 	}
 	started, err := e.Store.Start(ctx, r)
 	if err != nil {
 		return nil, e.fail(ctx, r.ID, h, tool.Name, err)
 	}
-	e.log().InfoContext(ctx, "run started",
-		"run", started.ID, "tool", tool.Name, "existing", started.Existing,
-		"correlation", r.Correlation, "caller", h.Caller)
+	// The decision is in the line an operator reads: who asked, on whose
+	// behalf, and which grant permitted it (authority spec §8).
+	fields := []any{"run", started.ID, "tool", tool.Name, "existing", started.Existing,
+		"correlation", r.Correlation, "caller", h.Caller, "principal", r.Principal.String()}
+	if r.ActsFor != nil {
+		fields = append(fields, "acts_for", r.ActsFor.String())
+	}
+	if r.GrantID != "" {
+		fields = append(fields, "grant", r.GrantID)
+	}
+	e.log().InfoContext(ctx, "run started", fields...)
 	return &runv1.InvokeResponse{
 		RunId:   started.ID,
 		Outcome: &runv1.InvokeResponse_Pending{Pending: &runv1.Pending{}},
@@ -280,11 +392,10 @@ func (e *Engine) Fetch(ctx context.Context, req *runv1.FetchRequest, h Headers) 
 	case err != nil:
 		return nil, e.fail(ctx, req.GetRunId(), h, "", err)
 	}
-	// Visibility (spec §4): the first body of the function the authority model
-	// will replace. A foreign run is NOT_FOUND, not DENIED -- its existence is
-	// not the caller's to learn, and the answer is the same as for an id that
-	// never existed.
-	if !e.visible(h, st) {
+	// Visibility (authority spec §4): the authority decides, and a foreign run
+	// is NOT_FOUND, not DENIED -- its existence is not the caller's to learn,
+	// and the answer is the same as for an id that never existed.
+	if !e.visible(ctx, h, st) {
 		return nil, serve.Wire(serve.NotFound("no run %s", req.GetRunId()), "")
 	}
 	resp := &runv1.FetchResponse{State: wireState(st.Status), Stage: st.Stage, Tool: st.Tool}
@@ -322,7 +433,7 @@ func (e *Engine) Events(ctx context.Context, req *runv1.EventsRequest, h Headers
 	case err != nil:
 		return nil, e.fail(ctx, req.GetRunId(), h, "", err)
 	}
-	if !e.visible(h, st) {
+	if !e.visible(ctx, h, st) {
 		return nil, serve.Wire(serve.NotFound("no run %s", req.GetRunId()), "")
 	}
 	wait := req.GetWait().AsDuration()
@@ -336,10 +447,20 @@ func (e *Engine) Events(ctx context.Context, req *runv1.EventsRequest, h Headers
 	return &runv1.EventsResponse{Events: events, Closed: closed}, nil
 }
 
-// visible: may this principal see this run? Today: the invoking account, and
-// nobody else -- an anonymous principal sees nothing. The authority model
-// replaces this body; its callers do not change.
-func (e *Engine) visible(h Headers, st State) bool {
+// visible: may this principal see this run? The authority model decides when
+// there is one -- the starting principal, or the subject it acted for; with
+// none, the invoking account and nobody else, which is what this was before.
+// Its callers -- Fetch, Events -- do not change.
+func (e *Engine) visible(ctx context.Context, h Headers, st State) bool {
+	if e.Authority != nil {
+		seen := Seen{Principal: st.Principal, ActsFor: st.ActsFor}
+		if seen.Principal.Zero() {
+			// A run recorded before there was an authority: fall back to the
+			// account, so an upgrade does not hide every run already started.
+			seen.Principal = Principal{Kind: KindAccount, ID: st.Caller}
+		}
+		return e.Authority.CanSee(ctx, PrincipalOf(h), seen)
+	}
 	return h.Caller != "" && h.Caller == st.Caller
 }
 

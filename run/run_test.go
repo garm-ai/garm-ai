@@ -86,6 +86,15 @@ func syncTool(name string, d time.Duration) *toolv1.Tool {
 	return &toolv1.Tool{Name: name, Delivery: &toolv1.Tool_Sync{
 		Sync: &toolv1.Sync{Budget: durationpb.New(d)}}}
 }
+
+// requiring is a tool with a requirement: the authority model's half of a
+// declaration. The two builders below stay requirement-less, so a test that
+// does not care about authority is unchanged.
+func requiring(t *toolv1.Tool, compartments ...string) *toolv1.Tool {
+	t.Requires = &toolv1.Requirement{Compartments: compartments}
+	return t
+}
+
 func asyncTool(name string) *toolv1.Tool {
 	return &toolv1.Tool{Name: name, Delivery: &toolv1.Tool_Async{Async: &toolv1.Async{Limit: durationpb.New(time.Minute)}}}
 }

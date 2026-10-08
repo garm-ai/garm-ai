@@ -2,19 +2,29 @@ package run_test
 
 import (
 	"context"
+	"log/slog"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"github.com/garm-ai/garm-ai/authority"
 	"github.com/garm-ai/garm-ai/call"
+	"github.com/garm-ai/garm-ai/declared"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/run"
 )
 
-const probeAsync = "probe.v1.schedule"
+const (
+	probeAsync = "probe.v1.schedule"
+	// The two tools with a requirement, for the authority tests: one of each
+	// delivery, so both paths through Invoke are decided.
+	probeAsyncRequiring = "probe.v1.schedule_audited"
+	probeSyncRequiring  = "probe.v1.read_audited"
+)
 
 // Spec §6.1: inside a run, message ids are deterministic -- the same (run, step)
 // yields the same id on a replay -- and causation chains from the caller's
@@ -99,7 +109,9 @@ func (r *recorder) Fetch(_ context.Context, _ string, wait time.Duration) (run.S
 // (nil = today's rund) and a tool caller that answers "answer".
 func engineWith(t *testing.T, store run.Store) (*run.Engine, *caller) {
 	t.Helper()
-	h := catalogueOf(t, syncTool("probe.v1.read", time.Second), asyncTool(probeAsync))
+	h := catalogueOf(t, syncTool("probe.v1.read", time.Second), asyncTool(probeAsync),
+		requiring(syncTool(probeSyncRequiring, time.Second), "audited"),
+		requiring(asyncTool(probeAsyncRequiring), "audited"))
 	c := &caller{out: []byte("answer")}
 	e := engine(h, c)
 	if store != nil {
@@ -316,5 +328,179 @@ func TestAnAsyncKeyThatIsNotASubjectTokenIsInvalid(t *testing.T) {
 	}
 	if _, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeAsync}, run.Headers{Idempotency: "ok-key_1:ABC", Caller: "ACX"}); failure != nil {
 		t.Fatalf("a plain key was refused: %v", failure)
+	}
+}
+
+// ---- the authority model at the engine ----
+
+// fixedSource is one principal's grant, as a Source.
+type fixedSource struct {
+	principal string
+	tools     []string
+	comps     []string
+	actsFor   *run.Principal
+}
+
+func (f fixedSource) For(_ context.Context, p run.Principal, _ time.Time) ([]authority.Grant, error) {
+	if p.ID != f.principal {
+		return nil, nil
+	}
+	return []authority.Grant{{ID: f.principal + "#0", Principal: p, Tools: f.tools, Compartments: f.comps, ActsFor: f.actsFor}}, nil
+}
+
+func engineWithAuthority(t *testing.T, store run.Store, src authority.Source) *run.Engine {
+	t.Helper()
+	e, _ := engineWith(t, store)
+	a := &authority.Authority{}
+	a.Set(src)
+	e.Authority = a
+	return e
+}
+
+// Properties 1 and 2 at the engine: a permitted async invoke becomes a durable
+// run carrying the decision -- the principal, what it relied on, and which
+// grant -- so the audit says what was decided and a replay never re-decides.
+func TestAPermittedAsyncInvokeRecordsTheDecision(t *testing.T) {
+	rec := &recorder{}
+	e := engineWithAuthority(t, rec, fixedSource{principal: "ACX", tools: []string{"*"}, comps: []string{"audited"}})
+	_, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeAsyncRequiring},
+		run.Headers{Idempotency: "k", Caller: "ACX", Message: "m0"})
+	if failure != nil {
+		t.Fatal(failure)
+	}
+	r := rec.started[0]
+	if r.Principal != (run.Principal{Kind: run.KindAccount, ID: "ACX"}) {
+		t.Fatalf("the run's principal is %+v", r.Principal)
+	}
+	if !reflect.DeepEqual(r.Compartments, []string{"audited"}) || r.GrantID != "ACX#0" {
+		t.Fatalf("the run recorded compartments %v grant %q", r.Compartments, r.GrantID)
+	}
+}
+
+// Property 3 through the engine: DENIED, and the run was never started.
+func TestADeniedInvokeStartsNoRun(t *testing.T) {
+	rec := &recorder{}
+	e := engineWithAuthority(t, rec, fixedSource{principal: "ACX", tools: []string{"*"}})
+	_, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeAsyncRequiring},
+		run.Headers{Idempotency: "k", Caller: "ACX"})
+	if failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_DENIED {
+		t.Fatalf("got %v, want DENIED", failure)
+	}
+	if !strings.Contains(failure.GetMessage(), "audited") {
+		t.Errorf("the refusal does not name the missing compartment: %q", failure.GetMessage())
+	}
+	if len(rec.started) != 0 {
+		t.Fatal("a denied invoke started a run")
+	}
+}
+
+// A sync call is decided on the same path, and a denied one never reaches the tool.
+func TestADeniedSyncInvokeNeverReachesTheTool(t *testing.T) {
+	e, c := engineWith(t, nil)
+	a := &authority.Authority{}
+	a.Set(fixedSource{principal: "ACX", tools: []string{"*"}})
+	e.Authority = a
+	_, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeSyncRequiring}, run.Headers{Caller: "ACX"})
+	if failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_DENIED || len(c.calls) != 0 {
+		t.Fatalf("%v calls=%d", failure, len(c.calls))
+	}
+	// and a permitted one does reach it
+	a.Set(fixedSource{principal: "ACX", tools: []string{"*"}, comps: []string{"audited"}})
+	if _, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeSyncRequiring}, run.Headers{Caller: "ACX"}); failure != nil || len(c.calls) != 1 {
+		t.Fatalf("%v calls=%d", failure, len(c.calls))
+	}
+}
+
+// Property 9: with no authority at all -- no --grants -- a tool that requires
+// nothing is invoked, and a tool with a requirement is DENIED naming the flag.
+// The reduced posture, announced rather than chosen by omission.
+func TestWithoutAnAuthorityARequirementIsRefusedNamingTheFlag(t *testing.T) {
+	e, c := engineWith(t, nil) // no Authority
+	if _, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: "probe.v1.read"}, run.Headers{Caller: "ACX"}); failure != nil {
+		t.Fatalf("a requirement-less sync tool was refused: %v", failure)
+	}
+	if len(c.calls) != 1 {
+		t.Fatalf("the tool was called %d times", len(c.calls))
+	}
+	_, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: probeSyncRequiring}, run.Headers{Caller: "ACX"})
+	if failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_DENIED {
+		t.Fatalf("got %v, want DENIED", failure)
+	}
+	if !strings.Contains(failure.GetMessage(), "--grants") {
+		t.Errorf("the refusal does not name the flag that would enable it: %q", failure.GetMessage())
+	}
+}
+
+// Property 14 at the engine: Fetch and Events admit the starting principal and
+// the subject it acted for, and nobody else -- one decision, three verbs.
+func TestFetchAndEventsAdmitTheStarterAndTheSubject(t *testing.T) {
+	person := run.Principal{Kind: run.KindPerson, ID: "p@example.com"}
+	rec := &recorder{state: run.State{ID: "k", Status: run.StatusSucceeded, Caller: "ACX", Result: []byte("r"),
+		Principal: run.Principal{Kind: run.KindAccount, ID: "ACX"}, ActsFor: &person},
+		events: []*runv1.Event{{RunId: "k", Seq: 1, Kind: &runv1.Event_Stage{Stage: &runv1.Stage{Stage: "done"}}}}, closed: true}
+	e := engineWithAuthority(t, rec, fixedSource{principal: "ACX", tools: []string{"*"}})
+	// the starter
+	if resp, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "k"}, run.Headers{Caller: "ACX"}); failure != nil || resp.GetState() != runv1.RunState_RUN_STATE_SUCCEEDED {
+		t.Fatalf("the starter's Fetch: %v %v", resp, failure)
+	}
+	if _, failure := e.Events(context.Background(), &runv1.EventsRequest{RunId: "k"}, run.Headers{Caller: "ACX"}); failure != nil {
+		t.Fatalf("the starter's Events: %v", failure)
+	}
+	// the subject, which has no account and presents itself as a principal --
+	// the arm this test was named for and did not exercise, found in review.
+	behalf := run.Headers{AsPrincipal: &person}
+	if resp, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "k"}, behalf); failure != nil || resp.GetState() != runv1.RunState_RUN_STATE_SUCCEEDED {
+		t.Fatalf("the subject's Fetch: %v %v", resp, failure)
+	}
+	if _, failure := e.Events(context.Background(), &runv1.EventsRequest{RunId: "k"}, behalf); failure != nil {
+		t.Fatalf("the subject's Events: %v", failure)
+	}
+	// a third PERSON, so the subject's admission is its identity and not its kind
+	stranger := run.Principal{Kind: run.KindPerson, ID: "someone.else@example.com"}
+	if _, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "k"}, run.Headers{AsPrincipal: &stranger}); failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_NOT_FOUND {
+		t.Fatalf("a third person's Fetch: %v, want NOT_FOUND", failure)
+	}
+	// a third account
+	if _, failure := e.Fetch(context.Background(), &runv1.FetchRequest{RunId: "k"}, run.Headers{Caller: "ACY"}); failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_NOT_FOUND {
+		t.Fatalf("a third account's Fetch: %v, want NOT_FOUND", failure)
+	}
+	if _, failure := e.Events(context.Background(), &runv1.EventsRequest{RunId: "k"}, run.Headers{Caller: "ACY"}); failure == nil || failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_NOT_FOUND {
+		t.Fatalf("a third account's Events: %v, want NOT_FOUND", failure)
+	}
+}
+
+// Found in review: the sync loop iterates the plan's actions and calls each
+// tool with no authority check, while the store's loop checks every step
+// against the run's recorded compartments. `permit` decided ONE tool -- the one
+// the caller named -- so a plan that grew a second action would have been
+// executed undecided on the sync path and refused on the async one.
+//
+// The engine cannot check it itself: `authority` imports `run`, so the step
+// check lives on the other side of a deliberate one-way dependency. So the sync
+// path refuses a plan it did not decide, rather than running half of it.
+func TestASyncPlanBeyondTheDecidedActionIsRefused(t *testing.T) {
+	e, c := engineWith(t, nil)
+	e.Planner = func(t declared.Tool, input []byte) ([]run.Action, error) {
+		return []run.Action{
+			{Tool: t.Name, Input: input, Budget: t.Budget()},
+			{Tool: "probe.v1.read", Input: input, Budget: time.Second},
+		}, nil
+	}
+	var logged strings.Builder
+	e.Log = slog.New(slog.NewTextHandler(&logged, nil))
+	_, failure := e.Invoke(context.Background(), &runv1.InvokeRequest{Tool: "probe.v1.read"}, run.Headers{Caller: "ACX"})
+	if failure == nil {
+		t.Fatal("a two-action sync plan ran with one action decided")
+	}
+	if failure.GetKind() != invokev1.ErrorKind_ERROR_KIND_INTERNAL {
+		t.Errorf("got %v, want INTERNAL: a plan the platform cannot decide is the platform's fault, not the caller's", failure.GetKind())
+	}
+	if len(c.calls) != 0 {
+		t.Errorf("a tool was called %d times before the refusal", len(c.calls))
+	}
+	// The caller is told nothing (INTERNAL keeps its cause at home); the
+	// operator is told everything.
+	if !strings.Contains(logged.String(), "run store") {
+		t.Errorf("the log does not say where a multi-action plan belongs:\n%s", logged.String())
 	}
 }

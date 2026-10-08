@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/garm-ai/garm-ai/authority"
 	invokev1 "github.com/garm-ai/garm-ai/garm/invoke/v1"
 	runv1 "github.com/garm-ai/garm-ai/garm/run/v1"
 	"github.com/garm-ai/garm-ai/observe"
@@ -37,7 +38,13 @@ type outcome struct {
 // planning produced.
 type plan struct {
 	Actions []run.Action
-	Error   *invokev1.Error
+	// Allowlist is an agent's, pinned at plan time: what a run of it may call,
+	// and the half of a step's decision the grant cannot widen (authority spec
+	// §7). Its Agent field says whether there is an agent at all -- a plain
+	// tool's own step has no allowlist to satisfy, and a slice alone could not
+	// say that without reading an empty agent as an unrestricted one.
+	Allowlist authority.Allowlist
+	Error     *invokev1.Error
 }
 
 // stepOutcome is a tool-call step's checkpoint: the tool's bytes, or the
@@ -70,7 +77,11 @@ func (s *Store) invoke(ctx dbos.Context, r run.Run) (outcome, error) {
 		if err != nil {
 			return plan{Error: wireOf(err, r.ID)}, nil
 		}
-		return plan{Actions: actions}, nil
+		allowlist := authority.Allowlist{Agent: tool.IsAgent()}
+		for _, ref := range tool.Agent.GetTools() {
+			allowlist.Tools = append(allowlist.Tools, ref.GetName())
+		}
+		return plan{Actions: actions, Allowlist: allowlist}, nil
 	}, dbos.WithStepName("plan"), dbos.WithStepMaxRetries(0))
 	if err != nil {
 		return outcome{}, err
@@ -89,6 +100,19 @@ func (s *Store) invoke(ctx dbos.Context, r run.Run) (outcome, error) {
 		}
 		if err := em.emit(ctx, &runv1.Event_Stage{Stage: &runv1.Stage{Stage: fmt.Sprintf("calling:%d", i)}}); err != nil {
 			return outcome{}, err
+		}
+		// The authority decision, from the RECORD: the run's compartments and the
+		// plan's pinned requirement and allowlist -- the intersection, never a
+		// fresh lookup, so a replay decides as the run was decided (spec §7).
+		if err := authority.CheckStep(r.Compartments, planned.Allowlist, a.Tool, a.Requires); err != nil {
+			if err := em.emit(ctx, &runv1.Event_Step{Step: &runv1.Step{Key: run.StepHeaders(r, i).Idempotency,
+				Tool: a.Tool, Kind: invokev1.ErrorKind_ERROR_KIND_DENIED}}); err != nil {
+				return outcome{}, err
+			}
+			if err := em.finish(ctx, runv1.RunState_RUN_STATE_FAILED); err != nil {
+				return outcome{}, err
+			}
+			return outcome{Error: wireOf(err, r.ID)}, nil
 		}
 		h := run.StepHeaders(r, i)
 		out, err := dbos.RunAsStep(ctx, func(c context.Context) (stepOutcome, error) {

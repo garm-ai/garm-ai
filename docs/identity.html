@@ -549,6 +549,14 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
         <code>cnf</code> appears nowhere in the code. Not in the token service, not in
         the grant contract. The property that stops a model-driven decider from lifting
         a token is the one that does not exist.</p>
+      <p><b>Step 12 did not close this, and it is what makes closing it possible.</b>
+        There is now a principal, a grant, and a decision recorded on the run — so
+        there is finally something to <i>assert</i>. A tool service still trusts
+        <i>position</i>: the message came from <code>rund</code>'s account, and the
+        caller's account sits in the subject the server placed. The slice after the
+        grant store attaches a short-lived operator-signed statement to each tool call
+        — this principal, this tool, this run, these compartments, expiring in seconds
+        — which the generated binding verifies. That is this gap, closed.</p>
     </div>
 
     <div class="card warn">
@@ -563,13 +571,21 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
     </div>
 
     <div class="card warn">
-      <h3>3 · A deployment cannot limit what any call may do <span class="s s-gap">open · named</span></h3>
+      <h3>3 · A deployment cannot limit what any call may do <span class="s s-gap">narrowed · step 12</span></h3>
       <p>Caveats live on a grant, and a grant is one person's — so a caveat binds only
         that person's calls, and most calls carry no grant at all. <i>"Never above €1m,
         whoever asks, whoever approves"</i> cannot be expressed as a caveat, and there
         is nowhere else to put it either: the authority model carries clearance,
         compartments, verbs and tool sets, and <b>no predicates</b>. The spec flags this
         itself rather than letting a reader assume caveats cover it.</p>
+      <p><b>Step 12 narrowed it by half.</b> A requirement is declared on the
+        <i>tool</i> and the vocabulary is declared by the <i>deployment</i>, so "this
+        tool is callable only by a principal this deployment granted
+        <code>payments</code>" is now a deployment-wide statement, held in one
+        reviewed file, independent of whose call it is. What is still missing is the
+        other half: a <b>predicate over the request</b>. "Never above €1m, whoever
+        asks" is a number in a field, and a compartment cannot read a field. That
+        waits on bounds, which wait on something real to bound.</p>
     </div>
 
     <div class="card warn">
@@ -842,6 +858,10 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
         that travels should live for minutes and be bound to the process carrying it.
         That covers a person at a keyboard and an agent at 03:00 with the same
         machinery. It does not yet cover a service that answers to nobody.</p>
+      <p>Step 12 built the durable half: a grant that never travels, in a reviewed
+        file, decided once per run and recorded on it. The travelling half — the
+        short-lived statement bound to the process carrying it — is the slice after
+        the grant store.</p>
     </div>
   </section>
 
@@ -854,6 +874,8 @@ garm  = scope ∩ manifest ∩ ceiling  <i>the fold</i></pre>
   <p class="note">Status marks: <span class="s s-ver">verified</span> read from code or
     vendor documentation in this session · <span class="s s-des">designed</span> written
     down in the previous estate's spec, not built ·
-    <span class="s s-gap">gap</span> named here, with nothing behind it yet.</p>
+    <span class="s s-gap">gap</span> named here, with nothing behind it yet. Two of
+    the four gaps were revisited after the authority model was built (step 12); each
+    says what that slice did and did not close.</p>
 
 </div>

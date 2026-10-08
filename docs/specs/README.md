@@ -43,3 +43,4 @@ amended to match (§7.3).
 | [signing keys: the root offline, accounts that can rotate](2026-10-05-signing-keys-design.md) | active — built as step 9f; §10 says what it leaves out |
 | [the run store: a run that outlives the call](2026-10-05-run-store-design.md) | active — built as step 10; four amendments marked inline. Builds the rund spec's §7.3 as far as invoke and fetch |
 | [push: a subscriber sees a run without polling](2026-10-07-push-design.md) | active — built as step 11; the amendments execution made are marked **built:** inline |
+| [the authority model: a grant meets a requirement](2026-10-08-authority-design.md) | active — built as step 12; the amendments execution made are marked **built:** inline. A tool declares what it requires, a deployment grants what a principal holds, `rund` decides once and records it; the grant store and the signed per-call authorization are the two slices after |

@@ -62,6 +62,50 @@ It cites tools **by name**, which means there is no proto import and no compile
 error when an entry is wrong. The relationship between an agent and what it may
 call **cannot be expressed in protobuf.** That is why `garmctl compose` exists.
 
+The allowlist bounds a **run**. A grant bounds a **principal**, and the two are
+independent: a tool call inside a run happens only when the allowlist cites it
+*and* the grant the run was started under admits it. Neither widens the other.
+
+## A principal holds a grant, and a tool declares what it requires
+
+Two objects, written by two different people.
+
+A tool's author writes `requires: { compartments: [...] }` beside the tool, in
+the proto. It says what kind of authority this tool needs — `payments`,
+`customer-data` — and it travels with the tool into every catalogue that
+merges it. The author knows what the tool touches; they do not know who should
+be allowed to touch it.
+
+Whoever reviews the deployment writes `grants.yaml`: which principals may
+invoke which tools, which compartments each holds, and until when. It sits
+beside `images.yaml`, the caller list and the issuance manifest — committed,
+reviewed, and read by `rund` alone.
+
+A call is permitted when **both** halves agree: a grant admits the tool by
+name or pattern, and that same grant holds every compartment the tool
+requires. Compartments are never pooled across two grants, because a call
+permitted by two half-grants is a call nobody granted. Everything else is
+refused, and the refusal names the half that failed — `holds no grant`, `does
+not admit`, or `requires payments; ... holds nothing` — so the person reading
+it knows which document to open.
+
+The decision is taken **once**, when the run starts, and recorded on the run:
+the principal, the grant it relied on, the compartments that grant held. A
+replay reads the record rather than deciding again, so a run that began under
+one grant finishes under it even if the file changed underneath.
+
+A **principal** is who the caller is. Today one kind can be proved — the
+account the bus authenticated — and that is the only kind a grant may name. A
+grant may also say it `acts_for` a person, which is how an agent assigned to
+someone exercises their authority and how that person reads back the runs
+their agent made.
+
+Without `--grants`, `rund` announces a reduced posture: a tool that requires
+nothing is open, and a tool with a requirement is refused naming the flag. It
+never guesses. `garmctl grants check` makes every refusal that boot makes and
+prints what each principal may invoke; `SIGHUP` reloads the file into a running
+`rund`, and a file that fails the checks leaves the running grants standing.
+
 ## An image is one repository's output. A catalogue is what runs
 
 | | produced by | what it is |
@@ -131,8 +175,9 @@ Postgres, SQLite on a laptop — and a `rund` replica executes it from a queue:
 step 0 is the plan, then one step per tool call under a deterministic key, so
 a replay after a crash re-sends the same ids and the tool collapses the
 duplicate. The caller's idempotency key **is** the run id; a reused key with a
-different request is refused. `Fetch` reads the run's state and result, to
-the account that started it and nobody else; a foreign run is `NOT_FOUND`.
+different request is refused. `Fetch` reads the run's state and result, to the
+principal that started it and to the one that principal acts for, and to
+nobody else; a foreign run is `NOT_FOUND`.
 
 Every run records its events — `stage`, each `step`'s outcome, `done` — in a
 durable stream, numbered from 1, and `rund` publishes each live on a subject

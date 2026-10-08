@@ -215,6 +215,95 @@ that was queued behind a slow one. That is why `main` closes the connection with
 `defer` *after* `Run`, and not before: closing early turns a deploy into a handful
 of caller timeouts.
 
+### Who may invoke what
+
+Two documents decide, written by two different people.
+
+A tool's author declares what the tool needs, beside the tool:
+
+```proto
+rpc ScheduleReport(ScheduleReportRequest) returns (ScheduleReportResponse) {
+  option (garm.tool.v1.tool) = {
+    name: "weather.v1.schedule_report"
+    async: { limit: { seconds: 60 } }
+    requires: { compartments: ["weather"] }   // what KIND of authority this needs
+  };
+}
+```
+
+Whoever reviews the deployment writes the grants, beside `images.yaml` and the
+caller list:
+
+```yaml
+# build/topo/grants.yaml
+schema: v1
+compartments: [weather]                       # this deployment's whole vocabulary
+grants:
+  - principal: { kind: account, id: CALLER-forecast }
+    tools: ["weather.v1.*"]                   # a name, a prefix ending in .*, or *
+    compartments: [weather]
+    # acts_for: { kind: person, id: ada }     # an agent exercising someone's authority
+    # expires: 2026-12-31T00:00:00Z
+```
+
+`rund` takes it and nothing else does:
+
+```bash
+go run ./cmd/rund --creds build/topo/creds/rund.creds --tls-ca build/topo/ca.pem \
+  --catalogue file://build/catalogue.binpb --grants build/topo/grants.yaml \
+  --callers build/topo/callers.json
+```
+
+A call is permitted when **both** halves agree: the grant admits the tool, and
+that same grant holds every compartment the tool requires. Compartments are
+never pooled across two grants. Everything else is `DENIED`, naming the half
+that failed:
+
+```
+DENIED: weather.v1.schedule_report requires weather; account:ACJUIMSA76BT55RGWVAVFRZDDCZHCHZKACRGSTCBHXRY7RAO6QRIYRQZ holds nothing
+```
+
+The decision is taken once, when the run starts, and recorded on the run with
+the grant's id — so a replay after a crash reads what was decided rather than
+deciding again. Inside a run, each tool call needs the agent's allowlist *and*
+the compartments the run recorded; the allowlist bounds the run, the grant
+bounds the principal, and neither widens the other.
+
+Check the file before `rund` does, and read back what it grants:
+
+```bash
+garmctl grants check --grants build/topo/grants.yaml --callers build/topo/callers.json \
+  --catalogue file://build/catalogue.binpb
+```
+
+```
+build/topo/grants.yaml  generation 39fe81e2d42e
+compartments: weather
+catalogue: file://build/catalogue.binpb  3 tools
+
+CALLER-forecast  account:ACJUIMSA76BT55RGWVAVFRZDDCZHCHZKACRGSTCBHXRY7RAO6QRIYRQZ
+  grant CALLER-forecast#0  tools: weather.v1.*  compartments: weather
+  may invoke:
+    weather.v1.get_forecast
+    weather.v1.schedule_report  requires weather
+```
+
+It makes every refusal `rund`'s boot makes — an unknown schema, a pattern that
+is not a pattern, a compartment outside the vocabulary, a principal no caller
+table knows, and with `--catalogue` a declared tool requiring a compartment the
+file never declares — and the report asks the same decider a call asks, so it
+cannot drift from what would happen.
+
+`SIGHUP` reloads the file into a running `rund`; a file that fails those checks
+leaves the running grants standing and says why. **Without `--grants`**, `rund`
+announces a reduced posture: a tool that requires nothing is open, a tool with
+a requirement is refused naming the flag, and a warning at boot names the
+declared tools it cannot decide, if there are any. It never guesses.
+
+`scripts/e2e.sh` runs all of this: it writes the file, checks it, hands it to
+`rund`, takes the compartment away, `SIGHUP`s, and asserts the same call is
+then refused.
+
 ### An async tool
 
 `weather.v1.schedule_report` declares `async: { limit: { seconds: 60 } }`. Its
@@ -284,8 +373,10 @@ payload; `done` carries no result. Another account subscribing to your run's
 subject receives nothing, and its `Events` is `NOT_FOUND`. If the bus cannot be
 published to, the record is still complete and the run still finishes.
 
-Only the account that started a run can read it; another's `fetch` is
-`NOT_FOUND`. The same key with a different request is `INVALID`: a key names
+Only the principal that started a run can read it — and the principal it
+`acts_for`, which is how a person reads back the runs their agent made. Anyone
+else's `fetch` is `NOT_FOUND`. The same key with a different request is
+`INVALID`: a key names
 one request, and DBOS alone would have answered the second from the first's
 recording.
 

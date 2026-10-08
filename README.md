@@ -23,8 +23,17 @@ garmctl compose examples/images.yaml -o build/catalogue.binpb  # two repositorie
 garmctl topology --dev --catalogue file://build/catalogue.binpb --callers forecast -o build/topo
                                                                # a THROWAWAY operator, accounts, one credential per process, a server config -- never for a deployment
 nats-server -c build/topo/nats-server.conf &                   # operator mode, TLS, every account preloaded
+cat > build/topo/grants.yaml <<'YAML'                          # who may invoke what -- a person writes this; nothing generates it
+schema: v1
+compartments: [weather]
+grants:
+  - principal: { kind: account, id: CALLER-forecast }
+    tools: ["weather.v1.*"]
+    compartments: [weather]
+YAML
+garmctl grants check --grants build/topo/grants.yaml --callers build/topo/callers.json --catalogue file://build/catalogue.binpb
 go run ./examples/cmd/weatherd --creds build/topo/creds/weather.v1.WeatherService.creds --tls-ca build/topo/ca.pem --health 127.0.0.1:8081
-go run ./cmd/rund              --creds build/topo/creds/rund.creds --tls-ca build/topo/ca.pem --catalogue file://build/catalogue.binpb --callers build/topo/callers.json --health 127.0.0.1:8080 --run-store sqlite:build/runs.db
+go run ./cmd/rund              --creds build/topo/creds/rund.creds --tls-ca build/topo/ca.pem --catalogue file://build/catalogue.binpb --callers build/topo/callers.json --health 127.0.0.1:8080 --run-store sqlite:build/runs.db --grants build/topo/grants.yaml
 go run ./examples/cmd/forecast --creds build/topo/creds/forecast.creds --tls-ca build/topo/ca.pem
 ```
 
@@ -148,7 +157,7 @@ generated** — `garmctl compose` prints the count, no document transcribes it.
 | `catalogue/` | the verified namespace rund serves | immutable, digest-identified, behind an atomic pointer |
 | `run/` | rund's engine | no NATS type in any signature |
 | `rundsvc/`, `natscall/` | rund on NATS, and reaching it | `rund` reads the caller's account off the subject the server rewrote; `natscall` opens the call's span and never changes what it publishes |
-| `cmd/rund` | the run manager | the only way a caller reaches a tool; `--callers` names them, `--health` answers a scheduler |
+| `cmd/rund` | the run manager | the only way a caller reaches a tool; `--callers` names them, `--grants` decides what each may invoke, `--health` answers a scheduler |
 | `natsserve/` | the transport | mounts a tool at `garm.tool.<name>`, continues the caller's trace into the handler, drains on shutdown |
 | `natsmicro/` | one NATS micro service, shared by `natsserve` and `rund` | the startup gate (a credential that does not cover a mount refuses to start), the drain that drops no work, `Ready()` held to agree with `$SRV.PING` |
 | `natsconn/` | how a command connects | a credential file and a CA; the ten lines four commands share |
@@ -225,23 +234,33 @@ third fixture shape appears, that is the moment to check whether one can go.
 
 ## What is next
 
-**Nothing authorizes anything.** A caller's identity is proved — placed in the
-subject by the server, carried on every trace — and then not used: any caller may
-invoke any tool through `rund`. The run store and push are built: a run is
-durable, has a step log, and can be followed live and from its record. Next is
-**the authority model** — who may invoke what, who may approve — then the first
-decider (a declared workflow), then approval, which closes the steel thread, then
-person identity. [docs/roadmap.md](docs/roadmap.md) has every unbuilt thing
-beside what it waits on.
+**Authority decides now, and nothing else does.** A caller's identity is proved
+— placed in the subject by the server — and finally *used*: a tool declares the
+compartments it requires, a deployment's reviewed `grants.yaml` says which
+principals hold which, and `rund` permits a call only when both halves agree.
+The decision is taken once per run and recorded on it, so a replay never
+re-decides. The run store and push are built too: a run is durable, has a step
+log, and can be followed live and from its record.
+
+Next is **the grant store** — the same decision over a table instead of a file,
+so assigning an agent to a person is a runtime write — then the **signed
+per-call authorization**, so a tool service trusts a statement rather than the
+position of the message. Then the first decider (a declared workflow), then
+approval, which closes the steel thread, then person identity.
+[docs/roadmap.md](docs/roadmap.md) has every unbuilt thing beside what it waits
+on.
 
 ## What is deliberately absent
 
-No clearance, compartments, verbs, tool sets, principal ceiling, bounds, model,
-prompts, graph, or consent — and a dozen other things, each listed in
+No clearance, verbs, tool sets, principal ceiling, bounds, model, prompts,
+graph, or consent — and a dozen other things, each listed in
 **[docs/roadmap.md](docs/roadmap.md)** beside what it waits on.
 
 They are absent because nothing enforces them yet, and in the old estate the
-authority model is where all four of 2026-10-02's bugs lived.
+authority model is where all four of 2026-10-02's bugs lived. **Compartments
+came back first**, in step 12, with an enforcer and twenty-five rows in
+[docs/invariants.md](docs/invariants.md) rather than a sentence in a guide. The
+rest return the same way, one at a time.
 
 ## Working on this
 
