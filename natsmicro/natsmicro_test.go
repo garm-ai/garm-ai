@@ -149,16 +149,37 @@ func TestServeDrainsACallThatIsQueuedButNotYetDispatched(t *testing.T) {
 	stop := serve(t, s, nc)
 
 	const calls = 2
+	// The first call occupies the handler. It waits in a goroutine because its
+	// answer only comes after the drain.
 	replies := make(chan error, calls)
-	for i := 0; i < calls; i++ {
-		go func() {
-			_, err := caller.Request("probe.subject", []byte("ping"), 5*time.Second)
-			replies <- err
-		}()
-	}
+	go func() {
+		_, err := caller.Request("probe.subject", []byte("ping"), 5*time.Second)
+		replies <- err
+	}()
+	<-entered // its handler is running
 
-	// The first handler is running; the second call is now queued behind it.
-	<-entered
+	// The second call is sent BY HAND, and the flush is the point: it returns
+	// only once the server has the request, so the request is queued before the
+	// drain begins. Found in review of this branch's CI, which failed here on a
+	// loaded runner -- two goroutines racing to publish meant the second
+	// sometimes published AFTER the unsubscribe and came back "no responders",
+	// which is a race in the test and says nothing about the drain.
+	inbox := nats.NewInbox()
+	answer, err := caller.SubscribeSync(inbox)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := caller.PublishRequest("probe.subject", inbox, []byte("ping")); err != nil {
+		t.Fatal(err)
+	}
+	if err := caller.Flush(); err != nil {
+		t.Fatalf("flush the queued call to the server: %v", err)
+	}
+	go func() {
+		_, err := answer.NextMsg(5 * time.Second)
+		replies <- err
+	}()
+
 	if err := stop(); err != nil {
 		t.Fatalf("Serve returned %v", err)
 	}
